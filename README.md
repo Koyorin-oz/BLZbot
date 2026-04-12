@@ -1,0 +1,2 @@
+# BLZbot
+bot discord 
