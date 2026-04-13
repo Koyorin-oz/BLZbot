@@ -51,21 +51,21 @@ function extractYtInitialData(html) {
 /**
  * @param {unknown} node
  * @param {object[]} acc
- * @param {number} limit
+ * @param {number} maxAcc
  */
-function collectVideoRenderers(node, acc, limit) {
-    if (!node || acc.length >= limit) return;
+function collectVideoRenderers(node, acc, maxAcc) {
+    if (!node || acc.length >= maxAcc) return;
     if (typeof node !== 'object') return;
     if (node.videoRenderer?.videoId) {
         acc.push(node.videoRenderer);
-        if (acc.length >= limit) return;
+        if (acc.length >= maxAcc) return;
     }
     for (const v of Object.values(node)) {
-        if (acc.length >= limit) return;
+        if (acc.length >= maxAcc) return;
         if (Array.isArray(v)) {
-            for (const x of v) collectVideoRenderers(x, acc, limit * 2);
+            for (const x of v) collectVideoRenderers(x, acc, maxAcc);
         } else if (v && typeof v === 'object') {
-            collectVideoRenderers(v, acc, limit * 2);
+            collectVideoRenderers(v, acc, maxAcc);
         }
     }
 }
