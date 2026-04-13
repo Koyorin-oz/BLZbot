@@ -212,8 +212,8 @@ module.exports = {
     async handleMessageDelete(client, message) {
         if (message.partial) return;
 
-        // 1. SÉCURITÉ : Suppression dans le salon de logs
-        if (message.channel.id === CONFIG.ALL_LOG_CHANNEL_ID) {
+        // 1. SÉCURITÉ : Suppression dans le salon de logs (prod ou test)
+        if (isProtectedLogChannel(message.channel.id, message.guild.id)) {
             await this.handleLogChannelSecurity(client, message);
             return;
         }
