@@ -57,6 +57,7 @@ async function handleVoiceRoomPanelButton(interaction) {
     if (!parsed) return;
 
     const { restricted, voiceChannelId, action } = parsed;
+    void action;
     const meta = getPrivateRoomVoiceMeta(interaction.client, voiceChannelId);
 
     if (!meta || meta.guildId !== interaction.guild?.id) {
