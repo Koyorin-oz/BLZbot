@@ -60,10 +60,11 @@ function penalizeUser(userId, durationMs = DEFAULT_PENALTY_DURATION, reason = 'A
  * @returns {boolean} True si une pénalité a été supprimée
  */
 function clearPenalty(userId) {
-    const hadPenalty = penalizedUsers.has(userId);
-    penalizedUsers.delete(userId);
+    const key = penaltyKey(userId);
+    const hadPenalty = penalizedUsers.has(key);
+    penalizedUsers.delete(key);
     if (hadPenalty) {
-        logger.info(`[RANKED] Pénalité supprimée pour ${userId}.`);
+        logger.info(`[RANKED] Pénalité supprimée pour ${key}.`);
     }
     return hadPenalty;
 }
