@@ -16,7 +16,9 @@
     "deploy:commands:all": "node scripts/run-deploy-all.js",
     "deploy:commands:all:test": "cross-env BLZ_TEST_MODE=1 node scripts/run-deploy-all.js",
     "points-bot": "node legacy/points-bot/index.js",
-    "rate-limit-test": "node scripts/dev/test-rate-limit.js"
+    "rate-limit-test": "node scripts/dev/test-rate-limit.js",
+    "git:hooks": "git config core.hooksPath .githooks",
+    "git:push": "git push origin HEAD"
   },
   "keywords": [],
   "author": "",

@@ -1,0 +1,13 @@
+#!/bin/sh
+# Après chaque commit : tente git push vers origin (branche courante).
+# Le commit local reste valide même si le push échoue (réseau, divergence).
+#
+# Activation une seule fois sur la machine :
+#   npm run git:hooks
+#   (équivalent : git config core.hooksPath .githooks)
+
+branch=$(git symbolic-ref --short HEAD 2>/dev/null) || exit 0
+if ! git push origin "$branch"; then
+  printf '%s\n' "[.githooks/post-commit] git push a échoué — exécute : git pull --rebase origin $branch && git push"
+fi
+exit 0
