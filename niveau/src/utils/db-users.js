@@ -383,23 +383,22 @@ async function setLevel(userId, level, client = null) {
 
         // Mettre à jour les rôles de niveau si le client est fourni
         if (client && level !== originalLevel) {
-            const member = await client.guilds.cache.get(process.env.GUILD_ID)?.members.fetch(userId).catch(() => null);
-            if (member) {
+            let announceMember = null;
+            await forEachMemberInBlzGuilds(client, userId, async (member) => {
                 await updateLevelRoles(member, level);
+                if (!announceMember) announceMember = member;
+            });
+            if (announceMember && level > originalLevel) {
+                const levelUpChannel = await client.channels.fetch(process.env.LEVEL_UP_CHANNEL).catch(() => null);
+                if (levelUpChannel) {
+                    const user = getUserStmt.get(userId);
+                    const notify = user ? user.notify_level_up : 1;
+                    const shouldPing = notify !== 0;
 
-                // Annoncer uniquement les montées de niveau
-                if (level > originalLevel) {
-                    const levelUpChannel = await client.channels.fetch(process.env.LEVEL_UP_CHANNEL).catch(() => null);
-                    if (levelUpChannel) {
-                        const user = getUserStmt.get(userId);
-                        const notify = user ? user.notify_level_up : 1;
-                        const shouldPing = notify !== 0;
-
-                        levelUpChannel.send({
-                            content: `🎉 Bravo à ${member} qui passe au niveau **${level}** !`,
-                            allowedMentions: shouldPing ? undefined : { parse: [] }
-                        });
-                    }
+                    levelUpChannel.send({
+                        content: `🎉 Bravo à ${announceMember} qui passe au niveau **${level}** !`,
+                        allowedMentions: shouldPing ? undefined : { parse: [] }
+                    });
                 }
             }
 
