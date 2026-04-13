@@ -93,17 +93,41 @@ function buildPrivateVoicePanelPayload(voiceChannelId, panelMode) {
     };
 }
 
+const PREFIX_OPEN = 'pvropen';
+
+/**
+ * Message court + bouton : seul le clic ouvre le vrai panneau en éphémère (rien de sensible dans le salon).
+ * @param {string} voiceChannelId
+ */
+function buildVocPanelOpenerPayload(voiceChannelId) {
+    const embed = new EmbedBuilder()
+        .setColor(getPanelEmbedColor())
+        .setTitle('Panneau vocal privé')
+        .setDescription(
+            'Clique sur **Ouvrir le panneau** pour gérer ce salon (renommer, limite, etc.).\n' +
+                'L’interface ne s’affichera **que pour toi**, tu n’as pas besoin d’être connecté au vocal.'
+        );
+    const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId(`${PREFIX_OPEN}:${voiceChannelId}`)
+            .setLabel('Ouvrir le panneau')
+            .setStyle(ButtonStyle.Primary)
+            .setEmoji('🎛️')
+    );
+    return { embeds: [embed], components: [row] };
+}
+
 /**
  * @param {string} customId
- * @returns {{ restricted: boolean, voiceChannelId: string, action: string } | null}
+ * @returns {{ restricted: boolean, voiceChannelId: string, action: string, mode: 'r' | 'p' | 'e' } | null}
  */
 function parseVoicePanelButtonId(customId) {
     if (!customId.startsWith(`${PREFIX_BTN}:`)) return null;
     const parts = customId.split(':');
     if (parts.length !== 4) return null;
     const [, mode, voiceChannelId, action] = parts;
-    if ((mode !== 'r' && mode !== 'p') || !/^\d{17,22}$/.test(voiceChannelId)) return null;
-    return { restricted: mode === 'r', voiceChannelId, action };
+    if ((mode !== 'r' && mode !== 'p' && mode !== 'e') || !/^\d{17,22}$/.test(voiceChannelId)) return null;
+    return { restricted: mode === 'r', voiceChannelId, action, mode };
 }
 
 /**
@@ -114,14 +138,23 @@ function parseVoicePanelModalId(customId) {
     const parts = customId.split(':');
     if (parts.length !== 4) return null;
     const [, mode, voiceChannelId, kind] = parts;
-    if ((mode !== 'r' && mode !== 'p') || !/^\d{17,22}$/.test(voiceChannelId)) return null;
-    return { restricted: mode === 'r', voiceChannelId, kind };
+    if ((mode !== 'r' && mode !== 'p' && mode !== 'e') || !/^\d{17,22}$/.test(voiceChannelId)) return null;
+    return { restricted: mode === 'r', voiceChannelId, kind, mode };
+}
+
+/** @param {string} customId */
+function parseVocPanelOpenId(customId) {
+    if (!customId.startsWith(`${PREFIX_OPEN}:`)) return null;
+    const id = customId.slice(PREFIX_OPEN.length + 1);
+    return /^\d{17,22}$/.test(id) ? id : null;
 }
 
 module.exports = {
     getPrivateRoomStaffRoleId,
     getPanelEmbedColor,
     buildPrivateVoicePanelPayload,
+    buildVocPanelOpenerPayload,
     parseVoicePanelButtonId,
     parseVoicePanelModalId,
+    parseVocPanelOpenId,
 };
