@@ -11,7 +11,7 @@ function btnId(guildId, action) {
 
 /**
  * @param {string} guildId
- * @param {ReturnType<import('./voice-music-manager').getMusicSession>} session
+ * @param {object} session — session retournée par {@link import('./voice-music-manager').getMusicSession}
  */
 function buildMusicPanelPayload(guildId, session) {
     const qPreview = session.queue.slice(0, 4).map((t, i) => `${i + 1}. ${truncate(t.title, 60)}`);
