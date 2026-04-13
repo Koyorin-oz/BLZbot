@@ -401,9 +401,13 @@ class AntiRaidManager {
      * Log une alerte raid dans le salon de logs avec Components V2
      */
     async logRaidAlert(guild, title, score, criteria, color) {
-        const { resolveAllLogChannelId } = require('../utils/log-channel-resolve');
-        const logChannelId =
-            CONFIG.RAID_LOG_CHANNEL_ID || resolveAllLogChannelId(guild.id);
+        let logChannelId;
+        if (isBlzTestGuild(guild.id)) {
+            const tr = String(process.env.TEST_RAID_LOG_CHANNEL_ID || '').trim();
+            logChannelId = /^\d{17,22}$/.test(tr) ? tr : resolveAllLogChannelId(guild.id);
+        } else {
+            logChannelId = CONFIG.RAID_LOG_CHANNEL_ID || CONFIG.ALL_LOG_CHANNEL_ID;
+        }
         const logChannel = guild.channels.cache.get(logChannelId);
 
         if (!logChannel || !logChannel.isTextBased()) return;
