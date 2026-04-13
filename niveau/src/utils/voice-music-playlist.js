@@ -1,4 +1,5 @@
 const db = require('../database/database');
+const { normalizeYoutubePlayUrl } = require('./youtube-html-search');
 
 /** Max 4 lignes de paires de boutons + 1 ligne navigation = 5 (limite Discord). */
 const PAGE_SIZE = 4;

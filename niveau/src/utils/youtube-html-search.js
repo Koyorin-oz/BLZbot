@@ -3,27 +3,68 @@ const axios = require('axios');
 const USER_AGENT =
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 
+/** ID vidéo YouTube standard (11 caractères). */
+const YOUTUBE_VIDEO_ID_RE = /^[a-zA-Z0-9_-]{11}$/;
+
+/**
+ * Extrait l’ID vidéo depuis une URL YouTube (watch, music, shorts, embed, youtu.be, etc.).
+ * @param {string | null | undefined} raw
+ * @returns {string | null}
+ */
+function extractYoutubeVideoId(raw) {
+    if (raw == null) return null;
+    const s = String(raw).trim();
+    if (!s) return null;
+    let u;
+    try {
+        u = new URL(s);
+    } catch {
+        return null;
+    }
+    const host = (u.hostname || '').replace(/^www\./, '').toLowerCase();
+
+    if (host === 'youtu.be') {
+        const id = u.pathname.split('/').filter(Boolean)[0]?.split('?')[0] ?? '';
+        return YOUTUBE_VIDEO_ID_RE.test(id) ? id : null;
+    }
+
+    if (host === 'youtube-nocookie.com') {
+        const m = u.pathname.match(/^\/embed\/([a-zA-Z0-9_-]{11})(?:\/|$|\?)/);
+        return m && YOUTUBE_VIDEO_ID_RE.test(m[1]) ? m[1] : null;
+    }
+
+    const isYoutubeHost = host === 'youtube.com' || host.endsWith('.youtube.com');
+    if (isYoutubeHost) {
+        const v = u.searchParams.get('v');
+        if (v && YOUTUBE_VIDEO_ID_RE.test(v)) return v;
+        const path = u.pathname;
+        const shorts = path.match(/^\/shorts\/([a-zA-Z0-9_-]{11})(?:\/|$|\?)/);
+        if (shorts && YOUTUBE_VIDEO_ID_RE.test(shorts[1])) return shorts[1];
+        const embed = path.match(/^\/embed\/([a-zA-Z0-9_-]{11})(?:\/|$|\?)/);
+        if (embed && YOUTUBE_VIDEO_ID_RE.test(embed[1])) return embed[1];
+        const live = path.match(/^\/live\/([a-zA-Z0-9_-]{11})(?:\/|$|\?)/);
+        if (live && YOUTUBE_VIDEO_ID_RE.test(live[1])) return live[1];
+    }
+
+    return null;
+}
+
+/**
+ * URL canonique pour play-dl / @discordjs/voice (évite Invalid URL si lien music/shorts/embed).
+ * @param {string | null | undefined} raw
+ * @returns {string | null}
+ */
+function normalizeYoutubePlayUrl(raw) {
+    const id = extractYoutubeVideoId(raw);
+    return id ? `https://www.youtube.com/watch?v=${id}` : null;
+}
+
 /**
  * @param {string} url
  * @returns {boolean}
  */
 function isYoutubeWatchUrl(url) {
-    if (!url || typeof url !== 'string') return false;
-    try {
-        const u = new URL(url.trim());
-        const host = u.hostname.replace(/^www\./, '');
-        if (host === 'youtu.be') {
-            const id = u.pathname.replace(/^\//, '').split('/')[0];
-            return /^[\w-]{11}$/.test(id);
-        }
-        if (host === 'youtube.com' || host === 'm.youtube.com') {
-            const v = u.searchParams.get('v');
-            return Boolean(v && /^[\w-]{11}$/.test(v));
-        }
-        return false;
-    } catch {
-        return false;
-    }
+    return extractYoutubeVideoId(url) !== null;
 }
 
 /**
