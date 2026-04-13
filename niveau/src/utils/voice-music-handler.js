@@ -275,9 +275,19 @@ async function handleMusicSelect(interaction) {
             .catch(() => null);
     }
 
+    const watchUrl = normalizeYoutubePlayUrl(pick.url);
+    if (!watchUrl) {
+        return interaction
+            .editReply({
+                content: 'Ce résultat n’a pas un lien YouTube exploitable. Réessaie ou colle l’URL de la vidéo.',
+                components: [],
+            })
+            .catch(() => null);
+    }
+
     const track = {
         title: pick.title,
-        url: pick.url,
+        url: watchUrl,
         requestedBy: userId,
     };
     if (!session.enqueue(track)) {
@@ -288,7 +298,7 @@ async function handleMusicSelect(interaction) {
 
     await interaction
         .editReply({
-            content: `Ajouté à la file : **${pick.title.slice(0, 120)}**`,
+            content: `Ajouté à la file : **${pick.title.slice(0, 120)}**\n${watchUrl}`,
             components: [],
         })
         .catch(() => null);
