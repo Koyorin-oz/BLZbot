@@ -28,12 +28,19 @@ function channelJumpUrl(guildId, channelId) {
     return `https://discord.com/channels/${guildId}/${channelId}`;
 }
 
-function formatFrLong(d) {
-    return new Date(d).toLocaleDateString('fr-FR', { dateStyle: 'long' });
+/** Dates courtes pour le pied de message (épuré) */
+function formatFrCompactDate(d) {
+    return new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function formatFrLongWithTime(d) {
-    return new Date(d).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' });
+function formatFrCompactDateTime(d) {
+    return new Date(d).toLocaleString('fr-FR', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
 }
 
 /**
@@ -63,20 +70,16 @@ function buildWelcomeMessage(member, options = {}) {
 
     const section = new SectionBuilder().addTextDisplayComponents(header).setThumbnailAccessory(thumbnail);
 
-    /**
-     * Tout le texte d’arrivée + métadonnées dans la zone sous le trait (équivalent footer embed), Components V2.
-     * Flèches ➔ comme sur le rendu classique ; salons en <#id> pour les pastilles Discord.
-     */
-    const footer = new TextDisplayBuilder().setContent(
-        `➔ Nous sommes ravis de te voir arriver sur **${serverName}** !\n\n` +
-            `➔ N'hésite pas à aller faire un tour dans <#${regId}> et <#${ticketsId}> si t'as besoin d'aide.\n\n` +
-            `➔ Passe un agréable séjour ici ! 🔥\n\n` +
-            `---\n\n` +
-            `## Informations d’arrivée\n` +
-            `### Compte Discord\n` +
-            `Créé le **${formatFrLong(createdAt)}**\n\n` +
-            `### Sur ce serveur\n` +
-            `**Arrivée** — ${formatFrLongWithTime(joinedAt)}`
+    /** Corps : uniquement les 3 lignes (comme l’embed d’origine), sans blocs ##/### */
+    const body = new TextDisplayBuilder().setContent(
+        `➔ Nous sommes ravis de te voir arriver sur **${serverName}** !\n` +
+            `➔ N'hésite pas à aller faire un tour dans <#${regId}> et <#${ticketsId}> si t'as besoin d'aide.\n` +
+            `➔ Passe un agréable séjour ici ! 🔥`
+    );
+
+    /** Pied type embed : une seule ligne discrète (italique + sous-texte Discord si supporté) */
+    const footerMeta = new TextDisplayBuilder().setContent(
+        `-# Compte créé le ${formatFrCompactDate(createdAt)} · Arrivée ${formatFrCompactDateTime(joinedAt)}`
     );
 
     const row = new ActionRowBuilder().addComponents(
@@ -94,7 +97,8 @@ function buildWelcomeMessage(member, options = {}) {
         .setAccentColor(parseAccentColor(w.ACCENT_COLOR))
         .addSectionComponents(section)
         .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
-        .addTextDisplayComponents(footer)
+        .addTextDisplayComponents(body)
+        .addTextDisplayComponents(footerMeta)
         .addActionRowComponents(row);
 
     return {
