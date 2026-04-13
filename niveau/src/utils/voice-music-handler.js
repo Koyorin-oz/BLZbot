@@ -321,6 +321,8 @@ function truncateOpt(s, n) {
 module.exports = {
     handleMusicButton,
     handleMusicSelect,
+    handleMusicPlayModal,
+    executeMusicPlayCore,
     storePendingSearch,
     buildSearchSelectRow,
 };
