@@ -5,6 +5,7 @@ const { MAIN_COMMAND_SUBDIRS: mainCommandSubdirs } = require('./command-loader')
 const { getEventState: getHalloweenState } = require('./db-halloween');
 const { getEventState: getChristmasState } = require('./db-noel');
 const { getEventState: getValentinState } = require('./db-valentin');
+const { getSlashDeployGuildIds } = require(path.join(__dirname, '..', '..', '..', 'blzbot-env.js'));
 
 // Fonction pour charger les données de commande depuis un fichier
 function loadCommandData(filePath) {
