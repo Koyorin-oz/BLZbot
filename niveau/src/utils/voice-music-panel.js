@@ -21,7 +21,7 @@ function buildMusicPanelPayload(guildId, session) {
             body += '\n\n*⏸ En pause*';
         }
     } else {
-        body = '*Aucune lecture — utilise `/musique play` avec un titre ou un lien YouTube.*';
+        body = '*Aucune lecture — bouton **Ajouter** ou `/musique play`.*';
     }
 
     if (qPreview.length) {
