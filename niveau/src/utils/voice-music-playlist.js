@@ -1,6 +1,7 @@
 const db = require('../database/database');
 
-const PAGE_SIZE = 5;
+/** Max 4 lignes de paires de boutons + 1 ligne navigation = 5 (limite Discord). */
+const PAGE_SIZE = 4;
 
 /**
  * Enregistre un morceau joué / ajouté à la file pour l’utilisateur (serveur courant, DB économie).

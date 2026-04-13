@@ -144,6 +144,12 @@ class GuildMusicSession {
             return false;
         }
         this.queue.push(track);
+        try {
+            const { recordUserPlayedTrack } = require('./voice-music-playlist');
+            recordUserPlayedTrack(this.guildId, track.requestedBy, track.title, track.url);
+        } catch (_) {
+            /* ignore */
+        }
         return true;
     }
 
