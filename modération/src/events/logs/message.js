@@ -154,7 +154,7 @@ async function handleLogChannelSecurity(client, logger, message) {
 
             const alertEmbed = {
                 title: '🚨 ALERTE SÉCURITÉ - SUPPRESSION DE LOGS 🚨',
-                description: `Des messages ont été supprimés dans le salon de logs <#${CONFIG.ALL_LOG_CHANNEL_ID}> !`,
+                description: `Des messages ont été supprimés dans le salon de logs <#${resolveAllLogChannelId(message.guild.id)}> !`,
                 color: 0xFF0000,
                 fields: [
                     { name: 'Détails des suppressions récentes', value: details || 'Aucun détail disponible' }
