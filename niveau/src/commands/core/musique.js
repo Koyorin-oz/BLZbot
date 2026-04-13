@@ -55,42 +55,15 @@ module.exports = {
             if (!v.ok) return interaction.reply(v.reply);
 
             await interaction.deferReply({ flags: 64 });
-
-            const direct = await resolveYoutubeQueryToTracks(q, interaction.user.id);
-            if (direct?.length) {
-                session.ensureConnection(interaction.client, v.vc);
-                const n = session.enqueueMany(direct);
-                if (n === 0) {
-                    return interaction.editReply({ content: 'La file est pleine.' });
-                }
-                await session.startOrContinue(interaction.client, v.vc);
-                await session.refreshPanel();
-                const extra =
-                    direct.length > 1
-                        ? ` (${n} morceau(x) depuis playlist / lien)`
-                        : '';
-                return interaction.editReply({ content: `Ajouté à la file${extra}.` });
-            }
-
-            let results;
-            try {
-                results = await searchYoutubeVideos(q, interaction.user.id);
-            } catch (e) {
-                return interaction.editReply({
-                    content: `Recherche impossible : ${e?.message || 'erreur'}. Réessaie ou colle un lien YouTube.`,
-                });
-            }
-
-            if (!results.length) {
-                return interaction.editReply({ content: 'Aucun résultat — précise le titre ou envoie une URL YouTube.' });
-            }
-
-            storePendingSearch(guildId, interaction.user.id, results);
-            const row = buildSearchSelectRow(guildId, interaction.user.id, results);
-            return interaction.editReply({
-                content: '**Choisis un résultat** (menu ci-dessous) :',
-                components: [row],
+            await executeMusicPlayCore({
+                guildId,
+                userId: interaction.user.id,
+                member: interaction.member,
+                client: interaction.client,
+                query: q,
+                editReply: (opts) => interaction.editReply(opts),
             });
+            return;
         }
 
         if (sub === 'queue') {
