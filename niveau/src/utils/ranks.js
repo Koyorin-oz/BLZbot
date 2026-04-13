@@ -84,7 +84,8 @@ async function updateUserRank(client, userId) {
     try {
         const { economyGuildId } = require('./economy-scope');
         const { resolveRankUpChannelId } = require('./blz-guild-channels');
-        const targetGuildId = economyGuildId.getStore() || process.env.GUILD_ID;
+        const targetGuildId = String(economyGuildId.getStore() || process.env.GUILD_ID || '').trim();
+        if (!/^\d{17,22}$/.test(targetGuildId)) return;
         const guild = await client.guilds.fetch(targetGuildId).catch(() => null);
         if (!guild) return;
 
