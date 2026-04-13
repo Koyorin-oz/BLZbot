@@ -86,11 +86,8 @@ module.exports = {
         const threadName = rawTitle.slice(0, 100);
         const reporter = buildReporterLabel(interaction);
         const userId = interaction.user.id;
-        const whenFr = new Date().toLocaleString('fr-FR', {
-            dateStyle: 'full',
-            timeStyle: 'short',
-            timeZone: 'Europe/Paris',
-        });
+        const timestamp = Math.floor(Date.now() / 1000);
+        const whenFr = `<t:${timestamp}:F>`;
 
         const descSlice = description.length > 3900 ? `${description.slice(0, 3897)}…` : description;
 
