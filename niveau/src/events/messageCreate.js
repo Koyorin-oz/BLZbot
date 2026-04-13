@@ -34,6 +34,8 @@ module.exports = {
             return;
         }
 
+        const { runWithEconomyGuild } = require('../utils/economy-scope');
+        return runWithEconomyGuild(message.guild.id, async () => {
         try {
             // Ignorer les messages dans les fils de tutoriel pour éviter les crashes
             if (message.channel.isThread()) {
