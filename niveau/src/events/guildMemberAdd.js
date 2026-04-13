@@ -1,5 +1,7 @@
 const { Events, EmbedBuilder } = require('discord.js');
 const logger = require('../utils/logger');
+const { runWithEconomyGuild } = require('../utils/economy-scope');
+const { resolveTutorialChannelId } = require('../utils/blz-guild-channels');
 
 let _warnedTutorialChannelInaccessible = false;
 const { initializeTutorial } = require('../utils/tutorial-handler');
@@ -9,14 +11,14 @@ const { updateGuildChannelPermissions } = require('../utils/guild/guild-upgrades
 module.exports = {
     name: Events.GuildMemberAdd,
     async execute(member, client) {
+        return runWithEconomyGuild(member.guild.id, async () => {
         try {
             logger.info(`[TUTORIAL] Nouveau membre détecté: ${member.user.username} (${member.id})`);
 
-            // Vérifier si le canal TUTORIAL_CHANNEL est défini dans .env
-            const tutorialChannelId = process.env.TUTORIAL_CHANNEL;
+            const tutorialChannelId = resolveTutorialChannelId(member.guild.id);
 
             if (!tutorialChannelId) {
-                logger.warn('[TUTORIAL] TUTORIAL_CHANNEL non défini dans .env');
+                logger.warn('[TUTORIAL] Aucun salon tutoriel configuré pour ce serveur (.env TUTORIAL_CHANNEL ou test).');
                 return;
             }
 

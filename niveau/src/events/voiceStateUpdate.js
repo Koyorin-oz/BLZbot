@@ -1,6 +1,7 @@
 const { Events } = require('discord.js');
 const { usersInVoice } = require('../utils/global-state');
 const { resetVoiceQuestsProgress } = require('../utils/quests');
+const { voiceTrackingKey, runWithEconomyGuild } = require('../utils/economy-scope');
 const logger = require('../utils/logger');
 const { handleLobbyJoin, deleteIfOwnerEmpty } = require('../utils/private-voice-rooms');
 
@@ -18,24 +19,26 @@ module.exports = {
         }
 
         const userId = newState.id;
+        const guildId = newState.guild.id;
+        const vKey = voiceTrackingKey(guildId, userId);
 
         // Un utilisateur est éligible s'il est dans un salon et n'est pas mute/sourd PAR LE SERVEUR
         // (selfMute et selfDeaf ne comptent pas, c'est un choix personnel)
         const isEligible = newState.channelId && !newState.serverMute && !newState.serverDeaf;
-        const wasInSet = usersInVoice.has(userId);
+        const wasInSet = usersInVoice.has(vKey);
 
         logger.debug(`VoiceStateUpdate: ${member?.user?.username} | channel: ${newState.channelId} | serverMute: ${newState.serverMute} | serverDeaf: ${newState.serverDeaf} | eligible: ${isEligible} | wasInSet: ${wasInSet}`);
 
         if (isEligible) {
             if (!wasInSet) {
                 logger.info(`${member.user.username} est maintenant éligible aux récompenses vocales.`);
-                usersInVoice.add(userId);
+                usersInVoice.add(vKey);
             }
         } else {
             if (wasInSet) {
                 logger.info(`${member.user.username} n'est plus éligible aux récompenses vocales (déconnecté ou mute/sourd serveur).`);
-                usersInVoice.delete(userId);
-                resetVoiceQuestsProgress(userId);
+                usersInVoice.delete(vKey);
+                runWithEconomyGuild(guildId, () => resetVoiceQuestsProgress(userId));
             }
         }
 
