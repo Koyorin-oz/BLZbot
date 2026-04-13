@@ -27,25 +27,68 @@ function isYoutubeWatchUrl(url) {
 }
 
 /**
+ * Extrait le premier objet JSON à partir d’un `{` en respectant chaînes et accolades
+ * (le HTML YouTube contient des `;` dans le JSON — un simple split ne suffit pas).
+ * @param {string} html
+ * @param {number} braceStart index du `{` initial
+ * @returns {object | null}
+ */
+function parseBalancedJsonObject(html, braceStart) {
+    if (html[braceStart] !== '{') return null;
+    let depth = 0;
+    let inString = false;
+    let escape = false;
+    for (let i = braceStart; i < html.length; i++) {
+        const c = html[i];
+        if (inString) {
+            if (escape) {
+                escape = false;
+                continue;
+            }
+            if (c === '\\') {
+                escape = true;
+                continue;
+            }
+            if (c === '"') inString = false;
+            continue;
+        }
+        if (c === '"') {
+            inString = true;
+            continue;
+        }
+        if (c === '{') depth++;
+        else if (c === '}') {
+            depth--;
+            if (depth === 0) {
+                try {
+                    return JSON.parse(html.slice(braceStart, i + 1));
+                } catch {
+                    return null;
+                }
+            }
+        }
+    }
+    return null;
+}
+
+/**
  * @param {string} html
  * @returns {object | null}
  */
 function extractYtInitialData(html) {
     if (!html || typeof html !== 'string') return null;
-    const splitKey = 'var ytInitialData = ';
-    let chunk = html.split(splitKey)[1];
-    if (!chunk) {
-        const alt = 'ytInitialData = ';
-        chunk = html.split(alt)[1];
+    const withVar = 'var ytInitialData = ';
+    const plain = 'ytInitialData = ';
+    let idx = html.indexOf(withVar);
+    if (idx !== -1) {
+        idx += withVar.length;
+    } else {
+        idx = html.indexOf(plain);
+        if (idx === -1) return null;
+        idx += plain.length;
     }
-    if (!chunk) return null;
-    const head = chunk.split(/;\s*(var|const|let)\s/)[0]?.trim();
-    if (!head) return null;
-    try {
-        return JSON.parse(head);
-    } catch {
-        return null;
-    }
+    while (idx < html.length && /\s/.test(html[idx])) idx++;
+    return parseBalancedJsonObject(html, idx);
 }
 
 /**
