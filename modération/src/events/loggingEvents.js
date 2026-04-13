@@ -1,6 +1,7 @@
 const { Events, AuditLogEvent } = require('discord.js');
 const Logger = require('../modules/logger');
 const CONFIG = require('../config.js');
+const { isProtectedLogChannel, resolveAllLogChannelId } = require('../utils/log-channel-resolve');
 
 // Stockage pour la sécurité des logs
 const logDeletionHistory = [];
