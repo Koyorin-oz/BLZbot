@@ -4,7 +4,11 @@
  * Prérequis : BOT_TOKEN, GUILD_ID (racine .env + override modération/.env comme le bot).
  */
 const path = require('node:path');
-const { resolveDotenvPath, PEBBLE_HOST_ENV_PATH } = require(path.join(__dirname, '..', 'blzbot-env.js'));
+const { resolveDotenvPath, PEBBLE_HOST_ENV_PATH, applyTestGuildOverride } = require(path.join(
+    __dirname,
+    '..',
+    'blzbot-env.js'
+));
 
 require('dotenv').config({
     path: resolveDotenvPath(
@@ -15,6 +19,7 @@ require('dotenv').config({
     quiet: true,
 });
 require('dotenv').config({ path: path.join(__dirname, '..', 'modération', '.env'), quiet: true, override: true });
+applyTestGuildOverride();
 
 const { Client, GatewayIntentBits } = require('discord.js');
 const config = require(path.join(__dirname, '..', 'modération', 'src', 'config.js'));

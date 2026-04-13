@@ -13,7 +13,11 @@ const {
   ApplicationCommandOptionType
 } = require('discord.js');
 const derankUrgence = require('./derank-urgence.js');
-const { resolveDotenvPath, PEBBLE_HOST_ENV_PATH } = require(path.join(__dirname, '..', 'blzbot-env.js'));
+const { resolveDotenvPath, PEBBLE_HOST_ENV_PATH, applyTestGuildOverride } = require(path.join(
+  __dirname,
+  '..',
+  'blzbot-env.js'
+));
 require('dotenv').config({
   path: resolveDotenvPath(
     path.join(__dirname, '..', '.env'),
@@ -22,6 +26,7 @@ require('dotenv').config({
   ),
   quiet: true,
 });
+applyTestGuildOverride();
 
 /** Racine du dépôt (parent de orchestrator/) */
 const REPO_ROOT = path.join(__dirname, '..');

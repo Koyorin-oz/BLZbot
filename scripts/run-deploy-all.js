@@ -6,7 +6,11 @@
  *         (racine du dépôt, même .env que le bot : /home/container/.env sur Pebble)
  */
 const path = require('node:path');
-const { resolveDotenvPath, PEBBLE_HOST_ENV_PATH } = require(path.join(__dirname, '..', 'blzbot-env.js'));
+const { resolveDotenvPath, PEBBLE_HOST_ENV_PATH, applyTestGuildOverride } = require(path.join(
+    __dirname,
+    '..',
+    'blzbot-env.js'
+));
 
 require('dotenv').config({
     path: resolveDotenvPath(
@@ -17,6 +21,7 @@ require('dotenv').config({
     quiet: true,
 });
 require('dotenv').config({ path: path.join(__dirname, '..', 'modération', '.env'), quiet: true, override: true });
+applyTestGuildOverride();
 
 console.log(
     '[deploy-all] Démarrage — si rien ne s’affiche pendant ~10s, c’est normal (chargement SQLite / modules).'

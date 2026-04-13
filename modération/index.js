@@ -1,5 +1,9 @@
 const path = require('path');
-const { resolveDotenvPath, PEBBLE_HOST_ENV_PATH } = require(path.join(__dirname, '..', 'blzbot-env.js'));
+const { resolveDotenvPath, PEBBLE_HOST_ENV_PATH, applyTestGuildOverride } = require(path.join(
+    __dirname,
+    '..',
+    'blzbot-env.js'
+));
 // Racine du repo puis modération/.env (override) pour que GUILD_ID soit cohérent même si cwd ≠ modération/
 require('dotenv').config({
     path: resolveDotenvPath(
@@ -10,6 +14,7 @@ require('dotenv').config({
     quiet: true,
 });
 require('dotenv').config({ path: path.join(__dirname, '.env'), quiet: true, override: true });
+applyTestGuildOverride();
 
 const { Client, GatewayIntentBits, Partials, Collection } = require('discord.js');
 const { REST, Routes } = require('discord.js');
