@@ -298,7 +298,7 @@ async function handleMusicSelect(interaction) {
 
     await interaction
         .editReply({
-            content: `Ajouté à la file : **${pick.title.slice(0, 120)}**\n${watchUrl}`,
+            content: `Ajouté à la file : **${pick.title.slice(0, 120)}**`,
             components: [],
         })
         .catch(() => null);
