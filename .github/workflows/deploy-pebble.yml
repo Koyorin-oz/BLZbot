@@ -1,0 +1,62 @@
+# Déploie le code sur PebbleHost (SFTP) à chaque push sur main.
+# Le .env reste sur le serveur (non versionné) — il n’est pas écrasé.
+#
+# Active le déploiement : GitHub → Settings → Secrets and variables → Actions
+#   - Variable (onglet Variables) : PEBBLE_DEPLOY = 1
+#   - Secrets (onglet Secrets) : voir doc/DEPLOY-PEBBLE.md
+#
+name: Deploy PebbleHost (SFTP)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-pebble
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Sync fichiers vers Pebble (SFTP)
+    runs-on: ubuntu-latest
+    # Définis la variable repo PEBBLE_DEPLOY=1 quand les secrets SFTP sont configurés
+    if: vars.PEBBLE_DEPLOY == '1'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Préparer le dossier à envoyer (sans .git / node_modules / bruit)
+        run: |
+          mkdir -p _deploy_out
+          rsync -a \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='modération/node_modules' \
+            --exclude='niveau/node_modules' \
+            --exclude='.github' \
+            --exclude='_deploy_out' \
+            --exclude='*.log' \
+            ./ _deploy_out/
+
+      - name: Port SFTP (défaut 22 si secret vide)
+        id: sftp_port
+        run: |
+          P="${{ secrets.PEBBLE_SFTP_PORT }}"
+          if [ -z "$P" ]; then P="22"; fi
+          echo "port=$P" >> "$GITHUB_OUTPUT"
+
+      - name: Déployer en SFTP
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        with:
+          username: ${{ secrets.PEBBLE_SFTP_USERNAME }}
+          server: ${{ secrets.PEBBLE_SFTP_HOST }}
+          port: ${{ steps.sftp_port.outputs.port }}
+          password: ${{ secrets.PEBBLE_SFTP_PASSWORD }}
+          ssh_private_key: ${{ secrets.PEBBLE_SFTP_PRIVATE_KEY }}
+          local_path: ./_deploy_out/*
+          remote_path: ${{ secrets.PEBBLE_REMOTE_PATH }}
+          # Variable repo PEBBLE_SFTP_ONLY=1 si l’hébergeur n’accepte que le sous-système SFTP
+          sftp_only: ${{ vars.PEBBLE_SFTP_ONLY == '1' }}
+          sftpArgs: '-o StrictHostKeyChecking=no -o ConnectTimeout=30'

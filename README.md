@@ -72,6 +72,10 @@ Autres scripts utiles :
 
 Variables optionnelles (voir `.env.example`) : `BLZ_FORK_SERVICES`, `SKIP_SLASH_DEPLOY_ON_START`, `BLZ_FAST_START`, `LOG_LEVEL`, etc.
 
+### Mise à jour auto vers PebbleHost
+
+Après chaque **`git push`** sur `main`, un workflow GitHub Actions peut synchroniser les fichiers vers ton serveur en **SFTP** (sans toucher au `.env` sur Pebble). Configuration : **[`doc/DEPLOY-PEBBLE.md`](doc/DEPLOY-PEBBLE.md)**. Dans Cursor : tâche **« Push main → déclenche déploiement Pebble »** (`.vscode/tasks.json`) après tes commits — puis **Restart** du bot sur le panel Pebble.
+
 ---
 
 ## Structure du dépôt (simplifié)
