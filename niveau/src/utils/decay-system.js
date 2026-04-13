@@ -1,24 +1,21 @@
 const db = require('../database/database');
 const { getRankFromPoints, updateUserRank } = require('./ranks');
-const logger = require('../utils/logger');
+const { runWithEconomyGuild } = require('./economy-scope');
+const logger = require('./logger');
 
 // Seuil de points pour être éligible au decay
 const DECAY_MINIMUM_POINTS = 3000;
 
-// Préparer les requêtes
-const getDecayCandidatesStmt = db.prepare('SELECT id, points, last_activity_timestamp FROM users WHERE points >= ?');
-
 /**
  * Détermine le seuil d'inactivité en heures pour un rang donné.
- * @param {object} rank L'objet de rang.
+ * @param {object} rank L'objet du rang.
  * @returns {number} Le nombre d'heures d'inactivité avant decay.
  */
 function getInactivityThresholdHours(rank) {
-    // Les rangs de Or I à Diamant II ont 4h, les autres (supérieurs) ont 3h
-    if (rank.points >= 3000 && rank.points < 12500) { // Or I à Diamant II
+    if (rank.points >= 3000 && rank.points < 12500) {
         return 4;
     }
-    return 3; // Diamant III et plus
+    return 3;
 }
 
 /**
@@ -28,31 +25,54 @@ function getInactivityThresholdHours(rank) {
 function processDecay(client) {
     logger.info('Vérification de la perte de points (decay) par inactivité...');
 
-    const candidates = getDecayCandidatesStmt.all(DECAY_MINIMUM_POINTS);
     const now = Date.now();
     const { burnPlayerRP } = require('./ranked-shares');
 
-    for (const user of candidates) {
-        const rank = getRankFromPoints(user.points);
+    const mainDb = typeof db.getMainDb === 'function' ? db.getMainDb() : db;
+    const testDb = typeof db.getTestDb === 'function' ? db.getTestDb() : null;
+    const testG = String(process.env.GUILD_ID || '').trim();
+    const mainG = String(process.env.BLZ_MAIN_GUILD_ID || '').trim();
 
-        // Si le rang n'a pas de valeur de decay, on l'ignore
-        if (!rank || !rank.decay) {
-            continue;
+    /**
+     * @param {import('better-sqlite3').Database} dbInstance
+     * @param {string} guildIdForContext
+     */
+    function runDecayOnDatabase(dbInstance, guildIdForContext) {
+        if (!guildIdForContext || !/^\d{17,22}$/.test(guildIdForContext)) {
+            return;
         }
 
-        const inactivityThresholdHours = getInactivityThresholdHours(rank);
-        const inactivityThresholdMs = inactivityThresholdHours * 60 * 60 * 1000;
+        const candidates = dbInstance
+            .prepare('SELECT id, points, last_activity_timestamp FROM users WHERE points >= ?')
+            .all(DECAY_MINIMUM_POINTS);
 
-        const timeSinceLastActivity = now - (user.last_activity_timestamp || now); // Utiliser now si le timestamp est null
+        for (const user of candidates) {
+            const rank = getRankFromPoints(user.points);
 
-        if (timeSinceLastActivity >= inactivityThresholdMs) {
-            burnPlayerRP(user.id, rank.decay);
+            if (!rank || !rank.decay) {
+                continue;
+            }
 
-            logger.info(`L'utilisateur ${user.id} a perdu ${rank.decay} RP (Shares Burn) pour inactivité.`);
+            const inactivityThresholdHours = getInactivityThresholdHours(rank);
+            const inactivityThresholdMs = inactivityThresholdHours * 60 * 60 * 1000;
 
-            // Mettre à jour le rôle si le rang a changé
-            updateUserRank(client, user.id);
+            const timeSinceLastActivity = now - (user.last_activity_timestamp || now);
+
+            if (timeSinceLastActivity >= inactivityThresholdMs) {
+                runWithEconomyGuild(guildIdForContext, () => {
+                    burnPlayerRP(user.id, rank.decay);
+                    logger.info(`L'utilisateur ${user.id} a perdu ${rank.decay} RP (Shares Burn) pour inactivité.`);
+                    updateUserRank(client, user.id);
+                });
+            }
         }
+    }
+
+    if (testDb) {
+        runDecayOnDatabase(mainDb, mainG);
+        runDecayOnDatabase(testDb, testG);
+    } else {
+        runDecayOnDatabase(mainDb, testG || mainG);
     }
 }
 
