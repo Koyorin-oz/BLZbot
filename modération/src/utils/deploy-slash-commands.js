@@ -54,21 +54,11 @@ async function deployModerationSlashCommands(client, config, opts = {}) {
         await new Promise((resolve) => client.once('clientReady', resolve));
     }
 
-    let guild;
-    try {
-        guild = await client.guilds.fetch(config.GUILD_ID);
-    } catch (e) {
-        if (e.code === 10004) {
-            console.error(
-                '❌ Modération — Unknown Guild : GUILD_ID dans modération/.env ne correspond pas à un serveur où le bot est membre.'
-            );
-        } else {
-            console.error('❌ Modération — guilde introuvable:', e.message || e);
-        }
-        return;
-    }
-    if (!guild) {
-        console.error('❌ Impossible de trouver la guilde pour enregistrer les commandes.');
+    const mainGuildIds = getSlashDeployGuildIds();
+    if (mainGuildIds.length === 0) {
+        console.error(
+            '❌ Modération — aucun GUILD_ID valide (vérifie le .env / mode TEST et BLZ_MAIN_GUILD_ID).'
+        );
         return;
     }
 
