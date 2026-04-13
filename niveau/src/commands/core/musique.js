@@ -150,11 +150,6 @@ module.exports = {
                 session.stopAndClear();
                 return interaction.reply({ content: '⏹️ Arrêté, file vidée.', flags: 64 });
             }
-            case 'clear': {
-                session.queue.length = 0;
-                await session.refreshPanel();
-                return interaction.reply({ content: '🗑️ File vidée (lecture en cours inchangée).', flags: 64 });
-            }
             default:
                 return interaction.reply({ content: 'Sous-commande inconnue.', flags: 64 });
         }
