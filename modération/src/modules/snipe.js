@@ -1,5 +1,7 @@
+const path = require('node:path');
 const { Collection, EmbedBuilder } = require('discord.js');
 const CONFIG = require('../config.js');
+const { isTestBotProfile } = require(path.join(__dirname, '..', '..', '..', 'blzbot-env.js'));
 
 /**
  * Module de gestion du snipe (messages supprimés et édités)

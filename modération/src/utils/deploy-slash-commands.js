@@ -76,12 +76,17 @@ async function deployModerationSlashCommands(client, config, opts = {}) {
                     }
                     if (!compact) console.log(`✨ Commande déployée sur serveur panel: ${cmdJsonPanel.name}`);
                 }
-                if (String(config.PANEL_GUILD_ID) !== String(config.GUILD_ID)) {
-                    const mainExisting = await guild.commands.fetch();
+                for (const gid of mainGuildIds) {
+                    if (String(gid) === String(config.PANEL_GUILD_ID)) continue;
+                    const stripGuild = await client.guilds.fetch(gid).catch(() => null);
+                    if (!stripGuild) continue;
+                    const mainExisting = await stripGuild.commands.fetch();
                     for (const cmd of mainExisting.values()) {
                         if (PANEL_COMMAND_NAMES.has(cmd.name)) {
                             await cmd.delete();
-                            if (!compact) console.log(`🗑️ Commande supprimée du serveur principal: ${cmd.name}`);
+                            if (!compact) {
+                                console.log(`🗑️ Commande supprimée (${stripGuild.name}): ${cmd.name}`);
+                            }
                         }
                     }
                 }
