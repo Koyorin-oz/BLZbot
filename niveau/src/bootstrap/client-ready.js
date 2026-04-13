@@ -55,16 +55,38 @@ function registerClientReady(client, { isHalloweenActive }) {
     const startupBase = Number.isFinite(_deferRaw) && _deferRaw >= 0 ? _deferRaw : 1500;
     logger.info(`Connecté en tant que ${client.user.tag} !`);
 
-    const prv = require('../utils/private-voice-rooms').getConfig();
-    if (!prv.enabled) {
-        logger.warn(
-            '[PRIVATE_ROOM] Désactivé : ajoute PRIVATE_ROOM_CATEGORY_ID dans le .env (ID de la catégorie où créer les vocaux privés). Lobby par défaut : 1388968408711823411.'
-        );
+    const prvMod = require('../utils/private-voice-rooms');
+    const prvGuildId = process.env.GUILD_ID;
+    const prvGuild = prvGuildId ? client.guilds.cache.get(prvGuildId) : client.guilds.cache.first();
+    if (!prvGuild) {
+        logger.warn('[PRIVATE_ROOM] Aucune guilde au démarrage — vérifie GUILD_ID et l’invitation du bot sur le serveur.');
     } else {
-        logger.info(
-            `[PRIVATE_ROOM] Actif — salon d’accueil <#${prv.lobbyChannelId}> → catégorie \`${prv.voiceCategoryId}\``
-        );
+        prvMod
+            .resolvePrivateRoomConfig(client, prvGuild)
+            .then((prv) => {
+                if (!prv.enabled) {
+                    const prvMsg =
+                        prv.error === 'lobby_not_found'
+                            ? `[PRIVATE_ROOM] Lobby introuvable sur la guilde (ID ${prv.lobbyChannelId}). Vérifie GUILD_ID / invite du bot.`
+                            : prv.error === 'missing_category'
+                              ? '[PRIVATE_ROOM] Inactif : catégorie vocale invalide (vérifie PRIVATE_ROOM_CATEGORY_ID).'
+                              : '[PRIVATE_ROOM] Inactif (PRIVATE_ROOM_ENABLED=0 ou configuration invalide).';
+                    if (process.env.BLZ_COMPACT_LOG === '1') logger.debug(prvMsg);
+                    else logger.warn(prvMsg);
+                } else {
+                    const panelHint = prv.panelTextChannelId ? ` → panneau <#${prv.panelTextChannelId}>` : '';
+                    logger.info(
+                        `[PRIVATE_ROOM] Actif — lobby <#${prv.lobbyChannelId}> → catégorie \`${prv.voiceCategoryId}\`${panelHint}`
+                    );
+                }
+            })
+            .catch((e) => logger.error('[PRIVATE_ROOM] Résolution config:', e?.message || e));
     }
+
+    scheduleStartupTask('bot-service-role', startupBase + 800, async () => {
+        const { ensureBotServiceRole } = require('../utils/bot-service-role');
+        await ensureBotServiceRole(client);
+    });
 
     // --- Synchronisation boosters / salons guildes / comptage : différé pour alléger le pic API au ready ---
     scheduleStartupTask('boosters', startupBase, async () => {
@@ -179,7 +201,7 @@ function registerClientReady(client, { isHalloweenActive }) {
 
                     logger.info(`[COUNTING] Système initialisé. Dernier nombre valide: ${lastNumber || 0}, utilisateurs pénalisés: ${Object.keys(usersToRemovePC).length}`);
                 } else {
-                    logger.warn('[COUNTING] Canal de comptage non trouvé ou non valide');
+                    logger.debug('[COUNTING] Canal de comptage non trouvé ou non valide (vérifie COMPTAGE dans .env).');
                 }
             } else {
                 logger.info('[COUNTING] Variable COMPTAGE non définie dans .env');
@@ -266,8 +288,6 @@ function registerClientReady(client, { isHalloweenActive }) {
         logger.info('Première vérification des rôles TOP...');
         await updateAllTopRoles(client);
     }, 10000); // 10 seconds after startup
-
-    logger.info(`Connecté en tant que ${client.user.tag} !`);
 
     // Mettre à jour les usernames "unknown" dans la base Halloween
     if (isHalloweenActive) {

@@ -25,7 +25,7 @@ class AntiRaidManager {
         // Démarrer le système de décroissance automatique
         this.startDecayInterval();
 
-        console.log('✓ AntiRaidManager initialisé');
+        if (process.env.BLZ_COMPACT_LOG !== '1') console.log('✓ AntiRaidManager initialisé');
     }
 
     /**

@@ -1,5 +1,12 @@
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+const { resolveDotenvPath, PEBBLE_HOST_ENV_PATH } = require(path.join(__dirname, '..', 'blzbot-env.js'));
+require('dotenv').config({
+    path: resolveDotenvPath(
+        path.resolve(__dirname, '../.env'),
+        PEBBLE_HOST_ENV_PATH,
+        path.join(process.cwd(), '.env')
+    ),
+});
 
 const Groq = require('groq-sdk');
 const { InferenceClient } = require('@huggingface/inference');
@@ -19,8 +26,9 @@ const CLOUDFLARE_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID || "1951d3c93101
 const HF_MODEL = "Mistral-7B-Instruct";
 
 module.exports = {
-    IA_PANEL_CHANNEL_ID: '1414668466413375629',
-    PUBLIC_IA_CHANNEL_ID: '1454467497066762352',
+    IA_PANEL_CHANNEL_ID: process.env.IA_PANEL_CHANNEL_ID || '1414668466413375629',
+    /** Salon « historique + résumé » ; les mentions ailleurs sont gérées par IA_MENTION_ANY_CHANNEL (handlers). */
+    PUBLIC_IA_CHANNEL_ID: process.env.PUBLIC_IA_CHANNEL_ID || '1454467497066762352',
     PANEL_MESSAGE_ID: '1415380912815865996',
     FLAG_CHANNEL_ID: '1343196193421000704',
     RICHARD_USER_ID: '1222548578539536405',
@@ -33,7 +41,7 @@ module.exports = {
     THREAD_MODEL_PRO_CUSTOM_ID: 'thread_model_pro',
     DEEP_THINK_CUSTOM_ID: 'deep_think_action',
     SHOW_THOUGHTS_CUSTOM_ID: 'show_thoughts_action',
-    HARD_MODE_CHANNEL_ID: '1461100993889566975',
+    HARD_MODE_CHANNEL_ID: process.env.HARD_MODE_CHANNEL_ID || '1461100993889566975',
     HARD_MODE_ROLE_ID: '1461101220117614757',
     BASIC_CHATBOT_CHANNEL_ID: '1388970340440473650',
     HARD_MODE_MODAL_ID: 'hard_mode_confirmation_modal',

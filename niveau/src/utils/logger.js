@@ -8,14 +8,21 @@ const LOG_LEVELS = {
     DEBUG: 4,
 };
 
-/** Sous npm start l’orchestrateur met BLZ_COMPACT_LOG=1 → moins de bruit (WARN par défaut). LOG_LEVEL dans .env prime toujours. */
+/**
+ * Sous maintemp, BLZ_COMPACT_LOG=1 : on ignore LOG_LEVEL du .env (souvent INFO/WARN) pour éviter le spam au boot.
+ * Pour forcer WARN/INFO sur les workers : BLZ_CHILD_LOG_LEVEL=WARN dans le .env racine.
+ */
 function resolveLogLevel() {
+    if (process.env.BLZ_COMPACT_LOG === '1') {
+        const child = process.env.BLZ_CHILD_LOG_LEVEL;
+        if (child && LOG_LEVELS[child] !== undefined) {
+            return LOG_LEVELS[child];
+        }
+        return LOG_LEVELS.ERROR;
+    }
     const name = process.env.LOG_LEVEL;
     if (name && LOG_LEVELS[name] !== undefined) {
         return LOG_LEVELS[name];
-    }
-    if (process.env.BLZ_COMPACT_LOG === '1') {
-        return LOG_LEVELS.WARN;
     }
     return LOG_LEVELS.INFO;
 }

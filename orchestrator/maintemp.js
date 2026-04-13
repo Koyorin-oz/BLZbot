@@ -1,7 +1,7 @@
 // main.js
 
 // --- Modules et configuration de l'environnement ---
-const { fork } = require('child_process');
+const { fork, execFile } = require('child_process');
 const path = require('path');
 const {
   Client,
@@ -13,8 +13,13 @@ const {
   ApplicationCommandOptionType
 } = require('discord.js');
 const derankUrgence = require('./derank-urgence.js');
+const { resolveDotenvPath, PEBBLE_HOST_ENV_PATH } = require(path.join(__dirname, '..', 'blzbot-env.js'));
 require('dotenv').config({
-  path: path.join(__dirname, '..', '.env'),
+  path: resolveDotenvPath(
+    path.join(__dirname, '..', '.env'),
+    PEBBLE_HOST_ENV_PATH,
+    path.join(process.cwd(), '.env')
+  ),
   quiet: true,
 });
 
@@ -54,7 +59,7 @@ const client = new Client({
 /**
  * Registre unique : /settings et statuts. Par défaut on ne fork plus que modération + niveau
  * (évite plusieurs sessions Discord avec le même token — linkScanner/Bug/IA restent optionnels).
- * BLZ_FORK_SERVICES=moderation,niveau | all | liste: checktoken,moderation,niveau,linkscanner,ia,bug
+ * BLZ_FORK_SERVICES=moderation,niveau,ia | all | liste: checktoken,moderation,niveau,linkscanner,ia,bug
  */
 const SCRIPT_REGISTRY = [
   { key: 'checktoken', name: 'workers/CheckToken.js', description: 'Vérif token (webhook)', status: 'inactive' },
@@ -66,7 +71,7 @@ const SCRIPT_REGISTRY = [
 ];
 
 function parseForkServiceKeys() {
-  const raw = (process.env.BLZ_FORK_SERVICES || 'moderation,niveau').trim().toLowerCase();
+  const raw = (process.env.BLZ_FORK_SERVICES || 'moderation,niveau,ia').trim().toLowerCase();
   if (!raw || raw === 'all' || raw === '*') return null;
   return new Set(raw.split(/[,;]/).map((k) => k.trim()).filter(Boolean));
 }
@@ -78,7 +83,7 @@ if (scriptsToRun.length === 0) {
   console.error('[maintemp] BLZ_FORK_SERVICES ne correspond à aucun service connu. Clés: checktoken, moderation, niveau, linkscanner, ia, bug — ou "all".');
   process.exit(1);
 }
-console.log(`[maintemp] Forks: ${scriptsToRun.map((s) => s.key).join(', ')} (BLZ_FORK_SERVICES)`);
+console.log(`[maintemp] Services: ${scriptsToRun.map((s) => s.key).join(', ')}`);
 
 // Stocke les processus enfants
 const scriptProcesses = {};
@@ -168,24 +173,26 @@ function runScript(scriptObj) {
     return;
   }
   const scriptName = scriptObj.name;
-  console.log(`▶ ${scriptName}`);
+  if (process.env.BLZ_VERBOSE_FORK === '1') console.log(`▶ ${scriptName}`);
 
   const env = {
     ...process.env,
     DOTENV_CONFIG_QUIET: 'true',
     BLZ_COMPACT_LOG: '1',
-    LOG_LEVEL: process.env.BLZ_CHILD_LOG_LEVEL || 'WARN',
+    // Aligné avec niveau/src/utils/logger.js (compact → ERROR sauf BLZ_CHILD_LOG_LEVEL).
+    LOG_LEVEL: process.env.BLZ_CHILD_LOG_LEVEL || 'ERROR',
     NODE_OPTIONS: process.env.NODE_OPTIONS
       ? `${process.env.NODE_OPTIONS} --no-deprecation`.trim()
       : '--no-deprecation',
   };
-  // Démarrage plus rapide : pas de déploiement slash à chaque boot (npm run deploy:commands après changement)
+  // Ne plus désactiver le déploiement slash via BLZ_FAST_START : les nouvelles commandes (/panel-voc, etc.)
+  // n’apparaissaient jamais sur Discord. Pour sauter le deploy au boot : SKIP_SLASH_DEPLOY_ON_START=1 explicitement.
+  // Démarrage plus fluide : déploiement slash après le READY (défaut côté bot si non défini).
   if (
-    scriptName === 'niveau/src/index.js' &&
-    process.env.BLZ_FAST_START === '1' &&
-    !process.env.SKIP_SLASH_DEPLOY_ON_START
+    (scriptName === 'niveau/src/index.js' || scriptName === 'modération/index.js') &&
+    (env.BLZ_DEFER_SLASH_DEPLOY_MS === undefined || env.BLZ_DEFER_SLASH_DEPLOY_MS === '')
   ) {
-    env.SKIP_SLASH_DEPLOY_ON_START = '1';
+    env.BLZ_DEFER_SLASH_DEPLOY_MS = '5000';
   }
 
   const proc = fork(path.join(REPO_ROOT, scriptName), [], {
@@ -332,8 +339,6 @@ async function registerCommands() {
       return;
     }
 
-    console.log('[maintemp] Commandes orchestrateur…');
-
     // Récupérer les commandes existantes sur Discord
     const existingCommands = await guild.commands.fetch();
     const existingMap = new Map();
@@ -359,7 +364,11 @@ async function registerCommands() {
         }
 
         const action = existing ? 'Updating' : 'Creating';
-        await guild.commands.create(command);
+        if (existing) {
+          await guild.commands.edit(existing.id, command);
+        } else {
+          await guild.commands.create(command);
+        }
         if (existing) updatedCount++;
         else createdCount++;
       } catch (cmdError) {
@@ -368,7 +377,9 @@ async function registerCommands() {
       }
     }
 
-    console.log(`[maintemp] Slash OK — +${createdCount} ~${updatedCount} =${skippedCount} err:${errorCount}`);
+    if (process.env.BLZ_VERBOSE_FORK === '1') {
+      console.log(`[maintemp] Slash orchestrateur — +${createdCount} ~${updatedCount} =${skippedCount} err:${errorCount}`);
+    }
   } catch (err) {
     console.error('[maintemp.js] Erreur lors de l\'enregistrement des commandes :', err);
   }
@@ -475,12 +486,45 @@ client.on('interactionCreate', async interaction => {
   // Ici, toutes les autres commandes sont libres d'accès
 });
 
+/**
+ * Re-pousse toutes les slash (niveau + modération) via npm — utile si SKIP_SLASH ou déploiement raté sur un enfant.
+ * Désactive : BLZ_AUTO_DEPLOY_SLASH=0
+ */
+function scheduleSlashSyncFromOrchestrator() {
+  const raw = process.env.BLZ_AUTO_DEPLOY_SLASH;
+  const disabled = ['0', 'false', 'no', 'off'].includes(String(raw || '').toLowerCase());
+  if (disabled) return;
+
+  const delay = Math.max(2000, parseInt(process.env.BLZ_AUTO_DEPLOY_SLASH_DELAY_MS || '15000', 10));
+  const deployScript = path.join(REPO_ROOT, 'scripts', 'run-deploy-all.js');
+  console.log(
+    `[maintemp] Dans ${Math.round(delay / 1000)}s → node scripts/run-deploy-all.js (niveau + modération, sans npm). Couper : BLZ_AUTO_DEPLOY_SLASH=0`
+  );
+
+  setTimeout(() => {
+    execFile(
+      process.execPath,
+      [deployScript],
+      { cwd: REPO_ROOT, env: process.env, maxBuffer: 4 * 1024 * 1024 },
+      (err, stdout, stderr) => {
+        if (stdout) process.stdout.write(stdout);
+        if (stderr) process.stderr.write(stderr);
+        if (err) console.error('[maintemp] run-deploy-all.js —', err.message);
+        else console.log('[maintemp] run-deploy-all.js terminé.');
+      }
+    );
+  }, delay);
+}
+
 // Au démarrage du bot
 client.once('clientReady', async () => {
-  console.log(`[maintemp] Connecté : ${client.user.tag} — workers dans ${FORK_DELAY_MS}ms chacun (BLZ_FORK_DELAY_MS)`);
-  await registerCommands();  // Attendre que les commandes soient déployées
-  derankUrgence.initialize(client); // Initialisation du module de derank
+  await registerCommands();
+  derankUrgence.initialize(client);
   runScriptsWithDelay(scriptsToRun, FORK_DELAY_MS);
+  scheduleSlashSyncFromOrchestrator();
+  console.log(
+    `[maintemp] ${client.user.tag} · orchestrateur prêt · forks ${FORK_DELAY_MS}ms — ${scriptsToRun.map((s) => s.key).join(', ')}`
+  );
 });
 
 client.login(BOT_TOKEN);

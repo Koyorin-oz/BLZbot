@@ -11,6 +11,8 @@ const MAIN_RANKS = roleConfig.rankRoles.mainRanks;
 // Rangs qui sont "verrouillés" une fois atteints - l'utilisateur garde le rôle et l'affichage même en perdant des points
 const LOCKED_RANKS = roleConfig.rankRoles.lockedRanks;
 
+let _warnedRankRoles50013 = false;
+
 /**
  * Détermine le rang d'un utilisateur en fonction de ses points.
  * @param {number} points Le nombre de points de l'utilisateur.
@@ -190,9 +192,12 @@ async function updateUserRank(client, userId) {
             if (rolesToAddObjects.length > 0) await member.roles.add(rolesToAddObjects);
         } catch (roleErr) {
             if (roleErr.code === 50013) {
-                logger.warn(
-                    `Rangs — Missing Permissions pour ${member.user.username} : rôle du bot au-dessus des rôles de rang + « Gérer les rôles ».`
-                );
+                if (!_warnedRankRoles50013) {
+                    _warnedRankRoles50013 = true;
+                    logger.warn(
+                        'Rangs — Missing Permissions (50013) : rôle du bot au-dessus des rôles de rang + « Gérer les rôles ».'
+                    );
+                }
                 return;
             }
             throw roleErr;
@@ -243,7 +248,12 @@ async function updateUserRank(client, userId) {
 
     } catch (error) {
         if (error.code === 50013) {
-            logger.warn(`Rangs — permissions Discord insuffisantes pour l’utilisateur ${userId} (voir message précédent).`);
+            if (!_warnedRankRoles50013) {
+                _warnedRankRoles50013 = true;
+                logger.warn(
+                    'Rangs — Missing Permissions (50013) : rôle du bot au-dessus des rôles de rang + « Gérer les rôles ».'
+                );
+            }
             return;
         }
         logger.error(`Erreur lors de la mise à jour du rang pour ${userId}:`, error.message || error);

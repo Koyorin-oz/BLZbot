@@ -4,6 +4,8 @@ const db = require('../database/database');
 const { grantResources } = require('./db-users');
 const logger = require('./logger');
 
+let _warnedStreakChannel = false;
+
 /**
  * Calcule la récompense de streak en fonction du nombre de jours
  * @param {number} streak - Le nombre de jours de streak
@@ -123,13 +125,19 @@ function updateStreak(client, userId) {
 async function sendStreakAnnouncement(client, userId, newStreak, reward) {
     try {
         if (!process.env.STREAK_CHANNEL) {
-            logger.warn('STREAK_CHANNEL non défini dans les variables d\'environnement');
+            if (!_warnedStreakChannel) {
+                _warnedStreakChannel = true;
+                logger.warn('STREAK_CHANNEL non défini dans les variables d\'environnement');
+            }
             return;
         }
 
         const channel = await client.channels.fetch(process.env.STREAK_CHANNEL).catch(() => null);
         if (!channel) {
-            logger.warn(`Canal de streak ${process.env.STREAK_CHANNEL} introuvable`);
+            if (!_warnedStreakChannel) {
+                _warnedStreakChannel = true;
+                logger.warn(`Canal de streak ${process.env.STREAK_CHANNEL} introuvable`);
+            }
             return;
         }
 

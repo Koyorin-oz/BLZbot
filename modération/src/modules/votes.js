@@ -3,6 +3,8 @@ const path = require('path');
 const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionsBitField } = require('discord.js');
 const CONFIG = require('../config.js');
 
+const _V_COMPACT = process.env.BLZ_COMPACT_LOG === '1';
+
 /**
  * Module de gestion des votes (débannissement, promotions, candidatures, votes personnalisés)
  */
@@ -31,24 +33,21 @@ class VoteManager {
      */
     loadVotes() {
         const votesFilePath = path.join(__dirname, '../../votes.json');
-        console.log(`[VoteManager] Tentative de chargement des votes depuis: ${votesFilePath}`);
+        if (!_V_COMPACT) console.log(`[VoteManager] Chargement votes: ${votesFilePath}`);
 
         if (fs.existsSync(votesFilePath)) {
             try {
                 const data = fs.readFileSync(votesFilePath, 'utf8');
                 const votes = JSON.parse(data);
                 const voteCount = Object.keys(votes).length;
-                console.log(`[VoteManager] ✅ ${voteCount} vote(s) chargé(s) depuis votes.json`);
-                if (voteCount > 0) {
-                    console.log(`[VoteManager] Clés des votes: ${Object.keys(votes).join(', ')}`);
-                }
+                if (!_V_COMPACT) console.log(`[VoteManager] ${voteCount} vote(s) chargé(s)`);
                 return votes;
             } catch (e) {
-                console.error(`[VoteManager] ❌ Erreur lors du parsing de votes.json:`, e);
+                console.error(`[VoteManager] Erreur parsing votes.json:`, e);
                 return {};
             }
         }
-        console.log(`[VoteManager] ⚠️ Fichier votes.json non trouvé, création d'un nouvel objet vide`);
+        if (!_V_COMPACT) console.log(`[VoteManager] votes.json absent — état vide`);
         return {};
     }
 

@@ -1,5 +1,7 @@
 const { Events, EmbedBuilder } = require('discord.js');
 const logger = require('../utils/logger');
+
+let _warnedTutorialChannelInaccessible = false;
 const { initializeTutorial } = require('../utils/tutorial-handler');
 const { getGuildOfUser } = require('../utils/db-guilds');
 const { updateGuildChannelPermissions } = require('../utils/guild/guild-upgrades');
@@ -22,9 +24,12 @@ module.exports = {
 
             // Récupérer le canal de tutoriel
             const tutorialChannel = await member.guild.channels.fetch(tutorialChannelId).catch((err) => {
-                logger.warn(
-                    `[TUTORIAL] Canal ${tutorialChannelId} inaccessible (${err.code || err.message}) — permissions bot ou mauvais salon pour ce serveur.`
-                );
+                if (!_warnedTutorialChannelInaccessible) {
+                    _warnedTutorialChannelInaccessible = true;
+                    logger.warn(
+                        `[TUTORIAL] Canal ${tutorialChannelId} inaccessible (${err.code || err.message}) — permissions bot ou mauvais salon pour ce serveur.`
+                    );
+                }
                 return null;
             });
 

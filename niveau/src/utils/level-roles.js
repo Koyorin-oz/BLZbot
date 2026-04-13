@@ -1,13 +1,18 @@
 const roleConfig = require('../config/role.config.json');
 const logger = require('./logger');
 
+let _warnedLevelRoles50013 = false;
+
 function logRoleApiError(context, member, err) {
     const code = err && err.code;
     const msg = err && (err.message || String(err));
     if (code === 50013) {
-        logger.warn(
-            `${context} (${member?.user?.tag || member?.id}) — Missing Permissions : place le rôle du bot au-dessus des rôles de niveau et active « Gérer les rôles ».`
-        );
+        if (!_warnedLevelRoles50013) {
+            _warnedLevelRoles50013 = true;
+            logger.warn(
+                'Rôles de niveau — Missing Permissions (50013) : rôle du bot au-dessus des rôles de niveau + « Gérer les rôles ».'
+            );
+        }
         return;
     }
     logger.error(`${context} (${member?.user?.tag || member?.id}):`, msg);

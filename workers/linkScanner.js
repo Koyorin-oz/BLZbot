@@ -6,7 +6,15 @@ const sqlite3 = require('sqlite3').verbose();
 const { URL } = require('url');
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '..', '.env'), quiet: true });
+const { resolveDotenvPath, PEBBLE_HOST_ENV_PATH } = require(path.join(__dirname, '..', 'blzbot-env.js'));
+require('dotenv').config({
+    path: resolveDotenvPath(
+        path.join(__dirname, '..', '.env'),
+        PEBBLE_HOST_ENV_PATH,
+        path.join(process.cwd(), '.env')
+    ),
+    quiet: true,
+});
 
 const LOG_FILE = 'link_logs.txt';
 // Utilisation d'un write stream pour limiter les opérations disque répétées

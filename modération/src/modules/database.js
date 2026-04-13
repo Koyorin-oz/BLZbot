@@ -1,6 +1,11 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
+const BLZ_COMPACT_DB = process.env.BLZ_COMPACT_LOG === '1';
+function dbConnectLog(msg) {
+    if (!BLZ_COMPACT_DB) console.log(msg);
+}
+
 /**
  * Module de gestion centralisée des bases de données
  */
@@ -27,7 +32,7 @@ class DatabaseManager {
             if (err) {
                 console.error('Erreur lors de la connexion à la base de données des sanctions :', err);
             } else {
-                console.log(`✓ Connecté à la base de données des sanctions.`);
+                dbConnectLog(`✓ Connecté à la base de données des sanctions.`);
                 this.databases.sanctions.serialize(() => {
                     this.databases.sanctions.run(`CREATE TABLE IF NOT EXISTS sanctions (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -110,7 +115,7 @@ class DatabaseManager {
             if (err) {
                 console.error('Erreur lors de la connexion à la base de données des notes :', err);
             } else {
-                console.log('✓ Connecté à la base de données des notes.');
+                dbConnectLog('✓ Connecté à la base de données des notes.');
                 this.databases.notes.serialize(() => {
                     this.databases.notes.run(`CREATE TABLE IF NOT EXISTS notes (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -130,7 +135,7 @@ class DatabaseManager {
             if (err) {
                 console.error('Erreur lors de la connexion à la base de données des règles :', err);
             } else {
-                console.log('✓ Connecté à la base de données des règles.');
+                dbConnectLog('✓ Connecté à la base de données des règles.');
                 this.databases.rules.serialize(() => {
                     this.databases.rules.run(`CREATE TABLE IF NOT EXISTS rules (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -156,7 +161,7 @@ class DatabaseManager {
             if (err) {
                 console.error('Erreur lors de la connexion à la base de données des rôles temporairement supprimés :', err);
             } else {
-                console.log('✓ Connecté à la base de données des rôles temporairement supprimés.');
+                dbConnectLog('✓ Connecté à la base de données des rôles temporairement supprimés.');
                 this.databases.tempRemovedRoles.serialize(() => {
                     this.databases.tempRemovedRoles.run(`CREATE TABLE IF NOT EXISTS temp_removed_roles (
                         userId TEXT NOT NULL,
@@ -176,7 +181,7 @@ class DatabaseManager {
             if (err) {
                 console.error('Erreur lors de la connexion à la base de données des avertissements du staff :', err);
             } else {
-                console.log('✓ Connecté à la base de données des avertissements du staff.');
+                dbConnectLog('✓ Connecté à la base de données des avertissements du staff.');
                 this.databases.staffWarns.serialize(() => {
                     this.databases.staffWarns.run(`CREATE TABLE IF NOT EXISTS staff_warns (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -194,7 +199,7 @@ class DatabaseManager {
             if (err) {
                 console.error('Erreur lors de la connexion à la base de données du profil staff :', err);
             } else {
-                console.log('✓ Connecté à la base de données du profil staff.');
+                dbConnectLog('✓ Connecté à la base de données du profil staff.');
                 this.databases.staffProfile.serialize(() => {
                     // Table des périodes de modo test
                     this.databases.staffProfile.run(`CREATE TABLE IF NOT EXISTS modo_test_periods (
@@ -280,7 +285,7 @@ class DatabaseManager {
             if (err) {
                 console.error('Erreur lors de la connexion à la base de données des incidents de raid :', err);
             } else {
-                console.log('✓ Connecté à la base de données des incidents de raid.');
+                dbConnectLog('✓ Connecté à la base de données des incidents de raid.');
                 this.databases.raidIncidents.serialize(() => {
                     // Table des incidents de raid
                     this.databases.raidIncidents.run(`CREATE TABLE IF NOT EXISTS raid_incidents (
@@ -349,7 +354,7 @@ class DatabaseManager {
             if (err) {
                 console.error('Erreur lors de la connexion à la base de données des absences staff :', err);
             } else {
-                console.log('✓ Connecté à la base de données des absences staff.');
+                dbConnectLog('✓ Connecté à la base de données des absences staff.');
                 this.databases.staffAbsences.serialize(() => {
                     this.databases.staffAbsences.run(`CREATE TABLE IF NOT EXISTS staff_absences (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,

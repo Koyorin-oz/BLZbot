@@ -2,6 +2,78 @@ const { createCanvas, loadImage, registerFont } = require('canvas');
 const fs = require('node:fs');
 const path = require('node:path');
 
+let sharpMod = null;
+try {
+  sharpMod = require('sharp');
+} catch {
+  /* optionnel : conversion WebP / buffers exotiques */
+}
+
+/** PNG 1×1 valide — évite tout crash si les fichiers rank-icons sont absents / LFS / corrompus sur l’hébergeur */
+const RANK_ICON_FALLBACK_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhwI/pW7Y1QAAAABJRU5ErkJggg==',
+  'base64'
+);
+
+let _rankFallbackImage = null;
+async function getRankFallbackImage() {
+  if (_rankFallbackImage) return _rankFallbackImage;
+  _rankFallbackImage = await loadImage(RANK_ICON_FALLBACK_PNG);
+  return _rankFallbackImage;
+}
+
+const _rankIconBad = new Set();
+async function loadRankIconBuffer(iconPath) {
+  const useFallbackQuietly = async () => {
+    try {
+      return await getRankFallbackImage();
+    } catch {
+      return null;
+    }
+  };
+
+  if (!iconPath || !fs.existsSync(iconPath)) {
+    return useFallbackQuietly();
+  }
+
+  const buf = fs.readFileSync(iconPath);
+  if (buf.length < 24) {
+    return useFallbackQuietly();
+  }
+
+  const probe = buf.slice(0, 64).toString('utf8');
+  if (probe.includes('version https://git-lfs')) {
+    if (!_rankIconBad.has(iconPath)) {
+      _rankIconBad.add(iconPath);
+      if (process.env.BLZ_COMPACT_LOG !== '1') {
+        console.warn(`[profile] Icône rang (LFS non tiré): ${path.basename(iconPath)} — placeholder`);
+      }
+    }
+    return useFallbackQuietly();
+  }
+
+  try {
+    return await loadImage(buf);
+  } catch {
+    if (sharpMod) {
+      try {
+        const png = await sharpMod(buf).png().toBuffer();
+        return await loadImage(png);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  if (!_rankIconBad.has(iconPath)) {
+    _rankIconBad.add(iconPath);
+    if (process.env.BLZ_COMPACT_LOG !== '1') {
+      console.warn(`[profile] Icône rang illisible pour canvas: ${path.basename(iconPath)} — placeholder`);
+    }
+  }
+  return useFallbackQuietly();
+}
+
 try {
   const assetsPath = path.join(__dirname, '..', 'assets');
   if (fs.existsSync(path.join(assetsPath, 'Inter-Bold.ttf'))) {
@@ -97,13 +169,10 @@ async function drawRankChip(ctx, text, cx, y, iconPath, glowColor = null, glowIn
   const iconSize = 48;
   const iconPadding = 10;
   try {
-    if (fs.existsSync(iconPath)) {
-      const iconBuffer = fs.readFileSync(iconPath);
-      icon = await loadImage(iconBuffer);
-    } else {
-      console.error(`Rank icon file does not exist: ${iconPath}`);
-    }
-  } catch (e) { console.error(`Could not load rank icon: ${iconPath}`, e); }
+    icon = await loadRankIconBuffer(iconPath);
+  } catch {
+    icon = null;
+  }
 
   const iconWidthWithPadding = icon ? iconSize + iconPadding : 0;
 

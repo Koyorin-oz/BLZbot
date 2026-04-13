@@ -1,22 +1,114 @@
 /**
- * Module de bienvenue pour les nouveaux membres
+ * Module de bienvenue pour les nouveaux membres (Discord Components V2)
  */
-const { EmbedBuilder } = require('discord.js');
+const {
+    ContainerBuilder,
+    TextDisplayBuilder,
+    SectionBuilder,
+    ThumbnailBuilder,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    SeparatorBuilder,
+    MessageFlags,
+} = require('discord.js');
 const CONFIG = require('../config.js');
 
-// Anti-doublon : éviter les messages si le membre rejoint/quitte rapidement
 const recentJoins = new Map();
-const ANTI_DUPLICATE_MS = 5000; // 5 secondes
+const ANTI_DUPLICATE_MS = 5000;
+
+function parseAccentColor(hex) {
+    if (!hex) return 0x2f3136;
+    const s = String(hex).replace(/^#/, '');
+    const n = parseInt(s, 16);
+    return Number.isNaN(n) ? 0x2f3136 : n;
+}
+
+function channelJumpUrl(guildId, channelId) {
+    return `https://discord.com/channels/${guildId}/${channelId}`;
+}
+
+function formatFrLong(d) {
+    return new Date(d).toLocaleDateString('fr-FR', { dateStyle: 'long' });
+}
+
+function formatFrLongWithTime(d) {
+    return new Date(d).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' });
+}
 
 /**
- * Gère l'arrivée d'un nouveau membre
- * @param {GuildMember} member - Le membre qui vient de rejoindre
+ * @param {import('discord.js').GuildMember} member
+ * @param {{ joinedAt?: Date }} [options]
+ * @returns {{ components: import('discord.js').ContainerBuilder[]; flags: number; allowedMentions: { users: string[] } }}
+ */
+function buildWelcomeMessage(member, options = {}) {
+    const w = CONFIG.WELCOME;
+    const regId = w.LINK_REGLEMENT_CHANNEL_ID;
+    const ticketsId = w.LINK_TICKETS_CHANNEL_ID;
+
+    if (!/^\d{17,22}$/.test(String(regId)) || !/^\d{17,22}$/.test(String(ticketsId))) {
+        throw new Error('LINK_REGLEMENT_CHANNEL_ID ou LINK_TICKETS_CHANNEL_ID invalide dans config.js');
+    }
+
+    const guildId = member.guild.id;
+    const serverName = member.guild.name;
+    const avatar = member.user.displayAvatarURL({ extension: 'png', size: 512 });
+    const joinedAt = options.joinedAt ?? member.joinedAt ?? new Date();
+    const createdAt = member.user.createdAt;
+
+    const thumbnail = new ThumbnailBuilder().setURL(avatar).setDescription(`Avatar — ${member.user.username}`);
+
+    const body = new TextDisplayBuilder().setContent(
+        `# 👋 Bienvenue, ${member} !\n\n` +
+            `➜ Nous sommes ravis de te voir sur le serveur **${serverName}** !\n\n` +
+            `➜ N'hésite pas à aller faire un tour dans **⁠📋・règles** <#${regId}>\n\n` +
+            `➜ Si tu as besoin d'aide, ouvre un ticket : **🪢・tickets** <#${ticketsId}>\n\n` +
+            `➜ Passe un agréable séjour ici ! ✨`
+    );
+
+    const section = new SectionBuilder().addTextDisplayComponents(body).setThumbnailAccessory(thumbnail);
+
+    const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setStyle(ButtonStyle.Link)
+            .setLabel('📋 Règles')
+            .setEmoji('📋')
+            .setURL(channelJumpUrl(guildId, regId)),
+        new ButtonBuilder()
+            .setStyle(ButtonStyle.Link)
+            .setLabel('🪢 Tickets')
+            .setEmoji('🪢')
+            .setURL(channelJumpUrl(guildId, ticketsId))
+    );
+
+    const footer = new TextDisplayBuilder().setContent(
+        `## Informations membre\n` +
+            `### Compte Discord\n` +
+            `Créé le **${formatFrLong(createdAt)}**\n\n` +
+            `### Sur ce serveur\n` +
+            `**Date d’arrivée** — ${formatFrLongWithTime(joinedAt)}`
+    );
+
+    const container = new ContainerBuilder()
+        .setAccentColor(parseAccentColor(w.ACCENT_COLOR))
+        .addSectionComponents(section)
+        .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
+        .addTextDisplayComponents(footer)
+        .addActionRowComponents(row);
+
+    return {
+        components: [container],
+        flags: MessageFlags.IsComponentsV2,
+        allowedMentions: { users: [member.id] },
+    };
+}
+
+/**
+ * @param {import('discord.js').GuildMember} member
  */
 async function handleMemberJoin(member) {
-    // Vérifier si le système est activé
     if (!CONFIG.WELCOME?.ENABLED) return;
 
-    // Anti-doublon
     const now = Date.now();
     const lastJoin = recentJoins.get(member.id);
     if (lastJoin && now - lastJoin < ANTI_DUPLICATE_MS) {
@@ -24,7 +116,6 @@ async function handleMemberJoin(member) {
     }
     recentJoins.set(member.id, now);
 
-    // Nettoyer les anciennes entrées (toutes les 100 entrées)
     if (recentJoins.size > 100) {
         const cutoff = now - ANTI_DUPLICATE_MS;
         for (const [id, time] of recentJoins) {
@@ -32,39 +123,22 @@ async function handleMemberJoin(member) {
         }
     }
 
+    const w = CONFIG.WELCOME;
+
     try {
-        const channel = member.guild.channels.cache.get(CONFIG.WELCOME.CHANNEL_ID);
+        const channel = member.guild.channels.cache.get(w.CHANNEL_ID);
         if (!channel) {
-            console.error('❌ [Welcome] Salon de bienvenue introuvable:', CONFIG.WELCOME.CHANNEL_ID);
+            console.error('❌ [Welcome] Salon de bienvenue introuvable:', w.CHANNEL_ID);
             return;
         }
 
-        const avatar = member.user.displayAvatarURL({
-            extension: 'png',
-            size: 512
+        const payload = buildWelcomeMessage(member, { joinedAt: member.joinedAt ?? new Date() });
+        await channel.send({
+            components: payload.components,
+            flags: payload.flags,
+            allowedMentions: payload.allowedMentions,
         });
 
-        const embed = new EmbedBuilder()
-            .setColor(CONFIG.WELCOME.EMBED_COLOR || '#2F3136')
-            .setThumbnail(avatar)
-            .setDescription(
-                `# 👋 **Bienvenue, ${member} !**
-
-➜ Nous sommes ravis de te voir sur le serveur **BLZstarss** !
-
-➜ N'hésite pas à aller faire un tour dans  
-<#${CONFIG.WELCOME.RULES_CHANNEL_ID}>  
-
-➜ Si tu as besoin d'aide, ouvre un ticket :  
-<#${CONFIG.WELCOME.TICKETS_CHANNEL_ID}>
-
-➜ Passe un **agréable séjour** ici ! ✨`
-            )
-            .setFooter({ text: `Arrivé(e) le ${new Date().toLocaleDateString('fr-FR')}` });
-
-        await channel.send({ embeds: [embed] });
-
-        // Attribution automatique du rôle membre
         if (CONFIG.MEMBER_ROLE_ID) {
             try {
                 const role = member.guild.roles.cache.get(CONFIG.MEMBER_ROLE_ID);
@@ -80,12 +154,12 @@ async function handleMemberJoin(member) {
                 );
             }
         }
-
     } catch (error) {
-        console.error('❌ [Welcome] Erreur lors de l\'envoi du message de bienvenue:', error);
+        console.error("❌ [Welcome] Erreur lors de l'envoi du message de bienvenue:", error);
     }
 }
 
 module.exports = {
-    handleMemberJoin
+    handleMemberJoin,
+    buildWelcomeMessage,
 };

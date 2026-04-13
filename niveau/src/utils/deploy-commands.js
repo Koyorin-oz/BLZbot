@@ -11,7 +11,9 @@ function loadCommandData(filePath) {
     try {
         const command = require(filePath);
         if (command.data && command.execute) {
-            return command.data.toJSON();
+            const raw =
+                typeof command.data.toJSON === 'function' ? command.data.toJSON() : command.data;
+            return raw && typeof raw === 'object' ? { ...raw } : null;
         }
     } catch (e) {
         logger.error(`Erreur de chargement pour la commande à ${filePath}: ${e?.message || e}`);
@@ -29,17 +31,17 @@ function commandsAreEqual(remote, local) {
     const localOpts = JSON.stringify(local.options || []);
     if (remoteOpts !== localOpts) return false;
 
-    // Comparer default_member_permissions
-    if ((remote.defaultMemberPermissions || null) !== (local.default_member_permissions || null)) return false;
+    // Comparer default_member_permissions (Discord renvoie souvent un BigInt, le JSON local une chaîne)
+    const rp = remote.defaultMemberPermissions != null ? String(remote.defaultMemberPermissions) : '';
+    const lp = local.default_member_permissions != null ? String(local.default_member_permissions) : '';
+    if (rp !== lp) return false;
 
     return true;
 }
 
 module.exports = async function deployCommands(client) {
     const compact = process.env.BLZ_COMPACT_LOG === '1';
-    if (compact) {
-        console.log('[niveau] Déploiement des slash commands…');
-    } else {
+    if (!compact) {
         console.log('\n═══════════════════════════════════════════════════════════════');
         console.log('[DEPLOY-COMMANDS] Starting command deployment (Safe Mode)...');
         console.log('═══════════════════════════════════════════════════════════════\n');
@@ -97,6 +99,10 @@ module.exports = async function deployCommands(client) {
     }
 
     if (!compact) console.log(`[DEPLOY] Loaded ${localCommands.size} local commands`);
+    const hasPanelVoc = localCommands.has('panel-voc');
+    console.log(
+        `[niveau/deploy] /panel-voc présent dans le code : ${hasPanelVoc ? 'OUI ✓' : 'NON ✗ (fichier panel-voc.js manquant sur ce serveur ?)'}`
+    );
 
     if (!client.isReady()) {
         if (!compact) console.log('[DEPLOY] Waiting for client to be ready...');
@@ -178,8 +184,9 @@ module.exports = async function deployCommands(client) {
         }
 
         if (compact) {
+            const hasPanelVoc = localCommands.has('panel-voc');
             console.log(
-                `[niveau] Slash : +${createdCount} modif ${updatedCount} inchangées ${skippedCount} erreurs ${errorCount} (${guild.name})`
+                `[niveau] Slash : +${createdCount} ~${updatedCount} skip ${skippedCount} err ${errorCount} (${guild.name}) · chargé /panel-voc:${hasPanelVoc}`
             );
         } else {
             console.log('\n═══════════════════════════════════════════════════════════════');

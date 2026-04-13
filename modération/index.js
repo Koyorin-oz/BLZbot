@@ -1,6 +1,14 @@
 const path = require('path');
+const { resolveDotenvPath, PEBBLE_HOST_ENV_PATH } = require(path.join(__dirname, '..', 'blzbot-env.js'));
 // Racine du repo puis modération/.env (override) pour que GUILD_ID soit cohérent même si cwd ≠ modération/
-require('dotenv').config({ path: path.join(__dirname, '..', '.env'), quiet: true });
+require('dotenv').config({
+    path: resolveDotenvPath(
+        path.join(__dirname, '..', '.env'),
+        PEBBLE_HOST_ENV_PATH,
+        path.join(process.cwd(), '.env')
+    ),
+    quiet: true,
+});
 require('dotenv').config({ path: path.join(__dirname, '.env'), quiet: true, override: true });
 
 const { Client, GatewayIntentBits, Partials, Collection } = require('discord.js');
@@ -21,6 +29,7 @@ const SnipeManager = require('./src/modules/snipe');
 const RecruitmentManager = require('./src/modules/recruitment');
 const Scheduler = require('./src/modules/scheduler');
 const AntiRaidManager = require('./src/modules/antiraid');
+const { deployModerationSlashCommands } = require('./src/utils/deploy-slash-commands');
 
 // Création du client Discord
 const client = new Client({
@@ -53,14 +62,16 @@ client.commands = new Collection();
  */
 function loadCommands() {
     const commandFiles = fs.readdirSync(path.join(__dirname, 'src/commands')).filter(file => file.endsWith('.js'));
-
+    let n = 0;
     for (const file of commandFiles) {
         const command = require(`./src/commands/${file}`);
         if (command.data && command.execute) {
             client.commands.set(command.data.name, command);
+            n++;
             if (!BLZ_COMPACT) console.log(`✓ Commande chargée: ${command.data.name}`);
         }
     }
+    return n;
 }
 
 /**
@@ -71,7 +82,7 @@ function loadEvents() {
 
     // Fichiers d'événements gérés manuellement dans interactionCreate (ne pas charger automatiquement)
     const manuallyHandledEvents = ['buttonInteraction.js', 'modalSubmit.js', 'applyModeratorButton.js', 'loggingEvents.js', 'ticketButtons.js', 'welcome.js'];
-
+    let loaded = 0;
     for (const file of eventFiles) {
         // Ignorer les événements gérés manuellement
         if (manuallyHandledEvents.includes(file)) {
@@ -86,151 +97,19 @@ function loadEvents() {
             } else {
                 client.on(event.name, (...args) => event.execute(...args, { dbManager, voteManager, snipeManager, recruitmentManager, config }));
             }
+            loaded++;
             if (!BLZ_COMPACT) console.log(`✓ Événement chargé: ${event.name}`);
         }
     }
-
-
+    return loaded;
 }
 
 /**
  * Enregistrement des commandes slash
  */
 async function registerCommands() {
-    const commands = [];
-    const panelCommands = []; // Commandes à déployer sur le serveur panel (déban)
-    const commandFiles = fs.readdirSync(path.join(__dirname, 'src/commands')).filter(file => file.endsWith('.js'));
-
-    // Commandes qui doivent être déployées sur le serveur panel (déban)
-    const panelCommandNames = ['panel'];
-
-    for (const file of commandFiles) {
-        const command = require(`./src/commands/${file}`);
-        if (command.data) {
-            const cmdJson = command.data.toJSON ? command.data.toJSON() : command.data;
-            if (panelCommandNames.includes(cmdJson.name)) {
-                panelCommands.push(command.data);
-            } else {
-                commands.push(command.data);
-            }
-        }
-    }
-
     try {
-        if (!BLZ_COMPACT) console.log('🔄 Démarrage de l\'enregistrement des commandes slash (Mode Sûr)...');
-
-        // Attendre que le client soit prêt pour utiliser client.application
-        if (!client.isReady()) {
-            await new Promise((resolve) => client.once('clientReady', resolve));
-        }
-
-        let guild;
-        try {
-            guild = await client.guilds.fetch(config.GUILD_ID);
-        } catch (e) {
-            if (e.code === 10004) {
-                console.error(
-                    '❌ Modération — Unknown Guild : GUILD_ID dans modération/.env ne correspond pas à un serveur où le bot est membre.'
-                );
-            } else {
-                console.error('❌ Modération — guilde introuvable:', e.message || e);
-            }
-            return;
-        }
-        if (!guild) {
-            console.error('❌ Impossible de trouver la guilde pour enregistrer les commandes.');
-            return;
-        }
-
-        // --- Déployer /panel sur le serveur panel (déban) ---
-        if (panelCommands.length > 0) {
-            try {
-                const panelGuild = await client.guilds.fetch(config.PANEL_GUILD_ID);
-                if (panelGuild) {
-                    for (const cmdData of panelCommands) {
-                        const cmdJson = cmdData.toJSON ? cmdData.toJSON() : cmdData;
-                        const existingPanel = await panelGuild.commands.fetch().then((c) => c.find((x) => x.name === cmdJson.name));
-                        if (existingPanel) {
-                            await panelGuild.commands.edit(existingPanel.id, cmdJson);
-                        } else {
-                            await panelGuild.commands.create(cmdJson);
-                        }
-                        if (!BLZ_COMPACT) console.log(`✨ Commande déployée sur serveur panel: ${cmdJson.name}`);
-                    }
-                    // Ne retirer /panel du serveur principal que si le panel est un *autre* serveur
-                    if (String(config.PANEL_GUILD_ID) !== String(config.GUILD_ID)) {
-                        const mainExisting = await guild.commands.fetch();
-                        for (const cmd of mainExisting.values()) {
-                            if (panelCommandNames.includes(cmd.name)) {
-                                await cmd.delete();
-                                if (!BLZ_COMPACT) console.log(`🗑️ Commande supprimée du serveur principal: ${cmd.name}`);
-                            }
-                        }
-                    }
-                } else {
-                    console.error('❌ Impossible de trouver le serveur panel pour enregistrer /panel.');
-                }
-            } catch (panelError) {
-                if (panelError.code === 10004) {
-                    console.warn(
-                        `[modération] Serveur panel (PANEL_GUILD_ID=${config.PANEL_GUILD_ID}) introuvable — /panel non déployé. ` +
-                            'Invite le bot sur ce serveur ou mets PANEL_GUILD_ID=ton GUILD_ID dans le .env.'
-                    );
-                } else {
-                    console.error('❌ Erreur déploiement commandes panel:', panelError.message || panelError);
-                }
-            }
-        }
-
-        // Récupérer les commandes existantes sur Discord
-        const existingCommands = await guild.commands.fetch();
-        const existingMap = new Map();
-        existingCommands.forEach(cmd => existingMap.set(cmd.name, cmd));
-
-        let createdCount = 0;
-        let updatedCount = 0;
-        let skippedCount = 0;
-        let errorCount = 0;
-
-        for (const commandData of commands) {
-            try {
-                const cmdJson = commandData.toJSON ? commandData.toJSON() : commandData;
-                const existing = existingMap.get(cmdJson.name);
-
-                // Vérifier si la commande existe et n'a pas changé
-                if (existing) {
-                    const remoteOpts = JSON.stringify(existing.options?.map(o => o.toJSON ? o.toJSON() : o) || []);
-                    const localOpts = JSON.stringify(cmdJson.options || []);
-                    if (existing.description === cmdJson.description && remoteOpts === localOpts
-                        && (existing.defaultMemberPermissions || null) === (cmdJson.default_member_permissions || null)) {
-                        skippedCount++;
-                        continue;
-                    }
-                }
-
-                if (existing) {
-                    await guild.commands.edit(existing.id, cmdJson);
-                } else {
-                    await guild.commands.create(cmdJson);
-                }
-                if (!BLZ_COMPACT) {
-                    const action = existing ? '🔄' : '✨';
-                    console.log(`${action} Commande ${existing ? 'mise à jour' : 'créée'}: ${cmdJson.name}`);
-                }
-                if (existing) updatedCount++;
-                else createdCount++;
-            } catch (cmdError) {
-                const errMsg = cmdError?.message || String(cmdError);
-                console.error(`❌ Modération /${commandData.name}: ${errMsg}`);
-                errorCount++;
-            }
-        }
-
-        if (BLZ_COMPACT) {
-            console.log(`[modération] Slash : +${createdCount} maj ${updatedCount} skip ${skippedCount} err ${errorCount}`);
-        } else {
-            console.log(`✓ Modération: ${createdCount} new, ${updatedCount} updated, ${skippedCount} skipped, ${errorCount} errors`);
-        }
+        await deployModerationSlashCommands(client, config, { compact: BLZ_COMPACT });
     } catch (error) {
         const msg = error.code === 10004 ? 'Unknown Guild (vérifie GUILD_ID).' : (error.message || String(error));
         console.error('❌ Modération — commandes slash:', msg);
@@ -241,9 +120,7 @@ async function registerCommands() {
  * Event: Bot prêt
  */
 client.once('clientReady', async () => {
-    if (BLZ_COMPACT) {
-        console.log(`[modération] Prêt — ${client.user.tag}`);
-    } else {
+    if (!BLZ_COMPACT) {
         console.log('═══════════════════════════════════════════════════════');
         console.log(`✓ Bot connecté en tant que ${client.user.tag}`);
         console.log('═══════════════════════════════════════════════════════');
@@ -479,7 +356,7 @@ client.on('interactionCreate', async interaction => {
         const command = client.commands.get(interaction.commandName);
 
         if (!command) {
-            console.error(`Commande ${interaction.commandName} introuvable`);
+            /* Même token / plusieurs processus : les slash du bot « niveau » arrivent aussi ici — ne pas spammer les logs */
             return;
         }
 
@@ -846,21 +723,17 @@ async function checkExpiredAbsences() {
  * Démarrage du bot
  */
 async function start() {
-    if (BLZ_COMPACT) {
-        console.log('[modération] Démarrage…');
-    } else {
+    if (!BLZ_COMPACT) {
         console.log('🚀 Démarrage du bot de modération...');
     }
 
-    // Chargement des commandes et événements
-    loadCommands();
-    loadEvents();
+    const cmdLoaded = loadCommands();
+    const eventLoaded = loadEvents();
 
     // Chargement du système de logs (module spécial)
     try {
         if (!BLZ_COMPACT) console.log('[DEBUG] Attempting to load loggingEvents...');
 
-        // Initialiser le gestionnaire anti-raid
         antiRaidManager = new AntiRaidManager(client, dbManager);
         if (!BLZ_COMPACT) console.log('✓ AntiRaidManager initialisé');
 
@@ -873,11 +746,36 @@ async function start() {
         console.error('❌ Erreur lors du chargement des logs:', error?.message || error);
     }
 
-    // Connexion du bot
+    if (BLZ_COMPACT) {
+        console.log(`[COMMANDS] ${cmdLoaded} commandes chargées.`);
+        console.log(`[EVENTS] ${eventLoaded} événements chargés.`);
+    }
+
     await client.login(config.BOT_TOKEN);
 
-    // Enregistrement des commandes slash
-    await registerCommands();
+    if (BLZ_COMPACT) {
+        console.log(`[READY] Connecté en tant que ${client.user.tag}`);
+    }
+
+    const rawDefer = process.env.BLZ_DEFER_SLASH_DEPLOY_MS;
+    let deferMs =
+        rawDefer !== undefined && rawDefer !== '' ? parseInt(rawDefer, 10) : 0;
+    if (!Number.isFinite(deferMs) || deferMs < 0) deferMs = 0;
+
+    const runSlash = async () => {
+        try {
+            await registerCommands();
+        } catch (e) {
+            console.error('❌ registerCommands:', e?.message || e);
+        }
+    };
+
+    if (deferMs > 0) {
+        console.log(`[modération] Déploiement slash dans ${deferMs / 1000}s (BLZ_DEFER_SLASH_DEPLOY_MS)…`);
+        setTimeout(runSlash, deferMs);
+    } else {
+        await runSlash();
+    }
 }
 
 // Gestion des erreurs non capturées

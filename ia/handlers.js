@@ -7,15 +7,44 @@ const { handleAdminAction } = require('./admin_agent/actions.js');
 
 const processingThreads = new Set();
 
+const IA_EXTRA_PUBLIC_CHANNEL_IDS = new Set(
+    String(process.env.IA_EXTRA_PUBLIC_CHANNEL_IDS || '')
+        .split(/[,;\s]+/)
+        .map((s) => s.trim())
+        .filter(Boolean)
+);
+
+const IA_GUILD_MENTION_COOLDOWN_MS = Math.max(
+    0,
+    parseInt(process.env.IA_GUILD_MENTION_COOLDOWN_MS || '5000', 10)
+);
+const _iaGuildMentionLast = new Map();
+
+function iaMentionAnyGuildEnabled() {
+    const v = process.env.IA_MENTION_ANY_CHANNEL;
+    if (v === undefined || v === null || String(v).trim() === '') return true;
+    return ['1', 'true', 'yes', 'on'].includes(String(v).toLowerCase().trim());
+}
+
 async function handleMessageCreate(message, client, activeThreads) {
     if (message.author.bot) return;
+    if (!message.guild) return;
+
+    const mentionAnyGuild = iaMentionAnyGuildEnabled();
+    const hasBotMention = message.mentions.has(client.user.id);
 
     // Admin MCP Trigger
     // 1. Identify Context
     const isPrivateIaThread = message.channel.isThread() && activeThreads.has(message.channel.id);
     const isPublicIaThread = message.channel.isThread() && message.channel.parentId === config.IA_PANEL_CHANNEL_ID && message.channel.name.startsWith('IA-');
-    const isPublicChannelMention = message.channel.id === config.PUBLIC_IA_CHANNEL_ID && message.mentions.has(client.user.id);
-    const isHardModeChannelMention = message.channel.id === config.HARD_MODE_CHANNEL_ID && message.mentions.has(client.user.id);
+    const isListedPublicMention =
+        hasBotMention &&
+        (message.channel.id === config.PUBLIC_IA_CHANNEL_ID ||
+            IA_EXTRA_PUBLIC_CHANNEL_IDS.has(message.channel.id));
+    const isGuildWideMention =
+        mentionAnyGuild && hasBotMention && message.channel.isTextBased?.();
+    const isPublicChannelMention = isListedPublicMention || isGuildWideMention;
+    const isHardModeChannelMention = message.channel.id === config.HARD_MODE_CHANNEL_ID && hasBotMention;
     const isBotActiveChannel = isPrivateIaThread || isPublicIaThread || isPublicChannelMention || isHardModeChannelMention;
 
     const member = await message.guild.members.fetch(message.author.id).catch(() => null);
@@ -57,16 +86,23 @@ async function handleMessageCreate(message, client, activeThreads) {
     // 3. Normal Bot Routing (Non-admins, or Admins in inactive channels without +)
     if (!isBotActiveChannel) return;
 
-    // Ne pas appliquer processingThreads au salon public et hard (permet plusieurs pings simultanés)
-    if (!isPublicChannelMention && !isHardModeChannelMention && processingThreads.has(message.channel.id)) {
-        return; // Ignore if already processing
+    if (
+        isGuildWideMention &&
+        !isListedPublicMention &&
+        IA_GUILD_MENTION_COOLDOWN_MS > 0
+    ) {
+        const uid = message.author.id;
+        const now = Date.now();
+        const last = _iaGuildMentionLast.get(uid) || 0;
+        if (now - last < IA_GUILD_MENTION_COOLDOWN_MS) {
+            return;
+        }
+        _iaGuildMentionLast.set(uid, now);
     }
 
-
-
-    // Ne pas appliquer processingThreads au salon public et hard (permet plusieurs pings simultanés)
+    // Ne pas appliquer processingThreads au salon public / mention globale / hard (plusieurs pings simultanés)
     if (!isPublicChannelMention && !isHardModeChannelMention && processingThreads.has(message.channel.id)) {
-        return; // Ignore if already processing
+        return;
     }
 
     const userSetting = utils.getUserSetting(message.author.id);
@@ -1253,7 +1289,13 @@ async function handleInteractionCreate(interaction, client, activeThreads) {
 
                 // 5. History Fetching (Correct Logic)
                 const isPrivateThread = activeThreads.has(interaction.channel.id);
-                const isPublicChannelMention = interaction.channel.id === '1431306038275080312';
+                const _ich = interaction.channel.id;
+                const isPublicChannelMention =
+                    _ich === config.PUBLIC_IA_CHANNEL_ID ||
+                    IA_EXTRA_PUBLIC_CHANNEL_IDS.has(_ich) ||
+                    (iaMentionAnyGuildEnabled() &&
+                        interaction.guild &&
+                        interaction.channel?.isTextBased?.());
 
                 if (isPrivateThread) {
                     threadHistory = await utils.getLastMessagesFromThread(interaction.channel, 10, user.id);

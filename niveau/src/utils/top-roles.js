@@ -8,6 +8,8 @@ const { checkQuestProgress } = require('./quests');
 const logger = require('./logger');
 const roleConfig = require('../config/role.config.json');
 
+let _warnedTopRoles50013 = false;
+
 // Définition des rôles TOP par catégorie (sauf RP et streak)
 const TOP_ROLES = roleConfig.topRoles;
 
@@ -113,9 +115,12 @@ async function updateTopRolesForCategory(guild, members, category) {
                     }
                 } catch (err) {
                     if (err.code === 50013) {
-                        logger.warn(
-                            `[TOP-ROLES] Permissions insuffisantes pour ${member.user.tag} — place le rôle du bot au-dessus des rôles TOP.`
-                        );
+                        if (!_warnedTopRoles50013) {
+                            _warnedTopRoles50013 = true;
+                            logger.warn(
+                                '[TOP-ROLES] Permissions insuffisantes (50013) — place le rôle du bot au-dessus des rôles TOP.'
+                            );
+                        }
                     } else {
                         logger.error(`[TOP-ROLES] Erreur de modification de rôle pour ${member.user.tag}:`, err.message);
                     }

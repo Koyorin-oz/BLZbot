@@ -101,6 +101,20 @@ module.exports = {
                 // Routing pour les boutons de permissions/assignation des rôles personnalisés
                 const { handleCustomRoleInteraction } = require('../utils/guild/guild-custom-roles-handler');
                 await handleCustomRoleInteraction(interaction);
+            } else if (interaction.customId.startsWith('pvr:')) {
+                const { handleVoiceRoomPanelButton } = require('../utils/voice-room-panel-handler');
+                try {
+                    await handleVoiceRoomPanelButton(interaction);
+                } catch (error) {
+                    logger.error('Error handling private voice panel button:', error);
+                    try {
+                        if (!interaction.replied && !interaction.deferred) {
+                            await interaction.reply({ content: 'Une erreur est survenue.', flags: 64 });
+                        }
+                    } catch (replyError) {
+                        logger.error('Failed to reply after PVR panel error:', replyError.code || replyError.message);
+                    }
+                }
             }
             // Ignorer les boutons inconnus (guild_*, etc.) - ils sont gérés par les collectors dans les commandes
         } else if (interaction.isStringSelectMenu()) {
@@ -165,6 +179,20 @@ module.exports = {
                 // Routing pour le modal de rôle VIP personnalisé
                 const { handleVipRoleModal } = require('../utils/vip-role-handler');
                 await handleVipRoleModal(interaction);
+            } else if (interaction.customId.startsWith('pvrm:')) {
+                const { handleVoiceRoomPanelModal } = require('../utils/voice-room-panel-handler');
+                try {
+                    await handleVoiceRoomPanelModal(interaction);
+                } catch (error) {
+                    logger.error('Error handling private voice panel modal:', error);
+                    try {
+                        if (!interaction.replied && !interaction.deferred) {
+                            await interaction.reply({ content: 'Une erreur est survenue.', flags: 64 });
+                        }
+                    } catch (replyError) {
+                        logger.error('Failed to reply after PVR modal error:', replyError.code || replyError.message);
+                    }
+                }
             }
             // Ignorer les modals inconnus (rank_*, etc.) - ils sont gérés par les collectors dans les commandes
         } else if (interaction.isUserSelectMenu()) {

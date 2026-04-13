@@ -1,5 +1,13 @@
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../.env'), quiet: true });
+const { resolveDotenvPath, PEBBLE_HOST_ENV_PATH } = require(path.join(__dirname, '..', 'blzbot-env.js'));
+require('dotenv').config({
+    path: resolveDotenvPath(
+        path.resolve(__dirname, '../.env'),
+        PEBBLE_HOST_ENV_PATH,
+        path.join(process.cwd(), '.env')
+    ),
+    quiet: true,
+});
 
 if (!process.env.GEMINI_API_KEY) {
     console.log(

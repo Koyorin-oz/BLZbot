@@ -17,7 +17,9 @@ class Scheduler {
     }
 
     startScheduler() {
-        console.log('📅 Scheduler démarré - Vérifications automatiques activées');
+        if (process.env.BLZ_COMPACT_LOG !== '1') {
+            console.log('📅 Scheduler démarré - Vérifications automatiques activées');
+        }
 
         // Vérification initiale
         this.checkModoTestPeriods();
