@@ -122,7 +122,11 @@ module.exports = {
 
             await channel.threads.create({
                 name: threadName,
-                message: { embeds: [embed] },
+                message: {
+                    content: `<@&${BUG_NOTIFY_ROLE_ID}>`,
+                    embeds: [embed],
+                    allowedMentions: { roles: [BUG_NOTIFY_ROLE_ID] },
+                },
                 appliedTags: [BUG_FORUM_TAG_ID],
             });
 
