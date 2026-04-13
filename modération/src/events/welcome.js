@@ -59,14 +59,19 @@ function buildWelcomeMessage(member, options = {}) {
     const joinedAt = options.joinedAt ?? member.joinedAt ?? new Date();
     const createdAt = member.user.createdAt;
 
-    /** Tout le texte en pied de message (sous-texte) : pas de titre, pas de corps séparé, pas d’avatar. */
-    const footerOnly = new TextDisplayBuilder().setContent(
+    /**
+     * Un seul bloc texte (pas de section / auteur / vignette) : markdown normal (#, **, ***),
+     * et seule la ligne métadonnées en -# pour qu’elle soit plus petite que le reste (sous-texte Discord).
+     */
+    const welcomeBody = new TextDisplayBuilder().setContent(
         [
-            `-# 👋 Bienvenue, ${member} !`,
+            `# 👋 Bienvenue, ${member} !`,
             '',
-            `-# ➔ Nous sommes ravis de te voir arriver sur **${serverName}** !`,
-            `-# ➔ N'hésite pas à aller faire un tour dans <#${regId}> et <#${ticketsId}> si t'as besoin d'aide.`,
-            `-# ➔ Passe un agréable séjour ici ! 🔥`,
+            `➔ Nous sommes ravis de te voir arriver sur ***${serverName}*** !`,
+            '',
+            `➔ N'hésite pas à aller faire un tour dans <#${regId}> et <#${ticketsId}> si t'as besoin d'aide.`,
+            '',
+            `➔ **Passe un agréable séjour ici !** 🔥`,
             '',
             `-# Compte créé le ${formatFrCompactDate(createdAt)} · Arrivée ${formatFrCompactDateTime(joinedAt)}`,
         ].join('\n')
