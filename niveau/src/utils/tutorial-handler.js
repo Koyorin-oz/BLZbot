@@ -2,23 +2,30 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('
 const logger = require('./logger');
 const db = require('../database/database');
 
-// Créer la table pour suivre la progression du tutoriel
+const TUTORIAL_PROGRESS_DDL = `
+    CREATE TABLE IF NOT EXISTS tutorial_progress (
+        user_id TEXT PRIMARY KEY,
+        thread_id TEXT NOT NULL,
+        step TEXT NOT NULL DEFAULT 'welcome',
+        rules_accepted INTEGER DEFAULT 0,
+        completed INTEGER DEFAULT 0,
+        created_at INTEGER DEFAULT (strftime('%s', 'now') * 1000)
+    )
+`;
+
+// Créer la table sur chaque fichier SQLite (principal + test en mode double serveur).
+// Au chargement du module, db pointe sans contexte guild → sans ça seul mainDb serait initialisé.
 function initializeTutorialDatabase() {
     try {
-        db.exec(`
-            CREATE TABLE IF NOT EXISTS tutorial_progress (
-                user_id TEXT PRIMARY KEY,
-                thread_id TEXT NOT NULL,
-                step TEXT NOT NULL DEFAULT 'welcome',
-                rules_accepted INTEGER DEFAULT 0,
-                completed INTEGER DEFAULT 0,
-                created_at INTEGER DEFAULT (strftime('%s', 'now') * 1000)
-            )
-        `);
-        logger.info('[TUTORIAL] Table tutorial_progress initialisée avec succès');
+        if (typeof db.forEachEconomyDatabase === 'function') {
+            db.forEachEconomyDatabase((instance) => instance.exec(TUTORIAL_PROGRESS_DDL));
+        } else {
+            db.exec(TUTORIAL_PROGRESS_DDL);
+        }
+        logger.info('[TUTORIAL] Table tutorial_progress initialisée avec succès (toutes les bases économie)');
     } catch (error) {
         logger.error('[TUTORIAL] Erreur lors de l\'initialisation de la base de données:', error);
-        throw error; // Re-throw car c'est critique
+        throw error;
     }
 }
 
