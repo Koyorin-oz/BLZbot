@@ -309,23 +309,22 @@ async function grantResources(client, userId, { xp = 0, points = 0, stars = 0, s
 
             // Mettre à jour les rôles de niveau si le niveau a changé
             if (currentUserData.level !== originalLevel) {
-                const member = await client.guilds.cache.get(process.env.GUILD_ID)?.members.fetch(userId).catch(() => null);
-                if (member) {
+                let announceMember = null;
+                await forEachMemberInBlzGuilds(client, userId, async (member) => {
                     await updateLevelRoles(member, currentUserData.level);
+                    if (!announceMember) announceMember = member;
+                });
+                if (announceMember && currentUserData.level > originalLevel) {
+                    const levelUpChannel = await client.channels.fetch(process.env.LEVEL_UP_CHANNEL).catch(() => null);
+                    if (levelUpChannel) {
+                        const userForNotify = getUserStmt.get(userId);
+                        const notify = userForNotify ? userForNotify.notify_level_up : 1;
+                        const shouldPing = notify !== 0;
 
-                    // Annoncer uniquement les montées de niveau (pas les descentes)
-                    if (currentUserData.level > originalLevel) {
-                        const levelUpChannel = await client.channels.fetch(process.env.LEVEL_UP_CHANNEL).catch(() => null);
-                        if (levelUpChannel) {
-                            const userForNotify = getUserStmt.get(userId); // Re-fetch to be sure, or rely on currentUserData if columns are present
-                            const notify = userForNotify ? userForNotify.notify_level_up : 1;
-                            const shouldPing = notify !== 0;
-
-                            levelUpChannel.send({
-                                content: `🎉 Bravo à ${member} qui passe au niveau **${currentUserData.level}** !`,
-                                allowedMentions: shouldPing ? undefined : { parse: [] }
-                            });
-                        }
+                        levelUpChannel.send({
+                            content: `🎉 Bravo à ${announceMember} qui passe au niveau **${currentUserData.level}** !`,
+                            allowedMentions: shouldPing ? undefined : { parse: [] }
+                        });
                     }
                 }
 
