@@ -13,7 +13,7 @@ const PAGE_SIZE = 4;
  */
 function recordUserPlayedTrack(guildId, userId, title, url) {
     if (!guildId || !userId || !url) return;
-    const urlNorm = normalizeYoutubePlayUrl(url) || String(url).trim();
+    const urlNorm = normalizeYoutubePlayUrl(url);
     if (!urlNorm) return;
     const t = String(title || 'Sans titre').slice(0, 200);
     const now = Date.now();

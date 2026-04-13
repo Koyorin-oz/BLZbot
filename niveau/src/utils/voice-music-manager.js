@@ -7,7 +7,7 @@ const {
 } = require('@discordjs/voice');
 const play = require('play-dl');
 const logger = require('./logger');
-const { searchYoutubeViaHtml, isYoutubeWatchUrl } = require('./youtube-html-search');
+const { searchYoutubeViaHtml, isYoutubeWatchUrl, normalizeYoutubePlayUrl } = require('./youtube-html-search');
 
 /** @typedef {{ title: string, url: string, requestedBy: string }} MusicTrack */
 
