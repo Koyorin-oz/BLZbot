@@ -131,6 +131,20 @@ module.exports = {
                         logger.error('Failed to reply after PVR panel error:', replyError.code || replyError.message);
                     }
                 }
+            } else if (interaction.customId.startsWith('blzmpl:')) {
+                const { handlePlaylistButtonInteraction } = require('../utils/voice-music-playlist-ui');
+                try {
+                    await handlePlaylistButtonInteraction(interaction);
+                } catch (error) {
+                    logger.error('[MUSIC] playlist bouton:', error);
+                    try {
+                        if (!interaction.replied && !interaction.deferred) {
+                            await interaction.reply({ content: 'Erreur playlist.', flags: 64 });
+                        }
+                    } catch (replyError) {
+                        logger.error('[MUSIC] playlist reply:', replyError.code || replyError.message);
+                    }
+                }
             } else if (interaction.customId.startsWith('blzm:')) {
                 const { handleMusicButton } = require('../utils/voice-music-handler');
                 try {

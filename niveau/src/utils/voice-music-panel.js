@@ -78,7 +78,12 @@ function buildMusicPanelPayload(guildId, session) {
             .setCustomId(btnId(guildId, 'clear'))
             .setStyle(secondary)
             .setLabel('Vider file')
-            .setEmoji('🧹')
+            .setEmoji('🧹'),
+        new ButtonBuilder()
+            .setCustomId(btnId(guildId, 'playlist'))
+            .setStyle(ButtonStyle.Primary)
+            .setLabel('Playlist')
+            .setEmoji('🎵')
     );
 
     return { embeds: [embed], components: [row, row2] };
