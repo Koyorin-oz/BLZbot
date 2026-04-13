@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@discordjs/voice": "^0.19.0",
+    "@distube/ytdl-core": "^4.16.12",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@google/genai": "^1.30.0",
     "@google/generative-ai": "^0.24.1",
@@ -46,7 +47,9 @@
     "node-schedule": "^2.1.0",
     "play-dl": "^1.9.7",
     "sharp": "^0.34.5",
-    "sqlite3": "^5.0.0"
+    "sqlite3": "^5.0.0",
+    "youtube-dl-exec": "^3.1.4",
+    "youtubei.js": "^17.0.1"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
