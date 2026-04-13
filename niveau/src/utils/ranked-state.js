@@ -4,9 +4,15 @@
  */
 
 const logger = require('./logger');
+const { economyGuildId, voiceTrackingKey } = require('./economy-scope');
 
-// Map des utilisateurs pénalisés: userId -> { expireAt: timestamp, reason: string }
+// Map des utilisateurs pénalisés: clé (guilde:user ou user seul) -> { expireAt, reason }
 const penalizedUsers = new Map();
+
+function penaltyKey(userId) {
+    const gid = economyGuildId.getStore();
+    return voiceTrackingKey(gid, userId);
+}
 
 // Durée de pénalité par défaut en ms (15 minutes)
 const DEFAULT_PENALTY_DURATION = 15 * 60 * 1000;
