@@ -43,16 +43,21 @@ function buildPrivateVoicePanelPayload(voiceChannelId, panelMode) {
     const cid = (action) => `${PREFIX_BTN}:${m}:${voiceChannelId}:${action}`;
     const color = getPanelEmbedColor();
 
+    const legend =
+        '**Ligne 1** — **A** Renommer · **B** Limite de places · **C** Verrouiller (invités seulement) · **D** Minuteur auto · **E** Déverrouiller\n' +
+        '**Ligne 2** — **F** Lien d’invitation · **G** Autoriser un membre · **H** Sonner / appeler · **I** Déconnecter les autres · **J** Région vocale\n' +
+        '**Ligne 3** — **K** Expulser du salon · **L** Bannir du salon · **M** Transférer la propriété · **N** Récupérer le salon · **O** Supprimer le salon';
+
     const embed = new EmbedBuilder()
         .setColor(color)
-        .setTitle('Salon vocal')
+        .setTitle('Panneau — salon vocal privé')
         .setDescription(
-            'Cette **interface** sert à modifier ton salon vocal temporaire. Les réglages avancés restent accessibles via le salon (clic droit → modifier).'
+            `${legend}\n\nLes boutons reprennent la **lettre** et l’action. Réglages Discord supplémentaires : clic droit sur le salon → **Modifier le salon**.`
         )
         .setFooter({
             text:
                 panelMode === 'restricted'
-                    ? 'Réservé au créateur et au staff — actions ci-dessous'
+                    ? 'Réservé au créateur et au staff'
                     : 'Panneau public — tout le monde peut utiliser les boutons',
         });
 
@@ -60,27 +65,27 @@ function buildPrivateVoicePanelPayload(voiceChannelId, panelMode) {
     const danger = ButtonStyle.Danger;
 
     const row1 = new ActionRowBuilder().addComponents(
-        iconButton(cid('rename'), '✏️', secondary),
-        iconButton(cid('limit'), '👥', secondary),
-        iconButton(cid('lock'), '🛡️', secondary),
-        iconButton(cid('timer'), '⏱️', secondary),
-        iconButton(cid('unlock'), '🔓', secondary)
+        panelButton(cid('rename'), 'A', 'Renommer', '✏️', secondary),
+        panelButton(cid('limit'), 'B', 'Limite', '👥', secondary),
+        panelButton(cid('lock'), 'C', 'Verrouiller', '🛡️', secondary),
+        panelButton(cid('timer'), 'D', 'Minuteur', '⏱️', secondary),
+        panelButton(cid('unlock'), 'E', 'Déverr.', '🔓', secondary)
     );
 
     const row2 = new ActionRowBuilder().addComponents(
-        iconButton(cid('invite'), '➕', secondary),
-        iconButton(cid('permit'), '✅', secondary),
-        iconButton(cid('ring'), '📞', secondary),
-        iconButton(cid('disconnect_others'), '📵', secondary),
-        iconButton(cid('region'), '🌐', secondary)
+        panelButton(cid('invite'), 'F', 'Inviter', '➕', secondary),
+        panelButton(cid('permit'), 'G', 'Autoriser', '✅', secondary),
+        panelButton(cid('ring'), 'H', 'Appeler', '📞', secondary),
+        panelButton(cid('disconnect_others'), 'I', 'Déco. autres', '📵', secondary),
+        panelButton(cid('region'), 'J', 'Région', '🌐', secondary)
     );
 
     const row3 = new ActionRowBuilder().addComponents(
-        iconButton(cid('kick'), '🔇', secondary),
-        iconButton(cid('ban_room'), '⛔', secondary),
-        iconButton(cid('transfer'), '👑', secondary),
-        iconButton(cid('claim'), '📌', secondary),
-        iconButton(cid('delete'), '🗑️', danger)
+        panelButton(cid('kick'), 'K', 'Expulser', '🔇', secondary),
+        panelButton(cid('ban_room'), 'L', 'Ban salon', '⛔', secondary),
+        panelButton(cid('transfer'), 'M', 'Transférer', '👑', secondary),
+        panelButton(cid('claim'), 'N', 'Récupérer', '📌', secondary),
+        panelButton(cid('delete'), 'O', 'Supprimer', '🗑️', danger)
     );
 
     return {
