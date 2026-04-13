@@ -10,6 +10,8 @@ const {
     getPrivateRoomStaffRoleId,
     parseVoicePanelButtonId,
     parseVoicePanelModalId,
+    parseVocPanelOpenId,
+    buildPrivateVoicePanelPayload,
 } = require('./voice-room-panel');
 const { buildOverwrites, getPrivateRoomVoiceMeta } = require('./private-voice-rooms');
 
