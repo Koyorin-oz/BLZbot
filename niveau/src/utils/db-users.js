@@ -122,17 +122,20 @@ async function grantResources(client, userId, { xp = 0, points = 0, stars = 0, s
                 stars = Math.round(stars * (1 + guildBoosts.stars));
             }
 
-            const mainGuild = client.guilds.cache.get(process.env.GUILD_ID);
-            if (mainGuild) {
-                const member = await mainGuild.members.fetch(userId).catch(() => null);
-                if (member) {
-                    const hasBoostedRole = BOOSTED_ROLE_IDS.some(roleId => member.roles.cache.has(roleId));
-                    if (hasBoostedRole) {
-                        xp = Math.round(xp * 1.3);
-                        stars = Math.round(stars * 1.3);
-                        points = Math.round(points * 1.2);
-                    }
+            let hasBoostedRole = false;
+            for (const gid of collectBlzGuildIds()) {
+                const g = client.guilds.cache.get(gid) ?? (await client.guilds.fetch(gid).catch(() => null));
+                if (!g) continue;
+                const member = await g.members.fetch(userId).catch(() => null);
+                if (member && BOOSTED_ROLE_IDS.some((roleId) => member.roles.cache.has(roleId))) {
+                    hasBoostedRole = true;
+                    break;
                 }
+            }
+            if (hasBoostedRole) {
+                xp = Math.round(xp * 1.3);
+                stars = Math.round(stars * 1.3);
+                points = Math.round(points * 1.2);
             }
 
             const now = Date.now();
