@@ -9,10 +9,7 @@ function btnId(guildId, action) {
     return `blzm:${action}:${guildId}`;
 }
 
-/**
- * @param {string} guildId
- * @param {object} session — session retournée par {@link import('./voice-music-manager').getMusicSession}
- */
+/** @param {string} guildId @param {object} session */
 function buildMusicPanelPayload(guildId, session) {
     const qPreview = session.queue.slice(0, 4).map((t, i) => `${i + 1}. ${truncate(t.title, 60)}`);
     const more = session.queue.length > 4 ? `\n*+${session.queue.length - 4} dans la file*` : '';
