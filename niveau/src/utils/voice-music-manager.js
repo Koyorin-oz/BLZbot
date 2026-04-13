@@ -382,7 +382,7 @@ async function resolveYoutubeQueryToTracks(query, requestedBy) {
             const all = await pl.all_videos();
             const slice = all.slice(0, MAX_PLAYLIST_IMPORT);
             return slice
-                .filter((x) => x.url && !x.live)
+                .filter((x) => x.url && !x.live && isYoutubeWatchUrl(x.url))
                 .map((x) => ({
                     title: x.title || 'Sans titre',
                     url: x.url,
