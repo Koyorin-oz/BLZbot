@@ -13,6 +13,8 @@ const logger = require('../../utils/logger');
 const BUG_TRACKER_GUILD_ID = '1493276404643532810';
 const BUG_FORUM_CHANNEL_ID = '1493282774323302450';
 const BUG_FORUM_TAG_ID = '1493284188504461322';
+/** Rôle notifié à chaque nouveau signalement sur le forum bugs. */
+const BUG_NOTIFY_ROLE_ID = '1493277032745013452';
 
 const MODAL_CUSTOM_ID = 'bug_report_modal';
 const FIELD_TITLE = 'bug_title';
