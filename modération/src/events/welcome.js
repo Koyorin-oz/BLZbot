@@ -58,35 +58,36 @@ function buildWelcomeMessage(member, options = {}) {
 
     const thumbnail = new ThumbnailBuilder().setURL(avatar).setDescription(`Avatar — ${member.user.username}`);
 
-    const body = new TextDisplayBuilder().setContent(
-        `# 👋 Bienvenue, ${member} !\n\n` +
-            `➜ Nous sommes ravis de te voir sur le serveur **${serverName}** !\n\n` +
-            `➜ N'hésite pas à aller faire un tour dans **⁠📋・règles** <#${regId}>\n\n` +
-            `➜ Si tu as besoin d'aide, ouvre un ticket : **🪢・tickets** <#${ticketsId}>\n\n` +
-            `➜ Passe un agréable séjour ici ! ✨`
-    );
+    /** Bloc « titre » comme un embed : uniquement la ligne de bienvenue + miniature à droite */
+    const header = new TextDisplayBuilder().setContent(`# 👋 Bienvenue, ${member} !`);
 
-    const section = new SectionBuilder().addTextDisplayComponents(body).setThumbnailAccessory(thumbnail);
+    const section = new SectionBuilder().addTextDisplayComponents(header).setThumbnailAccessory(thumbnail);
+
+    /**
+     * Tout le texte d’arrivée + métadonnées dans la zone sous le trait (équivalent footer embed), Components V2.
+     * Flèches ➔ comme sur le rendu classique ; salons en <#id> pour les pastilles Discord.
+     */
+    const footer = new TextDisplayBuilder().setContent(
+        `➔ Nous sommes ravis de te voir arriver sur **${serverName}** !\n\n` +
+            `➔ N'hésite pas à aller faire un tour dans <#${regId}> et <#${ticketsId}> si t'as besoin d'aide.\n\n` +
+            `➔ Passe un agréable séjour ici ! 🔥\n\n` +
+            `---\n\n` +
+            `## Informations d’arrivée\n` +
+            `### Compte Discord\n` +
+            `Créé le **${formatFrLong(createdAt)}**\n\n` +
+            `### Sur ce serveur\n` +
+            `**Arrivée** — ${formatFrLongWithTime(joinedAt)}`
+    );
 
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setStyle(ButtonStyle.Link)
-            .setLabel('📋 Règles')
-            .setEmoji('📋')
+            .setLabel('Règlement')
             .setURL(channelJumpUrl(guildId, regId)),
         new ButtonBuilder()
             .setStyle(ButtonStyle.Link)
-            .setLabel('🪢 Tickets')
-            .setEmoji('🪢')
+            .setLabel('Infos / Aide')
             .setURL(channelJumpUrl(guildId, ticketsId))
-    );
-
-    const footer = new TextDisplayBuilder().setContent(
-        `## Informations membre\n` +
-            `### Compte Discord\n` +
-            `Créé le **${formatFrLong(createdAt)}**\n\n` +
-            `### Sur ce serveur\n` +
-            `**Date d’arrivée** — ${formatFrLongWithTime(joinedAt)}`
     );
 
     const container = new ContainerBuilder()
