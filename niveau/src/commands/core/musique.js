@@ -105,6 +105,12 @@ module.exports = {
             });
         }
 
+        if (sub === 'clear') {
+            session.queue.length = 0;
+            await session.refreshPanel();
+            return interaction.reply({ content: '🗑️ File vidée (lecture en cours inchangée).', flags: 64 });
+        }
+
         const v = requireVoice(interaction);
         if (!v.ok) return interaction.reply(v.reply);
 
