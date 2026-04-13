@@ -33,7 +33,7 @@ function buildMusicPanelPayload(guildId, session) {
         .setTitle('Lecteur — YouTube')
         .setDescription(body)
         .setFooter({
-            text: 'Transport : Précédent · Pause / Lecture · Suivant · File · Stop · Ajouter · Vider file · Playlist',
+            text: 'Transport : Précédent · Pause / Play · Suivant · File · Stop · Ajouter · Vider file · Playlist',
         });
 
     const secondary = ButtonStyle.Secondary;
