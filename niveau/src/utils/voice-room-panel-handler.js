@@ -365,8 +365,42 @@ async function handleVoiceRoomPanelModal(interaction) {
     }
 }
 
+/**
+ * Bouton « Ouvrir le panneau » (message public léger) → panneau complet en éphémère.
+ * @param {import('discord.js').ButtonInteraction} interaction
+ */
+async function handleVocPanelOpenButton(interaction) {
+    const voiceChannelId = parseVocPanelOpenId(interaction.customId);
+    if (!voiceChannelId || !interaction.guild) {
+        return interaction.reply({ content: 'Interaction invalide.', flags: 64 });
+    }
+
+    const meta = getPrivateRoomVoiceMeta(interaction.client, voiceChannelId);
+    if (!meta || meta.guildId !== interaction.guild.id) {
+        return interaction.reply({
+            content: 'Ce salon vocal n’est plus géré par le bot ou n’existe pas.',
+            flags: 64,
+        });
+    }
+
+    if (!canUseVoicePanel(interaction, voiceChannelId, false)) {
+        return interaction.reply({ content: 'Tu n’as pas accès à ce panneau.', flags: 64 });
+    }
+
+    const ch = await interaction.guild.channels.fetch(voiceChannelId).catch(() => null);
+    if (!ch?.isVoiceBased?.()) {
+        return interaction.reply({ content: 'Salon vocal introuvable.', flags: 64 });
+    }
+
+    return interaction.reply({
+        flags: 64,
+        ...buildPrivateVoicePanelPayload(voiceChannelId, 'public_ephemeral'),
+    });
+}
+
 module.exports = {
     handleVoiceRoomPanelButton,
     handleVoiceRoomPanelModal,
-    canUseVoicePanel,
+    handleVocPanelOpenButton,
+    canUseVoiceVoicePanel: undefined,
 };
