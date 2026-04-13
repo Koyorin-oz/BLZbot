@@ -317,7 +317,10 @@ async function grantResources(client, userId, { xp = 0, points = 0, stars = 0, s
                     if (!announceMember) announceMember = member;
                 });
                 if (announceMember && currentUserData.level > originalLevel) {
-                    const levelUpChannel = await client.channels.fetch(process.env.LEVEL_UP_CHANNEL).catch(() => null);
+                    const levelChId = resolveLevelUpChannelId(economyGuildId.getStore());
+                    const levelUpChannel = levelChId
+                        ? await client.channels.fetch(levelChId).catch(() => null)
+                        : null;
                     if (levelUpChannel) {
                         const userForNotify = getUserStmt.get(userId);
                         const notify = userForNotify ? userForNotify.notify_level_up : 1;
