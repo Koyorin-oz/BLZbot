@@ -193,6 +193,24 @@ module.exports = {
                         logger.error('Failed to reply after PVR modal error:', replyError.code || replyError.message);
                     }
                 }
+            } else if (interaction.customId === 'bug_report_modal') {
+                const { handleModalSubmit } = require('../commands/misc/bug');
+                try {
+                    await handleModalSubmit(interaction);
+                } catch (error) {
+                    logger.error('Error handling bug report modal:', error);
+                    try {
+                        if (interaction.deferred) {
+                            await interaction.editReply({
+                                content: '❌ Une erreur est survenue lors de l’envoi du signalement.',
+                            });
+                        } else if (!interaction.replied) {
+                            await interaction.reply({ content: '❌ Une erreur est survenue.', flags: 64 });
+                        }
+                    } catch (replyError) {
+                        logger.error('Failed to reply after bug modal error:', replyError.code || replyError.message);
+                    }
+                }
             }
             // Ignorer les modals inconnus (rank_*, etc.) - ils sont gérés par les collectors dans les commandes
         } else if (interaction.isUserSelectMenu()) {
