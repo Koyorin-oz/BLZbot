@@ -158,7 +158,11 @@ module.exports = {
                             const moderatorTitleWithArticle = getModeratorTitleWithArticle(moderator);
 
                             // Envoyer un message dans le canal de logs
-                            const logsChannel = interaction.guild.channels.cache.get(CONFIG.LOGS_CHANNEL_ID);
+                            const modLogId = resolveModerationSanctionLogChannelId(interaction.guild.id);
+                            const logsChannel = modLogId
+                                ? interaction.guild.channels.cache.get(modLogId) ||
+                                  (await interaction.guild.channels.fetch(modLogId).catch(() => null))
+                                : null;
                             if (logsChannel && logsChannel.isTextBased()) {
                                 const sentMessage = await logsChannel.send(`# ${user.tag} (${user.id}) a été warn pour la raison : "${finalReason}" par ${moderatorTitleWithArticle} <@${moderator.id}>\n-# Il est à ${warnCount} ${warnText}`);
 
