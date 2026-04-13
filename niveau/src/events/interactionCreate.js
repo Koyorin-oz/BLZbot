@@ -222,6 +222,11 @@ module.exports = {
                 await handleCustomRoleInteraction(interaction);
             }
         }
+        };
+        if (interaction.guildId) {
+            return runWithEconomyGuild(interaction.guildId, run);
+        }
+        return run();
     },
 };
 
