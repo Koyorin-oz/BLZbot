@@ -70,7 +70,7 @@ async function handleVoiceRoomPanelButton(interaction) {
         return interaction.reply({
             content: restricted
                 ? 'Tu n’as pas accès à ce panneau (créateur du salon ou staff uniquement).'
-                : 'Rejoins ce salon vocal pour utiliser ce panneau (ou tu dois être créateur / staff).',
+                : 'Tu n’as pas accès à ce panneau (créateur du salon ou staff uniquement).',
             flags: 64,
         });
     }
