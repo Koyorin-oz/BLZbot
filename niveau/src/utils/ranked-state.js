@@ -23,13 +23,14 @@ const DEFAULT_PENALTY_DURATION = 15 * 60 * 1000;
  * @returns {boolean} True si l'utilisateur est pénalisé
  */
 function isUserPenalized(userId) {
-    const penalty = penalizedUsers.get(userId);
+    const key = penaltyKey(userId);
+    const penalty = penalizedUsers.get(key);
     if (!penalty) return false;
 
     // Vérifier si la pénalité a expiré
     if (Date.now() >= penalty.expireAt) {
-        penalizedUsers.delete(userId);
-        logger.info(`[RANKED] La pénalité de l'utilisateur ${userId} a expiré.`);
+        penalizedUsers.delete(key);
+        logger.info(`[RANKED] La pénalité de l'utilisateur ${key} a expiré.`);
         return false;
     }
 
