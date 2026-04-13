@@ -103,6 +103,20 @@ module.exports = {
                 // Routing pour les boutons de permissions/assignation des rôles personnalisés
                 const { handleCustomRoleInteraction } = require('../utils/guild/guild-custom-roles-handler');
                 await handleCustomRoleInteraction(interaction);
+            } else if (interaction.customId.startsWith('pvropen:')) {
+                const { handleVocPanelOpenButton } = require('../utils/voice-room-panel-handler');
+                try {
+                    await handleVocPanelOpenButton(interaction);
+                } catch (error) {
+                    logger.error('Error handling voc-panel open button:', error);
+                    try {
+                        if (!interaction.replied && !interaction.deferred) {
+                            await interaction.reply({ content: 'Une erreur est survenue.', flags: 64 });
+                        }
+                    } catch (replyError) {
+                        logger.error('Failed to reply after pvropen error:', replyError.code || replyError.message);
+                    }
+                }
             } else if (interaction.customId.startsWith('pvr:')) {
                 const { handleVoiceRoomPanelButton } = require('../utils/voice-room-panel-handler');
                 try {
