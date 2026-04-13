@@ -15,6 +15,7 @@ const {
     resetValentinMessageCount,
     valentinEvents,
 } = require('../utils/global-state');
+const { parseVoiceTrackingKey, runWithEconomyGuild } = require('../utils/economy-scope');
 const config = require('../config');
 const { getEventState, grantEventCurrency } = require('../utils/db-halloween');
 const db = require('../database/database');
