@@ -1,11 +1,18 @@
 const logger = require('../utils/logger');
 const Database = require('better-sqlite3');
 const path = require('path');
+const { isTestBotProfile } = require(path.join(__dirname, '..', '..', '..', 'blzbot-env.js'));
 
-// Crée ou ouvre la base de données dans le dossier database
-const db = new Database(path.join(__dirname, 'blzbot.sqlite'));
+const mainDb = new Database(path.join(__dirname, 'blzbot.sqlite'));
+const testG = String(process.env.GUILD_ID || '').trim();
+const mainG = String(process.env.BLZ_MAIN_GUILD_ID || '').trim();
+let testDb = null;
+if (isTestBotProfile() && /^\d{17,22}$/.test(testG) && /^\d{17,22}$/.test(mainG) && testG !== mainG) {
+    testDb = new Database(path.join(__dirname, 'blzbot.test.sqlite'));
+    logger.info('[DB] Mode double serveur : économie test → blzbot.test.sqlite, principal → blzbot.sqlite');
+}
 
-function initializeDatabase() {
+function initializeDatabase(db) {
     logger.debug('Initialisation de la base de données…');
 
     // Table des utilisateurs
