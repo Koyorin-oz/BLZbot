@@ -138,27 +138,25 @@ class GuildMusicSession {
     }
 
     async _playNextFromQueue() {
-        if (!this.queue.length) {
-            await this.refreshPanel();
-            return;
-        }
-        const track = this.queue.shift();
-        this.current = track;
-        try {
-            const src = await play.stream(track.url, { discordPlayerCompatibility: true });
-            const resource = createAudioResource(src.stream, {
-                inputType: src.type,
-                inlineVolume: true,
-            });
-            if (resource.volume) {
-                resource.volume.setVolume(0.85);
+        this.current = null;
+        while (this.queue.length) {
+            const track = this.queue.shift();
+            try {
+                const src = await play.stream(track.url, { discordPlayerCompatibility: true });
+                const resource = createAudioResource(src.stream, {
+                    inputType: src.type,
+                    inlineVolume: true,
+                });
+                if (resource.volume) {
+                    resource.volume.setVolume(0.85);
+                }
+                this.current = track;
+                this.player.play(resource);
+                await this.refreshPanel();
+                return;
+            } catch (e) {
+                logger.error('[MUSIC] Stream error:', e?.message || e);
             }
-            this.player.play(resource);
-        } catch (e) {
-            logger.error('[MUSIC] Stream error:', e?.message || e);
-            this.current = null;
-            await this._playNextFromQueue();
-            return;
         }
         await this.refreshPanel();
     }
