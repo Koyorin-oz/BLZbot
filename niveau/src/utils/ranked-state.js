@@ -84,12 +84,13 @@ function getRPMultiplier(userId) {
  * @returns {object|null} Infos de pénalité ou null si pas pénalisé
  */
 function getPenaltyInfo(userId) {
-    const penalty = penalizedUsers.get(userId);
+    const key = penaltyKey(userId);
+    const penalty = penalizedUsers.get(key);
     if (!penalty) return null;
 
     // Vérifier si expirée
     if (Date.now() >= penalty.expireAt) {
-        penalizedUsers.delete(userId);
+        penalizedUsers.delete(key);
         return null;
     }
 
