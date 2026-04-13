@@ -1,10 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
-const {
-    getMusicSession,
-    resolveYoutubeQueryToTracks,
-    searchYoutubeVideos,
-} = require('../../utils/voice-music-manager');
-const { storePendingSearch, buildSearchSelectRow } = require('../../utils/voice-music-handler');
+const { getMusicSession } = require('../../utils/voice-music-manager');
+const { executeMusicPlayCore } = require('../../utils/voice-music-handler');
 
 function requireVoice(interaction) {
     const vc = interaction.member?.voice?.channel;
