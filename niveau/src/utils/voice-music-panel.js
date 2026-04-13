@@ -49,7 +49,7 @@ function buildMusicPanelPayload(guildId, session) {
         new ButtonBuilder()
             .setCustomId(btnId(guildId, paused ? 'resume' : 'pause'))
             .setStyle(paused ? ButtonStyle.Success : ButtonStyle.Primary)
-            .setLabel(paused ? 'Lecture' : 'Pause')
+            .setLabel(paused ? 'Play' : 'Pause')
             .setEmoji(paused ? '▶️' : '⏸️'),
         new ButtonBuilder()
             .setCustomId(btnId(guildId, 'skip'))
