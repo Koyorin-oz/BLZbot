@@ -125,6 +125,11 @@ async function handleMusicButton(interaction) {
     const session = getMusicSession(guildId);
     session._client = interaction.client;
 
+    if (action === 'playlist') {
+        const { openPlaylistPanel } = require('./voice-music-playlist-ui');
+        return openPlaylistPanel(interaction, guildId, interaction.user.id);
+    }
+
     if (action === 'playprompt') {
         const modal = new ModalBuilder()
             .setCustomId(`blzmm:play:${guildId}`)
