@@ -153,12 +153,12 @@ function burnPlayerRP(userId, perteRP) {
     
     // Le pool_rp_total NE BOUGE PAS (c'est ce qui crée la revalorisation globale via burn)
     
-    const updateTransaction = db.transaction(() => {
-        db.prepare('UPDATE users SET shares = ? WHERE id = ?').run(newShares, userId);
+    const updateTransaction = dbm.transaction(() => {
+        dbm.prepare('UPDATE users SET shares = ? WHERE id = ?').run(newShares, userId);
         setServerConfig('total_shares_global', newTotalShares);
         
         const finalRP = Math.floor((newShares * pool_rp_total) / newTotalShares);
-        db.prepare('UPDATE users SET points = ? WHERE id = ?').run(finalRP, userId);
+        dbm.prepare('UPDATE users SET points = ? WHERE id = ?').run(finalRP, userId);
     });
     
     try {
