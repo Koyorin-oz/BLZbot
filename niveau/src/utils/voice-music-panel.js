@@ -100,7 +100,7 @@ function parseMusicButtonId(customId) {
     if (parts.length !== 3) return null;
     const [, action, guildId] = parts;
     if (!/^\d{17,22}$/.test(guildId)) return null;
-    const allowed = new Set(['prev', 'pause', 'resume', 'skip', 'queue', 'stop']);
+    const allowed = new Set(['prev', 'pause', 'resume', 'skip', 'queue', 'stop', 'playprompt', 'clear']);
     if (!allowed.has(action)) return null;
     return { action, guildId };
 }
