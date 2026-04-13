@@ -25,7 +25,13 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+
+      # Ubuntu récent : « python3 -m pip install --user » échoue (PEP 668 / externally-managed-environment).
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
       - name: Préparer le dossier à envoyer (sans .git / node_modules / bruit)
         run: |
@@ -61,9 +67,8 @@ jobs:
             echo "::error::Secret(s) manquant(s) : PEBBLE_SFTP_HOST, USERNAME, PASSWORD ou REMOTE_PATH."
             exit 1
           fi
-          python3 -m pip install --user --quiet paramiko
-          export PATH="$HOME/.local/bin:$PATH"
-          python3 << 'PY'
+          pip install --quiet paramiko
+          python << 'PY'
           import os
           import sys
 
@@ -124,8 +129,21 @@ jobs:
                   else:
                       sftp.put(lp, rp)
 
-          upload_dir(local_root, remote_base)
-          sftp.close()
-          client.close()
+          try:
+              upload_dir(local_root, remote_base)
+          except Exception as e:
+              import traceback
+              traceback.print_exc()
+              print(f"::_error::Upload SFTP : {type(e).__name__}: {e}", file=sys.stderr)
+              sys.exit(1)
+          finally:
+              try:
+                  sftp.close()
+              except Exception:
+                  pass
+              try:
+                  client.close()
+              except Exception:
+                  pass
           print("Déploiement SFTP terminé.")
           PY
