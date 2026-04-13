@@ -73,10 +73,27 @@ function applyTestGuildOverride() {
     );
 }
 
+/**
+ * Guildes sur lesquelles enregistrer les slash (niveau + modération) : GUILD_ID courant,
+ * et en mode TEST aussi BLZ_MAIN_GUILD_ID (prod) si différent.
+ * @returns {string[]}
+ */
+function getSlashDeployGuildIds() {
+    const ids = new Set();
+    const primary = String(process.env.GUILD_ID || '').trim();
+    if (/^\d{17,22}$/.test(primary)) ids.add(primary);
+    if (isTestBotProfile()) {
+        const main = String(process.env.BLZ_MAIN_GUILD_ID || '').trim();
+        if (/^\d{17,22}$/.test(main)) ids.add(main);
+    }
+    return [...ids];
+}
+
 module.exports = {
     PEBBLE_HOST_ENV_PATH,
     resolveDotenvPath,
     BLZ_DEFAULT_TEST_GUILD_ID,
     isTestBotProfile,
     applyTestGuildOverride,
+    getSlashDeployGuildIds,
 };
