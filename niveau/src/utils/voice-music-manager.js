@@ -166,9 +166,15 @@ class GuildMusicSession {
         const { recordUserPlayedTrack } = require('./voice-music-playlist');
         for (const t of tracks) {
             if (this.queue.length >= MAX_QUEUE) break;
-            this.queue.push(t);
+            const playUrl = normalizeYoutubePlayUrl(t.url);
+            if (!playUrl) {
+                logger.warn('[MUSIC] Import ignoré (URL non reconnue):', t?.url);
+                continue;
+            }
+            const norm = { ...t, url: playUrl };
+            this.queue.push(norm);
             try {
-                recordUserPlayedTrack(this.guildId, t.requestedBy, t.title, t.url);
+                recordUserPlayedTrack(this.guildId, norm.requestedBy, norm.title, norm.url);
             } catch (_) {
                 /* ignore */
             }
