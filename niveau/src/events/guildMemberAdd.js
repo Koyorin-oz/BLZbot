@@ -78,5 +78,6 @@ module.exports = {
             logger.error('[TUTORIAL] ERREUR CRITIQUE lors de la création du tutoriel:', error);
             logger.error('[TUTORIAL] Stack trace:', error.stack);
         }
+        });
     }
 };
