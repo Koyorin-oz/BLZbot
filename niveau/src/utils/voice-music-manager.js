@@ -288,7 +288,12 @@ async function postOrReplaceMusicPanel(client, guildId, textChannel, member) {
  * @returns {Promise<MusicTrack[] | null>}
  */
 async function resolveYoutubeQueryToTracks(query, requestedBy) {
-    const v = await play.yt_validate(query);
+    let v;
+    try {
+        v = await play.yt_validate(query);
+    } catch {
+        return null;
+    }
     if (v === 'video') {
         let title = query;
         try {
