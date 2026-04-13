@@ -201,7 +201,7 @@ class GuildMusicSession {
                 continue;
             }
             try {
-                const src = await play.stream(playUrl, { discordPlayerCompatibility: true });
+                const src = await getYoutubeStreamForDiscord(playUrl);
                 const resource = createAudioResource(src.stream, {
                     inputType: src.type,
                     inlineVolume: true,
