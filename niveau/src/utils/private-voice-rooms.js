@@ -1,6 +1,7 @@
 const { ChannelType, PermissionFlagsBits } = require('discord.js');
 const { Routes } = require('discord-api-types/v10');
 const logger = require('./logger');
+const { postOrReplaceMusicPanel } = require('./voice-music-manager');
 
 /** Salon d’accueil par défaut (rejoindre ce vocal → création d’un salon privé). */
 const DEFAULT_LOBBY_CHANNEL_ID = '1388968408711823411';
@@ -440,6 +441,14 @@ async function createPrivateVoice(client, member, cfg) {
         await member.voice.setChannel(channel).catch((e) => {
             logger.warn(`[PRIVATE_ROOM] Impossible de déplacer le membre: ${e.message}`);
         });
+    }
+
+    if (panelWhere.where === 'voice' || panelWhere.where === 'voice-rest') {
+        try {
+            await postOrReplaceMusicPanel(client, guild.id, fresh, member);
+        } catch (e) {
+            logger.warn(`[PRIVATE_ROOM] Panneau musique: ${e?.message || e}`);
+        }
     }
 
     logger.info(`[PRIVATE_ROOM] Créé ${channel.name} (${channel.id}) pour ${member.user.tag}`);

@@ -138,27 +138,25 @@ class GuildMusicSession {
     }
 
     async _playNextFromQueue() {
-        if (!this.queue.length) {
-            await this.refreshPanel();
-            return;
-        }
-        const track = this.queue.shift();
-        this.current = track;
-        try {
-            const src = await play.stream(track.url, { discordPlayerCompatibility: true });
-            const resource = createAudioResource(src.stream, {
-                inputType: src.type,
-                inlineVolume: true,
-            });
-            if (resource.volume) {
-                resource.volume.setVolume(0.85);
+        this.current = null;
+        while (this.queue.length) {
+            const track = this.queue.shift();
+            try {
+                const src = await play.stream(track.url, { discordPlayerCompatibility: true });
+                const resource = createAudioResource(src.stream, {
+                    inputType: src.type,
+                    inlineVolume: true,
+                });
+                if (resource.volume) {
+                    resource.volume.setVolume(0.85);
+                }
+                this.current = track;
+                this.player.play(resource);
+                await this.refreshPanel();
+                return;
+            } catch (e) {
+                logger.error('[MUSIC] Stream error:', e?.message || e);
             }
-            this.player.play(resource);
-        } catch (e) {
-            logger.error('[MUSIC] Stream error:', e?.message || e);
-            this.current = null;
-            await this._playNextFromQueue();
-            return;
         }
         await this.refreshPanel();
     }
@@ -270,6 +268,17 @@ function getMusicSession(guildId) {
 async function postOrReplaceMusicPanel(client, guildId, textChannel, member) {
     const session = getMusicSession(guildId);
     session._client = client;
+    if (session.panelChannelId && session.panelMessageId) {
+        try {
+            const oldCh = await client.channels.fetch(session.panelChannelId).catch(() => null);
+            if (oldCh?.isTextBased?.()) {
+                const oldMsg = await oldCh.messages.fetch(session.panelMessageId).catch(() => null);
+                await oldMsg?.delete?.().catch(() => null);
+            }
+        } catch (_) {
+            /* ignore */
+        }
+    }
     const { buildMusicPanelPayload } = require('./voice-music-panel');
     const payload = {
         content: `<@${member.id}>`,
@@ -288,7 +297,12 @@ async function postOrReplaceMusicPanel(client, guildId, textChannel, member) {
  * @returns {Promise<MusicTrack[] | null>}
  */
 async function resolveYoutubeQueryToTracks(query, requestedBy) {
-    const v = await play.yt_validate(query);
+    let v;
+    try {
+        v = await play.yt_validate(query);
+    } catch {
+        return null;
+    }
     if (v === 'video') {
         let title = query;
         try {
