@@ -32,7 +32,9 @@ function buildMusicPanelPayload(guildId, session) {
         .setColor(0x5865f2)
         .setTitle('Lecteur — YouTube')
         .setDescription(body)
-        .setFooter({ text: 'Boutons : Précédent · Pause · Suivant · File · Stop' });
+        .setFooter({
+            text: 'Transport : Précédent · Pause · Suivant · File · Stop · Ajouter · Vider file',
+        });
 
     const secondary = ButtonStyle.Secondary;
     const danger = ButtonStyle.Danger;
