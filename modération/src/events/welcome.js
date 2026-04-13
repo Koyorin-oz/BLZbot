@@ -97,7 +97,10 @@ function buildWelcomeMessage(member, options = {}) {
 
     const container = new ContainerBuilder()
         .setAccentColor(parseAccentColor(w.ACCENT_COLOR))
-        .addTextDisplayComponents(welcomeBody)
+        .addSectionComponents(section)
+        .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
+        .addTextDisplayComponents(body)
+        .addTextDisplayComponents(footerMeta)
         .addActionRowComponents(row);
 
     return {
