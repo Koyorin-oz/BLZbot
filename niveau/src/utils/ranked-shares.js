@@ -61,7 +61,7 @@ function initializeSharesSystem() {
 }
 
 function getUserShares(userId) {
-    const row = db.prepare('SELECT shares FROM users WHERE id = ?').get(userId);
+    const row = dbm.prepare('SELECT shares FROM users WHERE id = ?').get(userId);
     return row ? (row.shares || 0) : 0;
 }
 
