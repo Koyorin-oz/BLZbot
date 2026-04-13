@@ -8,7 +8,7 @@ const logger = require('./logger');
 
 /**
  * @param {string} watchUrl URL https://www.youtube.com/watch?v=…
- * @returns {Promise<{ stream: import('stream').Readable, type: import('@discordjs/voice').StreamType }>}
+ * @returns {Promise<{ stream: import('node:stream').Readable, type: string }>}
  */
 async function getYoutubeStreamForDiscord(watchUrl) {
     const play = require('play-dl');
