@@ -109,17 +109,16 @@ function getAllPenalties() {
     const now = Date.now();
     const active = [];
 
-    for (const [userId, penalty] of penalizedUsers.entries()) {
+    for (const [key, penalty] of penalizedUsers.entries()) {
         if (now < penalty.expireAt) {
             active.push({
-                userId,
+                userId: key,
                 ...penalty,
                 remainingMs: penalty.expireAt - now,
                 remainingMinutes: Math.ceil((penalty.expireAt - now) / 60000)
             });
         } else {
-            // Nettoyer les pénalités expirées
-            penalizedUsers.delete(userId);
+            penalizedUsers.delete(key);
         }
     }
 
