@@ -23,7 +23,7 @@ Le dossier distant est en général **`/home/container`** (vérifie dans le pane
    |--------|-------------|
    | `PEBBLE_SFTP_HOST` | Hôte SFTP (ex. `sftp.example.pebble.host`) |
    | `PEBBLE_SFTP_USERNAME` | Utilisateur SFTP |
-   | `PEBBLE_REMOTE_PATH` | Chemin distant, souvent `/home/container` |
+   | `PEBBLE_REMOTE_PATH` | Chemin **vu par le SFTP** : souvent **`.`** ou **`/`** sur Pebble (chroot). Si `/home/container` échoue, mets **`.`**. Le workflow essaie aussi automatiquement `.` et `/` si ton chemin n’existe pas. |
    | `PEBBLE_SFTP_PASSWORD` | Mot de passe SFTP *(souvent le seul nécessaire)* |
 
    Optionnel :

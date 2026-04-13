@@ -115,17 +115,45 @@ jobs:
 
           sftp = client.open_sftp()
 
-          try:
-              sftp.stat(remote_base)
-          except OSError as e:
-              print(f"::_error::Dossier distant introuvable : {remote_base!r} ({e})", file=sys.stderr)
-              print("::_error::Vérifie le secret PEBBLE_REMOTE_PATH (ex. /home/container).", file=sys.stderr)
+          import stat as statmod
+
+          def resolve_remote_upload_root(sftp_client, preferred: str) -> str:
+              """Sur Pebble (chroot SFTP), /home/container n’existe souvent pas côté client : la racine est « . » ou « / »."""
+              raw = (preferred or "").strip().strip("\r\n")
+              candidates = []
+              if raw:
+                  candidates.append(raw.rstrip("/") or "/")
+              for p in (".", "/"):
+                  if p not in candidates:
+                      candidates.append(p)
+              for path in candidates:
+                  try:
+                      st = sftp_client.stat(path)
+                      if statmod.S_ISDIR(st.st_mode):
+                          print(f"Dossier distant utilisé : {path!r} (secret PEBBLE_REMOTE_PATH était {preferred!r})")
+                          return path
+                  except OSError:
+                      continue
+              print(
+                  "::_error::Aucun dossier distant valide. Essaie le secret PEBBLE_REMOTE_PATH = . "
+                  "ou / (souvent correct sur Pebble ; /home/container est parfois invisible en SFTP).",
+                  file=sys.stderr,
+              )
               sys.exit(1)
+
+          remote_base = resolve_remote_upload_root(sftp, remote_base)
+
+          def remote_join(rem: str, name: str) -> str:
+              if rem == "." or rem == "":
+                  return name
+              if rem == "/":
+                  return "/" + name
+              return f"{rem.rstrip('/')}/{name}"
 
           def upload_dir(local: str, remote: str) -> None:
               for name in sorted(os.listdir(local)):
                   lp = os.path.join(local, name)
-                  rp = f"{remote}/{name}".replace("//", "/")
+                  rp = remote_join(remote, name)
                   if os.path.isdir(lp):
                       try:
                           sftp.mkdir(rp)
