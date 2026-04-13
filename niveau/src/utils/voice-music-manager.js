@@ -260,17 +260,26 @@ class GuildMusicSession {
     }
 
     async refreshPanel() {
-        if (!this._client || !this.panelChannelId || !this.panelMessageId) return;
-        try {
-            const ch = await this._client.channels.fetch(this.panelChannelId).catch(() => null);
-            if (!ch?.isTextBased?.()) return;
-            const msg = await ch.messages.fetch(this.panelMessageId).catch(() => null);
-            if (!msg?.editable) return;
-            const { buildMusicPanelPayload } = require('./voice-music-panel');
-            await msg.edit(buildMusicPanelPayload(this.guildId, this));
-        } catch (e) {
-            logger.debug(`[MUSIC] refreshPanel: ${e?.message || e}`);
+        if (!this._client || !this.panelRegistrations.length) return;
+        const { buildMusicPanelPayload } = require('./voice-music-panel');
+        const payload = buildMusicPanelPayload(this.guildId, this);
+        const kept = [];
+        for (const r of this.panelRegistrations) {
+            try {
+                const ch = await this._client.channels.fetch(r.channelId).catch(() => null);
+                if (!ch?.isTextBased?.()) continue;
+                const msg = await ch.messages.fetch(r.messageId).catch(() => null);
+                if (!msg?.editable) continue;
+                await msg.edit({
+                    embeds: payload.embeds,
+                    components: payload.components,
+                });
+                kept.push(r);
+            } catch (e) {
+                logger.debug(`[MUSIC] refreshPanel skip: ${e?.message || e}`);
+            }
         }
+        this.panelRegistrations = kept;
     }
 }
 
