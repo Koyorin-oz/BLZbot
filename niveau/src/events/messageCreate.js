@@ -271,6 +271,7 @@ module.exports = {
                 isThread: message.channel.isThread()
             });
         }
+        });
     },
 };
 
