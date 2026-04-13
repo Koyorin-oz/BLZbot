@@ -185,7 +185,9 @@ async function handlePlaylistButtonInteraction(interaction) {
             return interaction.followUp({ content: 'Impossible de rejoindre le vocal.', flags: 64 }).catch(() => null);
         }
 
-        if (session.current?.url === row.url) {
+        const curId = extractYoutubeVideoId(session.current?.url);
+        const rowId = extractYoutubeVideoId(row.url);
+        if (curId && rowId && curId === rowId) {
             if (session.isPaused()) {
                 session.resume();
             } else {
@@ -196,9 +198,19 @@ async function handlePlaylistButtonInteraction(interaction) {
             return interaction.followUp({ content: msg, flags: 64 }).catch(() => null);
         }
 
+        const playUrl = normalizeYoutubePlayUrl(row.url);
+        if (!playUrl) {
+            return interaction
+                .followUp({
+                    content: 'Ce lien dans ta playlist n’est pas une URL YouTube valide. Supprime-le et rajoute le morceau.',
+                    flags: 64,
+                })
+                .catch(() => null);
+        }
+
         const track = {
             title: row.title,
-            url: row.url,
+            url: playUrl,
             requestedBy: interaction.user.id,
         };
         session.queue.unshift(track);
