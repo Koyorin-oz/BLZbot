@@ -81,7 +81,7 @@ async function handleVoiceRoomPanelButton(interaction) {
         return interaction.reply({ content: 'Salon vocal introuvable.', flags: 64 });
     }
 
-    const modeChar = restricted ? 'r' : 'p';
+    const modeChar = parsed.mode === 'r' ? 'r' : parsed.mode === 'e' ? 'e' : 'p';
     const modalBase = (kind) => `pvrm:${modeChar}:${voiceChannelId}:${kind}`;
 
     try {
