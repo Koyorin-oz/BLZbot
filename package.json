@@ -5,11 +5,16 @@
   "main": "orchestrator/maintemp.js",
   "scripts": {
     "start": "node orchestrator/maintemp.js",
+    "start:test": "cross-env BLZ_TEST_MODE=1 node orchestrator/maintemp.js",
     "start:full": "cross-env BLZ_FORK_SERVICES=all node orchestrator/maintemp.js",
     "start:niveau": "node niveau/src/index.js",
+    "start:niveau:test": "cross-env BLZ_TEST_MODE=1 node niveau/src/index.js",
     "deploy:commands": "node scripts/deploy-commands-cli.js",
+    "deploy:commands:test": "cross-env BLZ_TEST_MODE=1 node scripts/deploy-commands-cli.js",
     "deploy:commands:moderation": "node scripts/deploy-moderation-commands-cli.js",
+    "deploy:commands:moderation:test": "cross-env BLZ_TEST_MODE=1 node scripts/deploy-moderation-commands-cli.js",
     "deploy:commands:all": "node scripts/run-deploy-all.js",
+    "deploy:commands:all:test": "cross-env BLZ_TEST_MODE=1 node scripts/run-deploy-all.js",
     "points-bot": "node legacy/points-bot/index.js",
     "rate-limit-test": "node scripts/dev/test-rate-limit.js"
   },
