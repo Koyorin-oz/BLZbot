@@ -62,27 +62,27 @@ function buildPrivateVoicePanelPayload(voiceChannelId, panelMode) {
     const danger = ButtonStyle.Danger;
 
     const row1 = new ActionRowBuilder().addComponents(
-        panelButton(cid('rename'), 'A', 'Renommer', '✏️', secondary),
-        panelButton(cid('limit'), 'B', 'Limite', '👥', secondary),
-        panelButton(cid('lock'), 'C', 'Verrouiller', '🛡️', secondary),
-        panelButton(cid('timer'), 'D', 'Minuteur', '⏱️', secondary),
-        panelButton(cid('unlock'), 'E', 'Déverr.', '🔓', secondary)
+        panelButton(cid('rename'), 'Renommer', '✏️', secondary),
+        panelButton(cid('limit'), 'Limite', '👥', secondary),
+        panelButton(cid('lock'), 'Verrouiller', '🛡️', secondary),
+        panelButton(cid('timer'), 'Minuteur', '⏱️', secondary),
+        panelButton(cid('unlock'), 'Déverr.', '🔓', secondary)
     );
 
     const row2 = new ActionRowBuilder().addComponents(
-        panelButton(cid('invite'), 'F', 'Inviter', '➕', secondary),
-        panelButton(cid('permit'), 'G', 'Autoriser', '✅', secondary),
-        panelButton(cid('ring'), 'H', 'Appeler', '📞', secondary),
-        panelButton(cid('disconnect_others'), 'I', 'Déco. autres', '📵', secondary),
-        panelButton(cid('region'), 'J', 'Région', '🌐', secondary)
+        panelButton(cid('invite'), 'Inviter', '➕', secondary),
+        panelButton(cid('permit'), 'Autoriser', '✅', secondary),
+        panelButton(cid('ring'), 'Appeler', '📞', secondary),
+        panelButton(cid('disconnect_others'), 'Déco. autres', '📵', secondary),
+        panelButton(cid('region'), 'Région', '🌐', secondary)
     );
 
     const row3 = new ActionRowBuilder().addComponents(
-        panelButton(cid('kick'), 'K', 'Expulser', '🔇', secondary),
-        panelButton(cid('ban_room'), 'L', 'Ban salon', '⛔', secondary),
-        panelButton(cid('transfer'), 'M', 'Transférer', '👑', secondary),
-        panelButton(cid('claim'), 'N', 'Récupérer', '📌', secondary),
-        panelButton(cid('delete'), 'O', 'Supprimer', '🗑️', danger)
+        panelButton(cid('kick'), 'Expulser', '🔇', secondary),
+        panelButton(cid('ban_room'), 'Ban salon', '⛔', secondary),
+        panelButton(cid('transfer'), 'Transférer', '👑', secondary),
+        panelButton(cid('claim'), 'Récupérer', '📌', secondary),
+        panelButton(cid('delete'), 'Supprimer', '🗑️', danger)
     );
 
     return {
