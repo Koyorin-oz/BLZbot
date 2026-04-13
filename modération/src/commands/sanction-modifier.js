@@ -171,7 +171,11 @@ module.exports = {
 
                         // Envoyer un message de modification dans le canal de logs SEULEMENT si l'édition a échoué
                         if (!messageEdited) {
-                            const canalLog = interaction.guild.channels.cache.get(CONFIG.LOGS_CHANNEL_ID);
+                            const modLogId = resolveModerationSanctionLogChannelId(interaction.guild.id);
+                            const canalLog = modLogId
+                                ? interaction.guild.channels.cache.get(modLogId) ||
+                                  (await interaction.guild.channels.fetch(modLogId).catch(() => null))
+                                : null;
                             if (canalLog && canalLog.isTextBased()) {
                                 await canalLog.send(
                                     `# 📝 Modification de sanction #${sanctionId}\n` +
