@@ -223,6 +223,20 @@ module.exports = {
                 // Routing pour le modal de rôle VIP personnalisé
                 const { handleVipRoleModal } = require('../utils/vip-role-handler');
                 await handleVipRoleModal(interaction);
+            } else if (interaction.customId.startsWith('blzmm:play:')) {
+                const { handleMusicPlayModal } = require('../utils/voice-music-handler');
+                try {
+                    await handleMusicPlayModal(interaction);
+                } catch (error) {
+                    logger.error('[MUSIC] modal play:', error);
+                    try {
+                        if (!interaction.replied && !interaction.deferred) {
+                            await interaction.reply({ content: 'Erreur musique.', flags: 64 });
+                        }
+                    } catch (replyError) {
+                        logger.error('[MUSIC] modal reply:', replyError.code || replyError.message);
+                    }
+                }
             } else if (interaction.customId.startsWith('pvrm:')) {
                 const { handleVoiceRoomPanelModal } = require('../utils/voice-room-panel-handler');
                 try {
