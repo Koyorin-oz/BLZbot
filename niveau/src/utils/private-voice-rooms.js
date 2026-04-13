@@ -443,6 +443,14 @@ async function createPrivateVoice(client, member, cfg) {
         });
     }
 
+    if (panelWhere.where === 'voice' || panelWhere.where === 'voice-rest') {
+        try {
+            await postOrReplaceMusicPanel(client, guild.id, fresh, member);
+        } catch (e) {
+            logger.warn(`[PRIVATE_ROOM] Panneau musique: ${e?.message || e}`);
+        }
+    }
+
     logger.info(`[PRIVATE_ROOM] Créé ${channel.name} (${channel.id}) pour ${member.user.tag}`);
     return { ok: true, channel };
 }

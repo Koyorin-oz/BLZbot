@@ -159,6 +159,20 @@ module.exports = {
                 // Routing pour la gestion des rôles personnalisés (Select Menu)
                 const { handleCustomRoleInteraction } = require('../utils/guild/guild-custom-roles-handler');
                 await handleCustomRoleInteraction(interaction);
+            } else if (interaction.customId.startsWith('blzmpick:')) {
+                const { handleMusicSelect } = require('../utils/voice-music-handler');
+                try {
+                    await handleMusicSelect(interaction);
+                } catch (error) {
+                    logger.error('[MUSIC] sélection:', error);
+                    try {
+                        if (!interaction.replied && !interaction.deferred) {
+                            await interaction.reply({ content: 'Erreur lors du choix.', flags: 64 });
+                        }
+                    } catch (replyError) {
+                        logger.error('[MUSIC] reply select:', replyError.code || replyError.message);
+                    }
+                }
             }
             // Ignorer les select menus inconnus - ils sont gérés par les collectors dans les commandes
         } else if (interaction.isModalSubmit()) {
