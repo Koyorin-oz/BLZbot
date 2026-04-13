@@ -47,16 +47,28 @@ jobs:
           if [ -z "$P" ]; then P="22"; fi
           echo "port=$P" >> "$GITHUB_OUTPUT"
 
-      - name: Déployer en SFTP
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
-        with:
-          username: ${{ secrets.PEBBLE_SFTP_USERNAME }}
-          server: ${{ secrets.PEBBLE_SFTP_HOST }}
-          port: ${{ steps.sftp_port.outputs.port }}
-          password: ${{ secrets.PEBBLE_SFTP_PASSWORD }}
-          ssh_private_key: ${{ secrets.PEBBLE_SFTP_PRIVATE_KEY }}
-          local_path: ./_deploy_out/*
-          remote_path: ${{ secrets.PEBBLE_REMOTE_PATH }}
-          # Variable repo PEBBLE_SFTP_ONLY=1 si l’hébergeur n’accepte que le sous-système SFTP
-          sftp_only: ${{ vars.PEBBLE_SFTP_ONLY == '1' }}
-          sftpArgs: '-o StrictHostKeyChecking=no -o ConnectTimeout=30'
+      # SFTP uniquement (pas de « ssh mkdir ») : compatible PebbleHost port 2222.
+      - name: Déployer en SFTP (lftp mirror)
+        env:
+          LFTP_PASSWORD: ${{ secrets.PEBBLE_SFTP_PASSWORD }}
+          SFTP_HOST: ${{ secrets.PEBBLE_SFTP_HOST }}
+          SFTP_USER: ${{ secrets.PEBBLE_SFTP_USERNAME }}
+          REMOTE_PATH: ${{ secrets.PEBBLE_REMOTE_PATH }}
+          SFTP_PORT: ${{ steps.sftp_port.outputs.port }}
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq lftp
+          if [ -z "${SFTP_HOST:-}" ] || [ -z "${SFTP_USER:-}" ] || [ -z "${LFTP_PASSWORD:-}" ] || [ -z "${REMOTE_PATH:-}" ]; then
+            echo "::error::Secret(s) manquant(s) : PEBBLE_SFTP_HOST, USERNAME, PASSWORD ou REMOTE_PATH."
+            exit 1
+          fi
+          lftp -c "
+          set sftp:auto-confirm yes
+          set net:timeout 60
+          set net:max-retries 3
+          open -u \"${SFTP_USER}\",\"${LFTP_PASSWORD}\" sftp://${SFTP_HOST}:${SFTP_PORT}
+          mirror -R --parallel=3 \"${GITHUB_WORKSPACE}/_deploy_out\" \"${REMOTE_PATH}\"
+          bye
+          "
+          echo "Déploiement SFTP terminé."

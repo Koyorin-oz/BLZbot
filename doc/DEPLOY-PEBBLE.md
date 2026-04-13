@@ -26,16 +26,13 @@ Le dossier distant est en général **`/home/container`** (vérifie dans le pane
    | `PEBBLE_REMOTE_PATH` | Chemin distant, souvent `/home/container` |
    | `PEBBLE_SFTP_PASSWORD` | Mot de passe SFTP *(souvent le seul nécessaire)* |
 
-   Optionnels :
+   Optionnel :
 
    | Secret | Description |
    |--------|-------------|
-   | `PEBBLE_SFTP_PORT` | Port si différent de **22** |
-   | `PEBBLE_SFTP_PRIVATE_KEY` | Clé privée SSH si tu n’utilises pas le mot de passe |
+   | `PEBBLE_SFTP_PORT` | Port si différent de **22** (ex. **2222** sur Pebble) |
 
-4. Si Pebble n’accepte **que** SFTP (pas de shell SSH), ajoute une **variable** (pas un secret) :  
-   - Name : `PEBBLE_SFTP_ONLY`  
-   - Value : `1`  
+Le workflow utilise **`lftp` en SFTP** (pas de commande `ssh` avant), ce qui convient à PebbleHost.
 
 ## 3. Flux quotidien dans Cursor
 
