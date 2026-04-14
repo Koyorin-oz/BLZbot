@@ -377,7 +377,25 @@ function stop() {
         clearTimeout(intervalId);
         intervalId = null;
     }
-    logger.info('[VOICE-AFK] Système anti-AFK arrêté');
+    logger.info('[VOICE-AFK] Planification anti-AFK arrêtée (timer annulé).');
+}
+
+/**
+ * Coupe ou réactive tout le système (captchas aléatoires + déclenchements manuels).
+ * @param {boolean} disabled
+ */
+function setGloballyDisabled(disabled) {
+    globallyDisabled = Boolean(disabled);
+    if (globallyDisabled) {
+        stop();
+        logger.warn('[VOICE-AFK] Anti-AFK vocal **désactivé** jusqu’à réactivation (/anti-afk ou redémarrage sans VOICE_AFK_DISABLED).');
+    } else if (clientInstance) {
+        start(clientInstance);
+    }
+}
+
+function isVoiceAfkGloballyDisabled() {
+    return globallyDisabled;
 }
 
 /**
