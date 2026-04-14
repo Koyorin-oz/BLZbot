@@ -27,6 +27,19 @@ function iaMentionAnyGuildEnabled() {
     return ['1', 'true', 'yes', 'on'].includes(String(v).toLowerCase().trim());
 }
 
+/** Si le message demande une image raisonnable sans JSON explicite du modèle. null = ne pas forcer. */
+function inferReasonableImageRequest(userText) {
+    if (!userText || typeof userText !== 'string') return null;
+    const t = userText.trim();
+    if (t.length < 8) return null;
+    if (/(pas\s+d['']?image|sans\s+image|ne\s+(me\s+)?fais\s+pas|no\s+image)/i.test(t)) return null;
+    if (/\b(nsfw|nude|nus|sexe|porn|hentai)\b/i.test(t)) return null;
+    const heavy = /(\b\d{2,}\s*(images?|imgs?|variantes?))|\bvid(é|e)o\b.*\b(min|sec|heure|épisode)|\bfilm\s+(entier|complet)|\b(série|saison)\s+complète|\bcinématique\s+complète|\b16k\b|\bstudio\s+(complet|entier)/i;
+    if (heavy.test(t)) return null;
+    if (!/(génère|genere|fais[-\s]?moi|draw|dessin(e|ez)|une\s+image|image\s+de|logo\b|banni[èe]re|wallpaper|fond\s+d['']?écran|m[eè]me|meme|illustration|affiche|visuel|montre.{0,40}ressembl|png|jpg)\b/i.test(t)) return null;
+    return t.replace(/<@!?\d+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 700);
+}
+
 async function handleMessageCreate(message, client, activeThreads) {
     if (message.author.bot) return;
     if (!message.guild) return;
