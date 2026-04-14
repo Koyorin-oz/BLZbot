@@ -1731,80 +1731,56 @@ function addDeepThinkButton(message, responseContent) {
 }
 
 async function queryDeepThink(prompt, threadHistory = []) {
-  const availability = checkDeepThinkAvailability();
+  if (!config.groq) {
+    return { text: 'Deep Think indisponible (Groq non configuré).', generateImage: false, dangerousContent: false, thoughts: '' };
+  }
 
-  // Helper function to try a specific model
-  async function tryModel(modelName, budget) {
-    log(`🧠 Tentative Deep Think avec ${modelName} (Budget: ${budget})...`);
+  const historyLines = (threadHistory || [])
+    .map((h) => {
+      const role = h.role === 'model' ? 'Assistant' : 'User';
+      const t = (h.parts && h.parts.map((p) => p.text).join('\n')) || '';
+      return `[${role}]: ${t}`;
+    })
+    .join('\n');
+
+  const wrapped = `${historyLines ? `Historique:\n${historyLines}\n\n` : ''}Consigne:\n${prompt}\n\nRéponds en deux parties : d'abord ton raisonnement détaillé entre <redacted_thinking> et </redacted_thinking>, puis ta réponse finale pour l'utilisateur après la balise de fermeture.`;
+
+  const modelsToTry = ['llama-3.3-70b-versatile', config.GROQ_DEFAULT_MODEL, 'llama-3.1-8b-instant'];
+  const tried = new Set();
+
+  for (const modelName of modelsToTry) {
+    if (!modelName || tried.has(modelName)) continue;
+    tried.add(modelName);
     try {
-      const model = config.genAI.getGenerativeModel({
-        model: modelName,
-        safetySettings: [
-          { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-          { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-          { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-          { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-        ],
-      });
+      log(`🧠 Deep Think (Groq) — ${modelName}`);
+      const raw = await groqSimpleText(wrapped, { model: modelName, max_tokens: 4096, temperature: 0.4 });
+      if (!raw) continue;
 
-      const contents = [...threadHistory];
-      contents.push({ role: "user", parts: [{ text: prompt }] });
-      const requestConfig = {
-        contents: contents,
-        generationConfig: {
-          thinkingConfig: {
-            includeThoughts: true,
-            thinkingBudget: budget
-          }
-        }
-      };
-
-      const result = await model.generateContent(requestConfig);
-      const response = await result.response;
-
-      deepThinkUsage[modelName]++;
-      log(`📊 Usage Deep Think mis à jour: ${modelName} = ${deepThinkUsage[modelName]}`);
-
-      let thoughts = "";
-      let finalText = "";
-
-      if (response.candidates && response.candidates[0] && response.candidates[0].content && response.candidates[0].content.parts) {
-        for (const part of response.candidates[0].content.parts) {
-          if (part.thought) {
-            log(`💭 Pensée reçue: ${part.text.substring(0, 100)}...`);
-            thoughts += part.text + "\n";
-          } else if (part.text) {
-            finalText += part.text;
-          }
-        }
+      const thinkMatch = raw.match(/<redacted_thinking>([\s\S]*?)<\/redacted_thinking>/i);
+      let thoughts = '';
+      let finalText = raw;
+      if (thinkMatch) {
+        thoughts = thinkMatch[1].trim();
+        finalText = raw.replace(/<redacted_thinking>[\s\S]*?<\/redacted_thinking>/i, '').trim();
       }
 
       return {
-        text: finalText || "Je n'ai pas pu générer de réponse textuelle, mais j'ai réfléchi.",
-        thoughts: thoughts,
+        text: finalText || "Je n'ai pas pu formuler la réponse finale.",
+        thoughts,
         generateImage: false,
-        dangerousContent: false
+        dangerousContent: false,
       };
     } catch (error) {
-      log(`❌ Erreur Deep Think avec ${modelName}: ${error.message}`);
-      return null;
+      log(`❌ Deep Think Groq (${modelName}): ${error.message}`);
     }
   }
 
-  // Attempt 1: Gemini 2.5 Pro
-  if (availability.proAvailable) {
-    const result = await tryModel('gemini-2.5-pro', 32768);
-    if (result) return result;
-    log(`⚠️ Echec de gemini-2.5-pro, tentative de fallback...`);
-  }
-
-  // Attempt 2: Gemini 2.5 Flash (Fallback or Primary if Pro unavailable)
-  if (availability.flashAvailable) {
-    const result = await tryModel('gemini-2.5-flash', 24576);
-    if (result) return result;
-  }
-
-  return { text: "Désolé, impossible de générer une réflexion approfondie (quotas atteints ou erreurs techniques).", generateImage: false, dangerousContent: false };
+  return {
+    text: 'Désolé, impossible de générer une réflexion approfondie (erreur Groq).',
+    generateImage: false,
+    dangerousContent: false,
+    thoughts: '',
+  };
 }
 
 async function closeThread(thread, closer, reason, activeThreads) {
