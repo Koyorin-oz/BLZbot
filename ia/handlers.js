@@ -232,6 +232,7 @@ async function handleMessageCreate(message, client, activeThreads) {
             <trait name="style">Chaleureux et accessible. Tu mets à l'aise.</trait>
             <trait name="interaction">Tu ne fais JAMAIS de remarques sarcastiques ou piquantes.</trait>
             <trait name="empathie">Tu comprends les frustrations et offres du soutien.</trait>
+            <trait name="images">Tu peux proposer generateImage true pour une illustration simple, un meme, un logo basique, etc. Refuse les demandes trop lourdes (vidéo longue, dizaines d'images).</trait>
         </personality_traits>
     </character_profile>
 
