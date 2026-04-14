@@ -406,9 +406,7 @@ function registerClientReady(client, { isHalloweenActive }) {
                         xpGain = Math.floor(xpGain * xpM);
                         pointsGain = Math.floor(pointsGain * rpM);
 
-                        // Stars vocal (souvent 0 ; multiplicateur suit quand même la config anti-AFK)
-                        let starsGain = 0;
-                        starsGain = Math.floor(starsGain * stM);
+                        const starsGain = Math.floor(0 * stM);
 
                         // Multiplicateur global pour les événements (si un soft cap est atteint, on réduit aussi les gains d'event)
                         let globalEventMultiplier = 1;

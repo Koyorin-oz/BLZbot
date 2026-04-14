@@ -1,179 +1,185 @@
-const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
+const {
+    SlashCommandBuilder,
+    PermissionFlagsBits,
+    MessageFlags,
+    ModalBuilder,
+    TextInputBuilder,
+    TextInputStyle,
+    ActionRowBuilder,
+} = require('discord.js');
 const {
     setGloballyDisabled,
     isVoiceAfkGloballyDisabled,
 } = require('../../utils/voice-afk-checker');
 const voiceAfkRuntime = require('../../utils/voice-afk-runtime');
 
-function formatVoirLines() {
+const MODAL_CUSTOM_ID = 'anti_afk_config_modal';
+const TEXT_INPUT_ID = 'anti_afk_config_text';
+
+function stripAccents(s) {
+    return s.normalize('NFD').replace(/\p{M}/gu, '');
+}
+
+/** @returns {{ errors: string[], actif?: boolean, patch: Record<string, number> }} */
+function parseAntiAfkModalText(raw) {
+    const errors = [];
+    /** @type {Record<string, number>} */
+    const patch = {};
+    let actif;
+
+    const keyMap = new Map([
+        ['min', 'minIntervalMinutes'],
+        ['minminutes', 'minIntervalMinutes'],
+        ['minimum', 'minIntervalMinutes'],
+        ['max', 'maxIntervalMinutes'],
+        ['maxminutes', 'maxIntervalMinutes'],
+        ['maximum', 'maxIntervalMinutes'],
+        ['chance', 'eventChancePercent'],
+        ['proba', 'eventChancePercent'],
+        ['duree', 'penaltyDurationMinutes'],
+        ['dureeminutes', 'penaltyDurationMinutes'],
+        ['duration', 'penaltyDurationMinutes'],
+        ['rp', 'penalizedRpPercent'],
+        ['xp', 'penalizedXpPercent'],
+        ['stars', 'penalizedStarsPercent'],
+        ['starss', 'penalizedStarsPercent'],
+    ]);
+
+    const lines = String(raw || '').split(/\r?\n/);
+    for (const line of lines) {
+        const t = line.trim();
+        if (!t || t.startsWith('#')) continue;
+
+        const eq = t.match(/^\s*([^:=#]+?)\s*[:=]\s*(.+?)\s*$/);
+        if (!eq) {
+            errors.push(`(avertissement) Ligne ignorée : ${t.slice(0, 60)}`);
+            continue;
+        }
+
+        const rawKey = stripAccents(eq[1].trim().toLowerCase()).replace(/\s+/g, '');
+        const rawVal = eq[2].trim().toLowerCase();
+
+        if (rawKey === 'actif' || rawKey === 'active' || rawKey === 'onoff') {
+            if (['on', '1', 'true', 'oui', 'yes', 'actif', 'active'].includes(rawVal)) {
+                actif = true;
+            } else if (['off', '0', 'false', 'non', 'no', 'inactif', 'desactive', 'désactivé'].includes(rawVal)) {
+                actif = false;
+            } else {
+                errors.push(`Valeur actif invalide : ${eq[2].trim()} (utilise on ou off).`);
+            }
+            continue;
+        }
+
+        const field = keyMap.get(rawKey);
+        if (!field) {
+            errors.push(`(avertissement) Clé inconnue, ignorée : ${eq[1].trim()}`);
+            continue;
+        }
+
+        const num = Number(String(eq[2].trim()).replace(',', '.'));
+        if (!Number.isFinite(num)) {
+            errors.push(`${eq[1].trim()} : nombre invalide`);
+            continue;
+        }
+
+        patch[field] = Math.round(num);
+    }
+
+    return { errors, actif, patch };
+}
+
+function buildModalDefaultText() {
     const s = voiceAfkRuntime.getSnapshot();
-    const off = isVoiceAfkGloballyDisabled();
+    const on = !isVoiceAfkGloballyDisabled();
     return [
-        `**Système :** ${off ? 'désactivé' : 'activé'}`,
-        `**Délai aléatoire :** ${s.minIntervalMinutes}–${s.maxIntervalMinutes} min entre deux créneaux`,
-        `**Chance par créneau :** ${s.eventChancePercent} %`,
-        `**Sanction (échec captcha) :** ${s.penaltyDurationMinutes} min`,
-        `**Gains vocal pendant la sanction :** RP ${s.penalizedRpPercent} % · XP ${s.penalizedXpPercent} % · Stars ${s.penalizedStarsPercent} %`,
-        `_Fichier : \`niveau/voice-afk.runtime.json\`_`,
+        '# Une ligne = clé: valeur. Modifie seulement ce que tu veux.',
+        '# Clés : actif, min, max, chance, duree, rp, xp, stars',
+        '',
+        `actif: ${on ? 'on' : 'off'}`,
+        `min: ${s.minIntervalMinutes}`,
+        `max: ${s.maxIntervalMinutes}`,
+        `chance: ${s.eventChancePercent}`,
+        `duree: ${s.penaltyDurationMinutes}`,
+        `rp: ${s.penalizedRpPercent}`,
+        `xp: ${s.penalizedXpPercent}`,
+        `stars: ${s.penalizedStarsPercent}`,
     ].join('\n');
 }
 
+function buildAntiAfkModal() {
+    const modal = new ModalBuilder().setCustomId(MODAL_CUSTOM_ID).setTitle('Configuration anti-AFK vocal');
+
+    const input = new TextInputBuilder()
+        .setCustomId(TEXT_INPUT_ID)
+        .setLabel('Réglages (lignes clé: valeur)')
+        .setStyle(TextInputStyle.Paragraph)
+        .setRequired(true)
+        .setMaxLength(4000)
+        .setValue(buildModalDefaultText());
+
+    modal.addComponents(new ActionRowBuilder().addComponents(input));
+    return modal;
+}
+
+/**
+ * @param {import('discord.js').ModalSubmitInteraction} interaction
+ */
+async function handleAntiAfkModalSubmit(interaction) {
+    if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
+        await interaction.reply({
+            content: 'Réservé aux administrateurs.',
+            flags: MessageFlags.Ephemeral,
+        });
+        return;
+    }
+
+    const body = interaction.fields.getTextInputValue(TEXT_INPUT_ID);
+    const { errors, actif, patch } = parseAntiAfkModalText(body);
+
+    const blocking = errors.filter((e) => !e.startsWith('(avertissement)'));
+    if (blocking.length > 0) {
+        await interaction.reply({
+            content: `**Impossible d’enregistrer.**\n${blocking.slice(0, 8).map((e) => `• ${e}`).join('\n')}`,
+            flags: MessageFlags.Ephemeral,
+        });
+        return;
+    }
+
+    if (actif !== undefined) {
+        setGloballyDisabled(!actif);
+    }
+
+    if (Object.keys(patch).length > 0) {
+        voiceAfkRuntime.applyRuntimePatch(patch);
+    }
+
+    const s = voiceAfkRuntime.getSnapshot();
+    const off = isVoiceAfkGloballyDisabled();
+    const warn =
+        errors.length > 0
+            ? `\n_Note : ${errors.length} avertissement(s) (lignes ignorées ou clés inconnues)._`
+            : '';
+
+    await interaction.reply({
+        content:
+            `**Anti-AFK enregistré.**\n` +
+            `**Système :** ${off ? 'désactivé' : 'activé'}\n` +
+            `**Délai :** ${s.minIntervalMinutes}–${s.maxIntervalMinutes} min · **Chance :** ${s.eventChancePercent} %\n` +
+            `**Sanction :** ${s.penaltyDurationMinutes} min · **RP/XP/Stars :** ${s.penalizedRpPercent} % / ${s.penalizedXpPercent} % / ${s.penalizedStarsPercent} %${warn}`,
+        flags: MessageFlags.Ephemeral,
+    });
+}
+
 module.exports = {
+    MODAL_CUSTOM_ID,
+    handleAntiAfkModalSubmit,
+
     data: new SlashCommandBuilder()
         .setName('anti-afk')
-        .setDescription('Anti-AFK vocal : activer/désactiver, délai entre checks, et sévérité des sanctions.')
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-        .addSubcommand((sub) =>
-            sub
-                .setName('activation')
-                .setDescription('Coupe ou réactive complètement les captchas aléatoires et la planification.')
-                .addStringOption((option) =>
-                    option
-                        .setName('statut')
-                        .setDescription('Off = plus aucun timer ni captcha.')
-                        .setRequired(true)
-                        .addChoices(
-                            { name: 'Activé (on)', value: 'on' },
-                            { name: 'Désactivé (off)', value: 'off' }
-                        )
-                )
-        )
-        .addSubcommand((sub) =>
-            sub
-                .setName('delai')
-                .setDescription('Temps entre deux tirages aléatoires + optionnellement la probabilité.')
-                .addIntegerOption((o) =>
-                    o
-                        .setName('min_minutes')
-                        .setDescription('Minimum entre deux vérifications')
-                        .setRequired(true)
-                        .setMinValue(5)
-                        .setMaxValue(180)
-                )
-                .addIntegerOption((o) =>
-                    o
-                        .setName('max_minutes')
-                        .setDescription('Maximum (≥ min)')
-                        .setRequired(true)
-                        .setMinValue(5)
-                        .setMaxValue(180)
-                )
-                .addIntegerOption((o) =>
-                    o
-                        .setName('chance_pourcent')
-                        .setDescription('Probabilité à chaque créneau (0–100). Laisser vide = ne pas changer.')
-                        .setRequired(false)
-                        .setMinValue(0)
-                        .setMaxValue(100)
-                )
-        )
-        .addSubcommand((sub) =>
-            sub
-                .setName('sanctions')
-                .setDescription('Durée et % des gains vocal (XP, RP, Stars) après échec au captcha.')
-                .addIntegerOption((o) =>
-                    o
-                        .setName('duree_minutes')
-                        .setDescription('Durée de la pénalité')
-                        .setRequired(true)
-                        .setMinValue(1)
-                        .setMaxValue(1440)
-                )
-                .addIntegerOption((o) =>
-                    o
-                        .setName('rp_pourcent')
-                        .setDescription('% du gain RP vocal habituel (ex. 50 = moitié)')
-                        .setRequired(true)
-                        .setMinValue(0)
-                        .setMaxValue(100)
-                )
-                .addIntegerOption((o) =>
-                    o
-                        .setName('xp_pourcent')
-                        .setDescription('% du gain XP vocal. Vide = garder la valeur actuelle.')
-                        .setRequired(false)
-                        .setMinValue(0)
-                        .setMaxValue(100)
-                )
-                .addIntegerOption((o) =>
-                    o
-                        .setName('stars_pourcent')
-                        .setDescription('% Stars (vocal / cohérence). Vide = garder la valeur actuelle.')
-                        .setRequired(false)
-                        .setMinValue(0)
-                        .setMaxValue(100)
-                )
-        )
-        .addSubcommand((sub) => sub.setName('voir').setDescription('Affiche la configuration en cours.')),
+        .setDescription('Ouvre un formulaire pour configurer l’anti-AFK vocal (délai, sanctions, on/off).')
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
     async execute(interaction) {
-        const sub = interaction.options.getSubcommand();
-
-        if (sub === 'activation') {
-            const status = interaction.options.getString('statut');
-            const turnOff = status === 'off';
-            setGloballyDisabled(turnOff);
-            const nowOff = isVoiceAfkGloballyDisabled();
-            await interaction.reply({
-                content: nowOff
-                    ? '**Anti-AFK vocal désactivé.** Plus de timers ni de captchas. Utilise `/anti-afk activation` → Activé pour réactiver.'
-                    : '**Anti-AFK vocal activé.** La planification aléatoire reprend selon les réglages (`/anti-afk voir`).',
-                flags: MessageFlags.Ephemeral,
-            });
-            return;
-        }
-
-        if (sub === 'delai') {
-            const minM = interaction.options.getInteger('min_minutes', true);
-            const maxM = interaction.options.getInteger('max_minutes', true);
-            const chance = interaction.options.getInteger('chance_pourcent');
-
-            if (minM > maxM) {
-                await interaction.reply({
-                    content: '**Erreur :** `min_minutes` doit être inférieur ou égal à `max_minutes`.',
-                    flags: MessageFlags.Ephemeral,
-                });
-                return;
-            }
-
-            voiceAfkRuntime.setDelai({
-                minMinutes: minM,
-                maxMinutes: maxM,
-                chancePercent: chance,
-            });
-            const s = voiceAfkRuntime.getSnapshot();
-            await interaction.reply({
-                content: `**Délai mis à jour.** Entre **${s.minIntervalMinutes}** et **${s.maxIntervalMinutes}** min · chance **${s.eventChancePercent}** %.`,
-                flags: MessageFlags.Ephemeral,
-            });
-            return;
-        }
-
-        if (sub === 'sanctions') {
-            const duree = interaction.options.getInteger('duree_minutes', true);
-            const rp = interaction.options.getInteger('rp_pourcent', true);
-            const xp = interaction.options.getInteger('xp_pourcent');
-            const stars = interaction.options.getInteger('stars_pourcent');
-
-            voiceAfkRuntime.setSanctions({
-                durationMinutes: duree,
-                rpPercent: rp,
-                xpPercent: xp,
-                starsPercent: stars,
-            });
-            const s = voiceAfkRuntime.getSnapshot();
-            await interaction.reply({
-                content: `**Sanctions mises à jour.** ${s.penaltyDurationMinutes} min · RP **${s.penalizedRpPercent}** % · XP **${s.penalizedXpPercent}** % · Stars **${s.penalizedStarsPercent}** %.`,
-                flags: MessageFlags.Ephemeral,
-            });
-            return;
-        }
-
-        if (sub === 'voir') {
-            await interaction.reply({
-                content: formatVoirLines(),
-                flags: MessageFlags.Ephemeral,
-            });
-        }
+        await interaction.showModal(buildAntiAfkModal());
     },
 };

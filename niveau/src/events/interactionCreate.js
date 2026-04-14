@@ -283,6 +283,20 @@ module.exports = {
                         logger.error('Failed to reply after bug modal error:', replyError.code || replyError.message);
                     }
                 }
+            } else if (interaction.customId === 'anti_afk_config_modal') {
+                const { handleAntiAfkModalSubmit } = require('../commands/admin/anti-afk');
+                try {
+                    await handleAntiAfkModalSubmit(interaction);
+                } catch (error) {
+                    logger.error('Error handling anti-AFK modal:', error);
+                    try {
+                        if (!interaction.replied && !interaction.deferred) {
+                            await interaction.reply({ content: '❌ Erreur enregistrement anti-AFK.', flags: 64 });
+                        }
+                    } catch (replyError) {
+                        logger.error('Failed to reply after anti-AFK modal error:', replyError.code || replyError.message);
+                    }
+                }
             }
             // Ignorer les modals inconnus (rank_*, etc.) - ils sont gérés par les collectors dans les commandes
         } else if (interaction.isUserSelectMenu()) {

@@ -57,6 +57,9 @@ module.exports = {
     PANEL_MESSAGE_ID: '1415380912815865996',
     FLAG_CHANNEL_ID: '1343196193421000704',
     RICHARD_USER_ID: '1222548578539536405',
+    /** Salon texte où poster un embed si deux réponses IA normalisées d’affilée sont identiques (guild 1493276404643532810 par défaut). Vide = pas de notif salon. */
+    DUPLICATE_OUTPUT_LOG_GUILD_ID: process.env.IA_DUPLICATE_LOG_GUILD_ID || '1493276404643532810',
+    DUPLICATE_OUTPUT_LOG_CHANNEL_ID: process.env.IA_DUPLICATE_LOG_CHANNEL_ID || '1493623997986766919',
     CREATE_THREAD_CUSTOM_ID: 'create_private_thread_with_bot',
     CLOSE_THREAD_CUSTOM_ID: 'close_private_thread',
     DELETE_THREAD_CUSTOM_ID: 'delete_private_thread',
