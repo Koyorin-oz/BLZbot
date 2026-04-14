@@ -1137,7 +1137,7 @@ async function queryGroq(messages, attachments = [], injectModelInfo = false, sp
       systemInjection += `\n\nSi la demande est une simple discussion ou un savoir général ancien, n'utilise PAS l'outil.`;
 
       if (injectModelInfo) {
-        systemInjection += `\nTu es actuellement le modèle "${modelName}" (fournisseur: Groq). L'utilisateur Richard (ton créateur) te demande quel modèle tu es. Tu DOIS lui répondre précisément "${modelName} (Groq)".`;
+        systemInjection += `\nTu es actuellement le modèle "${modelName}" (fournisseur: Groq). koyorin_oz (développeur principal) te demande quel modèle tu es. Tu DOIS lui répondre précisément "${modelName} (Groq)".`;
       }
 
       // Injection dans le premier message (System ou User fallback)
