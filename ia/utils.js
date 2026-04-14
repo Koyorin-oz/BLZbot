@@ -2318,7 +2318,7 @@ function extractRawToolCall(content) {
 
   // 2. Format JSON brut: {"name": "...", "parameters": ...}
   try {
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
       // Format standard
