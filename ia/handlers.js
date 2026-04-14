@@ -1347,13 +1347,33 @@ async function handleStreamingResponse(message, modelName, queryFunction, existi
                 utils.deepThinkCache.set(streamMsgId, streamState.thinking);
             }
 
+            if (!String(responseText).replace(/\u200B/g, '').trim()) {
+                try {
+                    await streamReplyMessage.edit({ content: EMPTY_REPLY_FALLBACK, components: [] });
+                } catch { /* ignore */ }
+                return { responseText: null, streamReplyMessage, success: false };
+            }
+
             return { responseText, streamReplyMessage, success: true };
         } else {
+            try {
+                if (streamReplyMessage) {
+                    await streamReplyMessage.edit({ content: EMPTY_REPLY_FALLBACK, components: [] });
+                }
+            } catch { /* ignore */ }
             return { responseText: null, streamReplyMessage, success: false };
         }
     } catch (error) {
         clearInterval(editInterval);
         utils.log(`❌ Error streaming ${modelName}: ${error.message}`);
+        if (streamReplyMessage) {
+            try {
+                await streamReplyMessage.edit({
+                    content: `⚠️ Erreur API (${modelName}). Réessaie dans un instant.`,
+                    components: []
+                });
+            } catch { /* ignore */ }
+        }
         return { responseText: null, streamReplyMessage, success: false };
     }
 }
