@@ -339,17 +339,33 @@ async function runRandomEvent() {
  */
 function start(client) {
     clientInstance = client;
+    if (globallyDisabled) {
+        logger.info(
+            '[VOICE-AFK] Système inactif (VOICE_AFK_DISABLED dans .env ou désactivé avec /anti-afk). Aucune planification.'
+        );
+        return;
+    }
+    if (intervalId !== null) {
+        return;
+    }
     logger.info('[VOICE-AFK] Démarrage du système anti-AFK vocal (RANKED V2)');
     logger.info(`[VOICE-AFK] Intervalle: ${CONFIG.MIN_INTERVAL / 60000}-${CONFIG.MAX_INTERVAL / 60000} min, Chance: ${CONFIG.EVENT_CHANCE * 100}%`);
 
-    // Planifier le premier événement
     const scheduleNextEvent = () => {
+        if (globallyDisabled || intervalId === undefined) {
+            /* intervalId peut être null entre deux ticks ; on ne reschedule pas si désactivé */
+        }
+        if (globallyDisabled) return;
+
         const interval = getRandomInterval();
         logger.debug(`[VOICE-AFK] Prochain check dans ${Math.round(interval / 60000)} minutes`);
 
         intervalId = setTimeout(async () => {
+            intervalId = null;
             await runRandomEvent();
-            scheduleNextEvent(); // Planifier le suivant
+            if (!globallyDisabled && clientInstance) {
+                scheduleNextEvent();
+            }
         }, interval);
     };
 
