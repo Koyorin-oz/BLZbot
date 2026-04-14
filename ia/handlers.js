@@ -1,5 +1,6 @@
 const { MessageFlags, PermissionsBitField, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const config = require('./config.js');
+const blzBotCharacter = require('./blz-character-default.js');
 const utils = require('./utils.js');
 const imageGenerator = require('./imageGenerator.js');
 const { handleAdminRequest } = require('./admin_agent/agent.js');
