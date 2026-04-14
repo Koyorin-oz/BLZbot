@@ -63,7 +63,9 @@ function saveTts(text, filePath) {
  * @returns {number} Intervalle en ms
  */
 function getRandomInterval() {
-    return Math.floor(Math.random() * (CONFIG.MAX_INTERVAL - CONFIG.MIN_INTERVAL + 1)) + CONFIG.MIN_INTERVAL;
+    const min = Math.min(CONFIG.MIN_INTERVAL, CONFIG.MAX_INTERVAL);
+    const max = Math.max(CONFIG.MIN_INTERVAL, CONFIG.MAX_INTERVAL);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 /**
