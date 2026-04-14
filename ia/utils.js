@@ -1374,7 +1374,12 @@ RAPPEL: Tu es BLZbot, pas ChatGPT. Suis les instructions ci-dessus.`;
     } catch (error) {
       const statusCode = error.status || error.statusCode || (error.response && error.response.status);
 
-      if (statusCode === 429) {
+      if (statusCode === 401) {
+        groqAuthRejected = true;
+        log(
+          `❌ Groq 401 (clé refusée) pour ${modelName} — vérifie GROQ_API_KEY dans le .env du process ia (https://console.groq.com/keys), sans espaces ni guillemets en trop.`
+        );
+      } else if (statusCode === 429) {
         log(`⚠️ Quota dépassé (429) pour ${modelName}. Ajout à la liste noire temporaire.`);
         blacklistedModels.add(modelName);
       } else {
@@ -1385,6 +1390,9 @@ RAPPEL: Tu es BLZbot, pas ChatGPT. Suis les instructions ci-dessus.`;
   }
 
   log('❌ Tous les modèles Groq ont échoué');
+  if (groqAuthRejected) {
+    return { content: null, modelUsed: null, groqAuthError: true };
+  }
   return null;
 }
 
