@@ -7,10 +7,10 @@ const { renderDailyCard } = require('../../utils/canvas-daily');
 const { handleCommandError } = require('../../utils/error-handler');
 
 const rewards = [
-    { name: '10 000 Stars', chance: 0.30, type: 'stars', amount: 10000 },
+    { name: '10 000 Starss', chance: 0.30, type: 'stars', amount: 10000 },
     { name: '500 EXP', chance: 0.30, type: 'xp', amount: 500 },
     { name: '500 RP', chance: 0.20, type: 'points', amount: 500 },
-    { name: '25 000 Stars', chance: 0.10, type: 'stars', amount: 25000 },
+    { name: '25 000 Starss', chance: 0.10, type: 'stars', amount: 25000 },
     { name: 'Coffre au trésor', chance: 0.09, type: 'item', itemId: 'coffre_normal' },
     { name: 'Méga coffre au trésor', chance: 0.01, type: 'item', itemId: 'coffre_mega' },
 ];
