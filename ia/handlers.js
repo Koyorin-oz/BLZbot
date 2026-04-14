@@ -523,197 +523,43 @@ async function handleMessageCreate(message, client, activeThreads) {
         ];
         standardConversation.push({ role: "user", content: userPrompt });
 
-        // ITERATION SUR LE TABLEAU ORDONNÉ MODELS
+        // Groq uniquement : parcours du registre MODELS (déjà ordonné, GROQ_MODEL en tête si défini)
         for (const modelConfig of config.MODELS) {
             if (processedWithModel) break;
 
             const modelName = modelConfig.name;
             const provider = modelConfig.provider;
 
-            // Vérifier la disponibilité (blacklist temporaire par modèle — skip les modèles rate-limités)
             if (!utils.checkModelAvailability(modelName)) {
                 continue;
             }
 
-            // Vérifier si Gemini est désactivé globalement pour l'utilisateur
-            if (provider === 'gemini' && enableGemini === false) {
+            if (provider !== 'groq') {
                 continue;
             }
 
             utils.log(`🔄 Tentative modèle: ${modelName} (Provider: ${provider})...`);
 
             try {
-                // --- GEMINI ---
-                if (provider === 'gemini') {
-                    // Gestion Spéciale Quota Gemini 3
-                    if (modelName === 'gemini-3-flash-preview') {
-                        const quotaCheck = utils.checkAndUpdateGemini3FlashQuota(userId);
-                        if (!quotaCheck.allowed) {
-                            utils.log(`ℹ️ Quota Gemini 3 Flash atteint, skip.`);
-                            continue;
-                        }
-                    }
+                const result = await handleStreamingResponse(message, modelName, async (onProgress) => {
+                    return await utils.queryGroq(standardConversation, attachments, richardAskedForModel, modelName, onProgress);
+                }, streamReplyMessage);
 
-                    // Query Gemini
-                    // Note: queryGemini gère "thinking" via utils.js modifié précédemment
-                    let gResponse = await utils.queryGemini(getGeminiPrompt(modelName), modelName, attachments, includeSources, threadHistory);
+                streamReplyMessage = result.streamReplyMessage;
 
-                    if (gResponse) {
-                        aiResponse = gResponse;
-                        usedModelName = modelName;
-                        processedWithModel = true;
-
-                        if (modelName === 'gemini-3-flash-preview') {
-                            utils.markGemini3FlashUsed(userId);
-                            gemini3QuotaMessage = "\n-# vous venez d'utiliser notre modèle le plus performant";
-                        }
-                        utils.log(`✅ Succès Gemini (${modelName})`);
-                    }
+                if (result.success) {
+                    aiResponse = result.responseText;
+                    usedModelName = modelName;
+                    processedWithModel = true;
+                    utils.log(`✅ Succès Groq streaming (${modelName})`);
                 }
-
-                // --- GITHUB ---
-                else if (provider === 'github') {
-                    let currentConversation = [...standardConversation];
-                    if (richardAskedForModel) {
-                        currentConversation.push({
-                            role: "system",
-                            content: `[INFO DEBUG] Tu es actuellement le modèle "${modelName}" (fournisseur: GitHub Models). L'utilisateur Richard (ton créateur) te demande quel modèle tu es. Tu DOIS lui répondre précisément "${modelName} (GitHub Models)".`
-                        });
-                    }
-
-                    const result = await handleStreamingResponse(message, modelName, async (onProgress) => {
-                        return await utils.queryGithub(currentConversation, modelName, onProgress);
-                    }, streamReplyMessage);
-
-                    streamReplyMessage = result.streamReplyMessage;
-
-                    if (result.success) {
-                        aiResponse = result.responseText;
-                        usedModelName = modelName;
-                        processedWithModel = true;
-                        utils.log(`✅ Succès GitHub streaming (${modelName})`);
-                    }
-                }
-
-                // --- SAMBANOVA (STREAMING) ---
-                else if (provider === 'sambanova') {
-                    let currentConversation = [...standardConversation];
-                    if (richardAskedForModel) {
-                        currentConversation.push({ role: "system", content: `[INFO DEBUG] Tu es actuellement le modèle "${modelName}" (fournisseur: SambaNova). L'utilisateur Richard (ton créateur) te demande quel modèle tu es. Tu DOIS lui répondre précisément "${modelName} (SambaNova)".` });
-                    }
-
-                    const result = await handleStreamingResponse(message, modelName, async (onProgress) => {
-                        return await utils.querySambaNova(currentConversation, modelName, onProgress);
-                    }, streamReplyMessage);
-
-                    streamReplyMessage = result.streamReplyMessage;
-
-                    if (result.success) {
-                        aiResponse = result.responseText;
-                        usedModelName = modelName;
-                        processedWithModel = true;
-                        utils.log(`✅ Succès SambaNova streaming (${modelName})`);
-                    }
-                }
-
-                // --- CEREBRAS (STREAMING) ---
-                else if (provider === 'cerebras') {
-                    let currentConversation = [...standardConversation];
-                    if (richardAskedForModel) {
-                        currentConversation.push({ role: "system", content: `[INFO DEBUG] Tu es actuellement le modèle "${modelName}" (fournisseur: Cerebras). L'utilisateur Richard (ton créateur) te demande quel modèle tu es. Tu DOIS lui répondre précisément "${modelName} (Cerebras)".` });
-                    }
-
-                    const result = await handleStreamingResponse(message, modelName, async (onProgress) => {
-                        return await utils.queryCerebras(currentConversation, modelName, onProgress);
-                    }, streamReplyMessage);
-
-                    streamReplyMessage = result.streamReplyMessage;
-
-                    if (result.success) {
-                        aiResponse = result.responseText;
-                        usedModelName = modelName;
-                        processedWithModel = true;
-                        utils.log(`✅ Succès Cerebras streaming (${modelName})`);
-                    }
-                }
-
-                // --- GROQ ---
-                // --- GROQ (STREAMING) ---
-                else if (provider === 'groq') {
-                    // Pour Groq, on appelle queryGroq en spécifiant le modèle exact
-
-                    const result = await handleStreamingResponse(message, modelName, async (onProgress) => {
-                        return await utils.queryGroq(standardConversation, attachments, richardAskedForModel, modelName, onProgress);
-                    }, streamReplyMessage);
-
-                    streamReplyMessage = result.streamReplyMessage;
-
-                    if (result.success) {
-                        aiResponse = result.responseText;
-                        usedModelName = modelName;
-                        processedWithModel = true;
-                        utils.log(`✅ Succès Groq streaming (${modelName})`);
-
-                        // Si le modèle a renvoyé du reasoning via le retour final (cas non-streamé fallback ou structure spéciale)
-                        // on le capture aussi, mais handleStreamingResponse gère déjà le cache.
-                    }
-                }
-
             } catch (err) {
-                // Erreur ponctuelle sur ce modèle
                 utils.log(`❌ Erreur lors de l'exécution de ${modelName}: ${err.message}`);
-                // On continue la boucle vers le prochain modèle
             }
         }
 
-        // --- FALLBACK ULTIME (Si rien n'a fonctionné dans le tableau) ---
         if (!processedWithModel) {
-            utils.log("⚠️ Tous les modèles du tableau ont échoué ou ont été ignorés. Passage aux solutions de secours (OpenRouter -> HF -> AIML).");
-
-            let openRouterConversation = [
-                { role: "system", content: fullSystemPrompt },
-                { role: "user", content: userPrompt }
-            ]; // Simple conversation for OpenRouter fallback cleanup
-
-            if (richardAskedForModel) {
-                openRouterConversation.push({ role: "system", content: `[INFO DEBUG] Tu es actuellement le modèle "opengvlab/internvl3-14b:free" (fournisseur: OpenRouter). L'utilisateur Richard (ton créateur) te demande quel modèle tu es. Tu DOIS lui répondre précisément "opengvlab/internvl3-14b (OpenRouter)".` });
-            }
-
-            aiResponse = await utils.envoyerRequete(openRouterConversation, "opengvlab/internvl3-14b:free");
-            if (aiResponse) {
-                usedModelName = 'opengvlab/internvl3-14b:free';
-                processedWithModel = true;
-            }
-
-            if (!aiResponse) {
-                utils.log("Le modèle OpenRouter a échoué, basculement vers Hugging Face.");
-                if (utils.checkAndUpdateHFQuota(userId)) {
-                    let hfSystemPrompt = fullSystemPrompt;
-                    if (richardAskedForModel) {
-                        hfSystemPrompt += `\n\n[INFO DEBUG] Tu es actuellement le modèle "HuggingFace (Backup - fournisseur: Hugging Face)". Réponds-le à Richard.`;
-                    }
-                    aiResponse = await utils.queryHuggingFace(userPrompt, hfSystemPrompt);
-                    if (aiResponse) {
-                        usedModelName = 'huggingface-backup';
-                        processedWithModel = true;
-                    }
-                }
-            }
-            if (!aiResponse) {
-                utils.log("Le modèle Hugging Face a échoué, basculement vers AIMLapi.");
-                if (utils.checkAndUpdateAimlapiQuota(userId)) {
-                    let aimlSystemPrompt = fullSystemPrompt;
-                    if (richardAskedForModel) {
-                        aimlSystemPrompt += `\n\n[INFO DEBUG] Tu es actuellement le modèle "AIMLapi (Backup - fournisseur: AIMLapi)". Réponds-le à Richard.`;
-                    }
-                    aiResponse = await utils.queryAimapi(userPrompt, aimlSystemPrompt);
-                    if (aiResponse) {
-                        usedModelName = 'aimlapi-backup';
-                        aiResponse += "\n-# le modèle utilisé est un modèle de secours, des limitations sont présentes, vous avez droit à un message par heure.";
-                        processedWithModel = true;
-                    }
-                }
-            }
+            utils.log('⚠️ Tous les modèles Groq ont échoué ou ont été ignorés (pas de secours hors Groq).');
         }
 
 
