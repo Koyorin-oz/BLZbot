@@ -914,8 +914,10 @@ async function handleMessageCreate(message, client, activeThreads) {
             }
         }
 
+        } // fin if (!skipReplyPipeline)
+
         // Lancer l'extraction de faits à long terme en arrière-plan (si assez de contexte)
-        if (threadHistory.length >= 2 || userPrompt.length > 50) {
+        if (!skipReplyPipeline && (threadHistory.length >= 2 || userPrompt.length > 50)) {
             const historyForExtraction = [...threadHistory];
             historyForExtraction.push({ role: 'user', content: userPrompt });
             historyForExtraction.push({ role: 'model', content: responseContent });
