@@ -479,6 +479,7 @@ async function handleMessageCreate(message, client, activeThreads) {
         standardConversation.push({ role: "user", content: userPrompt });
 
         // Groq uniquement : parcours du registre MODELS (déjà ordonné, GROQ_MODEL en tête si défini)
+        let skipReplyPipeline = false;
         for (const modelConfig of config.MODELS) {
             if (processedWithModel) break;
 
@@ -502,6 +503,12 @@ async function handleMessageCreate(message, client, activeThreads) {
 
                 streamReplyMessage = result.streamReplyMessage;
 
+                if (result.skipReplyPipeline) {
+                    skipReplyPipeline = true;
+                    utils.log('🔑 Erreur auth Groq — message utilisateur déjà affiché, pas de secours multi-modèles.');
+                    break;
+                }
+
                 if (result.success) {
                     aiResponse = result.responseText;
                     usedModelName = modelName;
@@ -513,11 +520,11 @@ async function handleMessageCreate(message, client, activeThreads) {
             }
         }
 
-        if (!processedWithModel) {
+        if (!processedWithModel && !skipReplyPipeline) {
             utils.log('⚠️ Tous les modèles Groq ont échoué ou ont été ignorés (pas de secours hors Groq).');
         }
 
-
+        if (!skipReplyPipeline) {
         // Parser la réponse AI - elle peut être JSON structuré ou texte simple
         try {
             if (!aiResponse) {
