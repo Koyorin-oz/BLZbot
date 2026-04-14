@@ -26,6 +26,7 @@ async function getYoutubeStreamForDiscord(watchUrl) {
  */
 function spawnYtdlpWebmOpusStream(watchUrl) {
     const youtubedl = require('youtube-dl-exec');
+    /** tinyspawn : sans `reject: false`, la promesse rejette à la fin du processus → rejection non gérée → crash Node. */
     const subprocess = youtubedl.exec(
         watchUrl,
         {
@@ -38,8 +39,13 @@ function spawnYtdlpWebmOpusStream(watchUrl) {
         },
         {
             windowsHide: true,
+            reject: false,
         }
     );
+
+    void subprocess.catch((err) => {
+        logger.warn('[MUSIC] yt-dlp promesse:', err?.message || err);
+    });
 
     const stream = subprocess.stdout;
     if (!stream) {
