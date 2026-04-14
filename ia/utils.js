@@ -31,7 +31,14 @@ function normalizeOutputForComparison(output) {
     .trim();
 }
 
-// Vérifier si un output est dupliqué et notifier Richard si c'est le cas
+function truncateForEmbedField(text, maxLen = 1000) {
+  if (text == null || text === '') return '—';
+  const s = String(text);
+  if (s.length <= maxLen) return s;
+  return `${s.slice(0, maxLen - 20)}\n… _(tronqué, ${s.length} car.)_`;
+}
+
+// Vérifier si un output est dupliqué et poster un embed dans le salon de log (plus de MP)
 async function checkDuplicateOutput(client, modelName, outputToken, requestContext) {
   if (!outputToken || outputToken.length === 0) return false;
 
@@ -49,60 +56,45 @@ async function checkDuplicateOutput(client, modelName, outputToken, requestConte
   if (isDuplicate) {
     log(`⚠️ [DUPLICATE DETECTION] Doublon détecté! Modèle actuel: ${modelName}, Modèle précédent: ${previousModel}`);
 
-    if (!config.DUPLICATE_OUTPUT_NOTIFY_DM || !config.RICHARD_USER_ID) {
-      return true;
-    }
+    const channelId = config.DUPLICATE_OUTPUT_LOG_CHANNEL_ID;
+    if (channelId) {
+      try {
+        const channel = await client.channels.fetch(channelId).catch(() => null);
+        if (channel && channel.isTextBased()) {
+          const modelConfig = getModelConfig(modelName) || {};
+          const guildLabel = config.DUPLICATE_OUTPUT_LOG_GUILD_ID || '—';
 
-    try {
-      const richard = await client.users.fetch(config.RICHARD_USER_ID);
-      if (richard) {
-        const modelConfig = getModelConfig(modelName) || {};
+          const embed = new EmbedBuilder()
+            .setColor(0xff6b00)
+            .setTitle('⚠️ Doublon de réponse IA')
+            .setDescription(
+              `Le modèle **${modelName}** a renvoyé la **même réponse normalisée** que le message précédent.\n` +
+                `*(Guild log : \`${guildLabel}\` · Salon : \`${channelId}\`)*`
+            )
+            .addFields(
+              { name: 'Modèle actuel', value: truncateForEmbedField(`${modelName} (${modelConfig.provider || 'inconnu'})`, 256), inline: true },
+              { name: 'Modèle précédent', value: truncateForEmbedField(previousModel || 'N/A', 256), inline: true },
+              { name: 'Cutoff', value: truncateForEmbedField(modelConfig.cutoff || 'N/A', 256), inline: true },
+              { name: '📝 Contexte requête (extrait)', value: truncateForEmbedField(requestContext, 1024) },
+              { name: '📤 Output dupliqué (extrait)', value: truncateForEmbedField(outputToken, 1024) }
+            )
+            .setFooter({ text: 'BLZbot · alerte doublon (plus de MP)' })
+            .setTimestamp();
 
-        // Premier MP: l'embed avec les infos du modèle
-        const embed = new EmbedBuilder()
-          .setColor('#FF6B00')
-          .setTitle('⚠️ Détection de doublon de réponse')
-          .setDescription(`Le modèle **${modelName}** a renvoyé exactement la même réponse que la précédente (modèle précédent: ${previousModel || 'N/A'}).`)
-          .addFields(
-            { name: '🤖 Modèle actuel', value: `${modelName} (${modelConfig.provider || 'inconnu'})`, inline: true },
-            { name: '🤖 Modèle précédent', value: previousModel || 'N/A', inline: true },
-            { name: '📅 Cutoff', value: modelConfig.cutoff || 'N/A', inline: true }
-          )
-          .setTimestamp();
-
-        await richard.send({ embeds: [embed] });
-
-        // Fonction helper pour envoyer du texte long en plusieurs MPs
-        const sendLongText = async (title, content) => {
-          const maxChunkSize = 1900; // Laisse de la marge pour le formatage
-          const chunks = [];
-
-          for (let i = 0; i < content.length; i += maxChunkSize) {
-            chunks.push(content.substring(i, i + maxChunkSize));
-          }
-
-          for (let i = 0; i < chunks.length; i++) {
-            const partLabel = chunks.length > 1 ? ` (partie ${i + 1}/${chunks.length})` : '';
-            await richard.send(`**${title}${partLabel}:**\n\`\`\`\n${chunks[i]}\n\`\`\``);
-          }
-        };
-
-        // Envoyer la requête complète
-        await sendLongText('📝 Requête envoyée', requestContext);
-
-        // Envoyer l'output complet
-        await sendLongText('📤 Output dupliqué', outputToken);
-
-        log(`✅ MP envoyé à Richard concernant le doublon de ${modelName}`);
+          await channel.send({ embeds: [embed] });
+          log(`✅ Alerte doublon IA envoyée dans le salon ${channelId}`);
+        } else {
+          log(`⚠️ Salon log doublon IA introuvable ou non texte : ${channelId}`);
+        }
+      } catch (error) {
+        log(`❌ Erreur envoi embed doublon dans le salon : ${error.message}`);
       }
-    } catch (error) {
-      log(`❌ Erreur lors de l'envoi du MP à Richard: ${error.message}`);
     }
 
-    return true; // C'est un doublon
+    return true;
   }
 
-  return false; // Pas un doublon
+  return false;
 }
 
 
