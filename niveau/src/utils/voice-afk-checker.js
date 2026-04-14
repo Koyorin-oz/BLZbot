@@ -283,7 +283,7 @@ async function triggerAfkEvent(channel, targetMember) {
 async function runRandomEvent() {
     if (globallyDisabled) return;
     if (isEventRunning) return;
-    if (Math.random() > CONFIG.EVENT_CHANCE) {
+    if (Math.random() > voiceAfkRuntime.getEventChance()) {
         logger.debug('[VOICE-AFK] Événement ignoré (probabilité)');
         return;
     }
