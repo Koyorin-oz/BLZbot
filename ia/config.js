@@ -104,25 +104,7 @@ IMPORTANT : Si la demande de l'utilisateur ou la réponse que tu pourrais géné
     CLOUDFLARE_API_TOKEN: CLOUDFLARE_API_TOKEN,
     CLOUDFLARE_ACCOUNT_ID: CLOUDFLARE_ACCOUNT_ID,
 
-    // ============================================================================
-    // REGISTRE DES MODÈLES — Groq uniquement (ordre = priorité ; GROQ_MODEL en tête si présent)
-    // ============================================================================
-    MODELS: [
-        // === GROQ ===
-        { name: 'meta-llama/llama-4-maverick-17b-128e-instruct', provider: 'groq', displayName: 'Llama 4 Maverick', cutoff: 'Août 2024', multimodal: true, description: 'Multimodal', includeReplyContext: true },
-        { name: 'meta-llama/llama-4-scout-17b-16e-instruct', provider: 'groq', displayName: 'Llama 4 Scout', cutoff: 'Août 2024', multimodal: true, description: 'Scout', includeReplyContext: true },
-        { name: 'llama-3.3-70b-versatile', provider: 'groq', displayName: 'Llama 3.3 Versatile', cutoff: 'Décembre 2023', multimodal: false, description: 'Versatile', includeReplyContext: true },
-        { name: 'openai/gpt-oss-120b', provider: 'groq', displayName: 'GPT OSS 120B', cutoff: 'Juin 2024', multimodal: false, description: 'Le plus intelligent de la gamme groq', includeReplyContext: true },
-        { name: 'moonshotai/kimi-k2-instruct', provider: 'groq', displayName: 'Kimi K2', cutoff: 'Octobre 2024', multimodal: false, description: 'Modèle chinois long contexte', includeReplyContext: true },
-        { name: 'moonshotai/kimi-k2-instruct-0905', provider: 'groq', displayName: 'Kimi K2 0905', cutoff: 'Octobre 2024', multimodal: false, description: 'Update K2 Octobre', includeReplyContext: true },
-        { name: 'openai/gpt-oss-20b', provider: 'groq', displayName: 'GPT OSS 20B', cutoff: 'Juin 2024', multimodal: false, description: 'Modèle intermédiaire OS', includeReplyContext: true },
-        { name: 'allam-2-7b', provider: 'groq', displayName: 'Allam 2', cutoff: 'Janvier 2024', multimodal: false, description: 'Spécialisé Arabe/Anglais', includeReplyContext: true },
-        { name: 'qwen/qwen3-32b', provider: 'groq', displayName: 'Qwen 3 32B', cutoff: 'Septembre 2024', multimodal: false, description: 'Excellent ratio perf/taille', includeReplyContext: true },
-        { name: 'meta-llama/llama-guard-4-12b', provider: 'groq', displayName: 'Llama Guard 4', cutoff: 'Août 2024', multimodal: false, description: 'Modération de contenu', includeReplyContext: true },
-        { name: 'openai/gpt-oss-safeguard-20b', provider: 'groq', displayName: 'GPT OSS Safeguard', cutoff: 'Juin 2024', multimodal: false, description: 'Sécurité et alignement', includeReplyContext: true },
-        { name: 'canopylabs/orpheus-arabic-saudi', provider: 'groq', displayName: 'Orpheus', cutoff: 'Mars 2024', multimodal: false, description: 'Spécialisé dialecte Saoudien', includeReplyContext: true },
-        { name: 'llama-3.1-8b-instant', provider: 'groq', displayName: 'Llama 3.1 Instant', cutoff: 'Décembre 2023', multimodal: false, description: 'Inférence instantanée', includeReplyContext: true }
-    ],
+    MODELS: prioritizeGroqModel(GROQ_MODELS_LIST, GROQ_DEFAULT_MODEL),
 
     PROVIDER_CONFIG: {},
 
