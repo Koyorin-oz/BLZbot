@@ -1973,8 +1973,8 @@ async function handleSettingsButton(interaction) {
       const helpMessage = `
 **Aide sur les Paramètres :**
 
-* **Modèles Gemini :** Active/désactive l'utilisation prioritaire des modèles Google (Gemini 3 Flash, etc.). Si activé, le bot utilisera automatiquement le meilleur modèle Gemini disponible selon vos quotas journaliers.
-* **Inclure les sources :** Active/désactive l'affichage des liens de citation (sources) dans les réponses.
+* **Groq :** Le bot utilise uniquement l'API Groq (clé \`GROQ_API_KEY\`, modèle \`GROQ_MODEL\`). Ce n'est pas Grok (xAI).
+* **Inclure les sources :** Option héritée ; avec Groq pur, peu d'effet sans recherche web intégrée.
 * **Ajouter une information complémentaire :** Ajoutez jusqu'à 3 faits/préférences (max 100 caractères/info). Ces infos personnalisent les réponses du bot.
 * **Lister/Supprimer infos complémentaires :** Affiche et permet de gérer vos informations enregistrées.
 
