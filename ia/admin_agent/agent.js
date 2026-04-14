@@ -1,4 +1,3 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
 const config = require('../config.js');
 const { toolsDeclaration, toolsImplementation } = require('./tools.js');
 
@@ -14,86 +13,122 @@ TES RÈGLES D'OR :
 NOTE : avant de poser une question tu dois te demander si l'utilisateur te dirait "trouve toi même" qu'est ce que tu trouverais
 Exemple : Si on te demande "Qui est admin ?", ne demande pas "Quel rôle cherchez-vous ?", mais utilise \`get_roles_list\` pour trouver le rôle admin, puis \`get_member_roles\` ou \`get_members_search\` pour trouver les membres.`;
 
-const MODELS = [
-    "gemini-2.0-flash-exp",
-    "gemini-2.0-flash",
-    "gemini-2.5-flash",
-    "gemini-2.5-pro"
-];
+function adminModelChain() {
+    const fromEnv = String(process.env.GROQ_ADMIN_MODEL || '').trim();
+    const chain = [
+        fromEnv,
+        'llama-3.3-70b-versatile',
+        config.GROQ_DEFAULT_MODEL,
+        'llama-3.1-8b-instant',
+    ].filter(Boolean);
+    return [...new Set(chain)];
+}
+
+const groqToolSpecs = toolsDeclaration.map((t) => ({
+    type: 'function',
+    function: {
+        name: t.name,
+        description: t.description,
+        parameters:
+            t.parameters && typeof t.parameters === 'object'
+                ? t.parameters
+                : { type: 'object', properties: {} },
+    },
+}));
+
+let lastAdminGroqAt = 0;
+
+async function adminGroqCooldown() {
+    const ms = config.GROQ_COOLDOWN_MS || 0;
+    if (ms <= 0 || !config.groq) return;
+    const now = Date.now();
+    const wait = lastAdminGroqAt + ms - now;
+    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+    lastAdminGroqAt = Date.now();
+}
+
+function historyToOpenAI(historyGemini) {
+    return historyGemini.map((h) => ({
+        role: h.role === 'model' ? 'assistant' : 'user',
+        content: (h.parts && h.parts.map((p) => p.text).join('\n')) || '',
+    }));
+}
 
 async function fetchHistory(channel, client, limit = 20) {
     try {
         const messages = await channel.messages.fetch({ limit });
         const history = [];
 
-        // Iterate in reverse (oldest to newest)
         const sortedMessages = Array.from(messages.values()).reverse();
 
         for (const msg of sortedMessages) {
-            // Filter: User '+' commands (or after mention) OR Bot responses
-            const isUserCommand = msg.author.id !== client.user.id && (msg.content.includes('+') || msg.mentions.has(client.user));
+            const isUserCommand =
+                msg.author.id !== client.user.id &&
+                (msg.content.includes('+') || msg.mentions.has(client.user));
             const isBotResponse = msg.author.id === client.user.id;
 
             if (isUserCommand) {
-                // Extract prompt if it's a command
                 const mentionRegex = new RegExp(`<@!?${client.user.id}>`, 'g');
-                const contentWithoutMention = msg.content.replace(mentionRegex, "").trim();
+                const contentWithoutMention = msg.content.replace(mentionRegex, '').trim();
                 const plusIndex = contentWithoutMention.indexOf('+');
 
                 if (plusIndex !== -1) {
-                    history.push({ role: "user", parts: [{ text: contentWithoutMention.substring(plusIndex + 1).trim() }] });
+                    history.push({
+                        role: 'user',
+                        parts: [{ text: contentWithoutMention.substring(plusIndex + 1).trim() }],
+                    });
                 }
             } else if (isBotResponse) {
                 if (msg.content) {
-                    history.push({ role: "model", parts: [{ text: msg.content }] });
+                    history.push({ role: 'model', parts: [{ text: msg.content }] });
                 }
             }
         }
 
-        // Keep last 6 turns (3 exchanges)
         let slicedHistory = history.slice(-6);
 
-        // Ensure the first message is from 'user'
-        while (slicedHistory.length > 0 && slicedHistory[0].role !== "user") {
+        while (slicedHistory.length > 0 && slicedHistory[0].role !== 'user') {
             slicedHistory.shift();
         }
 
         return slicedHistory;
     } catch (error) {
-        console.error("[AdminAgent] Error fetching history:", error);
+        console.error('[AdminAgent] Error fetching history:', error);
         return [];
     }
 }
 
 async function handleAdminRequest(message, client) {
-    // Extract prompt: Remove mention, find '+', take everything after
     const mentionRegex = new RegExp(`<@!?${client.user.id}>`, 'g');
-    const contentWithoutMention = message.content.replace(mentionRegex, "").trim();
+    const contentWithoutMention = message.content.replace(mentionRegex, '').trim();
 
-    let prompt = "";
+    let prompt = '';
     const plusIndex = contentWithoutMention.indexOf('+');
 
     if (plusIndex !== -1) {
         prompt = contentWithoutMention.substring(plusIndex + 1).trim();
     }
 
-    if (!prompt) return message.reply("Veuillez entrer une commande après le '+'.");
+    if (!prompt) return message.reply('Veuillez entrer une commande après le \'+\'.');
 
     const guild = message.guild;
-    if (!guild) return message.reply("Cette commande ne peut être utilisée que sur un serveur.");
+    if (!guild) return message.reply('Cette commande ne peut être utilisée que sur un serveur.');
+
+    if (!config.groq) {
+        return message.reply(
+            'Groq non configuré : définissez GROQ_API_KEY (https://console.groq.com/keys — ne pas confondre avec Grok/xAI).'
+        );
+    }
 
     await message.channel.sendTyping();
 
-    // Fetch history
     const history = await fetchHistory(message.channel, client);
 
-    // Add user context
     const userContext = `Tu parles avec ${message.author.tag} (ID: ${message.author.id})`;
 
     let lastError = null;
     let hasReplied = false;
 
-    // Smart Reply function
     const smartReply = async (content, options = {}) => {
         let payload = {};
         if (typeof content === 'string') {
@@ -102,9 +137,8 @@ async function handleAdminRequest(message, client) {
             payload = { ...content, ...options };
         }
 
-        let text = payload.content || "";
+        let text = payload.content || '';
 
-        // Sanitize mentions (Prevent pings)
         text = text.replace(/@/g, '@.');
         payload.content = text;
 
@@ -140,113 +174,103 @@ async function handleAdminRequest(message, client) {
                 }
             }
             return;
-        } else {
-            if (!hasReplied) {
-                hasReplied = true;
-                return await message.reply(payload);
-            } else {
-                return await message.channel.send(payload);
-            }
         }
+        if (!hasReplied) {
+            hasReplied = true;
+            return await message.reply(payload);
+        }
+        return await message.channel.send(payload);
     };
 
-    for (const modelName of MODELS) {
+    const openAiHistory = historyToOpenAI(history);
+    const baseMessages = [
+        { role: 'system', content: `${SYSTEM_PROMPT}\n${userContext}` },
+        ...openAiHistory,
+        { role: 'user', content: prompt },
+    ];
+
+    for (const modelName of adminModelChain()) {
         try {
-            console.log(`[AdminAgent] Tentative avec le modèle: ${modelName}`);
+            console.log(`[AdminAgent] Groq — modèle: ${modelName}`);
 
-            // Initialize Gemini Model with Tools
-            const genAI = new GoogleGenerativeAI(config.GEMINI_API_KEY);
-            const model = genAI.getGenerativeModel({
-                model: modelName,
-                tools: [{ functionDeclarations: toolsDeclaration }],
-                systemInstruction: SYSTEM_PROMPT + "\n" + userContext
-            });
-
-            const chat = model.startChat({
-                history: history
-            });
-
-            let result = await chat.sendMessage(prompt);
-            let response = await result.response;
-            let text = response.text();
-            let functionCalls = response.functionCalls();
-
-            // Safety loop limit
+            const working = baseMessages.map((m) => ({ ...m }));
             let loopCount = 0;
             const MAX_LOOPS = 10;
 
             while (loopCount < MAX_LOOPS) {
                 loopCount++;
+                await adminGroqCooldown();
 
-                // If no function calls, break the loop
-                if (!functionCalls || functionCalls.length === 0) {
-                    break;
+                const completion = await config.groq.chat.completions.create({
+                    model: modelName,
+                    messages: working,
+                    tools: groqToolSpecs,
+                    tool_choice: 'auto',
+                });
+
+                const msg = completion.choices[0]?.message;
+                if (!msg) break;
+
+                const toolCalls = msg.tool_calls;
+                if (!toolCalls || toolCalls.length === 0) {
+                    if (msg.content) await smartReply(msg.content);
+                    return;
                 }
 
-                const nativeResponses = [];
+                working.push({
+                    role: 'assistant',
+                    content: msg.content || null,
+                    tool_calls: toolCalls,
+                });
 
-                // Execute Native Calls
-                for (const call of functionCalls) {
-                    const name = call.name;
-                    const args = call.args;
-                    console.log(`[AdminAgent] Calling native tool: ${name}`, args);
-
-                    if (toolsImplementation[name]) {
-                        try {
-                            const output = await toolsImplementation[name]({ client, guild, message, smartReply }, args);
-                            nativeResponses.push({
-                                functionResponse: {
-                                    name: name,
-                                    response: { result: output }
-                                }
-                            });
-                        } catch (error) {
-                            console.error(`[AdminAgent] Error in native tool ${name}:`, error);
-                            nativeResponses.push({
-                                functionResponse: {
-                                    name: name,
-                                    response: { error: error.message }
-                                }
-                            });
-                        }
-                    } else {
-                        nativeResponses.push({
-                            functionResponse: {
-                                name: name,
-                                response: { error: "Tool not implemented" }
-                            }
-                        });
-                    }
-                }
-
-                // Send outputs back to model
-                if (text) await smartReply(text);
+                if (msg.content) await smartReply(msg.content);
                 await message.channel.sendTyping();
 
-                if (nativeResponses.length > 0) {
-                    result = await chat.sendMessage(nativeResponses);
-                    response = await result.response;
-                    text = response.text();
-                    functionCalls = response.functionCalls();
-                } else {
-                    break;
+                for (const tc of toolCalls) {
+                    const name = tc.function.name;
+                    let args = {};
+                    try {
+                        args = JSON.parse(tc.function.arguments || '{}');
+                    } catch (_) {
+                        args = {};
+                    }
+                    console.log(`[AdminAgent] tool: ${name}`, args);
+
+                    let payload;
+                    if (toolsImplementation[name]) {
+                        try {
+                            const output = await toolsImplementation[name](
+                                { client, guild, message, smartReply },
+                                args
+                            );
+                            payload = { result: output };
+                        } catch (error) {
+                            console.error(`[AdminAgent] Error in tool ${name}:`, error);
+                            payload = { error: error.message };
+                        }
+                    } else {
+                        payload = { error: 'Tool not implemented' };
+                    }
+
+                    working.push({
+                        role: 'tool',
+                        tool_call_id: tc.id,
+                        content: JSON.stringify(payload),
+                    });
                 }
             }
 
-            if (text) {
-                await smartReply(text);
-            }
-
-            return;
-
+            console.warn(`[AdminAgent] Boucle outil max atteinte pour ${modelName}, modèle suivant…`);
         } catch (error) {
-            console.error(`[AdminAgent] Erreur avec le modèle ${modelName}:`, error.message);
+            console.error(`[AdminAgent] Erreur avec ${modelName}:`, error.message);
             lastError = error;
         }
     }
 
-    console.error("[AdminAgent] Tous les modèles ont échoué.");
-    await smartReply(`Désolé, impossible de traiter votre demande. Tous les modèles d'IA sont indisponibles ou ont rencontré une erreur.\nDernière erreur: ${lastError?.message}`);
+    console.error('[AdminAgent] Tous les modèles Groq ont échoué.');
+    await smartReply(
+        `Désolé, impossible de traiter votre demande. Tous les modèles Groq ont échoué.\nDernière erreur: ${lastError?.message || 'inconnue'}`
+    );
 }
 
 module.exports = { handleAdminRequest };
