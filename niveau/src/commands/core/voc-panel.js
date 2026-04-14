@@ -12,9 +12,11 @@ module.exports = {
         .addChannelOption((opt) =>
             opt
                 .setName('vocal')
-                .setDescription('Le salon vocal privé à contrôler')
+                .setDescription(
+                    'Optionnel : un salon précis (créateur/staff). Sans ça : chacun ouvre le panneau de **son** salon.'
+                )
                 .addChannelTypes(ChannelType.GuildVoice)
-                .setRequired(true)
+                .setRequired(false)
         ),
 
     async execute(interaction) {

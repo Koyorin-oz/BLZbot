@@ -1,6 +1,10 @@
 const { SlashCommandBuilder, ChannelType } = require('discord.js');
 const { buildPrivateVoicePanelPayload } = require('../../utils/voice-room-panel');
-const { getPrivateRoomVoiceMeta, resolvePrivateRoomConfig } = require('../../utils/private-voice-rooms');
+const {
+    getPrivateRoomVoiceMeta,
+    resolvePrivateRoomConfig,
+    ensureSessions,
+} = require('../../utils/private-voice-rooms');
 
 module.exports = {
     data: new SlashCommandBuilder()
