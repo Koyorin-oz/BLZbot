@@ -114,7 +114,37 @@ function checkModelAvailability(modelName) {
 
 const log = (message) => { const timestamp = new Date().toISOString(); console.log(`[${timestamp}] ${message}`); };
 
-// Placeholder to ensure I can read the file around here if needed
+let lastGroqApiCallAt = 0;
+
+async function applyGroqCooldown() {
+  const ms = config.GROQ_COOLDOWN_MS || 0;
+  if (ms <= 0 || !config.groq) return;
+  const now = Date.now();
+  const wait = lastGroqApiCallAt + ms - now;
+  if (wait > 0) {
+    await new Promise((r) => setTimeout(r, wait));
+  }
+  lastGroqApiCallAt = Date.now();
+}
+
+/** Texte brut via Groq (résumés, extraction JSON) — utilise GROQ_MODEL. */
+async function groqSimpleText(userContent, options = {}) {
+  if (!config.groq) return null;
+  const model = options.model || config.GROQ_DEFAULT_MODEL;
+  try {
+    await applyGroqCooldown();
+    const res = await config.groq.chat.completions.create({
+      model,
+      messages: [{ role: 'user', content: userContent }],
+      temperature: options.temperature ?? 0.3,
+      max_tokens: options.max_tokens ?? 2048,
+    });
+    return res.choices[0]?.message?.content ?? null;
+  } catch (e) {
+    log(`groqSimpleText: ${e.message || e}`);
+    return null;
+  }
+}
 
 
 const USER_SETTINGS_FILE = path.join(process.cwd(), 'user_settings.json');
