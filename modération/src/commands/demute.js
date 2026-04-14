@@ -15,9 +15,9 @@ module.exports = {
 
     async execute(interaction, { dbManager }) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
-            return interaction.reply({ 
-                content: '❌ Vous n\'avez pas la permission d\'utiliser cette commande.', 
-                ephemeral: true 
+            return interaction.reply({
+                content: '❌ Vous n\'avez pas la permission d\'utiliser cette commande.',
+                flags: MessageFlags.Ephemeral,
             });
         }
 

@@ -625,12 +625,7 @@ function registerClientReady(client, { isHalloweenActive }) {
 
     // --- Application des pénalités de sureffectif (tous les jours à minuit Paris) ---
     function scheduleOverstaffPenalties() {
-        const now = new Date();
-        const parisTimeStr = now.toLocaleString('en-US', { timeZone: 'Europe/Paris' });
-        const parisNow = new Date(parisTimeStr);
-        const parisMidnight = new Date(parisTimeStr);
-        parisMidnight.setHours(24, 0, 0, 0);
-        const msUntilMidnight = parisMidnight.getTime() - parisNow.getTime();
+        const msUntilMidnight = msUntilNextMidnightParis();
 
         setTimeout(() => {
             logger.info('⚠️ Minuit (Paris) ! Application des pénalités de sureffectif...');
