@@ -195,7 +195,7 @@ async function triggerAfkEvent(channel, targetMember) {
 
         // Envoyer le premier rappel immédiatement
         await sendReminder();
-        reminderIntervalId = setInterval(sendReminder, CONFIG.REMINDER_INTERVAL);
+        reminderIntervalId = setInterval(sendReminder, STATIC_CONFIG.REMINDER_INTERVAL);
 
         // Collecter la réponse
         const result = await new Promise(resolve => {
