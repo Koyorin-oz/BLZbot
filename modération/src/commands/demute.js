@@ -25,7 +25,20 @@ module.exports = {
         const membre = await interaction.guild.members.fetch(utilisateur.id).catch(() => null);
 
         if (!membre) {
-            return interaction.reply({ content: '❌ Membre introuvable.', ephemeral: true });
+            return interaction.reply({ content: '❌ Membre introuvable.', flags: MessageFlags.Ephemeral });
+        }
+
+        const me = interaction.guild.members.me;
+        if (
+            me &&
+            membre.roles.highest.position >= me.roles.highest.position &&
+            interaction.guild.ownerId !== me.id
+        ) {
+            return interaction.reply({
+                content:
+                    '❌ Je ne peux pas lever le timeout : ce membre a un rôle supérieur ou égal au mien. Placez le rôle du bot plus haut.',
+                flags: MessageFlags.Ephemeral,
+            });
         }
 
         try {
