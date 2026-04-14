@@ -1490,6 +1490,7 @@ async function callGroqCompound(originalMessages) {
           requestConfig.tool_choice = "auto";
         }
 
+        await applyGroqCooldown();
         const result = await config.groq.chat.completions.create(requestConfig, options);
         const choice = result.choices[0];
         const content = choice?.message?.content || "";
