@@ -1356,6 +1356,11 @@ async function handleStreamingResponse(message, modelName, queryFunction, existi
 
         clearInterval(editInterval);
 
+        // queryGroq renvoie { content, modelUsed } en succès — extraire la chaîne pour la suite
+        if (responseText && typeof responseText === 'object' && typeof responseText.content === 'string') {
+            responseText = responseText.content;
+        }
+
         if (responseText) {
             // Nettoyage final des tags <think> et mise à jour du cache
             const thinkRegex = /<think>([\s\S]*?)<\/redacted_thinking>/i;
