@@ -5,6 +5,7 @@ const {
     resolvePrivateRoomConfig,
     ensureSessions,
 } = require('../../utils/private-voice-rooms');
+const { canUseVoicePanel } = require('../../utils/voice-room-panel-handler');
 
 module.exports = {
     data: new SlashCommandBuilder()
