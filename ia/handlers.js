@@ -1325,54 +1325,49 @@ async function handleStreamingResponse(message, modelName, queryFunction, existi
     let lastEditContent = '';
     let responseText = null;
 
+    const inThinkingBlock = () =>
+        streamState.isThinking ||
+        ((streamState.content || '').includes('<redacted_thinking>') &&
+            !(streamState.content || '').includes('</redacted_thinking>'));
+
     const tickStreamEdit = async () => {
-        // Si terminé, on arrête d'éditer via l'intervalle
         if (streamState.done) return;
 
-        // Préparer le contenu à afficher
-        let visibleContent = streamState.content.trim();
-        let displayContent = '';
+        const visibleContent = (streamState.content || '').trim();
+        const thinking = inThinkingBlock();
 
-        // Gestion du statut "Thinking" (DeepSeek R1, etc.)
-        if (streamState.isThinking || (streamState.content.includes('<think>') && !streamState.content.includes('</think>'))) {
-            displayContent = '🧠 En réflexion...';
-        } else if (visibleContent) {
-            displayContent = visibleContent;
-        } else {
-            displayContent = '⏳ Génération en cours...';
-        }
+        if (!thinking && !visibleContent) return;
 
-        // Ajouter le curseur clignotant
-        displayContent += ' ▌';
+        const displayContent = thinking ? '🧠' : visibleContent;
 
         if (displayContent !== lastEditContent) {
             try {
-                // On tente d'éditer
-                await streamReplyMessage.edit({
-                    content: displayContent,
-                    components: streamState.isThinking ? [
-                        new ActionRowBuilder().addComponents(
-                            new ButtonBuilder()
-                                .setCustomId('thinking_placeholder')
-                                .setLabel('Réflexion en cours...')
-                                .setStyle(ButtonStyle.Secondary)
-                                .setDisabled(true)
-                        )
-                    ] : []
-                });
+                await streamReplyMessage.edit({ content: displayContent, components: [] });
                 lastEditContent = displayContent;
             } catch (e) {
-                // Ignore edit errors (message deleted, etc.)
+                /* ignore */
             }
         }
     };
 
-    void tickStreamEdit();
-    const editInterval = setInterval(tickStreamEdit, config.IA_STREAM_EDIT_INTERVAL_MS || 550);
+    const editMs = config.IA_STREAM_EDIT_INTERVAL_MS || 300;
+    let primedFirstEdit = false;
+    const editInterval = setInterval(tickStreamEdit, editMs);
 
     try {
         responseText = await queryFunction(async (progress) => {
             streamState = progress;
+            if (progress.done) return;
+            const v = (progress.content || '').trim();
+            const th =
+                progress.isThinking ||
+                (progress.content &&
+                    progress.content.includes('<redacted_thinking>') &&
+                    !progress.content.includes('</redacted_thinking>'));
+            if (!primedFirstEdit && (v.length > 0 || th)) {
+                primedFirstEdit = true;
+                void tickStreamEdit();
+            }
         });
 
         clearInterval(editInterval);
