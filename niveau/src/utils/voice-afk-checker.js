@@ -429,6 +429,8 @@ async function triggerManualAfk(client, userId) {
 module.exports = {
     start,
     stop,
+    setGloballyDisabled,
+    isVoiceAfkGloballyDisabled,
     triggerAfkEvent,
     triggerManualAfk,
     CONFIG
