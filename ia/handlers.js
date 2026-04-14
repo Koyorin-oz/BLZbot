@@ -38,6 +38,16 @@ function inferReasonableImageRequest(userText) {
     return t.replace(/<@!?\d+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 700);
 }
 
+const EMPTY_REPLY_FALLBACK =
+    '⚠️ Réponse vide du modèle — réessaie ou reformule ta question.';
+
+function ensureReplyBody(s) {
+    if (s == null || s === undefined) return EMPTY_REPLY_FALLBACK;
+    const str = String(s);
+    if (str.replace(/\u200B/g, '').trim().length > 0) return str;
+    return EMPTY_REPLY_FALLBACK;
+}
+
 async function handleMessageCreate(message, client, activeThreads) {
     if (message.author.bot) return;
     if (!message.guild) return;
