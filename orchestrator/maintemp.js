@@ -71,7 +71,7 @@ const SCRIPT_REGISTRY = [
   { key: 'moderation', name: 'modération/index.js', description: 'Modération V5', status: 'inactive' },
   { key: 'niveau', name: 'niveau/src/index.js', description: 'Bot principal (niveaux, économie)', status: 'inactive' },
   { key: 'linkscanner', name: 'workers/linkScanner.js', description: 'Scan des liens (2e session même token)', status: 'inactive' },
-  { key: 'ia', name: 'ia/index.js', description: 'Module IA (GEMINI_API_KEY requis)', status: 'inactive' },
+  { key: 'ia', name: 'ia/index.js', description: 'Module IA (GROQ_API_KEY requis)', status: 'inactive' },
   { key: 'bug', name: 'workers/Bug.js', description: 'Commande /bug (2e session même token)', status: 'inactive' },
 ];
 
