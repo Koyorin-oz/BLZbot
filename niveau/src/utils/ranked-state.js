@@ -5,6 +5,7 @@
 
 const logger = require('./logger');
 const { economyGuildId, voiceTrackingKey } = require('./economy-scope');
+const voiceAfkRuntime = require('./voice-afk-runtime');
 
 // Map des utilisateurs pénalisés: clé (guilde:user ou user seul) -> { expireAt, reason }
 const penalizedUsers = new Map();
