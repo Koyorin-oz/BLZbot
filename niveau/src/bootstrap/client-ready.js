@@ -239,20 +239,7 @@ function registerClientReady(client, { isHalloweenActive }) {
     const { applyDailyIncome } = require('../utils/guild/guild-treasury');
 
     function scheduleMidnightTreasuryIncome() {
-        // Calculer minuit en heure de Paris (Europe/Paris)
-        const now = new Date();
-
-        // Obtenir l'heure actuelle à Paris
-        const parisTimeStr = now.toLocaleString('en-US', { timeZone: 'Europe/Paris' });
-        const parisNow = new Date(parisTimeStr);
-
-        // Calculer le prochain minuit à Paris
-        const parisMidnight = new Date(parisTimeStr);
-        parisMidnight.setHours(24, 0, 0, 0);
-
-        // Calculer la différence en ms
-        const msUntilMidnight = parisMidnight.getTime() - parisNow.getTime();
-
+        const msUntilMidnight = msUntilNextMidnightParis();
         const hoursRemaining = Math.floor(msUntilMidnight / 1000 / 60 / 60);
         const minutesRemaining = Math.floor((msUntilMidnight / 1000 / 60) % 60);
 
