@@ -574,7 +574,7 @@ async function handleMessageCreate(message, client, activeThreads) {
                 // Si c'est une chaîne, essayer de la parser comme JSON
                 if (typeof aiResponse === 'string') {
                     // 1. Détection et extraction des balises <think> (AVANT le JSON)
-                    const thinkRegex = /<think>([\s\S]*?)<\/think>/i;
+                    const thinkRegex = /<think>([\s\S]*?)<\/redacted_thinking>/i;
                     const thinkMatch = aiResponse.match(thinkRegex);
                     if (thinkMatch) {
                         hasThoughts = true;
@@ -641,7 +641,7 @@ async function handleMessageCreate(message, client, activeThreads) {
                     responseContent = parsedResponse || "Une erreur est survenue lors de la requête API.";
 
                     // Détection des balises <think> (pour les modèles comme GPT-5 ou DeepSeek qui raisonnent dans le texte)
-                    const thinkRegex = /<think>([\s\S]*?)<\/think>/i;
+                    const thinkRegex = /<think>([\s\S]*?)<\/redacted_thinking>/i;
                     const thinkMatch = responseContent.match(thinkRegex);
                     if (thinkMatch) {
                         hasThoughts = true;
@@ -1355,7 +1355,7 @@ async function handleStreamingResponse(message, modelName, queryFunction, existi
 
         if (responseText) {
             // Nettoyage final des tags <think> et mise à jour du cache
-            const thinkRegex = /<think>([\s\S]*?)<\/think>/i;
+            const thinkRegex = /<think>([\s\S]*?)<\/redacted_thinking>/i;
             if (thinkRegex.test(responseText)) {
                 const thinkMatch = responseText.match(thinkRegex);
                 if (thinkMatch) {
