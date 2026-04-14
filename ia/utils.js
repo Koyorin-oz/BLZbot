@@ -1,12 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
-// Gemini image generation (preferred)
-const { GoogleGenAI, Modality } = require('@google/genai');
-// const imageGenerator = require('./imageGenerator.js'); // Gemini removed
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, TextInputBuilder, TextInputStyle, ModalBuilder, MessageFlags, TextDisplayBuilder, SectionBuilder, ContainerBuilder, ChannelType, ThreadAutoArchiveDuration } = require('discord.js');
 const config = require('./config.js');
-const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold, SchemaType } = require('@google/generative-ai');
 
 let userSettings = {};
 let quotas = {};
