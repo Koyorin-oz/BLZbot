@@ -10,8 +10,9 @@ const gtts = require('gtts');
 const fs = require('fs');
 const path = require('path');
 const logger = require('./logger');
-const { penalizeUser, DEFAULT_PENALTY_DURATION } = require('./ranked-state');
+const { penalizeUser } = require('./ranked-state');
 const { runWithEconomyGuild } = require('./economy-scope');
+const voiceAfkRuntime = require('./voice-afk-runtime');
 
 function envDisablesVoiceAfk(v) {
     return ['1', 'true', 'yes', 'on'].includes(String(v ?? '').trim().toLowerCase());
@@ -20,13 +21,10 @@ function envDisablesVoiceAfk(v) {
 /** Désactivé au boot si `VOICE_AFK_DISABLED=1` (ou true/yes/on), ou via `/anti-afk`. */
 let globallyDisabled = envDisablesVoiceAfk(process.env.VOICE_AFK_DISABLED);
 
-// Configuration
-const CONFIG = {
-    MIN_INTERVAL: 15 * 60 * 1000, // 15 minutes minimum
-    MAX_INTERVAL: 30 * 60 * 1000, // 30 minutes maximum
-    EVENT_CHANCE: 0.5, // 50% de chance de se déclencher
-    TOTAL_CAPTCHA_TIME: 90 * 1000, // 90 secondes au total
-    REMINDER_INTERVAL: 30 * 1000, // Rappel toutes les 30 secondes
+// Constantes UI captcha (non exposées dans /anti-afk)
+const STATIC_CONFIG = {
+    TOTAL_CAPTCHA_TIME: 90 * 1000,
+    REMINDER_INTERVAL: 30 * 1000,
     CODE_LENGTH: 5,
     TTS_DIR: path.join(__dirname, '../../tts-temp')
 };
@@ -70,9 +68,9 @@ function saveTts(text, filePath) {
  * @returns {number} Intervalle en ms
  */
 function getRandomInterval() {
-    const min = Math.min(CONFIG.MIN_INTERVAL, CONFIG.MAX_INTERVAL);
-    const max = Math.max(CONFIG.MIN_INTERVAL, CONFIG.MAX_INTERVAL);
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+    const minMs = Math.min(voiceAfkRuntime.getMinIntervalMs(), voiceAfkRuntime.getMaxIntervalMs());
+    const maxMs = Math.max(voiceAfkRuntime.getMinIntervalMs(), voiceAfkRuntime.getMaxIntervalMs());
+    return Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
 }
 
 /**
@@ -94,14 +92,14 @@ async function triggerAfkEvent(channel, targetMember) {
     isEventRunning = true;
     logger.info(`[VOICE-AFK] Déclenchement du captcha dans "${channel.name}" pour ${targetMember.user.username}`);
 
-    const code = generateRandomCode(CONFIG.CODE_LENGTH);
+    const code = generateRandomCode(STATIC_CONFIG.CODE_LENGTH);
     const codeSpaced = code.split('').join(' '); // Pour le TTS
 
     // Assurer que le dossier TTS existe
-    if (!fs.existsSync(CONFIG.TTS_DIR)) {
-        fs.mkdirSync(CONFIG.TTS_DIR, { recursive: true });
+    if (!fs.existsSync(STATIC_CONFIG.TTS_DIR)) {
+        fs.mkdirSync(STATIC_CONFIG.TTS_DIR, { recursive: true });
     }
-    const ttsFilePath = path.join(CONFIG.TTS_DIR, `afk-captcha-${Date.now()}.mp3`);
+    const ttsFilePath = path.join(STATIC_CONFIG.TTS_DIR, `afk-captcha-${Date.now()}.mp3`);
 
     let connection = null;
     let hasResponded = false;
@@ -146,7 +144,7 @@ async function triggerAfkEvent(channel, targetMember) {
             await textChannel.send(initialMessage);
         }
 
-        let timeLeft = CONFIG.TOTAL_CAPTCHA_TIME;
+        let timeLeft = STATIC_CONFIG.TOTAL_CAPTCHA_TIME;
 
         // Fonction pour envoyer un rappel
         const sendReminder = async () => {
@@ -189,7 +187,7 @@ async function triggerAfkEvent(channel, targetMember) {
                 logger.error('[VOICE-AFK] Erreur lors du rappel TTS:', err);
             }
 
-            timeLeft -= CONFIG.REMINDER_INTERVAL;
+            timeLeft -= STATIC_CONFIG.REMINDER_INTERVAL;
             if (timeLeft <= 0 && reminderIntervalId) {
                 clearInterval(reminderIntervalId);
             }
@@ -197,7 +195,7 @@ async function triggerAfkEvent(channel, targetMember) {
 
         // Envoyer le premier rappel immédiatement
         await sendReminder();
-        reminderIntervalId = setInterval(sendReminder, CONFIG.REMINDER_INTERVAL);
+        reminderIntervalId = setInterval(sendReminder, STATIC_CONFIG.REMINDER_INTERVAL);
 
         // Collecter la réponse
         const result = await new Promise(resolve => {
@@ -208,7 +206,7 @@ async function triggerAfkEvent(channel, targetMember) {
 
             const collector = textChannel.createMessageCollector({
                 filter: m => m.author.id === targetMember.id,
-                time: CONFIG.TOTAL_CAPTCHA_TIME,
+                time: STATIC_CONFIG.TOTAL_CAPTCHA_TIME,
             });
 
             collector.on('collect', async msg => {
@@ -231,12 +229,16 @@ async function triggerAfkEvent(channel, targetMember) {
 
                     // Appliquer la pénalité
                     try {
+                        const penaltyMs = voiceAfkRuntime.getPenaltyDurationMs();
+                        const s = voiceAfkRuntime.getSnapshot();
                         runWithEconomyGuild(targetMember.guild.id, () =>
-                            penalizeUser(targetMember.id, DEFAULT_PENALTY_DURATION, 'Échec du captcha AFK vocal')
+                            penalizeUser(targetMember.id, penaltyMs, 'Échec du captcha AFK vocal')
                         );
 
                         if (textChannel) {
-                            await textChannel.send(`❌ ${targetMember.user}, vous n'avez pas répondu à temps. Pénalité appliquée : **gains RP réduits de 50% pendant 15 minutes**.`);
+                            await textChannel.send(
+                                `❌ ${targetMember.user}, vous n'avez pas répondu à temps. Pénalité **${s.penaltyDurationMinutes} min** : gains vocal **RP ${s.penalizedRpPercent} %**, **XP ${s.penalizedXpPercent} %**, **Stars ${s.penalizedStarsPercent} %** (par rapport au gain normal).`
+                            );
                         }
 
                         // Kick du vocal
@@ -285,7 +287,7 @@ async function triggerAfkEvent(channel, targetMember) {
 async function runRandomEvent() {
     if (globallyDisabled) return;
     if (isEventRunning) return;
-    if (Math.random() > CONFIG.EVENT_CHANCE) {
+    if (Math.random() > voiceAfkRuntime.getEventChance()) {
         logger.debug('[VOICE-AFK] Événement ignoré (probabilité)');
         return;
     }
@@ -349,7 +351,10 @@ function start(client) {
         return;
     }
     logger.info('[VOICE-AFK] Démarrage du système anti-AFK vocal (RANKED V2)');
-    logger.info(`[VOICE-AFK] Intervalle: ${CONFIG.MIN_INTERVAL / 60000}-${CONFIG.MAX_INTERVAL / 60000} min, Chance: ${CONFIG.EVENT_CHANCE * 100}%`);
+    const snap = voiceAfkRuntime.getSnapshot();
+    logger.info(
+        `[VOICE-AFK] Intervalle: ${snap.minIntervalMinutes}-${snap.maxIntervalMinutes} min, Chance: ${snap.eventChancePercent}%`
+    );
 
     const scheduleNextEvent = () => {
         if (globallyDisabled) return;
@@ -433,5 +438,4 @@ module.exports = {
     isVoiceAfkGloballyDisabled,
     triggerAfkEvent,
     triggerManualAfk,
-    CONFIG
 };

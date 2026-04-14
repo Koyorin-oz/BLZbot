@@ -5,6 +5,7 @@
 
 const logger = require('./logger');
 const { economyGuildId, voiceTrackingKey } = require('./economy-scope');
+const voiceAfkRuntime = require('./voice-afk-runtime');
 
 // Map des utilisateurs pénalisés: clé (guilde:user ou user seul) -> { expireAt, reason }
 const penalizedUsers = new Map();
@@ -72,10 +73,28 @@ function clearPenalty(userId) {
 /**
  * Obtient le multiplicateur de gain RP pour un utilisateur
  * @param {string} userId L'ID de l'utilisateur
- * @returns {number} 0.5 si pénalisé, 1 sinon
+ * @returns {number} selon réglages anti-AFK si pénalisé, sinon 1
  */
 function getRPMultiplier(userId) {
-    return isUserPenalized(userId) ? 0.5 : 1;
+    return isUserPenalized(userId) ? voiceAfkRuntime.getPenalizedRpMultiplier() : 1;
+}
+
+/**
+ * Multiplicateur XP vocal si pénalisé (échec captcha AFK)
+ * @param {string} userId
+ * @returns {number}
+ */
+function getXpPenaltyMultiplier(userId) {
+    return isUserPenalized(userId) ? voiceAfkRuntime.getPenalizedXpMultiplier() : 1;
+}
+
+/**
+ * Multiplicateur Stars (vocal / futurs gains liés) si pénalisé
+ * @param {string} userId
+ * @returns {number}
+ */
+function getStarsPenaltyMultiplier(userId) {
+    return isUserPenalized(userId) ? voiceAfkRuntime.getPenalizedStarsMultiplier() : 1;
 }
 
 /**
@@ -130,6 +149,8 @@ module.exports = {
     penalizeUser,
     clearPenalty,
     getRPMultiplier,
+    getXpPenaltyMultiplier,
+    getStarsPenaltyMultiplier,
     getPenaltyInfo,
     getAllPenalties,
     DEFAULT_PENALTY_DURATION
