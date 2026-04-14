@@ -673,4 +673,28 @@ function toggleUserSetting(userId, settingName) {
     }
 }
 
-module.exports = { getOrCreateUser, grantResources, updateDailyClaim, checkUserInventory, updateUserItemQuantity, setLevel, setPoints, setStars, resetUser, getLeaderboard, getUserRank, updateUserActivityTimestamp, updateUserBoost, getUserInventory, updateUserBalance, addItemToInventory, removeUserItem, transferUserData, toggleUserSetting, setResourceSource, getResourceHistory, getResourceSummary };
+module.exports = {
+    getOrCreateUser,
+    grantResources,
+    updateDailyClaim,
+    resetDailyLastClaimedForUserIds,
+    checkUserInventory,
+    updateUserItemQuantity,
+    setLevel,
+    setPoints,
+    setStars,
+    resetUser,
+    getLeaderboard,
+    getUserRank,
+    updateUserActivityTimestamp,
+    updateUserBoost,
+    getUserInventory,
+    updateUserBalance,
+    addItemToInventory,
+    removeUserItem,
+    transferUserData,
+    toggleUserSetting,
+    setResourceSource,
+    getResourceHistory,
+    getResourceSummary,
+};
