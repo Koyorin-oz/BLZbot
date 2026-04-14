@@ -394,13 +394,21 @@ function registerClientReady(client, { isHalloweenActive }) {
                             pointsGain = Math.floor(baseRpAmount / 5);
                         }
 
-                        // RANKED V2: Appliquer le multiplicateur de pénalité AFK (0.5 si pénalisé)
-                        const { getRPMultiplier } = require('../utils/ranked-state');
-                        const rpMultiplier = getRPMultiplier(userId);
-                        pointsGain = Math.floor(pointsGain * rpMultiplier);
+                        // RANKED V2: pénalité AFK (réglable via /anti-afk → sanctions)
+                        const {
+                            getRPMultiplier,
+                            getXpPenaltyMultiplier,
+                            getStarsPenaltyMultiplier,
+                        } = require('../utils/ranked-state');
+                        const rpM = getRPMultiplier(userId);
+                        const xpM = getXpPenaltyMultiplier(userId);
+                        const stM = getStarsPenaltyMultiplier(userId);
+                        xpGain = Math.floor(xpGain * xpM);
+                        pointsGain = Math.floor(pointsGain * rpM);
 
-                        // On ne gagne PLUS de Stars en vocal
-                        const starsGain = 0;
+                        // Stars vocal (souvent 0 ; multiplicateur suit quand même la config anti-AFK)
+                        let starsGain = 0;
+                        starsGain = Math.floor(starsGain * stM);
 
                         // Multiplicateur global pour les événements (si un soft cap est atteint, on réduit aussi les gains d'event)
                         let globalEventMultiplier = 1;
