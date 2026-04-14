@@ -17,10 +17,10 @@ const HF_API_KEY = process.env.HF_API_KEY;
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GROQ_DEFAULT_MODEL = (process.env.GROQ_MODEL || 'llama-3.1-8b-instant').trim();
 const GROQ_COOLDOWN_MS = Math.max(0, parseInt(process.env.GROQ_COOLDOWN_MS || '0', 10));
-/** Intervalle entre deux éditions du message Discord pendant le stream (ms). Plus bas = plus réactif (risque rate-limit si < ~400). */
+/** Intervalle entre deux éditions du message Discord pendant le stream (ms). Plus bas = plus réactif (risque rate-limit si < ~200). */
 const IA_STREAM_EDIT_INTERVAL_MS = Math.min(
     3000,
-    Math.max(250, parseInt(process.env.IA_STREAM_EDIT_INTERVAL_MS || '550', 10))
+    Math.max(200, parseInt(process.env.IA_STREAM_EDIT_INTERVAL_MS || '300', 10))
 );
 /** 1/true = appel Groq supplémentaire pour résumer l’historique sur salon public (plus lent). Désactivé par défaut. */
 const IA_SUMMARY_PUBLIC_MENTION = ['1', 'true', 'yes', 'on'].includes(
