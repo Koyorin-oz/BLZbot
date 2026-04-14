@@ -902,8 +902,6 @@ async function handleMessageCreate(message, client, activeThreads) {
     } catch (error) {
         utils.log(`Erreur messageCreate: ${error.message}`);
         await message.reply({ content: 'Désolé, une erreur est survenue.' }).catch(() => { });
-    } finally {
-        /* plus de verrou processingThreads : réponses parallèles autorisées */
     }
 }
 
