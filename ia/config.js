@@ -61,6 +61,8 @@ IMPORTANT : Si la demande de l'utilisateur ou la réponse que tu pourrais géné
     HF_API_KEY: HF_API_KEY,
     HF_HEADERS: { "Authorization": `Bearer ${HF_API_KEY}`, "Content-Type": "application/json" },
     GROQ_API_KEY: GROQ_API_KEY,
+    GROQ_DEFAULT_MODEL,
+    GROQ_COOLDOWN_MS,
 
     // GitHub Token
     GITHUB_TOKEN: GITHUB_TOKEN,
