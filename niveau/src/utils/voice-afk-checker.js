@@ -206,7 +206,7 @@ async function triggerAfkEvent(channel, targetMember) {
 
             const collector = textChannel.createMessageCollector({
                 filter: m => m.author.id === targetMember.id,
-                time: CONFIG.TOTAL_CAPTCHA_TIME,
+                time: STATIC_CONFIG.TOTAL_CAPTCHA_TIME,
             });
 
             collector.on('collect', async msg => {
