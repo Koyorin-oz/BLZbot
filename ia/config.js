@@ -99,39 +99,13 @@ IMPORTANT : Si la demande de l'utilisateur ou la réponse que tu pourrais géné
         { name: 'llama-3.1-8b-instant', provider: 'groq', displayName: 'Llama 3.1 Instant', cutoff: 'Décembre 2023', multimodal: false, description: 'Inférence instantanée', includeReplyContext: true }
     ],
 
-    // ============================================================================
-    // CONFIGURATION PAR PROVIDER - Quotas, Thinking Budget/Level
-    // ============================================================================
-    PROVIDER_CONFIG: {
-        gemini: {
-            // thinkingBudget pour les modèles 2.5 (valeur numérique)
-            thinkingBudgets: {
-                'gemini-2.5-pro': 32768,
-                'gemini-2.5-flash': 24576
-            },
-            // thinkingLevel pour Gemini 3 (string: 'low', 'medium', 'high')
-            thinkingLevels: {
-                'gemini-3-flash-preview': 'high'
-            },
-            // Quotas par utilisateur (requests per day)
-            userQuotas: {
-                'gemini-3-flash-preview': 1
-            }
-        }
-    },
+    PROVIDER_CONFIG: {},
 
     groq: GROQ_API_KEY ? new Groq({ apiKey: GROQ_API_KEY }) : null,
-    gemini25Flash: new GoogleGenerativeAI(GEMINI_API_KEY).getGenerativeModel({ model: "gemini-2.5-flash" }),
     WOLFRAM_ALPHA_APP_ID: process.env.WOLFRAM_ALPHA_APP_ID,
-    genAI: new GoogleGenerativeAI(GEMINI_API_KEY),
+    genAI: null,
     hfClient: new InferenceClient(process.env.HF_TOKEN),
-    geminiModel: new GoogleGenerativeAI(GEMINI_API_KEY).getGenerativeModel({ model: "gemini-2.5-flash" }),
-    gemini25Flash: new GoogleGenerativeAI(GEMINI_API_KEY).getGenerativeModel({ model: "gemini-2.5-flash" }),
-    gemini2Flash: new GoogleGenerativeAI(GEMINI_API_KEY).getGenerativeModel({ model: "gemini-2.0-flash" }),
-    gemini25FlashLite: new GoogleGenerativeAI(GEMINI_API_KEY).getGenerativeModel({ model: "gemini-2.5-flash-lite" }),
-    gemini2FlashLite: new GoogleGenerativeAI(GEMINI_API_KEY).getGenerativeModel({ model: "gemini-2.0-flash-lite" }),
-    gemini2FlashExp: new GoogleGenerativeAI(GEMINI_API_KEY).getGenerativeModel({ model: "gemini-2.0-flash-exp" }),
-    embeddingModel: new GoogleGenerativeAI(GEMINI_API_KEY).getGenerativeModel({ model: "gemini-embedding-001" }),
+    embeddingModel: null,
     gradioClient: null, // Will be initialized on demand
     KNOWLEDGE_BASE_FILE: path.join(process.cwd(), 'knowledge_base.json'),
     KNOWLEDGE_BASE_EMBEDDINGS_FILE: path.join(process.cwd(), 'knowledge_base_embeddings.json'),
