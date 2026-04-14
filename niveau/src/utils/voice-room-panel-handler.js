@@ -13,7 +13,12 @@ const {
     parseVocPanelOpenId,
     buildPrivateVoicePanelPayload,
 } = require('./voice-room-panel');
-const { buildOverwrites, getPrivateRoomVoiceMeta, ensureSessions } = require('./private-voice-rooms');
+const {
+    buildOverwrites,
+    getPrivateRoomVoiceMeta,
+    ensureSessions,
+    resolvePrivateRoomConfig,
+} = require('./private-voice-rooms');
 
 function sessionKey(guildId, userId) {
     return `${guildId}:${userId}`;
