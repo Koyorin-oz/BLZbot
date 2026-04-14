@@ -1,15 +1,57 @@
 const fs = require('fs');
-const p = require('path').join(__dirname, '../ia/handlers.js');
+const path = require('path');
+const p = path.join(__dirname, '../ia/handlers.js');
 let s = fs.readFileSync(p, 'utf8');
 
-const markerStart = '    const tickStreamEdit = async () => {';
-const markerEnd = '        clearInterval(editInterval);';
-const i0 = s.indexOf(markerStart);
-const i1 = s.indexOf(markerEnd, i0);
-if (i0 === -1 || i1 === -1) {
-    console.error('markers not found', i0, i1);
-    process.exit(1);
-}
+const needle = `    const tickStreamEdit = async () => {
+        // Si terminé, on arrête d'éditer via l'intervalle
+        if (streamState.done) return;
+
+        // Préparer le contenu à afficher
+        let visibleContent = streamState.content.trim();
+        let displayContent = '';
+
+        // Gestion du statut "Thinking" (DeepSeek R1, etc.)
+        if (streamState.isThinking || (streamState.content.includes('<redacted_thinking>') && !streamState.content.includes('</redacted_thinking>'))) {
+            displayContent = '🧠 En réflexion...';
+        } else if (visibleContent) {
+            displayContent = visibleContent;
+        } else {
+            displayContent = '⏳ Génération en cours...';
+        }
+
+        // Ajouter le curseur clignotant
+        displayContent += ' ▌';
+
+        if (displayContent !== lastEditContent) {
+            try {
+                // On tente d'éditer
+                await streamReplyMessage.edit({
+                    content: displayContent,
+                    components: streamState.isThinking ? [
+                        new ActionRowBuilder().addComponents(
+                            new ButtonBuilder()
+                                .setCustomId('thinking_placeholder')
+                                .setLabel('Réflexion en cours...')
+                                .setStyle(ButtonStyle.Secondary)
+                                .setDisabled(true)
+                        )
+                    ] : []
+                });
+                lastEditContent = displayContent;
+            } catch (e) {
+                // Ignore edit errors (message deleted, etc.)
+            }
+        }
+    };
+
+    void tickStreamEdit();
+    const editInterval = setInterval(tickStreamEdit, config.IA_STREAM_EDIT_INTERVAL_MS || 550);
+
+    try {
+        responseText = await queryFunction(async (progress) => {
+            streamState = progress;
+        });`;
 
 const replacement = `    const inThinkingBlock = () =>
         streamState.isThinking ||
@@ -23,7 +65,7 @@ const replacement = `    const inThinkingBlock = () =>
 
         if (!thinking && !visibleContent) return;
 
-        const displayContent = thinking ? '\\uD83E\\uDDE0' : visibleContent;
+        const displayContent = thinking ? '🧠' : visibleContent;
 
         if (displayContent !== lastEditContent) {
             try {
@@ -53,15 +95,12 @@ const replacement = `    const inThinkingBlock = () =>
                 primedFirstEdit = true;
                 void tickStreamEdit();
             }
-        });
+        });`;
 
-        clearInterval(editInterval);`;
-
-// Fix emoji: use real brain emoji in output
-const fixed = replacement.replace('\\uD83E\\uDDE0', '🧠');
-
-const before = s.slice(0, i0);
-const after = s.slice(i1);
-const next = before + fixed + '\n\n' + after;
-fs.writeFileSync(p, next);
-console.log('patched', p, 'bytes', next.length);
+if (!s.includes(needle)) {
+    console.error('Needle not found — file may already be patched or line endings differ.');
+    process.exit(1);
+}
+s = s.replace(needle, replacement);
+fs.writeFileSync(p, s);
+console.log('OK patch-stream-handler');
