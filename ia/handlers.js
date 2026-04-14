@@ -119,10 +119,6 @@ async function handleMessageCreate(message, client, activeThreads) {
     await message.channel.sendTyping();
 
     try {
-        // Ne pas ajouter au salon public et hard (permet plusieurs traitements simultanés)
-        if (!isPublicChannelMention && !isHardModeChannelMention) {
-            processingThreads.add(message.channel.id);
-        }
         const mentionRegex = new RegExp(`<@!?${client.user.id}>`, 'g');
         let userPrompt = message.content.replace(mentionRegex, "").trim();
         userPrompt = utils.addDotAfterAt(userPrompt);
