@@ -144,7 +144,7 @@ async function triggerAfkEvent(channel, targetMember) {
             await textChannel.send(initialMessage);
         }
 
-        let timeLeft = CONFIG.TOTAL_CAPTCHA_TIME;
+        let timeLeft = STATIC_CONFIG.TOTAL_CAPTCHA_TIME;
 
         // Fonction pour envoyer un rappel
         const sendReminder = async () => {
