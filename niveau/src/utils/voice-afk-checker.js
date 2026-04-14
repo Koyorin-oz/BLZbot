@@ -352,9 +352,6 @@ function start(client) {
     logger.info(`[VOICE-AFK] Intervalle: ${CONFIG.MIN_INTERVAL / 60000}-${CONFIG.MAX_INTERVAL / 60000} min, Chance: ${CONFIG.EVENT_CHANCE * 100}%`);
 
     const scheduleNextEvent = () => {
-        if (globallyDisabled || intervalId === undefined) {
-            /* intervalId peut être null entre deux ticks ; on ne reschedule pas si désactivé */
-        }
         if (globallyDisabled) return;
 
         const interval = getRandomInterval();
