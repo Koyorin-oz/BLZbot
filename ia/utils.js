@@ -1837,21 +1837,13 @@ function generateSettingsPayload(userId) {
     .setContent(`# ⚙️ Paramètres IA\nConfigurez votre expérience avec BLZbot.`);
   container.addTextDisplayComponents(headerText);
 
-  // Section 2: Modèles Gemini
-  const enableGeminiStatus = settings.enableGemini !== false ? 'Oui ✅' : 'Non ❌';
-  const geminiText = new TextDisplayBuilder()
-    .setContent(`### ⚡ Modèles Gemini\nActiver l utilisation des modèles Gemini (Gemini 3 Flash, 2.5 Flash).\n**État:** ${enableGeminiStatus}`);
-
-  const toggleGeminiButton = new ButtonBuilder()
-    .setCustomId('toggle_gemini')
-    .setLabel(settings.enableGemini !== false ? 'Désactiver Gemini' : 'Activer Gemini')
-    .setStyle(settings.enableGemini !== false ? ButtonStyle.Danger : ButtonStyle.Success);
-
-  const geminiSection = new SectionBuilder()
-    .addTextDisplayComponents(geminiText)
-    .setButtonAccessory(toggleGeminiButton);
-
-  container.addSectionComponents(geminiSection);
+  const groqInfoText = new TextDisplayBuilder()
+    .setContent(
+      `### ⚡ Fournisseur IA (Groq)\n` +
+        `Les réponses du bot passent par **Groq** (Llama, etc.) — ne pas confondre avec **Grok** (xAI).\n` +
+        `Modèle principal configuré : \`${config.GROQ_DEFAULT_MODEL}\` · cooldown API : ${config.GROQ_COOLDOWN_MS || 0} ms`
+    );
+  container.addTextDisplayComponents(groqInfoText);
 
   // Section 3: Sources
   const sourcesText = new TextDisplayBuilder()
