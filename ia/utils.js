@@ -49,6 +49,10 @@ async function checkDuplicateOutput(client, modelName, outputToken, requestConte
   if (isDuplicate) {
     log(`⚠️ [DUPLICATE DETECTION] Doublon détecté! Modèle actuel: ${modelName}, Modèle précédent: ${previousModel}`);
 
+    if (!config.DUPLICATE_OUTPUT_NOTIFY_DM || !config.RICHARD_USER_ID) {
+      return true;
+    }
+
     try {
       const richard = await client.users.fetch(config.RICHARD_USER_ID);
       if (richard) {
