@@ -438,5 +438,4 @@ module.exports = {
     isVoiceAfkGloballyDisabled,
     triggerAfkEvent,
     triggerManualAfk,
-    CONFIG
 };
