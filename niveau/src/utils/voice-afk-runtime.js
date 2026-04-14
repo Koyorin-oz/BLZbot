@@ -130,6 +130,20 @@ function setSanctions(opts) {
     save();
 }
 
+/**
+ * Met à jour uniquement les champs présents dans patch (clés = celles de DEFAULTS).
+ * @param {Partial<typeof DEFAULTS>} patch
+ */
+function applyRuntimePatch(patch) {
+    for (const key of Object.keys(DEFAULTS)) {
+        if (patch[key] !== undefined && patch[key] !== null) {
+            cache[key] = patch[key];
+        }
+    }
+    normalize();
+    save();
+}
+
 module.exports = {
     DEFAULTS,
     CONFIG_PATH,
