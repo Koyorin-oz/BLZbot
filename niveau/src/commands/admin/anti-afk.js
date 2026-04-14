@@ -52,7 +52,7 @@ function parseAntiAfkModalText(raw) {
 
         const eq = t.match(/^\s*([^:=#]+?)\s*[:=]\s*(.+?)\s*$/);
         if (!eq) {
-            errors.push(`Ligne ignorée (format attendu : clé: valeur) : ${t.slice(0, 60)}`);
+            errors.push(`(avertissement) Ligne ignorée : ${t.slice(0, 60)}`);
             continue;
         }
 
