@@ -316,7 +316,7 @@ async function summarizeHistory(history, previousSummary) {
   prompt += "\n\nConversation à résumer:\n" + conversationToSummarize;
 
   try {
-    const summary = await queryGemini(prompt, "gemini-2.0-flash", [], false);
+    const summary = await groqSimpleText(prompt);
     return summary || previousSummary || null;
   } catch (error) {
     log(`Erreur lors du résumé de l'historique: ${error}`);
