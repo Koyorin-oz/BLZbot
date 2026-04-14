@@ -347,7 +347,10 @@ function start(client) {
         return;
     }
     logger.info('[VOICE-AFK] Démarrage du système anti-AFK vocal (RANKED V2)');
-    logger.info(`[VOICE-AFK] Intervalle: ${CONFIG.MIN_INTERVAL / 60000}-${CONFIG.MAX_INTERVAL / 60000} min, Chance: ${CONFIG.EVENT_CHANCE * 100}%`);
+    const snap = voiceAfkRuntime.getSnapshot();
+    logger.info(
+        `[VOICE-AFK] Intervalle: ${snap.minIntervalMinutes}-${snap.maxIntervalMinutes} min, Chance: ${snap.eventChancePercent}%`
+    );
 
     const scheduleNextEvent = () => {
         if (globallyDisabled) return;
