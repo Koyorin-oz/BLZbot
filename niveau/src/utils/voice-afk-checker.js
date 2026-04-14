@@ -68,9 +68,9 @@ function saveTts(text, filePath) {
  * @returns {number} Intervalle en ms
  */
 function getRandomInterval() {
-    const min = Math.min(CONFIG.MIN_INTERVAL, CONFIG.MAX_INTERVAL);
-    const max = Math.max(CONFIG.MIN_INTERVAL, CONFIG.MAX_INTERVAL);
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+    const minMs = Math.min(voiceAfkRuntime.getMinIntervalMs(), voiceAfkRuntime.getMaxIntervalMs());
+    const maxMs = Math.max(voiceAfkRuntime.getMinIntervalMs(), voiceAfkRuntime.getMaxIntervalMs());
+    return Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
 }
 
 /**
