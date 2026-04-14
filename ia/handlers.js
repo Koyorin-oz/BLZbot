@@ -655,6 +655,7 @@ async function handleMessageCreate(message, client, activeThreads) {
         }
 
         responseContent = utils.addDotAfterAt(responseContent);
+        responseContent = ensureReplyBody(responseContent);
 
         // Signaler le contenu dangereux
         if (isDangerousContent) {
