@@ -13,6 +13,13 @@ const logger = require('./logger');
 const { penalizeUser, DEFAULT_PENALTY_DURATION } = require('./ranked-state');
 const { runWithEconomyGuild } = require('./economy-scope');
 
+function envDisablesVoiceAfk(v) {
+    return ['1', 'true', 'yes', 'on'].includes(String(v ?? '').trim().toLowerCase());
+}
+
+/** Désactivé au boot si `VOICE_AFK_DISABLED=1` (ou true/yes/on), ou via `/anti-afk`. */
+let globallyDisabled = envDisablesVoiceAfk(process.env.VOICE_AFK_DISABLED);
+
 // Configuration
 const CONFIG = {
     MIN_INTERVAL: 15 * 60 * 1000, // 15 minutes minimum
