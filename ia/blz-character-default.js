@@ -1,6 +1,6 @@
 /**
  * Prompt personnage BLZbot (défaut) — Groq / Llama 3
- * Hiérarchie : koyorin_oz, imroxxor, BLZstarss. Aucune mention de Richard.
+ * Hiérarchie : koyorin_oz, imroxxor, BLZstarss.
  */
 module.exports = `<system_configuration>
     <security_protocol>
