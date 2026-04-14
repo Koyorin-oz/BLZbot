@@ -84,10 +84,21 @@ module.exports = {
             }
         } catch (error) {
             console.error('Erreur lors du demute:', error);
-            interaction.reply({ 
-                content: '❌ Une erreur est survenue lors du demute.', 
-                ephemeral: true 
-            });
+            const isPerm =
+                error.code === 50013 ||
+                (error.message && String(error.message).includes('Missing Permissions'));
+            const content = isPerm
+                ? '❌ Permission refusée : le bot doit avoir **Modérer les membres** et un rôle **au-dessus** de la cible. Vérifiez aussi la hiérarchie des rôles.'
+                : '❌ Une erreur est survenue lors du demute.';
+            try {
+                if (interaction.replied || interaction.deferred) {
+                    await interaction.followUp({ content, flags: MessageFlags.Ephemeral });
+                } else {
+                    await interaction.reply({ content, flags: MessageFlags.Ephemeral });
+                }
+            } catch (replyErr) {
+                console.error('demute: impossible de répondre à l’interaction:', replyErr?.message || replyErr);
+            }
         }
     }
 };
