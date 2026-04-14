@@ -141,7 +141,7 @@ module.exports = {
                     .setCustomId(`buy_${item.id}`)
                     .setLabel(buyLabel)
                     .setStyle(buyStyle)
-                    .setDisabled(!canBuy && buyLabel === 'Épuisé');
+                    .setDisabled(!canBuy || buyLabel === 'Épuisé');
 
                 if (item.price > 0) {
                     buyButton.setEmoji('💸');
