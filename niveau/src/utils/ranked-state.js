@@ -149,6 +149,8 @@ module.exports = {
     penalizeUser,
     clearPenalty,
     getRPMultiplier,
+    getXpPenaltyMultiplier,
+    getStarsPenaltyMultiplier,
     getPenaltyInfo,
     getAllPenalties,
     DEFAULT_PENALTY_DURATION
