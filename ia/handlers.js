@@ -41,6 +41,12 @@ function inferReasonableImageRequest(userText) {
 const EMPTY_REPLY_FALLBACK =
     '⚠️ Réponse vide du modèle — réessaie ou reformule ta question.';
 
+const GROQ_401_USER_MESSAGE =
+    '🔑 **Clé API Groq refusée (401 Invalid API Key).** Le bot voit une `GROQ_API_KEY` mais Groq la rejette.\n' +
+    '→ Régénère une clé sur https://console.groq.com/keys (préfixe **gsk_**, pas une clé OpenAI/OpenRouter).\n' +
+    '→ Dans le `.env` du dépôt : une seule ligne `GROQ_API_KEY=gsk_...` sans guillemets ni espace autour du `=`.\n' +
+    '→ Redémarre le process `ia` après modification.';
+
 function ensureReplyBody(s) {
     if (s == null || s === undefined) return EMPTY_REPLY_FALLBACK;
     const str = String(s);
