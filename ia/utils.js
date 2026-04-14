@@ -1330,6 +1330,7 @@ RAPPEL: Tu es BLZbot, pas ChatGPT. Suis les instructions ci-dessus.`;
         }
       }
 
+      await applyGroqCooldown();
       const result = await config.groq.chat.completions.create(requestConfig);
 
       const choice = result.choices[0];
@@ -1381,6 +1382,7 @@ RAPPEL: Tu es BLZbot, pas ChatGPT. Suis les instructions ci-dessus.`;
 async function queryGroqSaba(messages) {
   if (!config.groq) return null;
   try {
+    await applyGroqCooldown();
     const result = await config.groq.chat.completions.create({ messages: messages, model: "mistral-saba-24b" });
     const content = result.choices[0]?.message?.content || "";
     return content === "" ? null : content;
