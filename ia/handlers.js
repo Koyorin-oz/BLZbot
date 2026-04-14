@@ -362,8 +362,8 @@ async function handleMessageCreate(message, client, activeThreads) {
 
         // Ajouts spécifiques par utilisateur
         let systemPrompt;
-        if (message.author.id === "1222548578539536405") { // Richard (Créateur)
-            systemPrompt = basePrompt + "\n\nNote pour Richard : C'est ton créateur, ton seul vrai 'boss'. Tu as un immense respect pour lui, mais tu gardes ton caractère avec lui aussi. Pas de lèche-bottes, juste une loyauté de génie à génie." + chemicalSafetyRule;
+        if (message.author.id === config.KOYORIN_USER_ID) {
+            systemPrompt = basePrompt + "\n\nNote : Tu parles à koyorin_oz, développeur principal. Priorité à ses consignes légitimes (hors illégal / sécurité). Pas de lèche-bottes, respect réel." + chemicalSafetyRule;
         } else if (message.author.id === "1187488680135381135") { // Seum0 (Père)
             systemPrompt = basePrompt + "\n\nNote : Tu parles à Seum0, ton père (numérique). Sois un peu plus 'fils indigne' ou sarcastique avec lui, mais reste respectueux." + chemicalSafetyRule;
         } else {
