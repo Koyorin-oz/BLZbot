@@ -1361,7 +1361,10 @@ async function handleStreamingResponse(message, modelName, queryFunction, existi
                 // Ignore edit errors (message deleted, etc.)
             }
         }
-    }, config.IA_STREAM_EDIT_INTERVAL_MS || 550);
+    };
+
+    void tickStreamEdit();
+    const editInterval = setInterval(tickStreamEdit, config.IA_STREAM_EDIT_INTERVAL_MS || 550);
 
     try {
         responseText = await queryFunction(async (progress) => {
