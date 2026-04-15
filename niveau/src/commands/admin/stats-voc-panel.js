@@ -7,7 +7,7 @@ const {
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('stats-voc-deploy')
+        .setName('stats-voc-panel')
         .setDescription(
             '[ADMIN] 3 vocaux compteur (total / humains / bots), connexion réservée aux admins.'
         )
@@ -25,8 +25,6 @@ module.exports = {
                 .setDescription('Supprime les 3 salons suivis puis les recrée (destructif).')
                 .setRequired(false)
         ),
-    // Pas de setDefaultMemberPermissions : sinon Discord masque / aux non-Administrateurs
-    // (un rôle « Staff » sans le bit Administrateur ne voit pas la commande du tout).
 
     async execute(interaction) {
         await interaction.deferReply({ ephemeral: true });
