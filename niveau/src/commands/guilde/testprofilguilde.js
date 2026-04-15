@@ -11,16 +11,16 @@ const { handleCommandError } = require('../../utils/error-handler');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('testprofilguilde')
-        .setDescription('Aperçu canvas : 3 variantes visuelles du profil guilde (hors /profil-guilde).')
+        .setDescription('Aperçu canvas : Citadelle, Brasier, Étendard (thème BLZ saturé, hors /profil-guilde).')
         .addStringOption((opt) =>
             opt
                 .setName('style')
                 .setDescription('Variante à afficher')
                 .setRequired(true)
                 .addChoices(
-                    { name: 'Bastion — pierre & or', value: 'bastion' },
-                    { name: 'Orbit — espace & halos', value: 'orbit' },
-                    { name: 'Registre — style tableau', value: 'ledger' }
+                    { name: 'Citadelle — 3 blocs + roster', value: 'citadelle' },
+                    { name: 'Brasier — stats / membres', value: 'brasier' },
+                    { name: 'Étendard — bandeau + cartes or', value: 'etendard' }
                 )
         )
         .addStringOption((opt) =>
