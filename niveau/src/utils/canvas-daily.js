@@ -323,7 +323,7 @@ async function renderDailyCard({
                 : 'Double Daily via quêtes et événements';
         ctx.fillText(truncateText(ctx, hint, innerW - 120), boxLeft, footY + footerH / 2);
         ctx.textAlign = 'right';
-        ctx.fillText('Daily — BLZbot', boxRight, footY + footerH / 2);
+        ctx.fillText(`BLZbot · ${DAILY_CARD_BUILD}`, boxRight, footY + footerH / 2);
     }
     ctx.textAlign = 'left';
 
