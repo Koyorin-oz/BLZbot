@@ -200,8 +200,8 @@ async function renderDailyCard({
         ctx.textAlign = 'left';
     }
 
-    const barY = 68;
-    const barH = 18;
+    const barY = 74;
+    const barH = 16;
     const barX = textX;
     const barW = textRight - barX;
 
