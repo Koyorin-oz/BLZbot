@@ -55,6 +55,13 @@ module.exports = {
             ? rawCat
             : defaultCategoryId(guild.id);
 
+        if (!categoryId || !/^\d{17,22}$/.test(String(categoryId))) {
+            return interaction.editReply({
+                content:
+                    '❌ Sur ce serveur il n’y a **pas de catégorie par défaut**. Renseigne l’option **categorie_id** (ID de la catégorie **sur ce serveur**), ou ajoute cette guilde dans **MEMBER_STATS_CATEGORY_IDS** dans le `.env`.',
+            });
+        }
+
         const recreate = interaction.options.getBoolean('recreate') === true;
 
         try {
