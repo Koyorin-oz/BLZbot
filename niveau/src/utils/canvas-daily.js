@@ -348,17 +348,22 @@ async function renderDailyCard({
         ctx.fillText('Récompense journalière réclamée', boxLeft, y + contentH - 12);
     } else {
         const subFull = 'Temps restant avant la prochaine récompense (minuit)';
-        ctx.textAlign = 'center';
-        ctx.font = `700 24px ${titleFace}, Arial`;
-        ctx.fillStyle = THEME.error;
-        ctx.textBaseline = 'bottom';
-        ctx.fillText(remainingTime, boxMidX, boxMidY - 4);
+        const timerY = y + Math.max(52, contentH * 0.34);
+        const usedSize = drawFlashyCountdown(
+            ctx,
+            remainingTime,
+            boxMidX,
+            timerY,
+            innerW - 28,
+            titleFace
+        );
 
+        ctx.textAlign = 'center';
         ctx.font = `500 12px ${textFace}, Arial`;
         ctx.fillStyle = THEME.sub;
         ctx.textBaseline = 'top';
         const subLine = truncateText(ctx, subFull, innerW - 40);
-        ctx.fillText(subLine, boxMidX, boxMidY + 6);
+        ctx.fillText(subLine, boxMidX, timerY + usedSize * 0.52 + 12);
 
         ctx.textAlign = 'left';
     }
