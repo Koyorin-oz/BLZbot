@@ -9,58 +9,6 @@ try {
     /* optionnel */
 }
 
-const FALLBACK_PNG = Buffer.from(
-    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhwI/pW7Y1QAAAABJRU5ErkJggg==',
-    'base64'
-);
-
-let _fallbackImage = null;
-async function getFallbackImage() {
-    if (_fallbackImage) return _fallbackImage;
-    _fallbackImage = await loadImage(FALLBACK_PNG);
-    return _fallbackImage;
-}
-
-const _badImages = new Set();
-async function loadImageSafe(filePath) {
-    const useFallback = async () => {
-        try {
-            return await getFallbackImage();
-        } catch {
-            return null;
-        }
-    };
-
-    if (!filePath || !fs.existsSync(filePath)) {
-        return useFallback();
-    }
-
-    try {
-        const buf = fs.readFileSync(filePath);
-        if (buf.length < 24) return useFallback();
-
-        if (buf.slice(0, 64).toString('utf8').includes('version https://git-lfs')) {
-            if (!_badImages.has(filePath)) {
-                _badImages.add(filePath);
-            }
-            return useFallback();
-        }
-
-        return await loadImage(buf);
-    } catch {
-        if (sharpMod) {
-            try {
-                const png = await sharpMod(buf).png().toBuffer();
-                return await loadImage(png);
-            } catch {
-                /* ignore */
-            }
-        }
-    }
-
-    return useFallback();
-}
-
 try {
     const assetsPath = path.join(__dirname, '..', 'assets');
     if (fs.existsSync(path.join(assetsPath, 'Inter-Bold.ttf'))) {
