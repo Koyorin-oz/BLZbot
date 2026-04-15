@@ -221,6 +221,7 @@ async function deployMemberStatsVoice(guild, categoryId, opts = {}) {
         throw new Error('Catégorie introuvable ou ID invalide (attendu : ID de catégorie).');
     }
 
+    await guild.roles.fetch().catch(() => {});
     const overwrites = buildVoiceStatOverwrites(guild);
     const botCount = await countBotsInGuild(guild);
     const total = guild.memberCount;

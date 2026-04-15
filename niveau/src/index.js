@@ -83,6 +83,10 @@ if (skipSlashDeployEnv) {
         client.login(process.env.BOT_TOKEN);
     });
 
+    if (Object.keys(loadMemberStatsVoiceState()).length > 0) {
+        startMemberStatsVoiceScheduler(client);
+    }
+
     const cmdCount = client.commands.size;
     if (BLZ_COMPACT) {
         console.log(`[niveau] ${client.user.tag} — ${cmdCount} cmd · ${eventCount} événements`);

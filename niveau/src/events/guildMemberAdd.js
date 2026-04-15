@@ -12,6 +12,8 @@ const { updateGuildChannelPermissions } = require('../utils/guild/guild-upgrades
 module.exports = {
     name: Events.GuildMemberAdd,
     async execute(member, client) {
+        onMemberJoined(member.guild, member).catch(() => {});
+
         return runWithEconomyGuild(member.guild.id, async () => {
         try {
             logger.info(`[TUTORIAL] Nouveau membre détecté: ${member.user.username} (${member.id})`);
