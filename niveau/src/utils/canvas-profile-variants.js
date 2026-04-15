@@ -1,6 +1,6 @@
 /**
- * Aperçus visuels alternatifs pour /profile (ne remplace pas renderProfileCard).
- * 3 styles : aurora | nocturne | parchment
+ * Aperçus visuels pour /testprofil (ne remplace pas renderProfileCard).
+ * 10 styles : aurora, nocturne, parchment + 7 thèmes BLZ (fonds / vitrages proches du /profile).
  */
 const { createCanvas, loadImage, registerFont } = require('canvas');
 const fs = require('node:fs');
