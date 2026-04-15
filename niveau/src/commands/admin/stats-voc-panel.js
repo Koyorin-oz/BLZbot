@@ -15,7 +15,7 @@ module.exports = {
             opt
                 .setName('categorie_id')
                 .setDescription(
-                    'ID catégorie sur ce serveur. Sinon MEMBER_STATS_CATEGORY_IDS / MEMBER_STATS_CATEGORY_ID (.env).'
+                    'ID catégorie sur ce serveur. Obligatoire si ta guilde n’est pas dans MEMBER_STATS_CATEGORY_IDS.'
                 )
                 .setRequired(false)
         )

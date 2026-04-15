@@ -64,15 +64,19 @@ function parseMemberStatsCategoryIdsByGuild() {
 }
 
 /**
- * Catégorie par défaut pour une guilde (double serveur test + prod).
+ * Catégorie par défaut pour une guilde.
+ * Si `MEMBER_STATS_CATEGORY_IDS` contient au moins une paire, seules les guildes listées ont un défaut
+ * (ex. prod dans le .env, test sans catégorie fixe → il faut passer `categorie_id` sur le test).
+ * Si la variable est vide, comportement classique : MEMBER_STATS_CATEGORY_ID puis fallback code.
  * @param {string} [guildId]
- * @returns {string | null} null si aucune config — l’appelant doit exiger categorie_id ou .env
+ * @returns {string | null}
  */
 function defaultCategoryId(guildId) {
     const gid = String(guildId || '').trim();
-    if (gid) {
-        const mapped = parseMemberStatsCategoryIdsByGuild().get(gid);
-        if (mapped) return mapped;
+    const map = parseMemberStatsCategoryIdsByGuild();
+    if (gid && map.has(gid)) return map.get(gid);
+    if (map.size > 0) {
+        return null;
     }
     const fromEnv = String(process.env.MEMBER_STATS_CATEGORY_ID || '').trim();
     if (/^\d{17,22}$/.test(fromEnv)) return fromEnv;
