@@ -22,6 +22,7 @@ const { getEventState } = require('./utils/db-halloween');
 const { initializeSharesSystem } = require('./utils/ranked-shares');
 const { loadTopLevelCommands, loadSeasonalCommands } = require('./utils/command-loader');
 const { registerClientReady } = require('./bootstrap/client-ready');
+const { startScheduler: startMemberStatsVoiceScheduler, loadState: loadMemberStatsVoiceState } = require('./utils/member-stats-voice');
 
 initializeSharesSystem();
 
@@ -81,6 +82,10 @@ if (skipSlashDeployEnv) {
         });
         client.login(process.env.BOT_TOKEN);
     });
+
+    if (Object.keys(loadMemberStatsVoiceState()).length > 0) {
+        startMemberStatsVoiceScheduler(client);
+    }
 
     const cmdCount = client.commands.size;
     if (BLZ_COMPACT) {

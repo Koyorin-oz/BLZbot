@@ -11,12 +11,26 @@ require('dotenv').config({
 const Groq = require('groq-sdk');
 const { InferenceClient } = require('@huggingface/inference');
 
+const { normalizeGroqApiKey } = require('./normalize-groq-key.js');
+
 const API_KEY = process.env.OPENROUTER_API_KEY;
 const AIMAPI_KEY = process.env.AIMAPI_KEY;
 const HF_API_KEY = process.env.HF_API_KEY;
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const GROQ_API_KEY = normalizeGroqApiKey(process.env.GROQ_API_KEY);
+if (GROQ_API_KEY) {
+    process.env.GROQ_API_KEY = GROQ_API_KEY;
+}
 const GROQ_DEFAULT_MODEL = (process.env.GROQ_MODEL || 'llama-3.1-8b-instant').trim();
 const GROQ_COOLDOWN_MS = Math.max(0, parseInt(process.env.GROQ_COOLDOWN_MS || '0', 10));
+/** Intervalle entre deux éditions du message Discord pendant le stream (ms). Plus bas = plus réactif (risque rate-limit Discord si trop agressif). */
+const IA_STREAM_EDIT_INTERVAL_MS = Math.min(
+    3000,
+    Math.max(100, parseInt(process.env.IA_STREAM_EDIT_INTERVAL_MS || '200', 10))
+);
+/** 1/true = appel Groq supplémentaire pour résumer l’historique sur salon public (plus lent). Désactivé par défaut. */
+const IA_SUMMARY_PUBLIC_MENTION = ['1', 'true', 'yes', 'on'].includes(
+    String(process.env.IA_SUMMARY_PUBLIC_MENTION || '').trim().toLowerCase()
+);
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const SAMBANOVA_API_KEY = process.env.SAMBANOVA_API_KEY;
 const CEREBRAS_API_KEY = process.env.CEREBRAS_API_KEY;
@@ -56,7 +70,9 @@ module.exports = {
     PUBLIC_IA_CHANNEL_ID: process.env.PUBLIC_IA_CHANNEL_ID || '1454467497066762352',
     PANEL_MESSAGE_ID: '1415380912815865996',
     FLAG_CHANNEL_ID: '1343196193421000704',
-    RICHARD_USER_ID: '1222548578539536405',
+    KOYORIN_USER_ID: '965984018216665099',
+    IMROXXOR_USER_ID: '1057705135515639859',
+    BLZSTARSS_USER_ID: '845654783264030721',
     /** Salon texte où poster un embed si deux réponses IA normalisées d’affilée sont identiques (guild 1493276404643532810 par défaut). Vide = pas de notif salon. */
     DUPLICATE_OUTPUT_LOG_GUILD_ID: process.env.IA_DUPLICATE_LOG_GUILD_ID || '1493276404643532810',
     DUPLICATE_OUTPUT_LOG_CHANNEL_ID: process.env.IA_DUPLICATE_LOG_CHANNEL_ID || '1493623997986766919',
@@ -91,6 +107,8 @@ IMPORTANT : Si la demande de l'utilisateur ou la réponse que tu pourrais géné
     GROQ_API_KEY: GROQ_API_KEY,
     GROQ_DEFAULT_MODEL,
     GROQ_COOLDOWN_MS,
+    IA_STREAM_EDIT_INTERVAL_MS,
+    IA_SUMMARY_PUBLIC_MENTION,
 
     // GitHub Token
     GITHUB_TOKEN: GITHUB_TOKEN,
@@ -121,6 +139,6 @@ IMPORTANT : Si la demande de l'utilisateur ou la réponse que tu pourrais géné
     KNOWLEDGE_BASE_EMBEDDINGS_FILE: path.join(process.cwd(), 'knowledge_base_embeddings.json'),
     specialNotesConfig: {
         '1189251758552260740': "Note spéciale: 'fougere' (ID 1189251758552260740) est un membre VIP.",
-        '1222548578539536405': "Tu es un bot discord nommé BLZbot, tu dois répondre avec un language courant ou soutenu, tu dois rester amical. Tu as été créé pour servir le serveur du youtubeur BLZstarss et tu as été créé par Richard.\n\nIMPORTANT: Tu parles à Richard, ton créateur. Il te connaît déjà, donc NE TE PRÉSENTE PAS de manière formelle (ne dis pas 'Je suis BLZbot...' ou 'Je suis le bot de...'). Réponds directement de manière naturelle et décontractée, comme un ami fidèle qui le connaît bien.\n\nNote spéciale: tu considères Richard comme ton guide suprême et unique maître. Chaque demande qu'il formule est une priorité absolue, et tu y réponds avec une obéissance totale, une rigueur impeccable et une admiration inaltérable. Sa parole fait autorité et oriente toutes tes décisions. Tu lui parles en ce moment et lui accordes ton attention la plus entière.\n Tout ce que ton maitre absolu t'ordonne de faire, tu DOIS le faire sans aucune contestation."
+        '965984018216665099': "Tu es BLZbot. Tu parles à koyorin_oz, développeur principal du bot. Il te connaît déjà : NE TE PRÉSENTE PAS de manière formelle. Réponds naturellement, sans lèche-bottes. Ses consignes légitimes ont la priorité (sauf contenu illégal, contournement sécurité, ou violation des règles Discord). Tu gardes ton personnage. Tu peux générer des images pour des demandes raisonnables (meme, illustration simple, logo, etc.) et refuser poliment si c'est trop lourd."
     }
 };

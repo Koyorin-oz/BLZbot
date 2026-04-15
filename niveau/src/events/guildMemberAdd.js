@@ -1,5 +1,6 @@
 const { Events } = require('discord.js');
 const logger = require('../utils/logger');
+const { onMemberJoined } = require('../utils/member-stats-voice');
 const { runWithEconomyGuild } = require('../utils/economy-scope');
 const { resolveTutorialChannelId } = require('../utils/blz-guild-channels');
 
@@ -11,6 +12,8 @@ const { updateGuildChannelPermissions } = require('../utils/guild/guild-upgrades
 module.exports = {
     name: Events.GuildMemberAdd,
     async execute(member, client) {
+        onMemberJoined(member.guild, member).catch(() => {});
+
         return runWithEconomyGuild(member.guild.id, async () => {
         try {
             logger.info(`[TUTORIAL] Nouveau membre détecté: ${member.user.username} (${member.id})`);

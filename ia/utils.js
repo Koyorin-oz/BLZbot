@@ -343,9 +343,16 @@ async function updateAndGenerateChannelContext(message, includeGlobalContext = f
 
   if (history.length > 3) {
     const messagesToSummarize = history.splice(0, 4);
-    const newSummary = await summarizeHistory(messagesToSummarize, channelData.summary);
-    channelData.summary = newSummary;
-    log(`[Résumé pour le salon ${channelId}]:\n${newSummary}\n--------------------`);
+    const previousSummary = channelData.summary;
+    summarizeHistory(messagesToSummarize, previousSummary)
+      .then((newSummary) => {
+        if (newSummary) {
+          channelData.summary = newSummary;
+          log(`[Résumé async salon ${channelId}]:\n${newSummary}\n--------------------`);
+          saveHistory(channelHistories);
+        }
+      })
+      .catch((err) => log(`Erreur résumé async salon: ${err.message || err}`));
   }
 
   saveHistory(channelHistories);
@@ -1090,6 +1097,7 @@ async function queryGroq(messages, attachments = [], injectModelInfo = false, sp
   }
 
   let multimodalFailed = false;
+  let groqAuthRejected = false;
 
   for (let i = 0; i < modelsToTry.length; i++) {
     const modelInfo = modelsToTry[i];
@@ -1130,7 +1138,7 @@ async function queryGroq(messages, attachments = [], injectModelInfo = false, sp
       systemInjection += `\n\nSi la demande est une simple discussion ou un savoir général ancien, n'utilise PAS l'outil.`;
 
       if (injectModelInfo) {
-        systemInjection += `\nTu es actuellement le modèle "${modelName}" (fournisseur: Groq). L'utilisateur Richard (ton créateur) te demande quel modèle tu es. Tu DOIS lui répondre précisément "${modelName} (Groq)".`;
+        systemInjection += `\nTu es actuellement le modèle "${modelName}" (fournisseur: Groq). koyorin_oz (développeur principal) te demande quel modèle tu es. Tu DOIS lui répondre précisément "${modelName} (Groq)".`;
       }
 
       // Injection dans le premier message (System ou User fallback)
@@ -1366,7 +1374,12 @@ RAPPEL: Tu es BLZbot, pas ChatGPT. Suis les instructions ci-dessus.`;
     } catch (error) {
       const statusCode = error.status || error.statusCode || (error.response && error.response.status);
 
-      if (statusCode === 429) {
+      if (statusCode === 401) {
+        groqAuthRejected = true;
+        log(
+          `❌ Groq 401 (clé refusée) pour ${modelName} — vérifie GROQ_API_KEY dans le .env du process ia (https://console.groq.com/keys), sans espaces ni guillemets en trop.`
+        );
+      } else if (statusCode === 429) {
         log(`⚠️ Quota dépassé (429) pour ${modelName}. Ajout à la liste noire temporaire.`);
         blacklistedModels.add(modelName);
       } else {
@@ -1377,6 +1390,9 @@ RAPPEL: Tu es BLZbot, pas ChatGPT. Suis les instructions ci-dessus.`;
   }
 
   log('❌ Tous les modèles Groq ont échoué');
+  if (groqAuthRejected) {
+    return { content: null, modelUsed: null, groqAuthError: true };
+  }
   return null;
 }
 
@@ -1822,6 +1838,12 @@ async function setupPanelIfNeeded(client) {
     await channel.messages.fetch(config.PANEL_MESSAGE_ID);
     log('Panneau de contrôle existant trouvé.');
   } catch (error) {
+    if (error.code === 10003) {
+      log(
+        `Salon panneau IA inconnu (10003) — ID ${config.IA_PANEL_CHANNEL_ID}. Sur une guilde de test, mets IA_PANEL_CHANNEL_ID dans .env vers un salon texte où le bot peut écrire, ou crée ce salon.`
+      );
+      return;
+    }
     if (error.code === 10008) { // Unknown Message
       log('Panneau introuvable. Création...');
       const channel = await client.channels.fetch(config.IA_PANEL_CHANNEL_ID).catch(() => null);

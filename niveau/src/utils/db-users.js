@@ -359,6 +359,26 @@ function updateDailyClaim(userId) {
     }
 }
 
+/**
+ * Remet daily_last_claimed à 0 pour une liste d’IDs Discord (lignes absentes de `users` ignorées).
+ * @param {string[]} userIds
+ * @returns {number} nombre de lignes effectivement mises à jour
+ */
+function resetDailyLastClaimedForUserIds(userIds) {
+    if (!userIds || userIds.length === 0) return 0;
+    const unique = [...new Set(userIds)];
+    const chunkSize = 400;
+    let totalChanges = 0;
+    const stmtChunk = (n) => db.prepare(`UPDATE users SET daily_last_claimed = 0 WHERE id IN (${Array(n).fill('?').join(',')})`);
+    for (let i = 0; i < unique.length; i += chunkSize) {
+        const chunk = unique.slice(i, i + chunkSize);
+        const stmt = stmtChunk(chunk.length);
+        const info = stmt.run(...chunk);
+        totalChanges += info.changes;
+    }
+    return totalChanges;
+}
+
 function checkUserInventory(userId, itemId) {
     const stmt = db.prepare('SELECT quantity FROM user_inventory WHERE user_id = ? AND item_id = ?');
     const row = stmt.get(userId, itemId);
@@ -653,4 +673,28 @@ function toggleUserSetting(userId, settingName) {
     }
 }
 
-module.exports = { getOrCreateUser, grantResources, updateDailyClaim, checkUserInventory, updateUserItemQuantity, setLevel, setPoints, setStars, resetUser, getLeaderboard, getUserRank, updateUserActivityTimestamp, updateUserBoost, getUserInventory, updateUserBalance, addItemToInventory, removeUserItem, transferUserData, toggleUserSetting, setResourceSource, getResourceHistory, getResourceSummary };
+module.exports = {
+    getOrCreateUser,
+    grantResources,
+    updateDailyClaim,
+    resetDailyLastClaimedForUserIds,
+    checkUserInventory,
+    updateUserItemQuantity,
+    setLevel,
+    setPoints,
+    setStars,
+    resetUser,
+    getLeaderboard,
+    getUserRank,
+    updateUserActivityTimestamp,
+    updateUserBoost,
+    getUserInventory,
+    updateUserBalance,
+    addItemToInventory,
+    removeUserItem,
+    transferUserData,
+    toggleUserSetting,
+    setResourceSource,
+    getResourceHistory,
+    getResourceSummary,
+};

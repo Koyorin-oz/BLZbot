@@ -101,8 +101,11 @@ module.exports = async function deployCommands(client) {
 
     if (!compact) console.log(`[DEPLOY] Loaded ${localCommands.size} local commands`);
     const hasPanelVoc = localCommands.has('panel-voc');
+    const hasStatsVocPanel = localCommands.has('stats-voc-panel');
     console.log(
-        `[niveau/deploy] /panel-voc présent dans le code : ${hasPanelVoc ? 'OUI ✓' : 'NON ✗ (fichier panel-voc.js manquant sur ce serveur ?)'}`
+        `[niveau/deploy] /panel-voc code : ${hasPanelVoc ? 'OUI ✓' : 'NON ✗'} · /stats-voc-panel code : ${
+            hasStatsVocPanel ? 'OUI ✓' : 'NON ✗'
+        }`
     );
 
     if (!client.isReady()) {
@@ -196,8 +199,9 @@ module.exports = async function deployCommands(client) {
 
         if (compact) {
             const hasPanelVoc = localCommands.has('panel-voc');
+            const hasStatsVocPanel = localCommands.has('stats-voc-panel');
             console.log(
-                `[niveau] Slash : +${createdCount} ~${updatedCount} skip ${skippedCount} err ${errorCount} · guildes ${guildIds.join(',')} · /panel-voc:${hasPanelVoc}`
+                `[niveau] Slash : +${createdCount} ~${updatedCount} skip ${skippedCount} err ${errorCount} · guildes ${guildIds.join(',')} · /panel-voc:${hasPanelVoc} · /stats-voc-panel:${hasStatsVocPanel}`
             );
         } else {
             console.log('\n═══════════════════════════════════════════════════════════════');

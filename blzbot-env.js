@@ -48,18 +48,23 @@ function isTestBotProfile() {
 function applyTestGuildOverride() {
     if (!isTestBotProfile()) return;
 
-    const fromEnvGuild = String(process.env.GUILD_ID || '').trim();
-    const explicitMain = String(process.env.BLZ_MAIN_GUILD_ID || '').trim();
-    /** Sert au déploiement double slash + lookups membre sur le serveur principal. */
-    if (!/^\d{17,22}$/.test(explicitMain) && /^\d{17,22}$/.test(fromEnvGuild)) {
-        process.env.BLZ_MAIN_GUILD_ID = fromEnvGuild;
-    }
-
     const id = String(process.env.TEST_GUILD_ID || BLZ_DEFAULT_TEST_GUILD_ID).trim();
     if (!/^\d{17,22}$/.test(id)) {
         console.warn('[BLZ] Mode TEST actif mais TEST_GUILD_ID invalide — override ignoré.');
         return;
     }
+
+    const fromEnvGuild = String(process.env.GUILD_ID || '').trim();
+    const explicitMain = String(process.env.BLZ_MAIN_GUILD_ID || '').trim();
+    /**
+     * Si BLZ_MAIN_GUILD_ID est absent et que GUILD_ID (.env) pointait vers un autre serveur que la guilde de test,
+     * c’était en pratique le principal — on le copie pour le double déploiement slash.
+     * Si GUILD_ID était déjà la guilde de test, ne pas copier (sinon BLZ_MAIN = test → aucun slash sur le main).
+     */
+    if (!/^\d{17,22}$/.test(explicitMain) && /^\d{17,22}$/.test(fromEnvGuild) && fromEnvGuild !== id) {
+        process.env.BLZ_MAIN_GUILD_ID = fromEnvGuild;
+    }
+
     process.env.GUILD_ID = id;
     const keepPanel = ['1', 'true', 'yes', 'on'].includes(
         String(process.env.BLZ_TEST_KEEP_PANEL_GUILD || '').toLowerCase()
@@ -67,25 +72,38 @@ function applyTestGuildOverride() {
     if (!keepPanel) {
         process.env.PANEL_GUILD_ID = id;
     }
-    const mainRef = String(process.env.BLZ_MAIN_GUILD_ID || '').trim();
+    let mainRef = String(process.env.BLZ_MAIN_GUILD_ID || '').trim();
+    if (mainRef === id) {
+        delete process.env.BLZ_MAIN_GUILD_ID;
+        mainRef = '';
+        console.warn(
+            '[BLZ] BLZ_MAIN_GUILD_ID ne peut pas être la même guilde que le test — ignoré. ' +
+                'Pour enregistrer les slash sur le serveur principal, mets BLZ_MAIN_GUILD_ID=<id du main> dans le .env.'
+        );
+    }
+    if (!mainRef && fromEnvGuild === id) {
+        console.warn(
+            '[BLZ] Ton GUILD_ID dans le .env est déjà la guilde de test : les slash ne partiront pas sur le main tant que tu ne définis pas ' +
+                'BLZ_MAIN_GUILD_ID=<id du serveur principal> (invite le bot sur ce serveur aussi).'
+        );
+    }
     console.warn(
         `[BLZ] ——— Mode TEST ———  GUILD_ID=${id} (runtime + slash) · serveur principal slash aussi : BLZ_MAIN_GUILD_ID=${mainRef || '—'}`
     );
 }
 
 /**
- * Guildes sur lesquelles enregistrer les slash (niveau + modération) : GUILD_ID courant,
- * et en mode TEST aussi BLZ_MAIN_GUILD_ID (prod) si différent.
+ * Guildes sur lesquelles enregistrer les slash (niveau + modération) :
+ * toujours `GUILD_ID`, et en plus `BLZ_MAIN_GUILD_ID` s’il est défini (même hors mode test),
+ * pour pouvoir déployer sur le serveur principal tout en gardant GUILD_ID sur un autre serveur.
  * @returns {string[]}
  */
 function getSlashDeployGuildIds() {
     const ids = new Set();
     const primary = String(process.env.GUILD_ID || '').trim();
     if (/^\d{17,22}$/.test(primary)) ids.add(primary);
-    if (isTestBotProfile()) {
-        const main = String(process.env.BLZ_MAIN_GUILD_ID || '').trim();
-        if (/^\d{17,22}$/.test(main)) ids.add(main);
-    }
+    const main = String(process.env.BLZ_MAIN_GUILD_ID || '').trim();
+    if (/^\d{17,22}$/.test(main)) ids.add(main);
     return [...ids];
 }
 

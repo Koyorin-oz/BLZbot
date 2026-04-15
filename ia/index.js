@@ -1,4 +1,5 @@
 const path = require('path');
+const { normalizeGroqApiKey } = require('./normalize-groq-key.js');
 const { resolveDotenvPath, PEBBLE_HOST_ENV_PATH } = require(path.join(__dirname, '..', 'blzbot-env.js'));
 require('dotenv').config({
     path: resolveDotenvPath(
@@ -9,11 +10,25 @@ require('dotenv').config({
     quiet: true,
 });
 
+const _gqRaw = process.env.GROQ_API_KEY;
+process.env.GROQ_API_KEY = normalizeGroqApiKey(_gqRaw);
+if (_gqRaw != null && String(_gqRaw) !== process.env.GROQ_API_KEY) {
+    console.warn(
+        '[ia] GROQ_API_KEY a été nettoyée (espace fin de ligne, guillemets ou caractère invisible). Mets une seule ligne sans rien après la clé.'
+    );
+}
+
 if (!process.env.GROQ_API_KEY) {
     console.log(
         '[ia] Pas de GROQ_API_KEY — module IA non démarré (l’IA utilise uniquement Groq ; voir https://console.groq.com/keys — ne pas confondre avec Grok/xAI).'
     );
     process.exit(0);
+}
+
+if (!process.env.GROQ_API_KEY.startsWith('gsk_')) {
+    console.warn(
+        '[ia] GROQ_API_KEY ne commence pas par gsk_ — souvent les clés Groq ont ce préfixe. Si l’API renvoie 401, régénère une clé sur https://console.groq.com/keys (pas OpenAI / OpenRouter).'
+    );
 }
 
 const { Client, GatewayIntentBits, Partials } = require('discord.js');
