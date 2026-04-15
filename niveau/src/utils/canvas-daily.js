@@ -153,9 +153,9 @@ async function renderDailyCard({
         }
     }
 
-    const avS = 54;
-    const avX = 18;
-    const avY = 22;
+    const avS = 50;
+    const avX = 16;
+    const avY = 24;
 
     ctx.save();
     rr(ctx, avX, avY, avS, avS, avS / 2);
