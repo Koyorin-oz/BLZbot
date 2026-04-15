@@ -179,8 +179,8 @@ async function renderDailyCard({
     ctx.arc(avX + avS / 2, avY + avS / 2, avS / 2 + 1, 0, Math.PI * 2);
     ctx.stroke();
 
-    const textX = avX + avS + 14;
-    const textRight = W - 18;
+    const textX = avX + avS + 12;
+    const textRight = W - 16;
 
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
