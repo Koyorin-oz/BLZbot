@@ -185,7 +185,7 @@ async function renderGuildProfileV2({ guild, members, owner, warInfo, totalMembe
             ctx.fillStyle = 'rgba(255, 200, 80, 0.06)';
             ctx.fill();
         }
-        let icon = '·';
+        let icon = '👤';
         if (member.user_id === guild.owner_id) {
             icon = '👑';
             ctx.fillStyle = THEME.gold;
