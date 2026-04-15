@@ -412,7 +412,7 @@ async function renderProfilePreviewVariant(data, variant) {
     ctx.font = `500 15px ${textFace}, Arial`;
     ctx.fillText(rank?.name ?? '', boxX + boxW / 2 + 30, y2 + 98);
     if (nextRank) {
-        const need = Math.max(0, nextRank.minPoints - (user.points ?? 0));
+        const need = Math.max(0, (nextRank.points ?? 0) - (user.points ?? 0));
         ctx.font = `500 13px ${textFace}, Arial`;
         ctx.fillStyle = '#5c4033';
         ctx.fillText(`Prochain : ${nextRank.name} (${need.toLocaleString('fr-FR')} RP)`, boxX + boxW / 2 + 30, y2 + 128);
