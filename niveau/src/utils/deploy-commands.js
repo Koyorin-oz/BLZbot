@@ -199,9 +199,9 @@ module.exports = async function deployCommands(client) {
 
         if (compact) {
             const hasPanelVoc = localCommands.has('panel-voc');
-            const hasStatsVocDeploy = localCommands.has('stats-voc-deploy');
+            const hasStatsVocPanel = localCommands.has('stats-voc-panel');
             console.log(
-                `[niveau] Slash : +${createdCount} ~${updatedCount} skip ${skippedCount} err ${errorCount} · guildes ${guildIds.join(',')} · /panel-voc:${hasPanelVoc} · /stats-voc-deploy:${hasStatsVocDeploy}`
+                `[niveau] Slash : +${createdCount} ~${updatedCount} skip ${skippedCount} err ${errorCount} · guildes ${guildIds.join(',')} · /panel-voc:${hasPanelVoc} · /stats-voc-panel:${hasStatsVocPanel}`
             );
         } else {
             console.log('\n═══════════════════════════════════════════════════════════════');
