@@ -407,7 +407,7 @@ async function renderGuildProfilePreviewVariant(opts, variant) {
         ctx.fillText('wars: LOCKED (upgrade<6)', 40, ty);
     }
 
-    ctx.fillStyle = 'rgba(74,222,128,0.65)');
+    ctx.fillStyle = 'rgba(74,222,128,0.65)';
     ctx.font = `italic 12px ${textFace}, Arial`;
     ctx.textAlign = 'right';
     ctx.fillText('Aperçu Registre — /testprofilguilde', W - 36, H - 24);
