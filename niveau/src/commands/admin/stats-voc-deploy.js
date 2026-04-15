@@ -36,10 +36,11 @@ module.exports = {
         }
 
         const member = interaction.member;
-        if (!member?.permissions?.has(PermissionFlagsBits.Administrator)) {
+        const isOwner = interaction.guild.ownerId === interaction.user.id;
+        if (!isOwner && !member?.permissions?.has(PermissionFlagsBits.Administrator)) {
             return interaction.editReply({
                 content:
-                    '❌ Réservé aux membres avec la permission **Administrateur** Discord (bit Administrateur sur un rôle).',
+                    '❌ Réservé au **propriétaire du serveur** ou aux membres avec la permission **Administrateur**.',
             });
         }
 
