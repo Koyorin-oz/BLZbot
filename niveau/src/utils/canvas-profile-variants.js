@@ -419,6 +419,7 @@ async function renderBlzTestProfileVariant(data, variantId, titleFace, textFace)
     });
 
     drawCard(2, 'Rang suivant', (x, yy) => {
+        const cardLeft = pad + 2 * (cw + gap);
         ctx.fillStyle = theme.sub;
         ctx.font = `500 14px ${textFace}, Arial`;
         if (nextRank) {
@@ -431,7 +432,7 @@ async function renderBlzTestProfileVariant(data, variantId, titleFace, textFace)
         if (rankIconPath && fs.existsSync(rankIconPath)) {
             try {
                 const ic = await loadImage(fs.readFileSync(rankIconPath));
-                ctx.drawImage(ic, x + cw - 96, yCards + 36, 56, 56);
+                ctx.drawImage(ic, cardLeft + cw - 68, yCards + 38, 52, 52);
             } catch {
                 /* ignore */
             }
