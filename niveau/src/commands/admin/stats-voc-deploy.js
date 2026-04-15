@@ -43,7 +43,7 @@ module.exports = {
         const rawCat = String(interaction.options.getString('categorie_id') || '').trim();
         const categoryId = /^\d{17,22}$/.test(rawCat) ? rawCat : defaultCategoryId();
 
-        const recreate = interaction.options.getBoolean('recréer') === true;
+        const recreate = interaction.options.getBoolean('recreate') === true;
 
         try {
             await deployMemberStatsVoice(guild, categoryId, { recreate });
