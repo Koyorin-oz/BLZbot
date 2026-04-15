@@ -549,6 +549,10 @@ async function renderGuildProfilePreviewVariant(opts, variant) {
         return canvas.toBuffer('image/png');
     }
 
+    if (variant !== 'etendard') {
+        return renderGuildProfilePreviewVariant(opts, 'citadelle');
+    }
+
     /* Étendard : colonne stats à gauche + zone droite (guerre haut, roster bas). */
     const canvas = createCanvas(W, H);
     const ctx = canvas.getContext('2d');
