@@ -1,6 +1,6 @@
 /**
- * Aperçus visuels alternatifs pour profil guilde (ne remplace pas renderGuildProfileV2).
- * bastion | orbit | ledger
+ * Aperçus /testprofilguilde — thème BLZ saturé (noir, bordeaux, or, jaune, rouge).
+ * citadelle | brasier | etendard
  */
 const { createCanvas, loadImage, registerFont } = require('canvas');
 const fs = require('node:fs');
@@ -22,10 +22,25 @@ const W = 1200;
 const H = 800;
 
 const GUILD_PREVIEW_VARIANTS = [
-    { id: 'bastion', label: 'Bastion', hint: 'Pierre, or, blason' },
-    { id: 'orbit', label: 'Orbit', hint: 'Espace, halo, lisibilité néon' },
-    { id: 'ledger', label: 'Registre', hint: 'Style tableau / terminal vert' },
+    { id: 'citadelle', label: 'Citadelle', hint: '3 blocs + membres + stats (comme Bastion, couleurs BLZ)' },
+    { id: 'brasier', label: 'Brasier', hint: 'Stats à gauche, membres à droite — contrasté' },
+    { id: 'etendard', label: 'Étendard', hint: 'Bandeau cramoisi + cartes or + liste' },
 ];
+
+const C = {
+    overlay: 'rgba(22, 6, 10, 0.62)',
+    panel: 'rgba(5, 1, 3, 0.94)',
+    panelHi: 'rgba(48, 12, 18, 0.95)',
+    text: '#fff8f0',
+    sub: '#f0b0a8',
+    gold: '#ffc928',
+    yellow: '#ffd166',
+    red: '#ff2d2d',
+    crimson: '#7f1020',
+    strokeGold: 'rgba(255, 200, 70, 0.75)',
+    strokeHot: 'rgba(255, 80, 60, 0.35)',
+    peace: '#86efac',
+};
 
 function rr(ctx, x, y, w, h, r) {
     const R = Math.min(r, w / 2, h / 2);
@@ -42,22 +57,12 @@ function truncateText(ctx, text, maxWidth) {
     let width = ctx.measureText(text).width;
     if (width <= maxWidth) return text;
     const ellipsis = '...';
-    const ellipsisWidth = ctx.measureText(ellipsis).width;
-    while (width > maxWidth - ellipsisWidth && text.length > 0) {
+    const ew = ctx.measureText(ellipsis).width;
+    while (width > maxWidth - ew && text.length > 0) {
         text = text.substring(0, text.length - 1);
         width = ctx.measureText(text).width;
     }
     return text + ellipsis;
-}
-
-async function tryLoadBlzBg() {
-    const p = path.join(__dirname, '..', 'assets', 'blz_bg.png');
-    if (!fs.existsSync(p)) return null;
-    try {
-        return await loadImage(fs.readFileSync(p));
-    } catch {
-        return null;
-    }
 }
 
 function formatValue(n) {
@@ -67,361 +72,407 @@ function formatValue(n) {
     return v.toLocaleString('fr-FR');
 }
 
-function drawMemberRows(ctx, members, guild, startX, startY, colW, titleFace, textFace, iconFn) {
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
-    const lineH = 52;
-    ctx.font = `700 18px ${titleFace}, Arial`;
-    ctx.fillStyle = iconFn.accent;
-    ctx.fillText('Membres', startX, startY);
-    ctx.font = `600 15px ${textFace}, Arial`;
-    for (let i = 0; i < Math.min(10, members.length); i++) {
-        const m = members[i];
-        const y = startY + 28 + i * lineH;
-        let icon = '·';
-        let nameColor = iconFn.text;
-        if (m.user_id === guild.owner_id) {
-            icon = '♦';
-            nameColor = iconFn.gold;
-        } else if (guild.sub_chiefs && guild.sub_chiefs.includes(m.user_id)) {
-            icon = '◇';
-            nameColor = iconFn.silver;
+async function drawBlzBackdrop(ctx) {
+    const p = path.join(__dirname, '..', 'assets', 'blz_bg.png');
+    if (fs.existsSync(p)) {
+        try {
+            const bg = await loadImage(fs.readFileSync(p));
+            ctx.drawImage(bg, 0, 0, W, H);
+            ctx.fillStyle = C.overlay;
+            ctx.fillRect(0, 0, W, H);
+            return;
+        } catch {
+            /* fallthrough */
         }
-        ctx.fillStyle = nameColor;
-        ctx.fillText(`${icon} ${truncateText(ctx, m.username, colW - 120)}`, startX, y);
-        ctx.fillStyle = iconFn.sub;
-        ctx.font = `500 13px ${textFace}, Arial`;
-        const mv = m.total_value || 0;
-        ctx.fillText(formatValue(mv), startX + colW - 100, y);
-        ctx.font = `600 15px ${textFace}, Arial`;
     }
+    const g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, '#120408');
+    g.addColorStop(0.4, '#2a0c12');
+    g.addColorStop(1, '#080204');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(18, 4, 8, 0.45)';
+    ctx.fillRect(0, 0, W, H);
+}
+
+function panelBlz(ctx, x, y, w, h, r, fill = C.panel) {
+    rr(ctx, x, y, w, h, r);
+    ctx.fillStyle = fill;
+    ctx.fill();
+    ctx.strokeStyle = C.strokeGold;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    ctx.save();
+    rr(ctx, x + 2, y + 2, w - 4, h - 4, Math.max(0, r - 2));
+    ctx.strokeStyle = C.strokeHot;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+}
+
+function drawFooter(ctx, label) {
+    ctx.font = 'italic 13px Inter, Arial';
+    ctx.fillStyle = 'rgba(255, 200, 100, 0.85)';
+    ctx.textAlign = 'right';
+    ctx.fillText(label, W - 28, H - 22);
+    ctx.textAlign = 'left';
+}
+
+function drawMemberLine(ctx, member, guild, x, y, nameMax, titleFace, textFace, valueRightX) {
+    let icon = '👤';
+    let nameColor = C.text;
+    if (member.user_id === guild.owner_id) {
+        icon = '👑';
+        nameColor = C.gold;
+    } else if (guild.sub_chiefs && guild.sub_chiefs.includes(member.user_id)) {
+        icon = '⚔️';
+        nameColor = '#e8e0ff';
+    }
+    ctx.font = `20px Arial`;
+    ctx.fillText(icon, x, y);
+    ctx.font = `700 16px ${titleFace}, Arial`;
+    ctx.fillStyle = nameColor;
+    ctx.fillText(truncateText(ctx, member.username, nameMax), x + 36, y);
+    ctx.font = `700 14px ${textFace}, Arial`;
+    ctx.fillStyle = C.yellow;
+    const mv = member.total_value || 0;
+    ctx.textAlign = 'right';
+    ctx.fillText(`💎 ${formatValue(mv)}`, valueRightX, y);
+    ctx.textAlign = 'left';
 }
 
 /**
- * @param {object} opts — { guild, members, owner, warInfo, totalMembers }
- * @param {'bastion'|'orbit'|'ledger'} variant
+ * @param {object} opts
+ * @param {'citadelle'|'brasier'|'etendard'} variant
  */
 async function renderGuildProfilePreviewVariant(opts, variant) {
     const { guild, members, owner, warInfo, totalMembers } = opts;
     const titleFace = 'InterBold';
     const textFace = 'Inter';
     const ownerName = owner?.username ?? 'Inconnu';
+    const up = guild.upgrade_level === 10 ? 'X' : String(guild.upgrade_level);
 
-    if (variant === 'bastion') {
+    if (variant === 'citadelle') {
         const canvas = createCanvas(W, H);
         const ctx = canvas.getContext('2d');
-        const g = ctx.createLinearGradient(0, 0, W, H);
-        g.addColorStop(0, '#2a2a32');
-        g.addColorStop(0.5, '#3d3a42');
-        g.addColorStop(1, '#1e1c22');
-        ctx.fillStyle = g;
-        ctx.fillRect(0, 0, W, H);
-        const bg = await tryLoadBlzBg();
-        if (bg) {
-            ctx.save();
-            ctx.globalAlpha = 0.18;
-            ctx.drawImage(bg, 0, 0, W, H);
-            ctx.restore();
-        }
+        await drawBlzBackdrop(ctx);
 
-        rr(ctx, 36, 36, W - 72, 120, 20);
-        ctx.fillStyle = 'rgba(0,0,0,0.35)';
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(212,175,55,0.85)';
-        ctx.lineWidth = 3;
-        ctx.stroke();
+        const pad = 22;
+        const gap = 14;
+        const topH = 112;
+        const cw = (W - pad * 2 - gap * 2) / 3;
+        let y0 = 18;
 
-        ctx.font = `700 44px ${titleFace}, Arial`;
-        ctx.fillStyle = '#f5e6b8';
-        ctx.fillText(`${guild.emoji}`, 64, 108);
-        ctx.fillStyle = '#fffef5';
-        ctx.font = `700 36px ${titleFace}, Arial`;
-        ctx.fillText(truncateText(ctx, guild.name, 700), 130, 105);
+        panelBlz(ctx, pad, y0, cw, topH, 20, C.panelHi);
+        ctx.font = `52px Arial`;
+        ctx.fillText(guild.emoji, pad + 18, y0 + 72);
+        ctx.font = `800 32px ${titleFace}, Arial`;
+        ctx.fillStyle = C.text;
+        ctx.fillText(truncateText(ctx, guild.name, cw - 90), pad + 82, y0 + 68);
 
-        const chipY = 190;
-        const chipW = (W - 80) / 3;
-        const drawChip = (i, title, val, sub) => {
-            const x = 40 + i * (chipW + 10);
-            rr(ctx, x, chipY, chipW, 100, 16);
-            ctx.fillStyle = 'rgba(0,0,0,0.4)';
-            ctx.fill();
-            ctx.strokeStyle = 'rgba(212,175,55,0.5)';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            ctx.fillStyle = '#d4af37';
-            ctx.font = `700 16px ${titleFace}, Arial`;
-            ctx.fillText(title, x + 18, chipY + 28);
-            ctx.fillStyle = '#fff';
-            ctx.font = `700 26px ${textFace}, Arial`;
-            ctx.fillText(val, x + 18, chipY + 62);
-            if (sub) {
-                ctx.fillStyle = 'rgba(245,230,184,0.75)';
-                ctx.font = `500 12px ${textFace}, Arial`;
-                ctx.fillText(sub, x + 18, chipY + 86);
-            }
-        };
-        const up = guild.upgrade_level === 10 ? 'X' : String(guild.upgrade_level);
-        drawChip(0, 'VALEUR', `💎 ${formatValue(guild.total_value || 0)}`, 'Puissance guilde');
-        drawChip(1, 'UPGRADE', `U${up}`, `${totalMembers}/${guild.member_slots} membres`);
-        drawChip(2, 'CHEF', truncateText(ctx, ownerName, chipW - 36), 'Salle des chefs');
-
-        const leftW = 520;
-        rr(ctx, 40, 320, leftW, H - 360, 18);
-        ctx.fillStyle = 'rgba(0,0,0,0.42)';
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(212,175,55,0.4)';
-        ctx.stroke();
-        drawMemberRows(ctx, members, guild, 64, 350, leftW - 48, titleFace, textFace, {
-            accent: '#d4af37',
-            text: '#f8f4e8',
-            sub: 'rgba(245,230,184,0.75)',
-            gold: '#ffd700',
-            silver: '#c8c8d8',
-        });
-
-        const rx = 40 + leftW + 24;
-        const rw = W - rx - 40;
-        rr(ctx, rx, 320, rw, H - 360, 18);
-        ctx.fillStyle = 'rgba(0,0,0,0.42)';
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(212,175,55,0.4)';
-        ctx.stroke();
-
-        ctx.fillStyle = '#d4af37';
-        ctx.font = `700 20px ${titleFace}, Arial`;
-        ctx.fillText('Trésorerie', rx + 24, 352);
-        ctx.fillStyle = '#eee';
-        ctx.font = `600 16px ${textFace}, Arial`;
-        if (guild.upgrade_level < 2) {
-            ctx.fillText('🔒 Débloquée à l’upgrade 2', rx + 24, 392);
-        } else {
-            ctx.fillText(
-                `${(guild.treasury ?? 0).toLocaleString('fr-FR')} / ${(guild.treasury_capacity ?? 0).toLocaleString('fr-FR')} ⭐`,
-                rx + 24,
-                388
-            );
-        }
-
-        ctx.fillStyle = '#d4af37';
-        ctx.font = `700 20px ${titleFace}, Arial`;
-        ctx.fillText('Guerre', rx + 24, 448);
-        ctx.fillStyle = '#e8e0d4';
+        const x2 = pad + cw + gap;
+        panelBlz(ctx, x2, y0, cw, topH, 20, C.panelHi);
+        ctx.font = `800 38px ${titleFace}, Arial`;
+        ctx.fillStyle = C.yellow;
+        ctx.fillText(`💎 ${formatValue(guild.total_value || 0)}`, x2 + 16, y0 + 58);
         ctx.font = `600 15px ${textFace}, Arial`;
-        if (guild.upgrade_level < 6) {
-            ctx.fillText('🔒 Guerres à l’upgrade 6', rx + 24, 482);
-        } else if (warInfo && warInfo.status === 'ongoing') {
-            ctx.fillStyle = '#f87171';
-            ctx.fillText(`En cours vs ${warInfo.opponent}`, rx + 24, 478);
-            const h = Math.max(1, Math.ceil((warInfo.timeRemaining || 0) / (3600000)));
-            ctx.fillStyle = '#ccc';
-            ctx.fillText(`~${h}h restantes`, rx + 24, 502);
-        } else {
-            ctx.fillStyle = '#a7f3d0';
-            ctx.fillText('Aucune guerre en cours', rx + 24, 482);
-        }
+        ctx.fillStyle = C.sub;
+        ctx.fillText('Valeur totale', x2 + 16, y0 + 92);
 
-        ctx.fillStyle = 'rgba(200,190,170,0.8)';
-        ctx.font = `italic 13px ${textFace}, Arial`;
-        ctx.textAlign = 'right';
-        ctx.fillText('Aperçu Bastion — /testprofilguilde', W - 36, H - 28);
-        ctx.textAlign = 'left';
-        return canvas.toBuffer('image/png');
-    }
-
-    if (variant === 'orbit') {
-        const canvas = createCanvas(W, H);
-        const ctx = canvas.getContext('2d');
-        const rg = ctx.createRadialGradient(W / 2, H / 2, 40, W / 2, H / 2, W * 0.75);
-        rg.addColorStop(0, '#1a0f2e');
-        rg.addColorStop(0.4, '#0f172a');
-        rg.addColorStop(1, '#020617');
-        ctx.fillStyle = rg;
-        ctx.fillRect(0, 0, W, H);
-
-        ctx.strokeStyle = 'rgba(56,189,248,0.15)';
-        ctx.lineWidth = 2;
-        for (let r = 120; r < 700; r += 90) {
-            ctx.beginPath();
-            ctx.arc(W / 2, 120, r, 0, Math.PI * 2);
-            ctx.stroke();
-        }
-
-        ctx.fillStyle = '#38bdf8';
-        ctx.font = `800 42px ${titleFace}, Arial`;
-        ctx.textAlign = 'center';
-        ctx.fillText(`${guild.emoji}`, W / 2, 100);
-        ctx.fillStyle = '#f0f9ff';
-        ctx.font = `700 34px ${titleFace}, Arial`;
-        ctx.fillText(truncateText(ctx, guild.name, 900), W / 2, 150);
-
-        const barY = 200;
-        const barH = 56;
-        const segW = (W - 100) / 4;
-        for (let i = 0; i < 4; i++) {
-            const x = 50 + i * segW;
-            rr(ctx, x, barY, segW - 12, barH, 14);
-            ctx.fillStyle = 'rgba(15,23,42,0.85)';
-            ctx.fill();
-            ctx.strokeStyle = 'rgba(56,189,248,0.45)';
-            ctx.stroke();
-        }
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#7dd3fc';
-        ctx.font = `600 13px ${textFace}, Arial`;
-        ctx.fillText('VALEUR', 50 + (segW - 12) / 2, barY + 22);
-        ctx.fillText('MEMBRES', 50 + segW + (segW - 12) / 2, barY + 22);
-        ctx.fillText('UPGRADE', 50 + 2 * segW + (segW - 12) / 2, barY + 22);
-        ctx.fillText('CHEF', 50 + 3 * segW + (segW - 12) / 2, barY + 22);
-        ctx.fillStyle = '#fff';
-        ctx.font = `700 18px ${titleFace}, Arial`;
-        ctx.fillText(formatValue(guild.total_value || 0), 50 + (segW - 12) / 2, barY + 48);
-        ctx.fillText(`${totalMembers}/${guild.member_slots}`, 50 + segW + (segW - 12) / 2, barY + 48);
-        const up = guild.upgrade_level === 10 ? 'X' : String(guild.upgrade_level);
-        ctx.fillText(`U${up}`, 50 + 2 * segW + (segW - 12) / 2, barY + 48);
-        ctx.fillText(truncateText(ctx, ownerName, 120), 50 + 3 * segW + (segW - 12) / 2, barY + 48);
-
-        const midY = 300;
-        const lw = 540;
-        rr(ctx, 40, midY, lw, H - midY - 50, 18);
-        ctx.fillStyle = 'rgba(2,6,23,0.65)';
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(99,102,241,0.5)';
-        ctx.stroke();
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'alphabetic';
-        drawMemberRows(ctx, members, guild, 64, midY + 28, lw - 48, titleFace, textFace, {
-            accent: '#818cf8',
-            text: '#e0e7ff',
-            sub: '#94a3b8',
-            gold: '#fcd34d',
-            silver: '#cbd5e1',
-        });
-
-        const rx = 40 + lw + 20;
-        const rw = W - rx - 40;
-        rr(ctx, rx, midY, rw, H - midY - 50, 18);
-        ctx.fillStyle = 'rgba(2,6,23,0.65)';
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(99,102,241,0.5)';
-        ctx.stroke();
-        ctx.fillStyle = '#a5b4fc';
-        ctx.font = `700 18px ${titleFace}, Arial`;
-        ctx.fillText('Synthèse', rx + 20, midY + 32);
-        ctx.fillStyle = '#e2e8f0';
+        const x3 = pad + (cw + gap) * 2;
+        panelBlz(ctx, x3, y0, cw, topH, 20, C.panelHi);
+        ctx.font = `800 26px ${titleFace}, Arial`;
+        ctx.fillStyle = C.gold;
+        ctx.fillText(`Upgrade ${up}`, x3 + 16, y0 + 50);
+        ctx.font = `600 16px ${textFace}, Arial`;
+        ctx.fillStyle = C.text;
+        ctx.fillText(`👥 ${totalMembers} / ${guild.member_slots}`, x3 + 16, y0 + 82);
         ctx.font = `600 14px ${textFace}, Arial`;
-        let ly = midY + 64;
-        if (guild.upgrade_level >= 2) {
-            ctx.fillText(`Trésor : ${(guild.treasury ?? 0).toLocaleString('fr-FR')} / ${(guild.treasury_capacity ?? 0).toLocaleString('fr-FR')}`, rx + 20, ly);
-            ly += 28;
+        ctx.fillStyle = C.gold;
+        ctx.fillText(truncateText(ctx, `👑 ${ownerName}`, cw - 24), x3 + 16, y0 + 106);
+
+        const yMain = y0 + topH + gap;
+        const mainH = H - yMain - 32;
+        const leftW = 440;
+
+        panelBlz(ctx, pad, yMain, leftW, mainH, 22);
+        ctx.font = `800 22px ${titleFace}, Arial`;
+        ctx.fillStyle = C.yellow;
+        ctx.fillText(`Membres (${totalMembers})`, pad + 20, yMain + 36);
+        const startY = yMain + 58;
+        const lh = 50;
+        for (let i = 0; i < Math.min(10, members.length); i++) {
+            const rowY = startY + i * lh;
+            if (i % 2 === 0) {
+                rr(ctx, pad + 10, rowY - 18, leftW - 20, lh - 6, 10);
+                ctx.fillStyle = 'rgba(255, 200, 80, 0.07)';
+                ctx.fill();
+            }
+            drawMemberLine(ctx, members[i], guild, pad + 18, rowY, 220, titleFace, textFace);
         }
-        if (guild.upgrade_level >= 6) {
-            ctx.fillText(`Victoires : ${guild.wars_won ?? 0}`, rx + 20, ly);
-            ly += 28;
+        if (totalMembers > 10) {
+            ctx.font = `italic 14px ${textFace}, Arial`;
+            ctx.fillStyle = C.sub;
+            ctx.fillText(`… +${totalMembers - 10}`, pad + 20, startY + 10 * lh + 4);
+        }
+
+        const rx = pad + leftW + gap;
+        const rw = W - rx - pad;
+        const h1 = Math.round(mainH * 0.38);
+        const h2 = Math.round(mainH * 0.34);
+        const h3 = mainH - h1 - h2 - gap;
+        let yy = yMain;
+
+        panelBlz(ctx, rx, yy, rw, h1, 18);
+        ctx.font = `800 22px ${titleFace}, Arial`;
+        ctx.fillStyle = C.yellow;
+        ctx.fillText('Trésorerie', rx + 18, yy + 32);
+        if (guild.upgrade_level < 2) {
+            ctx.font = `700 18px ${textFace}, Arial`;
+            ctx.fillStyle = '#9ca3af';
+            ctx.fillText('🔒 Upgrade 2', rx + 18, yy + 72);
+        } else {
+            ctx.font = `700 28px ${titleFace}, Arial`;
+            ctx.fillStyle = C.text;
+            ctx.fillText(
+                `${(guild.treasury ?? 0).toLocaleString('fr-FR')} / ${(guild.treasury_capacity ?? 0).toLocaleString('fr-FR')}`,
+                rx + 18,
+                yy + 68
+            );
+            ctx.font = `600 14px ${textFace}, Arial`;
+            ctx.fillStyle = C.sub;
+            const inc = guild.level * 100 * (guild.treasury_multiplier_purchased || 1);
+            ctx.fillText(`📈 ${inc.toLocaleString('fr-FR')} ⭐ / jour`, rx + 18, yy + 100);
+        }
+
+        yy += h1 + gap;
+        panelBlz(ctx, rx, yy, rw, h2, 18);
+        ctx.font = `800 22px ${titleFace}, Arial`;
+        ctx.fillStyle = C.red;
+        ctx.fillText('Guerres', rx + 18, yy + 30);
+        if (guild.upgrade_level < 6) {
+            ctx.fillStyle = '#9ca3af';
+            ctx.font = `700 17px ${textFace}, Arial`;
+            ctx.fillText('🔒 Upgrade 6', rx + 18, yy + 68);
+        } else {
+            ctx.font = `600 16px ${textFace}, Arial`;
+            ctx.fillStyle = C.text;
+            ctx.fillText(`🏆 ${guild.wars_won ?? 0} · 🔥${guild.wars_won_70 ?? 0} · ⚡${guild.wars_won_80 ?? 0} · 💎${guild.wars_won_90 ?? 0}`, rx + 18, yy + 62);
             if (warInfo && warInfo.status === 'ongoing') {
-                ctx.fillStyle = '#fca5a5';
-                ctx.fillText(`Guerre : ${warInfo.opponent}`, rx + 20, ly);
-                ly += 28;
+                ctx.fillStyle = C.red;
+                ctx.font = `700 15px ${titleFace}, Arial`;
+                ctx.fillText(`⚔️ ${warInfo.opponent}`, rx + 18, yy + 92);
+            } else {
+                ctx.fillStyle = C.peace;
+                ctx.font = `600 15px ${textFace}, Arial`;
+                ctx.fillText('🕊️ Paix', rx + 18, yy + 92);
             }
         }
-        ctx.fillStyle = 'rgba(148,163,184,0.9)';
-        ctx.font = `italic 12px ${textFace}, Arial`;
-        ctx.textAlign = 'right';
-        ctx.fillText('Aperçu Orbit — /testprofilguilde', W - 36, H - 26);
-        ctx.textAlign = 'left';
+
+        yy += h2 + gap;
+        panelBlz(ctx, rx, yy, rw, h3, 18);
+        ctx.font = `800 18px ${titleFace}, Arial`;
+        ctx.fillStyle = C.gold;
+        ctx.fillText('Infos', rx + 18, yy + 28);
+        ctx.font = `600 14px ${textFace}, Arial`;
+        ctx.fillStyle = C.text;
+        const pct = Math.min(100, Math.round((totalMembers / Math.max(1, guild.member_slots)) * 100));
+        ctx.fillText(`Places ${pct} % · 🃏 ${guild.joker_guilde_uses || 0}/3`, rx + 18, yy + 56);
+        ctx.fillText(guild.channel_id ? '💬 Salon privé actif' : '💬 Salon : U5', rx + 18, yy + 78);
+
+        drawFooter(ctx, 'Aperçu Citadelle — /testprofilguilde');
         return canvas.toBuffer('image/png');
     }
 
-    /* ledger */
+    if (variant === 'brasier') {
+        const canvas = createCanvas(W, H);
+        const ctx = canvas.getContext('2d');
+        await drawBlzBackdrop(ctx);
+
+        const pad = 22;
+        const gap = 16;
+        const colL = 400;
+        const yTop = 18;
+        const hTop = 110;
+
+        panelBlz(ctx, pad, yTop, colL, H - yTop - pad, 22, C.panelHi);
+        ctx.font = `800 24px ${titleFace}, Arial`;
+        ctx.fillStyle = C.yellow;
+        ctx.fillText('Synthèse', pad + 18, yTop + 36);
+        ctx.font = `700 42px ${titleFace}, Arial`;
+        ctx.fillStyle = C.yellow;
+        ctx.fillText(`💎`, pad + 18, yTop + 92);
+        ctx.fillText(formatValue(guild.total_value || 0), pad + 64, yTop + 92);
+        ctx.font = `700 22px ${textFace}, Arial`;
+        ctx.fillStyle = C.gold;
+        ctx.fillText(`U${up}`, pad + 18, yTop + 140);
+        ctx.font = `600 16px ${textFace}, Arial`;
+        ctx.fillStyle = C.text;
+        ctx.fillText(`${guild.emoji} ${truncateText(ctx, guild.name, colL - 36)}`, pad + 18, yTop + 180);
+        ctx.fillText(`👥 ${totalMembers} / ${guild.member_slots}`, pad + 18, yTop + 212);
+        ctx.fillStyle = C.gold;
+        ctx.fillText(`👑 ${truncateText(ctx, ownerName, colL - 36)}`, pad + 18, yTop + 244);
+
+        let yy = yTop + 280;
+        panelBlz(ctx, pad, yy, colL, 200, 18);
+        ctx.font = `800 20px ${titleFace}, Arial`;
+        ctx.fillStyle = C.yellow;
+        ctx.fillText('Trésorerie', pad + 18, yy + 32);
+        if (guild.upgrade_level < 2) {
+            ctx.fillStyle = '#9ca3af';
+            ctx.font = `700 17px ${textFace}, Arial`;
+            ctx.fillText('🔒 U2', pad + 18, yy + 72);
+        } else {
+            ctx.fillStyle = C.text;
+            ctx.font = `700 24px ${titleFace}, Arial`;
+            ctx.fillText(`${(guild.treasury ?? 0).toLocaleString('fr-FR')}`, pad + 18, yy + 70);
+            ctx.font = `600 13px ${textFace}, Arial`;
+            ctx.fillStyle = C.sub;
+            ctx.fillText(`cap ${(guild.treasury_capacity ?? 0).toLocaleString('fr-FR')}`, pad + 18, yy + 98);
+        }
+
+        yy += 200 + gap;
+        panelBlz(ctx, pad, yy, colL, H - yy - pad, 18);
+        ctx.font = `800 20px ${titleFace}, Arial`;
+        ctx.fillStyle = C.red;
+        ctx.fillText('Guerre', pad + 18, yy + 32);
+        if (guild.upgrade_level < 6) {
+            ctx.fillStyle = '#9ca3af';
+            ctx.font = `700 17px ${textFace}, Arial`;
+            ctx.fillText('🔒 U6', pad + 18, yy + 72);
+        } else if (warInfo && warInfo.status === 'ongoing') {
+            ctx.fillStyle = C.red;
+            ctx.font = `700 18px ${titleFace}, Arial`;
+            ctx.fillText(`VS ${warInfo.opponent}`, pad + 18, yy + 72);
+        } else {
+            ctx.fillStyle = C.peace;
+            ctx.font = `600 17px ${textFace}, Arial`;
+            ctx.fillText('Paix', pad + 18, yy + 72);
+        }
+
+        const rx = pad + colL + gap;
+        const rw = W - rx - pad;
+        panelBlz(ctx, rx, yTop, rw, H - yTop - pad, 22, C.panel);
+        ctx.font = `800 26px ${titleFace}, Arial`;
+        ctx.fillStyle = C.gold;
+        ctx.fillText(`Membres`, rx + 22, yTop + 40);
+        const startY = yTop + 72;
+        const lh = 52;
+        for (let i = 0; i < Math.min(10, members.length); i++) {
+            const y = startY + i * lh;
+            rr(ctx, rx + 12, y - 20, rw - 24, lh - 8, 12);
+            ctx.fillStyle = i % 2 === 0 ? 'rgba(255,60,40,0.12)' : 'rgba(255,200,80,0.08)';
+            ctx.fill();
+            drawMemberLine(ctx, members[i], guild, rx + 22, y, 320, titleFace, textFace);
+        }
+
+        drawFooter(ctx, 'Aperçu Brasier — /testprofilguilde');
+        return canvas.toBuffer('image/png');
+    }
+
+    /* etendard */
     const canvas = createCanvas(W, H);
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#041208';
-    ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = 'rgba(34,197,94,0.25)';
-    for (let y = 0; y < H; y += 28) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(W, y);
-        ctx.stroke();
-    }
+    await drawBlzBackdrop(ctx);
 
-    ctx.fillStyle = '#22c55e';
-    ctx.font = `700 12px ${textFace}, Arial`;
-    ctx.fillText('GUILDE_REG / v0-preview', 32, 28);
-    ctx.fillStyle = '#4ade80';
-    ctx.font = `700 32px ${titleFace}, Arial`;
-    ctx.fillText(`${guild.emoji} ${truncateText(ctx, guild.name, 800)}`, 32, 68);
-
-    ctx.strokeStyle = '#166534';
-    ctx.strokeRect(28, 96, W - 56, 64);
-    ctx.fillStyle = 'rgba(22,101,52,0.25)';
-    ctx.fillRect(28, 96, W - 56, 64);
-    ctx.fillStyle = '#bbf7d0';
-    ctx.font = `600 15px ${textFace}, Arial`;
-    ctx.fillText(`valeur_total=${(guild.total_value || 0).toLocaleString('fr-FR')} | membres=${totalMembers}/${guild.member_slots} | upgrade=${guild.upgrade_level === 10 ? 'X' : guild.upgrade_level} | chef=${ownerName}`, 40, 128);
-
-    const tableTop = 190;
-    const rowH = 46;
-    ctx.fillStyle = '#22c55e';
-    ctx.font = `700 13px ${textFace}, Arial`;
-    ctx.fillText('user_id', 40, tableTop);
-    ctx.fillText('username', 280, tableTop);
-    ctx.fillText('total_value', 780, tableTop);
-    ctx.strokeStyle = '#14532d';
-    ctx.beginPath();
-    ctx.moveTo(32, tableTop + 8);
-    ctx.lineTo(W - 32, tableTop + 8);
+    const pad = 22;
+    const bandH = 100;
+    rr(ctx, pad, 16, W - pad * 2, bandH, 16);
+    const bg = ctx.createLinearGradient(pad, 0, W - pad, 0);
+    bg.addColorStop(0, '#5c0a14');
+    bg.addColorStop(0.5, '#8b1424');
+    bg.addColorStop(1, '#4a0810');
+    ctx.fillStyle = bg;
+    ctx.fill();
+    ctx.strokeStyle = C.gold;
+    ctx.lineWidth = 3;
     ctx.stroke();
 
-    ctx.font = `500 14px ${textFace}, Arial`;
-    for (let i = 0; i < Math.min(10, members.length); i++) {
-        const m = members[i];
-        const y = tableTop + 22 + i * rowH;
-        ctx.fillStyle = m.user_id === guild.owner_id ? '#fde047' : '#86efac';
-        const idShort = `${m.user_id}`.slice(0, 12) + '…';
-        ctx.fillText(idShort, 40, y);
-        ctx.fillStyle = '#dcfce7';
-        ctx.fillText(truncateText(ctx, m.username, 420), 280, y);
-        ctx.fillStyle = '#a7f3d0';
-        ctx.fillText(String(m.total_value ?? 0), 780, y);
-    }
+    ctx.font = `56px Arial`;
+    ctx.fillText(guild.emoji, pad + 28, 88);
+    ctx.font = `800 40px ${titleFace}, Arial`;
+    ctx.fillStyle = '#fff';
+    ctx.fillText(truncateText(ctx, guild.name, 700), pad + 100, 82);
+    ctx.font = `600 16px ${textFace}, Arial`;
+    ctx.fillStyle = 'rgba(255,230,200,0.95)');
+    ctx.fillText(`Chef : ${ownerName} · ${totalMembers}/${guild.member_slots} membres`, pad + 100, 108);
 
-    const boxY = tableTop + 22 + 10 * rowH + 20;
-    ctx.strokeStyle = '#166534';
-    ctx.strokeRect(28, boxY, W - 56, 120);
-    ctx.fillStyle = 'rgba(6,78,59,0.35)';
-    ctx.fillRect(28, boxY, W - 56, 120);
-    ctx.fillStyle = '#86efac';
-    ctx.font = `600 14px ${textFace}, Arial`;
-    let ty = boxY + 28;
-    if (guild.upgrade_level >= 2) {
-        ctx.fillText(`treasury: ${(guild.treasury ?? 0)} / ${(guild.treasury_capacity ?? 0)}`, 40, ty);
-        ty += 26;
-    } else {
-        ctx.fillText('treasury: LOCKED (upgrade<2)', 40, ty);
-        ty += 26;
-    }
-    if (guild.upgrade_level >= 6) {
-        ctx.fillText(`wars_won: ${guild.wars_won ?? 0}`, 40, ty);
-        ty += 26;
-        if (warInfo && warInfo.status === 'ongoing') {
-            ctx.fillText(`war_opponent: ${warInfo.opponent}`, 40, ty);
+    const yCards = 16 + bandH + 14;
+    const cardW = (W - pad * 2 - 28) / 3;
+    const ch = 100;
+    const drawCard = (i, title, big, small) => {
+        const x = pad + i * (cardW + 14);
+        panelBlz(ctx, x, yCards, cardW, ch, 16);
+        ctx.font = `700 14px ${titleFace}, Arial`;
+        ctx.fillStyle = C.gold;
+        ctx.fillText(title, x + 16, yCards + 26);
+        ctx.font = `800 30px ${titleFace}, Arial`;
+        ctx.fillStyle = C.yellow;
+        ctx.fillText(big, x + 16, yCards + 64);
+        if (small) {
+            ctx.font = `600 12px ${textFace}, Arial`;
+            ctx.fillStyle = C.sub;
+            ctx.fillText(small, x + 16, yCards + 88);
         }
-    } else {
-        ctx.fillText('wars: LOCKED (upgrade<6)', 40, ty);
+    };
+    drawCard(0, 'VALEUR', `💎 ${formatValue(guild.total_value || 0)}`, 'Puissance');
+    drawCard(1, 'UPGRADE', `U${up}`, 'Niveau guilde');
+    const tr =
+        guild.upgrade_level < 2
+            ? '🔒 U2'
+            : `${(guild.treasury ?? 0).toLocaleString('fr-FR')} ⭐`;
+    drawCard(2, 'TRÉSOR', tr, 'Réserve');
+
+    const yList = yCards + ch + 18;
+    const listH = H - yList - pad;
+    const lw = (W - pad * 2 - 14) * 0.55;
+    const rw = W - pad * 2 - 14 - lw;
+
+    panelBlz(ctx, pad, yList, lw, listH, 20);
+    ctx.font = `800 22px ${titleFace}, Arial`;
+    ctx.fillStyle = C.yellow;
+    ctx.fillText('Roster', pad + 18, yList + 34);
+    const sy = yList + 56;
+    const lh = 48;
+    for (let i = 0; i < Math.min(10, members.length); i++) {
+        drawMemberLine(ctx, members[i], guild, pad + 14, sy + i * lh, 260, titleFace, textFace);
     }
 
-    ctx.fillStyle = 'rgba(74,222,128,0.65)';
-    ctx.font = `italic 12px ${textFace}, Arial`;
-    ctx.textAlign = 'right';
-    ctx.fillText('Aperçu Registre — /testprofilguilde', W - 36, H - 24);
-    ctx.textAlign = 'left';
+    const rx = pad + lw + 14;
+    panelBlz(ctx, rx, yList, rw, listH, 20);
+    ctx.font = `800 20px ${titleFace}, Arial`;
+    ctx.fillStyle = C.red;
+    ctx.fillText('Guerre & état', rx + 18, yList + 34);
+    ctx.font = `600 15px ${textFace}, Arial`;
+    ctx.fillStyle = C.text;
+    let ly = yList + 70;
+    if (guild.upgrade_level < 6) {
+        ctx.fillStyle = '#9ca3af';
+        ctx.fillText('Guerres verrouillées (U6).', rx + 18, ly);
+    } else {
+        ctx.fillText(`Victoires totales : ${guild.wars_won ?? 0}`, rx + 18, ly);
+        ly += 26;
+        if (warInfo && warInfo.status === 'ongoing') {
+            ctx.fillStyle = C.red;
+            ctx.fillText(`En guerre : ${warInfo.opponent}`, rx + 18, ly);
+        } else {
+            ctx.fillStyle = C.peace;
+            ctx.fillText('Aucune guerre en cours.', rx + 18, ly);
+        }
+    }
+    ly += 36;
+    ctx.fillStyle = C.sub;
+    ctx.font = `600 14px ${textFace}, Arial`;
+    ctx.fillText(`🃏 Jokers ${guild.joker_guilde_uses || 0}/3`, rx + 18, ly);
+
+    drawFooter(ctx, 'Aperçu Étendard — /testprofilguilde');
     return canvas.toBuffer('image/png');
 }
 
 function normalizeGuildVariant(v) {
     const allowed = GUILD_PREVIEW_VARIANTS.map((x) => x.id);
     if (allowed.includes(v)) return v;
-    return 'bastion';
+    return 'citadelle';
 }
 
 module.exports = {
