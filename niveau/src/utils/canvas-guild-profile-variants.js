@@ -363,7 +363,7 @@ async function renderGuildProfilePreviewVariant(opts, variant) {
             rr(ctx, rx + 12, y - 20, rw - 24, lh - 8, 12);
             ctx.fillStyle = i % 2 === 0 ? 'rgba(255,60,40,0.12)' : 'rgba(255,200,80,0.08)';
             ctx.fill();
-            drawMemberLine(ctx, members[i], guild, rx + 22, y, 320, titleFace, textFace);
+            drawMemberLine(ctx, members[i], guild, rx + 22, y, 320, titleFace, textFace, rx + rw - 18);
         }
 
         drawFooter(ctx, 'Aperçu Brasier — /testprofilguilde');
