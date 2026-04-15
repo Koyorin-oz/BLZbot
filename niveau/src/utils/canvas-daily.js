@@ -53,6 +53,63 @@ function drawBox(ctx, x, y, w, h, r = 10) {
     ctx.stroke();
 }
 
+/**
+ * Compte à rebours cooldown — gros, contrasté, halo chaud/froid.
+ * @returns {number} taille de police utilisée (pour placer la ligne sous le timer)
+ */
+function drawFlashyCountdown(ctx, text, cx, cy, maxWidth, titleFace) {
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+
+    let size = 56;
+    ctx.font = `900 ${size}px ${titleFace}, Arial`;
+    const padW = 24;
+    while (size >= 30 && ctx.measureText(text).width > maxWidth - padW) {
+        size -= 2;
+        ctx.font = `900 ${size}px ${titleFace}, Arial`;
+    }
+
+    const tw = ctx.measureText(text).width;
+    const gx0 = cx - tw / 2 - 10;
+    const gx1 = cx + tw / 2 + 10;
+
+    ctx.shadowColor = 'rgba(255, 90, 90, 0.75)';
+    ctx.shadowBlur = 26;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.fillStyle = 'rgba(255, 235, 200, 0.4)';
+    ctx.fillText(text, cx, cy);
+
+    ctx.shadowBlur = 14;
+    ctx.shadowColor = 'rgba(255, 200, 90, 0.95)';
+    ctx.fillStyle = 'rgba(255, 252, 240, 0.55)';
+    ctx.fillText(text, cx, cy);
+
+    ctx.shadowBlur = 0;
+
+    ctx.lineWidth = Math.max(4, Math.round(size / 10));
+    ctx.strokeStyle = '#120304';
+    ctx.strokeText(text, cx, cy);
+
+    ctx.lineWidth = Math.max(2, Math.round(size / 22));
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.42)';
+    ctx.strokeText(text, cx, cy);
+
+    const g = ctx.createLinearGradient(gx0, cy, gx1, cy);
+    g.addColorStop(0, '#ffffff');
+    g.addColorStop(0.22, '#fff8dc');
+    g.addColorStop(0.45, THEME.accent);
+    g.addColorStop(0.68, '#ff9f43');
+    g.addColorStop(1, '#ff4757');
+    ctx.fillStyle = g;
+    ctx.fillText(text, cx, cy);
+
+    ctx.restore();
+    return size;
+}
+
 function drawImageCover(ctx, img, dx, dy, dw, dh) {
     const sw = img.width;
     const sh = img.height;
