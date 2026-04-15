@@ -287,185 +287,243 @@ async function renderGuildProfilePreviewVariant(opts, variant) {
     }
 
     if (variant === 'brasier') {
+        /** Brasier : bandeau pleine largeur + tableau membres + 3 blocs bas (≠ Citadelle). */
         const canvas = createCanvas(W, H);
         const ctx = canvas.getContext('2d');
         await drawBlzBackdrop(ctx);
 
         const pad = 22;
-        const gap = 16;
-        const colL = 400;
-        const yTop = 18;
-        const hTop = 110;
+        const gap = 14;
+        const y0 = 18;
+        const headH = 102;
+        const innerW = W - pad * 2;
 
-        panelBlz(ctx, pad, yTop, colL, H - yTop - pad, 22, C.panelHi);
-        ctx.font = `800 24px ${titleFace}, Arial`;
-        ctx.fillStyle = C.yellow;
-        ctx.fillText('Synthèse', pad + 18, yTop + 36);
-        ctx.font = `700 42px ${titleFace}, Arial`;
-        ctx.fillStyle = C.yellow;
-        ctx.fillText(`💎`, pad + 18, yTop + 92);
-        ctx.fillText(formatValue(guild.total_value || 0), pad + 64, yTop + 92);
-        ctx.font = `700 22px ${textFace}, Arial`;
-        ctx.fillStyle = C.gold;
-        ctx.fillText(`U${up}`, pad + 18, yTop + 140);
-        ctx.font = `600 16px ${textFace}, Arial`;
+        panelBlz(ctx, pad, y0, innerW, headH, 20, C.panelHi);
+        ctx.font = `48px Arial`;
+        ctx.fillText(guild.emoji, pad + 20, y0 + 72);
+        ctx.font = `800 30px ${titleFace}, Arial`;
         ctx.fillStyle = C.text;
-        ctx.fillText(`${guild.emoji} ${truncateText(ctx, guild.name, colL - 36)}`, pad + 18, yTop + 180);
-        ctx.fillText(`👥 ${totalMembers} / ${guild.member_slots}`, pad + 18, yTop + 212);
-        ctx.fillStyle = C.gold;
-        ctx.fillText(`👑 ${truncateText(ctx, ownerName, colL - 36)}`, pad + 18, yTop + 244);
+        ctx.fillText(truncateText(ctx, guild.name, 420), pad + 86, y0 + 52);
+        ctx.font = `600 14px ${textFace}, Arial`;
+        ctx.fillStyle = C.sub;
+        ctx.fillText(`👑 ${truncateText(ctx, ownerName, 400)} · 👥 ${totalMembers}/${guild.member_slots}`, pad + 86, y0 + 78);
 
-        let yy = yTop + 280;
-        panelBlz(ctx, pad, yy, colL, 200, 18);
-        ctx.font = `800 20px ${titleFace}, Arial`;
+        ctx.textAlign = 'right';
+        ctx.font = `800 36px ${titleFace}, Arial`;
         ctx.fillStyle = C.yellow;
-        ctx.fillText('Trésorerie', pad + 18, yy + 32);
-        if (guild.upgrade_level < 2) {
-            ctx.fillStyle = '#9ca3af';
-            ctx.font = `700 17px ${textFace}, Arial`;
-            ctx.fillText('🔒 U2', pad + 18, yy + 72);
-        } else {
-            ctx.fillStyle = C.text;
-            ctx.font = `700 24px ${titleFace}, Arial`;
-            ctx.fillText(`${(guild.treasury ?? 0).toLocaleString('fr-FR')}`, pad + 18, yy + 70);
-            ctx.font = `600 13px ${textFace}, Arial`;
-            ctx.fillStyle = C.sub;
-            ctx.fillText(`cap ${(guild.treasury_capacity ?? 0).toLocaleString('fr-FR')}`, pad + 18, yy + 98);
-        }
-
-        yy += 200 + gap;
-        panelBlz(ctx, pad, yy, colL, H - yy - pad, 18);
-        ctx.font = `800 20px ${titleFace}, Arial`;
-        ctx.fillStyle = C.red;
-        ctx.fillText('Guerre', pad + 18, yy + 32);
-        if (guild.upgrade_level < 6) {
-            ctx.fillStyle = '#9ca3af';
-            ctx.font = `700 17px ${textFace}, Arial`;
-            ctx.fillText('🔒 U6', pad + 18, yy + 72);
-        } else if (warInfo && warInfo.status === 'ongoing') {
-            ctx.fillStyle = C.red;
-            ctx.font = `700 18px ${titleFace}, Arial`;
-            ctx.fillText(`VS ${warInfo.opponent}`, pad + 18, yy + 72);
-        } else {
-            ctx.fillStyle = C.peace;
-            ctx.font = `600 17px ${textFace}, Arial`;
-            ctx.fillText('Paix', pad + 18, yy + 72);
-        }
-
-        const rx = pad + colL + gap;
-        const rw = W - rx - pad;
-        panelBlz(ctx, rx, yTop, rw, H - yTop - pad, 22, C.panel);
-        ctx.font = `800 26px ${titleFace}, Arial`;
+        ctx.fillText(`💎 ${formatValue(guild.total_value || 0)}`, pad + innerW - 20, y0 + 58);
+        ctx.font = `600 14px ${textFace}, Arial`;
         ctx.fillStyle = C.gold;
-        ctx.fillText(`Membres`, rx + 22, yTop + 40);
-        const startY = yTop + 72;
-        const lh = 52;
+        ctx.fillText(`Upgrade ${up}`, pad + innerW - 20, y0 + 86);
+        ctx.textAlign = 'left';
+
+        const yTable = y0 + headH + gap;
+        const bottomH = 168;
+        const tableH = H - yTable - bottomH - pad - 10;
+
+        panelBlz(ctx, pad, yTable, innerW, tableH, 18, C.panel);
+        ctx.font = `800 22px ${titleFace}, Arial`;
+        ctx.fillStyle = C.gold;
+        ctx.fillText('Membres', pad + 20, yTable + 34);
+        ctx.strokeStyle = 'rgba(255, 200, 80, 0.35)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(pad + 16, yTable + 44);
+        ctx.lineTo(pad + innerW - 16, yTable + 44);
+        ctx.stroke();
+        ctx.font = `700 12px ${titleFace}, Arial`;
+        ctx.fillStyle = C.sub;
+        ctx.fillText('#', pad + 28, yTable + 64);
+        ctx.fillText('Membre', pad + 72, yTable + 64);
+        ctx.textAlign = 'right';
+        ctx.fillText('Valeur', pad + innerW - 28, yTable + 64);
+        ctx.textAlign = 'left';
+
+        const startY = yTable + 78;
+        const lh = 46;
         for (let i = 0; i < Math.min(10, members.length); i++) {
             const y = startY + i * lh;
-            rr(ctx, rx + 12, y - 20, rw - 24, lh - 8, 12);
-            ctx.fillStyle = i % 2 === 0 ? 'rgba(255,60,40,0.12)' : 'rgba(255,200,80,0.08)';
+            rr(ctx, pad + 12, y - 20, innerW - 24, lh - 6, 10);
+            ctx.fillStyle = i % 2 === 0 ? 'rgba(255, 200, 80, 0.07)' : 'rgba(255, 60, 40, 0.06)';
             ctx.fill();
-            drawMemberLine(ctx, members[i], guild, rx + 22, y, 320, titleFace, textFace, rx + rw - 18);
+            ctx.font = `600 13px ${textFace}, Arial`;
+            ctx.fillStyle = C.sub;
+            ctx.fillText(String(i + 1), pad + 28, y);
+            drawMemberLine(ctx, members[i], guild, pad + 64, y, innerW - 200, titleFace, textFace, pad + innerW - 28);
         }
+        if (totalMembers > 10) {
+            ctx.font = `italic 13px ${textFace}, Arial`;
+            ctx.fillStyle = C.sub;
+            ctx.fillText(`… +${totalMembers - 10}`, pad + 20, startY + 10 * lh + 4);
+        }
+
+        const yBot = yTable + tableH + gap;
+        const cw = (innerW - gap * 2) / 3;
+        let bx = pad;
+
+        panelBlz(ctx, bx, yBot, cw, bottomH, 16, C.panelRed);
+        ctx.font = `800 18px ${titleFace}, Arial`;
+        ctx.fillStyle = C.yellow;
+        ctx.fillText('Trésorerie', bx + 16, yBot + 30);
+        if (guild.upgrade_level < 2) {
+            ctx.font = `700 16px ${textFace}, Arial`;
+            ctx.fillStyle = '#9ca3af';
+            ctx.fillText('🔒 Upgrade 2', bx + 16, yBot + 68);
+            ctx.font = `500 13px ${textFace}, Arial`;
+            ctx.fillStyle = C.sub;
+            ctx.fillText('Déblocage requis', bx + 16, yBot + 92);
+        } else {
+            ctx.font = `700 22px ${titleFace}, Arial`;
+            ctx.fillStyle = C.text;
+            ctx.fillText(`${(guild.treasury ?? 0).toLocaleString('fr-FR')}`, bx + 16, yBot + 64);
+            ctx.font = `600 12px ${textFace}, Arial`;
+            ctx.fillStyle = C.sub;
+            ctx.fillText(`/ ${(guild.treasury_capacity ?? 0).toLocaleString('fr-FR')} ⭐`, bx + 16, yBot + 90);
+            const inc = guild.level * 100 * (guild.treasury_multiplier_purchased || 1);
+            ctx.fillText(`📈 ${inc.toLocaleString('fr-FR')} / jour`, bx + 16, yBot + 118);
+        }
+
+        bx += cw + gap;
+        panelBlz(ctx, bx, yBot, cw, bottomH, 16, C.panelRed);
+        ctx.font = `800 18px ${titleFace}, Arial`;
+        ctx.fillStyle = C.red;
+        ctx.fillText('Guerres', bx + 16, yBot + 30);
+        if (guild.upgrade_level < 6) {
+            ctx.fillStyle = '#9ca3af';
+            ctx.font = `700 16px ${textFace}, Arial`;
+            ctx.fillText('🔒 Upgrade 6', bx + 16, yBot + 68);
+        } else {
+            ctx.font = `600 14px ${textFace}, Arial`;
+            ctx.fillStyle = C.text;
+            ctx.fillText(`🏆 ${guild.wars_won ?? 0} victoires`, bx + 16, yBot + 62);
+            if (warInfo && warInfo.status === 'ongoing') {
+                ctx.fillStyle = C.red;
+                ctx.font = `700 14px ${titleFace}, Arial`;
+                ctx.fillText(`⚔️ ${truncateText(ctx, warInfo.opponent, cw - 32)}`, bx + 16, yBot + 92);
+            } else {
+                ctx.fillStyle = C.peace;
+                ctx.font = `600 14px ${textFace}, Arial`;
+                ctx.fillText('🕊️ Paix', bx + 16, yBot + 92);
+            }
+        }
+
+        bx += cw + gap;
+        panelBlz(ctx, bx, yBot, cw, bottomH, 16, C.panel);
+        ctx.font = `800 18px ${titleFace}, Arial`;
+        ctx.fillStyle = C.gold;
+        ctx.fillText('Infos', bx + 16, yBot + 30);
+        ctx.font = `600 14px ${textFace}, Arial`;
+        ctx.fillStyle = C.text;
+        const pct = Math.min(100, Math.round((totalMembers / Math.max(1, guild.member_slots)) * 100));
+        ctx.fillText(`Places ${pct} %`, bx + 16, yBot + 68);
+        ctx.fillText(`🃏 ${guild.joker_guilde_uses || 0}/3`, bx + 16, yBot + 94);
+        ctx.font = `500 12px ${textFace}, Arial`;
+        ctx.fillStyle = C.sub;
+        ctx.fillText(guild.channel_id ? '💬 Salon actif' : '💬 Salon : U5', bx + 16, yBot + 122);
 
         drawFooter(ctx, 'Aperçu Brasier — /testprofilguilde');
         return canvas.toBuffer('image/png');
     }
 
-    /* etendard */
+    /* Étendard : colonne stats à gauche + zone droite (guerre haut, roster bas). */
     const canvas = createCanvas(W, H);
     const ctx = canvas.getContext('2d');
     await drawBlzBackdrop(ctx);
 
     const pad = 22;
-    const bandH = 100;
-    rr(ctx, pad, 16, W - pad * 2, bandH, 16);
-    const bg = ctx.createLinearGradient(pad, 0, W - pad, 0);
-    bg.addColorStop(0, '#5c0a14');
-    bg.addColorStop(0.5, '#8b1424');
-    bg.addColorStop(1, '#4a0810');
-    ctx.fillStyle = bg;
+    const gap = 14;
+    const spineW = 248;
+    const xMain = pad + spineW + gap;
+    const mainW = W - xMain - pad;
+
+    rr(ctx, pad, 18, spineW, H - 36, 18);
+    const spineG = ctx.createLinearGradient(pad, 0, pad + spineW, 0);
+    spineG.addColorStop(0, 'rgba(92, 10, 20, 0.55)');
+    spineG.addColorStop(0.5, 'rgba(120, 18, 32, 0.5)');
+    spineG.addColorStop(1, 'rgba(50, 8, 14, 0.58)');
+    ctx.fillStyle = spineG;
     ctx.fill();
-    ctx.strokeStyle = C.gold;
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = C.strokeGold;
+    ctx.lineWidth = 2.5;
     ctx.stroke();
 
-    ctx.font = `56px Arial`;
-    ctx.fillText(guild.emoji, pad + 28, 88);
-    ctx.font = `800 40px ${titleFace}, Arial`;
-    ctx.fillStyle = '#fff';
-    ctx.fillText(truncateText(ctx, guild.name, 700), pad + 100, 82);
-    ctx.font = `600 16px ${textFace}, Arial`;
-    ctx.fillStyle = 'rgba(255,230,200,0.95)';
-    ctx.fillText(`Chef : ${ownerName} · ${totalMembers}/${guild.member_slots} membres`, pad + 100, 108);
-
-    const yCards = 16 + bandH + 14;
-    const cardW = (W - pad * 2 - 28) / 3;
-    const ch = 100;
-    const drawCard = (i, title, big, small) => {
-        const x = pad + i * (cardW + 14);
-        panelBlz(ctx, x, yCards, cardW, ch, 16);
-        ctx.font = `700 14px ${titleFace}, Arial`;
-        ctx.fillStyle = C.gold;
-        ctx.fillText(title, x + 16, yCards + 26);
-        ctx.font = `800 30px ${titleFace}, Arial`;
-        ctx.fillStyle = C.yellow;
-        ctx.fillText(big, x + 16, yCards + 64);
-        if (small) {
-            ctx.font = `600 12px ${textFace}, Arial`;
-            ctx.fillStyle = C.sub;
-            ctx.fillText(small, x + 16, yCards + 88);
-        }
-    };
-    drawCard(0, 'VALEUR', `💎 ${formatValue(guild.total_value || 0)}`, 'Puissance');
-    drawCard(1, 'UPGRADE', `U${up}`, 'Niveau guilde');
-    const tr =
-        guild.upgrade_level < 2
-            ? '🔒 U2'
-            : `${(guild.treasury ?? 0).toLocaleString('fr-FR')} ⭐`;
-    drawCard(2, 'TRÉSOR', tr, 'Réserve');
-
-    const yList = yCards + ch + 18;
-    const listH = H - yList - pad;
-    const lw = (W - pad * 2 - 14) * 0.55;
-    const rw = W - pad * 2 - 14 - lw;
-
-    panelBlz(ctx, pad, yList, lw, listH, 20);
+    ctx.font = `44px Arial`;
+    ctx.fillText(guild.emoji, pad + 20, 78);
     ctx.font = `800 22px ${titleFace}, Arial`;
-    ctx.fillStyle = C.yellow;
-    ctx.fillText('Roster', pad + 18, yList + 34);
-    const sy = yList + 56;
-    const lh = 48;
-    for (let i = 0; i < Math.min(10, members.length); i++) {
-        drawMemberLine(ctx, members[i], guild, pad + 14, sy + i * lh, 260, titleFace, textFace, pad + lw - 14);
-    }
+    ctx.fillStyle = C.text;
+    ctx.fillText(truncateText(ctx, guild.name, spineW - 28), pad + 16, 108);
+    ctx.font = `600 12px ${textFace}, Arial`;
+    ctx.fillStyle = 'rgba(255, 230, 200, 0.9)';
+    ctx.fillText(truncateText(ctx, `Chef : ${ownerName}`, spineW - 20), pad + 16, 132);
 
-    const rx = pad + lw + 14;
-    panelBlz(ctx, rx, yList, rw, listH, 20);
-    ctx.font = `800 20px ${titleFace}, Arial`;
+    const chip = (y, label, value, color) => {
+        rr(ctx, pad + 12, y, spineW - 24, 56, 12);
+        ctx.fillStyle = 'rgba(6, 2, 4, 0.45)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 200, 80, 0.35)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.font = `600 11px ${titleFace}, Arial`;
+        ctx.fillStyle = C.sub;
+        ctx.fillText(label, pad + 22, y + 20);
+        ctx.font = `800 20px ${titleFace}, Arial`;
+        ctx.fillStyle = color;
+        ctx.fillText(value, pad + 22, y + 46);
+    };
+    chip(156, 'VALEUR', `💎 ${formatValue(guild.total_value || 0)}`, C.yellow);
+    chip(220, 'UPGRADE', `U${up}`, C.gold);
+    chip(284, 'MEMBRES', `${totalMembers}/${guild.member_slots}`, C.text);
+
+    const warH = Math.round((H - 36 - gap) * 0.36);
+    const rosterY = 18 + warH + gap;
+    const rosterH = H - rosterY - pad;
+
+    panelBlz(ctx, xMain, 18, mainW, warH, 18, C.panelRed);
+    ctx.font = `800 24px ${titleFace}, Arial`;
     ctx.fillStyle = C.red;
-    ctx.fillText('Guerre & état', rx + 18, yList + 34);
+    ctx.fillText('Guerre & défense', xMain + 20, 18 + 36);
     ctx.font = `600 15px ${textFace}, Arial`;
     ctx.fillStyle = C.text;
-    let ly = yList + 70;
+    let wy = 18 + 72;
     if (guild.upgrade_level < 6) {
         ctx.fillStyle = '#9ca3af';
-        ctx.fillText('Guerres verrouillées (U6).', rx + 18, ly);
+        ctx.fillText('🔒 Guerres à l’Upgrade 6', xMain + 20, wy);
     } else {
-        ctx.fillText(`Victoires totales : ${guild.wars_won ?? 0}`, rx + 18, ly);
-        ly += 26;
+        ctx.fillText(`Victoires : ${guild.wars_won ?? 0} · 🔥${guild.wars_won_70 ?? 0} · ⚡${guild.wars_won_80 ?? 0} · 💎${guild.wars_won_90 ?? 0}`, xMain + 20, wy);
+        wy += 28;
         if (warInfo && warInfo.status === 'ongoing') {
             ctx.fillStyle = C.red;
-            ctx.fillText(`En guerre : ${warInfo.opponent}`, rx + 18, ly);
+            ctx.font = `700 16px ${titleFace}, Arial`;
+            ctx.fillText(`⚔️ En cours vs ${warInfo.opponent}`, xMain + 20, wy);
         } else {
             ctx.fillStyle = C.peace;
-            ctx.fillText('Aucune guerre en cours.', rx + 18, ly);
+            ctx.font = `600 16px ${textFace}, Arial`;
+            ctx.fillText('🕊️ Aucune guerre en cours', xMain + 20, wy);
         }
     }
-    ly += 36;
-    ctx.fillStyle = C.sub;
+    wy += 36;
     ctx.font = `600 14px ${textFace}, Arial`;
-    ctx.fillText(`🃏 Jokers ${guild.joker_guilde_uses || 0}/3`, rx + 18, ly);
+    ctx.fillStyle = C.sub;
+    ctx.fillText(`Trésorerie : ${guild.upgrade_level < 2 ? '🔒 U2' : `${(guild.treasury ?? 0).toLocaleString('fr-FR')} ⭐`}`, xMain + 20, wy);
+
+    panelBlz(ctx, xMain, rosterY, mainW, rosterH, 18, C.panel);
+    ctx.font = `800 22px ${titleFace}, Arial`;
+    ctx.fillStyle = C.yellow;
+    ctx.fillText('Roster', xMain + 18, rosterY + 34);
+    const sy = rosterY + 58;
+    const lh = 48;
+    for (let i = 0; i < Math.min(10, members.length); i++) {
+        const rowY = sy + i * lh;
+        rr(ctx, xMain + 12, rowY - 18, mainW - 24, lh - 6, 10);
+        ctx.fillStyle = i % 2 === 0 ? 'rgba(255, 200, 80, 0.06)' : 'rgba(255, 255, 255, 0.04)';
+        ctx.fill();
+        drawMemberLine(ctx, members[i], guild, xMain + 18, rowY, mainW - 140, titleFace, textFace, xMain + mainW - 22);
+    }
+    if (totalMembers > 10) {
+        ctx.font = `italic 13px ${textFace}, Arial`;
+        ctx.fillStyle = C.sub;
+        ctx.fillText(`… +${totalMembers - 10}`, xMain + 18, sy + 10 * lh + 2);
+    }
 
     drawFooter(ctx, 'Aperçu Étendard — /testprofilguilde');
     return canvas.toBuffer('image/png');
