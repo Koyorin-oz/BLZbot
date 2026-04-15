@@ -4,341 +4,356 @@ const path = require('node:path');
 
 let sharpMod = null;
 try {
-  sharpMod = require('sharp');
+    sharpMod = require('sharp');
 } catch {
-  /* optionnel */
+    /* optionnel */
 }
 
 const FALLBACK_PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhwI/pW7Y1QAAAABJRU5ErkJggg==',
-  'base64'
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhwI/pW7Y1QAAAABJRU5ErkJggg==',
+    'base64'
 );
 
 let _fallbackImage = null;
 async function getFallbackImage() {
-  if (_fallbackImage) return _fallbackImage;
-  _fallbackImage = await loadImage(FALLBACK_PNG);
-  return _fallbackImage;
+    if (_fallbackImage) return _fallbackImage;
+    _fallbackImage = await loadImage(FALLBACK_PNG);
+    return _fallbackImage;
 }
 
 const _badImages = new Set();
 async function loadImageSafe(filePath) {
-  const useFallback = async () => {
+    const useFallback = async () => {
+        try {
+            return await getFallbackImage();
+        } catch {
+            return null;
+        }
+    };
+
+    if (!filePath || !fs.existsSync(filePath)) {
+        return useFallback();
+    }
+
     try {
-      return await getFallbackImage();
+        const buf = fs.readFileSync(filePath);
+        if (buf.length < 24) return useFallback();
+
+        if (buf.slice(0, 64).toString('utf8').includes('version https://git-lfs')) {
+            if (!_badImages.has(filePath)) {
+                _badImages.add(filePath);
+            }
+            return useFallback();
+        }
+
+        return await loadImage(buf);
     } catch {
-      return null;
+        if (sharpMod) {
+            try {
+                const png = await sharpMod(buf).png().toBuffer();
+                return await loadImage(png);
+            } catch {
+                /* ignore */
+            }
+        }
     }
-  };
 
-  if (!filePath || !fs.existsSync(filePath)) {
     return useFallback();
-  }
-
-  try {
-    const buf = fs.readFileSync(filePath);
-    if (buf.length < 24) return useFallback();
-    
-    if (buf.slice(0, 64).toString('utf8').includes('version https://git-lfs')) {
-      if (!_badImages.has(filePath)) {
-        _badImages.add(filePath);
-      }
-      return useFallback();
-    }
-
-    return await loadImage(buf);
-  } catch {
-    if (sharpMod) {
-      try {
-        const png = await sharpMod(buf).png().toBuffer();
-        return await loadImage(png);
-      } catch {
-        /* ignore */
-      }
-    }
-  }
-
-  return useFallback();
 }
 
 try {
-  const assetsPath = path.join(__dirname, '..', 'assets');
-  if (fs.existsSync(path.join(assetsPath, 'Inter-Bold.ttf'))) {
-    registerFont(path.join(assetsPath, 'Inter-Bold.ttf'), { family: 'InterBold' });
-  }
-  if (fs.existsSync(path.join(assetsPath, 'Inter-Regular.ttf'))) {
-    registerFont(path.join(assetsPath, 'Inter-Regular.ttf'), { family: 'Inter' });
-  }
+    const assetsPath = path.join(__dirname, '..', 'assets');
+    if (fs.existsSync(path.join(assetsPath, 'Inter-Bold.ttf'))) {
+        registerFont(path.join(assetsPath, 'Inter-Bold.ttf'), { family: 'InterBold' });
+    }
+    if (fs.existsSync(path.join(assetsPath, 'Inter-Regular.ttf'))) {
+        registerFont(path.join(assetsPath, 'Inter-Regular.ttf'), { family: 'Inter' });
+    }
 } catch (e) {
-  console.error("Could not register fonts", e)
+    console.error('Could not register fonts', e);
 }
 
-const W = 1200, H = 800;
+/** Carte large type niveau (~3,4:1) — compacte dans le fil Discord */
+const W = 920;
+const H = 272;
+
 const THEME = {
-  overlay: 'rgba(0,0,0,0.40)',
-  panel: 'rgba(0,0,0,0.62)',
-  header: 'rgba(0,0,0,0.58)',
-  text: '#ffffff',
-  sub: '#f2d7d3',
-  accent: '#ffd166',
-  outline: 'rgba(255,255,255,0.43)',
-  gold: '#FFD700',
-  success: '#4ade80',
-  error: '#ff4444'
+    overlay: 'rgba(12, 8, 10, 0.55)',
+    panel: 'rgba(0, 0, 0, 0.38)',
+    text: '#ffffff',
+    sub: 'rgba(242, 215, 211, 0.9)',
+    accent: '#ffd166',
+    outline: 'rgba(255, 255, 255, 0.3)',
+    gold: '#FFD700',
+    success: '#4ade80',
+    error: '#ff6b6b',
 };
 
 function rr(ctx, x, y, w, h, r) {
-  const R = Math.min(r, w / 2, h / 2);
-  ctx.beginPath();
-  ctx.moveTo(x + R, y);
-  ctx.arcTo(x + w, y, x + w, y + h, R);
-  ctx.arcTo(x + w, y + h, x, y + h, R);
-  ctx.arcTo(x, y + h, x, y, R);
-  ctx.arcTo(x, y, x + w, y, R);
-  ctx.closePath();
+    const R = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + R, y);
+    ctx.arcTo(x + w, y, x + w, y + h, R);
+    ctx.arcTo(x + w, y + h, x, y + h, R);
+    ctx.arcTo(x, y + h, x, y, R);
+    ctx.arcTo(x, y, x + w, y, R);
+    ctx.closePath();
 }
 
-function panel(ctx, x, y, w, h, r, fill = THEME.panel) {
-  rr(ctx, x, y, w, h, r);
-  ctx.fillStyle = fill;
-  ctx.fill();
-  ctx.strokeStyle = THEME.outline;
-  ctx.lineWidth = 3;
-  ctx.stroke();
+function drawImageCover(ctx, img, dx, dy, dw, dh) {
+    const sw = img.width;
+    const sh = img.height;
+    const scale = Math.max(dw / sw, dh / sh);
+    const nw = sw * scale;
+    const nh = sh * scale;
+    const ox = dx + (dw - nw) / 2;
+    const oy = dy + (dh - nh) / 2;
+    ctx.drawImage(img, ox, oy, nw, nh);
 }
 
 function truncateText(ctx, text, maxWidth) {
-  let width = ctx.measureText(text).width;
-  if (width <= maxWidth) return text;
-  const ellipsis = '...';
-  const ellipsisWidth = ctx.measureText(ellipsis).width;
-  while (width > maxWidth - ellipsisWidth && text.length > 0) {
-    text = text.substring(0, text.length - 1);
-    width = ctx.measureText(text).width;
-  }
-  return text + ellipsis;
+    let width = ctx.measureText(text).width;
+    if (width <= maxWidth) return text;
+    const ellipsis = '...';
+    const ellipsisWidth = ctx.measureText(ellipsis).width;
+    while (width > maxWidth - ellipsisWidth && text.length > 0) {
+        text = text.substring(0, text.length - 1);
+        width = ctx.measureText(text).width;
+    }
+    return text + ellipsis;
 }
 
-async function loadAssets() {
-  const assetsPath = path.join(__dirname, '..', 'assets');
-  const bgBuffer = fs.readFileSync(path.join(assetsPath, 'blz_bg.png'));
-  const bg = await loadImage(bgBuffer);
-  return { bg };
+async function loadBgImage() {
+    const assetsPath = path.join(__dirname, '..', 'assets');
+    const p = path.join(assetsPath, 'blz_bg.png');
+    if (!fs.existsSync(p)) return null;
+    try {
+        return await loadImageSafe(p);
+    } catch {
+        return null;
+    }
+}
+
+function drawFallbackGradient(ctx) {
+    const g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, '#2a1214');
+    g.addColorStop(0.45, '#4a1e24');
+    g.addColorStop(1, '#1a0a0c');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
 }
 
 function drawNeonBorder(ctx, x, y, w, h, r, color = '#ffd166') {
-  ctx.save();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 3;
-  ctx.shadowColor = color;
-  ctx.shadowBlur = 15;
-
-  rr(ctx, x, y, w, h, r);
-  ctx.stroke();
-
-  ctx.restore();
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 10;
+    rr(ctx, x, y, w, h, r);
+    ctx.stroke();
+    ctx.restore();
 }
 
+/**
+ * @param {object | null} user — ligne `users` (stars, xp, xp_needed, level) pour l’en-tête
+ */
 async function renderDailyCard({
-  user,
-  username = 'Utilisateur',
-  displayName = 'Utilisateur',
-  highestRoleName = 'Membre',
-  avatarURL = null,
-  rewardName = '',
-  rewardType = '',
-  rewardAmount = null,
-  rewardEmoji = '🎁',
-  remainingTime = '',
-  doubleDailyCount = 0,
-  isSuccess = true
+    user = null,
+    username = 'Utilisateur',
+    displayName = 'Utilisateur',
+    highestRoleName = 'Membre',
+    avatarURL = null,
+    rewardName = '',
+    rewardType = '',
+    rewardAmount = null,
+    rewardEmoji = '🎁',
+    remainingTime = '',
+    doubleDailyCount = 0,
+    isSuccess = true,
 }) {
-  const { bg } = await loadAssets();
-  const canvas = createCanvas(W, H);
-  const ctx = canvas.getContext('2d');
+    void username;
+    const canvas = createCanvas(W, H);
+    const ctx = canvas.getContext('2d');
 
-  ctx.drawImage(bg, 0, 0, W, H);
-  ctx.fillStyle = THEME.overlay;
-  ctx.fillRect(0, 0, W, H);
+    const bg = await loadBgImage();
 
-  const titleFace = 'InterBold';
-  const textFace = 'Inter';
-
-  // ============================================
-  // HEADER PANEL (NEON STYLE LIKE ////////)
-  // ============================================
-  panel(ctx, 24, 24, W - 48, 160, 36, THEME.header);
-  drawNeonBorder(ctx, 24, 24, W - 48, 160, 36);
-
-  // Avatar
-  let avImg = null;
-  if (avatarURL) {
-    try {
-      avImg = await loadImage(avatarURL);
-    } catch {}
-  }
-
-  const avX = 50, avY = 44, avS = 96;
-
-  ctx.save();
-  rr(ctx, avX, avY, avS, avS, avS / 2);
-  ctx.clip();
-
-  if (avImg) {
-    ctx.drawImage(avImg, avX, avY, avS, avS);
-  } else {
-    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    ctx.fillRect(avX, avY, avS, avS);
-  }
-
-  ctx.restore();
-
-  // Name
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
-
-  ctx.fillStyle = THEME.text;
-  ctx.font = `700 42px InterBold, Arial`;
-  ctx.fillText(displayName, 170, 86);
-
-  // Role
-  ctx.fillStyle = THEME.sub;
-  ctx.font = `400 22px Inter, Arial`;
-  ctx.fillText(highestRoleName, 170, 114);
-
-  // ============================================
-  // RIGHT SIDE STATS (Stars like your snippet)
-  // ============================================
-  const starsY = 94;
-  const starsText = `${(user?.stars ?? 0).toLocaleString('fr-FR')} ⭐`;
-  const rightX = W - 50;
-
-  ctx.textAlign = 'right';
-  ctx.fillStyle = THEME.text;
-  ctx.font = `700 30px InterBold, Arial`;
-  ctx.fillText(starsText, rightX, starsY);
-
-  // optional icon (si tu as une fonction)
-  const textWidth = ctx.measureText(starsText).width;
-  const iconX = rightX - textWidth - 38;
-
-  // drawDollarWhite(ctx, dollar, iconX, starsY - 22, 28);
-
-  // ============================================
-  // XP BAR (style second snippet)
-  // ============================================
-  const progressRatio = Math.max(
-    0,
-    Math.min(1, (user?.xp ?? 0) / Math.max(1, user?.xp_needed ?? 1))
-  );
-
-  const x0 = 50, y0 = 198, w = W - 100, h = 32;
-
-  rr(ctx, x0, y0, w, h, 16);
-  ctx.fillStyle = 'rgba(255,255,255,0.25)';
-  ctx.fill();
-
-  rr(ctx, x0, y0, Math.max(16, Math.round(w * progressRatio)), h, 16);
-  ctx.fillStyle = THEME.accent;
-  ctx.fill();
-
-  // Level text
-  ctx.fillStyle = THEME.text;
-  ctx.font = `700 20px InterBold, Arial`;
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(`Niveau ${user?.level ?? 1}`, x0 + 20, y0 + h / 2);
-
-  // XP text
-  const xpText = `${(user?.xp ?? 0).toLocaleString('fr-FR')} / ${(user?.xp_needed ?? 0).toLocaleString('fr-FR')}`;
-
-  ctx.textAlign = 'center';
-  ctx.fillText(xpText, x0 + w / 2, y0 + h / 2);
-
-  // ============================================
-  // MAIN CONTENT PANEL
-  // ============================================
-  panel(ctx, 50, 260, W - 100, 510, 36, THEME.panel);
-
-  if (isSuccess) {
-    // SUCCESS CONTENT
-    
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    // Grand emoji
-    ctx.font = '140px Arial';
-    ctx.fillText(rewardEmoji, THEME.gold, W / 2, 360);
-
-    // Nom de la récompense
-    ctx.font = `700 48px ${titleFace}, Arial`;
-    ctx.fillStyle = THEME.accent;
-    const rewardNameTrunc = truncateText(ctx, rewardName, 750);
-    ctx.fillText(rewardNameTrunc, W / 2, 450);
-
-    // Montant
-    if (rewardAmount !== null && rewardType !== 'item') {
-      ctx.font = `600 40px ${titleFace}, Arial`;
-      ctx.fillStyle = THEME.gold;
-      
-      let amountText = '';
-      switch (rewardType) {
-        case 'stars':
-          amountText = `+ ${rewardAmount.toLocaleString('fr-FR')} ⭐`;
-          break;
-        case 'xp':
-          amountText = `+ ${rewardAmount.toLocaleString('fr-FR')} 🚀`;
-          break;
-        case 'points':
-          amountText = `+ ${rewardAmount.toLocaleString('fr-FR')} 🏆`;
-          break;
-      }
-      ctx.fillText(amountText, W / 2, 520);
-    }
-
-    // Statut
-    ctx.font = `600 24px ${titleFace}, Arial`;
-    ctx.fillStyle = THEME.success;
-    ctx.fillText('✅ Récompense Obtenue !', W / 2, 600);
-
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
-
-  } else {
-    // COOLDOWN CONTENT
-
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    // Temps restant - GRAND
-    ctx.font = `700 72px ${titleFace}, Arial`;
-    ctx.fillStyle = THEME.error;
-    ctx.fillText(remainingTime, W / 2, 360);
-
-    ctx.font = `500 24px ${textFace}, Arial`;
-    ctx.fillStyle = THEME.sub;
-    ctx.fillText('Temps restant avant la prochaine récompense', W / 2, 430);
-
-    // Double Daily info
-    if (doubleDailyCount > 0) {
-      ctx.font = `600 20px ${titleFace}, Arial`;
-      ctx.fillStyle = THEME.gold;
-      ctx.fillText(`💡 Vous avez ${doubleDailyCount} Double Daily`, W / 2, 500);
-      
-      ctx.font = `400 16px ${textFace}, Arial`;
-      ctx.fillStyle = THEME.sub;
-      ctx.fillText('Utilisez /inventaire pour réclamer une deuxième récompense', W / 2, 535);
+    ctx.save();
+    rr(ctx, 0, 0, W, H, 14);
+    ctx.clip();
+    if (bg) {
+        drawImageCover(ctx, bg, 0, 0, W, H);
     } else {
-      ctx.font = `500 18px ${textFace}, Arial`;
-      ctx.fillStyle = THEME.sub;
-      ctx.fillText('Obtenez des Double Daily via les quêtes et événements', W / 2, 500);
+        drawFallbackGradient(ctx);
+    }
+    ctx.restore();
+
+    rr(ctx, 0, 0, W, H, 14);
+    ctx.fillStyle = THEME.overlay;
+    ctx.fill();
+
+    const inset = 10;
+    rr(ctx, inset, inset, W - inset * 2, H - inset * 2, 12);
+    ctx.fillStyle = THEME.panel;
+    ctx.fill();
+    ctx.strokeStyle = THEME.outline;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    drawNeonBorder(ctx, inset, inset, W - inset * 2, H - inset * 2, 12);
+
+    const titleFace = 'InterBold';
+    const textFace = 'Inter';
+
+    let avImg = null;
+    if (avatarURL) {
+        try {
+            avImg = await loadImage(avatarURL);
+        } catch {
+            /* ignore */
+        }
     }
 
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
-  }
+    const avS = 54;
+    const avX = 18;
+    const avY = 22;
 
-  return canvas.toBuffer('image/png');
+    ctx.save();
+    rr(ctx, avX, avY, avS, avS, avS / 2);
+    ctx.clip();
+    if (avImg) {
+        ctx.drawImage(avImg, avX, avY, avS, avS);
+    } else {
+        ctx.fillStyle = THEME.accent;
+        ctx.fillRect(avX, avY, avS, avS);
+        ctx.font = '30px Arial';
+        ctx.fillStyle = '#2a1214';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('👤', avX + avS / 2, avY + avS / 2);
+    }
+    ctx.restore();
+
+    ctx.strokeStyle = THEME.gold;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(avX + avS / 2, avY + avS / 2, avS / 2 + 1, 0, Math.PI * 2);
+    ctx.stroke();
+
+    const textX = avX + avS + 14;
+    const textRight = W - 18;
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = THEME.text;
+    ctx.font = `700 20px ${titleFace}, Arial`;
+    ctx.fillText(truncateText(ctx, displayName, textRight - textX - 140), textX, 24);
+    ctx.fillStyle = THEME.sub;
+    ctx.font = `400 13px ${textFace}, Arial`;
+    ctx.fillText(highestRoleName, textX, 46);
+
+    if (user && typeof user.stars === 'number') {
+        ctx.textAlign = 'right';
+        ctx.fillStyle = THEME.text;
+        ctx.font = `700 18px ${titleFace}, Arial`;
+        const starsText = `${user.stars.toLocaleString('fr-FR')} ⭐`;
+        ctx.fillText(starsText, textRight, 28);
+        ctx.textAlign = 'left';
+    }
+
+    const barY = 68;
+    const barH = 18;
+    const barX = textX;
+    const barW = textRight - barX;
+
+    if (user && typeof user.xp === 'number' && typeof user.xp_needed === 'number') {
+        const ratio = Math.max(0, Math.min(1, user.xp / Math.max(1, user.xp_needed)));
+        rr(ctx, barX, barY, barW, barH, barH / 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.18)';
+        ctx.fill();
+        if (ratio > 0) {
+            const fillW = Math.max(barH, Math.round(barW * ratio));
+            rr(ctx, barX, barY, fillW, barH, barH / 2);
+            ctx.fillStyle = THEME.accent;
+            ctx.fill();
+        }
+        ctx.fillStyle = THEME.text;
+        ctx.font = `700 12px ${titleFace}, Arial`;
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'left';
+        ctx.fillText(`Niveau ${user.level ?? 1}`, barX + 10, barY + barH / 2);
+        ctx.textAlign = 'center';
+        const xpTxt = `${(user.xp ?? 0).toLocaleString('fr-FR')} / ${(user.xp_needed ?? 0).toLocaleString('fr-FR')}`;
+        ctx.font = `600 11px ${textFace}, Arial`;
+        ctx.fillText(xpTxt, barX + barW / 2, barY + barH / 2);
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+    }
+
+    const contentTop = user && typeof user.xp === 'number' ? 98 : 78;
+
+    if (isSuccess) {
+        const rowY = contentTop + 18;
+        ctx.font = '28px Arial';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(rewardEmoji, textX + 12, rowY);
+
+        ctx.font = `700 18px ${titleFace}, Arial`;
+        ctx.fillStyle = THEME.accent;
+        const rewardTrunc = truncateText(ctx, rewardName, textRight - textX - 130);
+        ctx.fillText(rewardTrunc, textX + 48, rowY);
+
+        if (rewardAmount !== null && rewardType !== 'item') {
+            ctx.font = `600 16px ${titleFace}, Arial`;
+            ctx.fillStyle = THEME.gold;
+            let amountText = '';
+            switch (rewardType) {
+                case 'stars':
+                    amountText = `+${rewardAmount.toLocaleString('fr-FR')} ⭐`;
+                    break;
+                case 'xp':
+                    amountText = `+${rewardAmount.toLocaleString('fr-FR')} XP`;
+                    break;
+                case 'points':
+                    amountText = `+${rewardAmount.toLocaleString('fr-FR')} RP`;
+                    break;
+            }
+            ctx.textAlign = 'right';
+            ctx.fillText(amountText, textRight, rowY);
+            ctx.textAlign = 'left';
+        }
+
+        ctx.font = `600 12px ${titleFace}, Arial`;
+        ctx.fillStyle = THEME.success;
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText('Récompense journalière réclamée', textX, H - 22);
+    } else {
+        ctx.textBaseline = 'middle';
+        ctx.font = `700 30px ${titleFace}, Arial`;
+        ctx.fillStyle = THEME.error;
+        ctx.fillText(remainingTime, textX, contentTop + 28);
+
+        ctx.font = `500 13px ${textFace}, Arial`;
+        ctx.fillStyle = THEME.sub;
+        ctx.fillText('Temps restant avant la prochaine récompense (minuit)', textX, contentTop + 58);
+
+        ctx.textBaseline = 'alphabetic';
+        if (doubleDailyCount > 0) {
+            ctx.font = `600 11px ${titleFace}, Arial`;
+            ctx.fillStyle = THEME.gold;
+            ctx.fillText(`Double Daily en stock : ${doubleDailyCount} — /inventaire`, textX, H - 36);
+        } else {
+            ctx.font = `500 11px ${textFace}, Arial`;
+            ctx.fillStyle = THEME.sub;
+            ctx.fillText('Double Daily via quêtes et événements', textX, H - 36);
+        }
+    }
+
+    ctx.font = `500 10px ${textFace}, Arial`;
+    ctx.fillStyle = 'rgba(255,255,255,0.42)';
+    ctx.textAlign = 'right';
+    ctx.fillText('Daily — BLZbot', textRight, H - 18);
+    ctx.textAlign = 'left';
+
+    return canvas.toBuffer('image/png');
 }
 
 module.exports = { renderDailyCard };
