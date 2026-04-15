@@ -265,16 +265,17 @@ async function renderDailyCard({
         ctx.font = `600 12px ${titleFace}, Arial`;
         ctx.fillStyle = THEME.success;
         ctx.textBaseline = 'alphabetic';
-        ctx.fillText('Récompense journalière réclamée', textX, H - 22);
+        ctx.fillText('Récompense journalière réclamée', textX, H - 20);
     } else {
         ctx.textBaseline = 'middle';
-        ctx.font = `700 30px ${titleFace}, Arial`;
+        ctx.font = `700 26px ${titleFace}, Arial`;
         ctx.fillStyle = THEME.error;
-        ctx.fillText(remainingTime, textX, contentTop + 28);
+        ctx.fillText(remainingTime, textX, contentTop + 26);
 
-        ctx.font = `500 13px ${textFace}, Arial`;
+        ctx.font = `500 12px ${textFace}, Arial`;
         ctx.fillStyle = THEME.sub;
-        ctx.fillText('Temps restant avant la prochaine récompense (minuit)', textX, contentTop + 58);
+        const subLine = truncateText(ctx, 'Temps restant avant la prochaine récompense (minuit)', textRight - textX);
+        ctx.fillText(subLine, textX, contentTop + 54);
 
         ctx.textBaseline = 'alphabetic';
         if (doubleDailyCount > 0) {
