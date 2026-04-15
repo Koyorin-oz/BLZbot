@@ -469,9 +469,17 @@ async function renderGuildProfilePreviewVariant(opts, variant) {
     return canvas.toBuffer('image/png');
 }
 
+/** Anciens IDs (Bastion / Orbit / Registre) → nouveaux aperçus BLZ (même si Discord envoie encore l’ancienne valeur). */
+const LEGACY_GUILD_VARIANT = Object.freeze({
+    bastion: 'citadelle',
+    orbit: 'brasier',
+    ledger: 'etendard',
+});
+
 function normalizeGuildVariant(v) {
+    const resolved = LEGACY_GUILD_VARIANT[v] || v;
     const allowed = GUILD_PREVIEW_VARIANTS.map((x) => x.id);
-    if (allowed.includes(v)) return v;
+    if (allowed.includes(resolved)) return resolved;
     return 'citadelle';
 }
 
