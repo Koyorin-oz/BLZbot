@@ -325,7 +325,7 @@ async function renderDailyCard({
     } else {
         const subFull = 'Temps restant avant la prochaine récompense (minuit)';
         const timerY = y + Math.max(52, contentH * 0.34);
-        const usedSize = drawFlashyCountdown(
+        const usedSize = drawCooldownTimer(
             ctx,
             remainingTime,
             boxMidX,
