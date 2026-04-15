@@ -301,29 +301,24 @@ async function renderDailyCard({
         ctx.fillText(subLine, boxMidX, boxMidY + 6);
 
         ctx.textAlign = 'left';
-        ctx.textBaseline = 'alphabetic';
-        if (doubleDailyCount > 0) {
-            ctx.font = `600 10px ${titleFace}, Arial`;
-            ctx.fillStyle = THEME.gold;
-            ctx.fillText(`Double Daily en stock : ${doubleDailyCount} — /inventaire`, boxLeft, y + contentH - 12);
-        } else {
-            ctx.font = `500 10px ${textFace}, Arial`;
-            ctx.fillStyle = THEME.sub;
-            ctx.fillText('Double Daily via quêtes et événements', boxLeft, y + contentH - 12);
-        }
     }
 
     // —— Pied de carte ——
     const footY = footerTop;
     drawBox(ctx, pad, footY, innerW, footerH, 8);
+    ctx.textBaseline = 'middle';
     ctx.font = `500 10px ${textFace}, Arial`;
     ctx.fillStyle = 'rgba(255,255,255,0.45)';
-    ctx.textBaseline = 'middle';
-    ctx.textAlign = 'left';
     if (isSuccess) {
-        ctx.fillText('Daily — BLZbot', boxLeft, footY + footerH / 2);
+        ctx.textAlign = 'right';
+        ctx.fillText('Daily — BLZbot', boxRight, footY + footerH / 2);
     } else {
-        ctx.fillText('Double Daily via quêtes et événements', boxLeft, footY + footerH / 2);
+        ctx.textAlign = 'left';
+        const hint =
+            doubleDailyCount > 0
+                ? `Double Daily : ${doubleDailyCount} — /inventaire`
+                : 'Double Daily via quêtes et événements';
+        ctx.fillText(truncateText(ctx, hint, innerW - 120), boxLeft, footY + footerH / 2);
         ctx.textAlign = 'right';
         ctx.fillText('Daily — BLZbot', boxRight, footY + footerH / 2);
     }
