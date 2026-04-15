@@ -287,6 +287,134 @@ async function renderGuildProfilePreviewVariant(opts, variant) {
         return canvas.toBuffer('image/png');
     }
 
+    if (variant === 'rempart') {
+        /** Bastion 1-3-2 : bandeau pleine largeur, 3 cartes stats, membres | trésorerie + guerre (panneaux vitrés). */
+        const canvas = createCanvas(W, H);
+        const ctx = canvas.getContext('2d');
+        await drawBlzBackdrop(ctx);
+
+        const pad = 22;
+        const gap = 12;
+        const innerW = W - pad * 2;
+        const y0 = 18;
+        const hBanner = 96;
+        const hMid = 108;
+
+        panelBlz(ctx, pad, y0, innerW, hBanner, 18, C.panelHi);
+        ctx.font = `52px Arial`;
+        ctx.fillText(guild.emoji, pad + 22, y0 + 70);
+        ctx.font = `800 36px ${titleFace}, Arial`;
+        ctx.fillStyle = C.text;
+        ctx.fillText(truncateText(ctx, guild.name, innerW - 100), pad + 92, y0 + 64);
+
+        const y1 = y0 + hBanner + gap;
+        const cardW = (innerW - gap * 2) / 3;
+        const drawStatCard = (ix, title, bigLine, subLine) => {
+            const x = pad + ix * (cardW + gap);
+            panelBlz(ctx, x, y1, cardW, hMid, 16, C.panel);
+            ctx.font = `700 13px ${titleFace}, Arial`;
+            ctx.fillStyle = C.gold;
+            ctx.fillText(title, x + 18, y1 + 28);
+            ctx.font = `800 28px ${titleFace}, Arial`;
+            ctx.fillStyle = C.text;
+            ctx.fillText(bigLine, x + 18, y1 + 68);
+            ctx.font = `600 13px ${textFace}, Arial`;
+            ctx.fillStyle = C.sub;
+            ctx.fillText(subLine, x + 18, y1 + 96);
+        };
+        drawStatCard(
+            0,
+            'VALEUR',
+            `${(guild.total_value || 0) >= 1000 ? `💎 ${formatValue(guild.total_value || 0)}` : `💎 ${(guild.total_value || 0).toLocaleString('fr-FR')}`}`,
+            'Puissance guilde'
+        );
+        drawStatCard(1, 'UPGRADE', `U${up}`, `${totalMembers}/${guild.member_slots} membres`);
+        drawStatCard(2, 'CHEF', truncateText(ctx, ownerName, cardW - 36), 'Salle des chefs');
+
+        const y2 = y1 + hMid + gap;
+        const mainH = H - y2 - pad - 26;
+        const leftW = Math.floor((innerW - gap) * 0.48);
+        const rightW = innerW - gap - leftW;
+        const rx = pad + leftW + gap;
+
+        panelBlz(ctx, pad, y2, leftW, mainH, 20, C.panel);
+        ctx.font = `800 22px ${titleFace}, Arial`;
+        ctx.fillStyle = C.gold;
+        ctx.fillText('Membres', pad + 20, y2 + 36);
+        const startY = y2 + 58;
+        const lh = 48;
+        for (let i = 0; i < Math.min(10, members.length); i++) {
+            const rowY = startY + i * lh;
+            if (i % 2 === 0) {
+                rr(ctx, pad + 12, rowY - 18, leftW - 24, lh - 6, 10);
+                ctx.fillStyle = 'rgba(255, 200, 80, 0.08)';
+                ctx.fill();
+            }
+            drawMemberLine(ctx, members[i], guild, pad + 18, rowY, 200, titleFace, textFace, pad + leftW - 18);
+        }
+        if (totalMembers > 10) {
+            ctx.font = `italic 13px ${textFace}, Arial`;
+            ctx.fillStyle = C.sub;
+            ctx.fillText(`… +${totalMembers - 10}`, pad + 18, startY + 10 * lh + 2);
+        }
+
+        const hTreasury = Math.floor((mainH - gap) * 0.52);
+        const hWar = mainH - gap - hTreasury;
+
+        panelBlz(ctx, rx, y2, rightW, hTreasury, 16, C.panel);
+        ctx.font = `800 20px ${titleFace}, Arial`;
+        ctx.fillStyle = C.yellow;
+        ctx.fillText('Trésorerie', rx + 18, y2 + 32);
+        if (guild.upgrade_level < 2) {
+            ctx.font = `700 17px ${textFace}, Arial`;
+            ctx.fillStyle = '#9ca3af';
+            ctx.fillText('🔒', rx + 18, y2 + 72);
+            ctx.fillStyle = C.text;
+            ctx.fillText('Débloquée à l’upgrade 2', rx + 48, y2 + 72);
+        } else {
+            ctx.font = `700 26px ${titleFace}, Arial`;
+            ctx.fillStyle = C.text;
+            ctx.fillText(
+                `${(guild.treasury ?? 0).toLocaleString('fr-FR')} / ${(guild.treasury_capacity ?? 0).toLocaleString('fr-FR')}`,
+                rx + 18,
+                y2 + 64
+            );
+            ctx.font = `600 14px ${textFace}, Arial`;
+            ctx.fillStyle = C.sub;
+            const inc = guild.level * 100 * (guild.treasury_multiplier_purchased || 1);
+            ctx.fillText(`📈 ${inc.toLocaleString('fr-FR')} ⭐ / jour`, rx + 18, y2 + 96);
+        }
+
+        const yWar = y2 + hTreasury + gap;
+        panelBlz(ctx, rx, yWar, rightW, hWar, 16, C.panelRed);
+        ctx.font = `800 20px ${titleFace}, Arial`;
+        ctx.fillStyle = C.red;
+        ctx.fillText('Guerre', rx + 18, yWar + 32);
+        if (guild.upgrade_level < 6) {
+            ctx.font = `700 17px ${textFace}, Arial`;
+            ctx.fillStyle = '#9ca3af';
+            ctx.fillText('🔒', rx + 18, yWar + 72);
+            ctx.fillStyle = C.text;
+            ctx.fillText('Guerres à l’upgrade 6', rx + 48, yWar + 72);
+        } else {
+            ctx.font = `600 15px ${textFace}, Arial`;
+            ctx.fillStyle = C.text;
+            ctx.fillText(`🏆 ${guild.wars_won ?? 0} victoires`, rx + 18, yWar + 64);
+            if (warInfo && warInfo.status === 'ongoing') {
+                ctx.fillStyle = C.red;
+                ctx.font = `700 15px ${titleFace}, Arial`;
+                ctx.fillText(`⚔️ ${truncateText(ctx, warInfo.opponent, rightW - 40)}`, rx + 18, yWar + 92);
+            } else {
+                ctx.fillStyle = C.peace;
+                ctx.font = `600 15px ${textFace}, Arial`;
+                ctx.fillText('🕊️ Paix', rx + 18, yWar + 92);
+            }
+        }
+
+        drawFooter(ctx, 'Aperçu Bastion (BLZ) — /testprofilguilde');
+        return canvas.toBuffer('image/png');
+    }
+
     if (variant === 'brasier') {
         /** Brasier : bandeau pleine largeur + tableau membres + 3 blocs bas (≠ Citadelle). */
         const canvas = createCanvas(W, H);
