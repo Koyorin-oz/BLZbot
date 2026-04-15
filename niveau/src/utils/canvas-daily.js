@@ -18,7 +18,7 @@ const W = 680;
 const H = 312;
 
 /** Incrémente si tu veux vérifier visuellement que le bon fichier est déployé (texte en bas à droite). */
-const DAILY_CARD_BUILD = 'v3.3';
+const DAILY_CARD_BUILD = 'v3.4';
 
 const THEME = {
     overlay: 'rgba(12, 8, 10, 0.5)',
