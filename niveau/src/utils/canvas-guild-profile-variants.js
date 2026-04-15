@@ -68,6 +68,8 @@ function formatValue(n) {
 }
 
 function drawMemberRows(ctx, members, guild, startX, startY, colW, titleFace, textFace, iconFn) {
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
     const lineH = 52;
     ctx.font = `700 18px ${titleFace}, Arial`;
     ctx.fillStyle = iconFn.accent;
