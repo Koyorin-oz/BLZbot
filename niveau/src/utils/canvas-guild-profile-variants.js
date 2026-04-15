@@ -208,7 +208,7 @@ async function renderGuildProfilePreviewVariant(opts, variant) {
                 ctx.fillStyle = 'rgba(255, 200, 80, 0.07)';
                 ctx.fill();
             }
-            drawMemberLine(ctx, members[i], guild, pad + 18, rowY, 220, titleFace, textFace);
+            drawMemberLine(ctx, members[i], guild, pad + 18, rowY, 220, titleFace, textFace, pad + leftW - 16);
         }
         if (totalMembers > 10) {
             ctx.font = `italic 14px ${textFace}, Arial`;
