@@ -19,7 +19,7 @@ module.exports = {
         )
         .addBooleanOption((opt) =>
             opt
-                .setName('recréer')
+                .setName('recreate')
                 .setDescription('Supprime les anciens salons enregistrés et les recrée (attention)')
                 .setRequired(false)
         )
