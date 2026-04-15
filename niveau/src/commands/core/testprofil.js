@@ -1,6 +1,6 @@
 const path = require('node:path');
 const fs = require('node:fs');
-const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
+const { SlashCommandBuilder, AttachmentBuilder, MessageFlags } = require('discord.js');
 const { getOrCreateUser } = require('../../utils/db-users');
 const { getGuildOfUser, getGuildMembersWithDetails } = require('../../utils/db-guilds');
 const { getDisplayRank, RANKS } = require('../../utils/ranks');

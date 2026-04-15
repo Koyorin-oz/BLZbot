@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
+const { SlashCommandBuilder, AttachmentBuilder, MessageFlags } = require('discord.js');
 const { getGuildOfUser, getGuildByName, getGuildMembersWithDetails, getGuildById } = require('../../utils/db-guilds');
 const { getOngoingWar } = require('../../utils/guild/guild-wars');
 const {
