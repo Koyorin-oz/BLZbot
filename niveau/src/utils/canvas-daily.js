@@ -57,10 +57,10 @@ function drawBox(ctx, x, y, w, h, r = 10) {
 const COOLDOWN_TIMER_RED = '#fca5a5';
 
 /**
- * Compte à rebours — texte bien gros, rouge clair uni.
- * @returns {number} taille de police utilisée (pour placer la ligne sous le timer)
+ * Texte centré, même échelle que le timer (64 px → réduit si trop long).
+ * @returns {number} taille de police utilisée (pour placer la ligne suivante)
  */
-function drawCooldownTimer(ctx, text, cx, cy, maxWidth, titleFace) {
+function drawLargeCenteredText(ctx, text, cx, cy, maxWidth, titleFace, fillStyle) {
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -74,11 +74,15 @@ function drawCooldownTimer(ctx, text, cx, cy, maxWidth, titleFace) {
     }
 
     ctx.shadowBlur = 0;
-    ctx.fillStyle = COOLDOWN_TIMER_RED;
+    ctx.fillStyle = fillStyle;
     ctx.fillText(text, cx, cy);
 
     ctx.restore();
     return size;
+}
+
+function drawCooldownTimer(ctx, text, cx, cy, maxWidth, titleFace) {
+    return drawLargeCenteredText(ctx, text, cx, cy, maxWidth, titleFace, COOLDOWN_TIMER_RED);
 }
 
 function drawImageCover(ctx, img, dx, dy, dw, dh) {
