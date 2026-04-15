@@ -196,7 +196,7 @@ async function renderDailyCard({
         ctx.fillStyle = THEME.text;
         ctx.font = `700 18px ${titleFace}, Arial`;
         const starsText = `${user.stars.toLocaleString('fr-FR')} ⭐`;
-        ctx.fillText(starsText, textRight, 28);
+        ctx.fillText(starsText, textRight, 30);
         ctx.textAlign = 'left';
     }
 
