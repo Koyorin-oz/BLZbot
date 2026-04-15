@@ -435,7 +435,7 @@ async function renderGuildProfilePreviewVariant(opts, variant) {
     const sy = yList + 56;
     const lh = 48;
     for (let i = 0; i < Math.min(10, members.length); i++) {
-        drawMemberLine(ctx, members[i], guild, pad + 14, sy + i * lh, 260, titleFace, textFace);
+        drawMemberLine(ctx, members[i], guild, pad + 14, sy + i * lh, 260, titleFace, textFace, pad + lw - 14);
     }
 
     const rx = pad + lw + 14;
