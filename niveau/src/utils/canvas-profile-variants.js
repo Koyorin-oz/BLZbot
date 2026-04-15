@@ -90,6 +90,376 @@ async function loadAvatar(member) {
     }
 }
 
+const BLZ_TEST_IDS = new Set(['rubis', 'carmin', 'forge', 'banniere', 'monolithe', 'vitres', 'braise']);
+
+const BLZ_THEMES = {
+    rubis: {
+        footer: 'Aperçu Rubis — /testprofil',
+        header: 'rgba(48, 10, 22, 0.82)',
+        panel: 'rgba(18, 4, 10, 0.72)',
+        stroke: 'rgba(255, 200, 90, 0.55)',
+        text: '#fff8f0',
+        sub: '#f0c0c8',
+        accent: '#ffd166',
+        xpFill: '#e11d48',
+        xpTrack: 'rgba(255, 255, 255, 0.14)',
+    },
+    carmin: {
+        footer: 'Aperçu Carmin — /testprofil',
+        header: 'rgba(36, 6, 14, 0.88)',
+        panel: 'rgba(12, 2, 6, 0.78)',
+        stroke: 'rgba(255, 120, 100, 0.45)',
+        text: '#ffffff',
+        sub: '#f5b8c0',
+        accent: '#ffcc4d',
+        xpFill: '#dc2626',
+        xpTrack: 'rgba(255, 255, 255, 0.1)',
+    },
+    forge: {
+        footer: 'Aperçu Forge — /testprofil',
+        header: 'rgba(22, 12, 8, 0.85)',
+        panel: 'rgba(8, 4, 2, 0.76)',
+        stroke: 'rgba(255, 190, 70, 0.5)',
+        text: '#fff8f0',
+        sub: '#e8c8a8',
+        accent: '#fbbf24',
+        xpFill: '#f59e0b',
+        xpTrack: 'rgba(255, 220, 180, 0.12)',
+    },
+    banniere: {
+        footer: 'Aperçu Bannière — /testprofil',
+        header: 'rgba(32, 8, 12, 0.8)',
+        panel: 'rgba(14, 4, 8, 0.7)',
+        stroke: 'rgba(255, 215, 120, 0.6)',
+        text: '#fffaf5',
+        sub: '#f0c8b8',
+        accent: '#fde047',
+        xpFill: '#ca8a04',
+        xpTrack: 'rgba(255, 255, 255, 0.12)',
+    },
+    monolithe: {
+        footer: 'Aperçu Monolithe — /testprofil',
+        header: 'rgba(16, 8, 12, 0.9)',
+        panel: 'rgba(10, 6, 10, 0.75)',
+        stroke: 'rgba(200, 180, 255, 0.35)',
+        text: '#f5f0ff',
+        sub: '#d8c8e8',
+        accent: '#c4b5fd',
+        xpFill: '#a78bfa',
+        xpTrack: 'rgba(255, 255, 255, 0.1)',
+    },
+    vitres: {
+        footer: 'Aperçu Vitres — /testprofil',
+        header: 'rgba(20, 6, 10, 0.48)',
+        panel: 'rgba(6, 2, 4, 0.42)',
+        stroke: 'rgba(255, 220, 140, 0.65)',
+        text: '#ffffff',
+        sub: '#fce7e7',
+        accent: '#fde68a',
+        xpFill: '#facc15',
+        xpTrack: 'rgba(255, 255, 255, 0.18)',
+    },
+    braise: {
+        footer: 'Aperçu Braise — /testprofil',
+        header: 'rgba(40, 14, 4, 0.78)',
+        panel: 'rgba(24, 8, 2, 0.68)',
+        stroke: 'rgba(255, 160, 60, 0.55)',
+        text: '#fff8f0',
+        sub: '#fcd9c4',
+        accent: '#fb923c',
+        xpFill: '#ea580c',
+        xpTrack: 'rgba(255, 240, 200, 0.15)',
+    },
+};
+
+async function applyBlzTestBackdrop(ctx, id) {
+    const bgImg = await tryLoadBlzBg();
+    const baseGrad = (stops) => {
+        const g = ctx.createLinearGradient(0, 0, W, H);
+        stops.forEach(([t, c]) => g.addColorStop(t, c));
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, W, H);
+    };
+
+    if (id === 'rubis') {
+        baseGrad([
+            [0, '#0c0306'],
+            [0.45, '#240810'],
+            [1, '#080204'],
+        ]);
+        if (bgImg) {
+            ctx.save();
+            ctx.globalAlpha = 0.42;
+            ctx.drawImage(bgImg, 0, 0, W, H);
+            ctx.restore();
+        }
+        const v = ctx.createRadialGradient(W * 0.25, H * 0.25, 0, W * 0.45, H * 0.45, 520);
+        v.addColorStop(0, 'rgba(200, 30, 60, 0.38)');
+        v.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = v;
+        ctx.fillRect(0, 0, W, H);
+    } else if (id === 'carmin') {
+        baseGrad([
+            [0, '#080204'],
+            [1, '#280610'],
+        ]);
+        if (bgImg) {
+            ctx.save();
+            ctx.globalAlpha = 0.38;
+            ctx.drawImage(bgImg, 0, 0, W, H);
+            ctx.restore();
+        }
+        const v = ctx.createRadialGradient(W, 0, 0, W, H * 0.2, 700);
+        v.addColorStop(0, 'rgba(160, 10, 40, 0.45)');
+        v.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = v;
+        ctx.fillRect(0, 0, W, H);
+    } else if (id === 'forge') {
+        baseGrad([
+            [0, '#0a0604'],
+            [1, '#120a08'],
+        ]);
+        if (bgImg) {
+            ctx.save();
+            ctx.globalAlpha = 0.48;
+            ctx.drawImage(bgImg, 0, 0, W, H);
+            ctx.restore();
+        }
+        ctx.strokeStyle = 'rgba(255, 200, 80, 0.06)';
+        ctx.lineWidth = 1;
+        for (let d = -H; d < W + H; d += 44) {
+            ctx.beginPath();
+            ctx.moveTo(d, 0);
+            ctx.lineTo(d + H, H);
+            ctx.stroke();
+        }
+    } else if (id === 'banniere') {
+        baseGrad([
+            [0, '#140608'],
+            [0.35, '#1e0a0c'],
+            [0.65, '#120408'],
+            [1, '#0a0304'],
+        ]);
+        if (bgImg) {
+            ctx.save();
+            ctx.globalAlpha = 0.44;
+            ctx.drawImage(bgImg, 0, 0, W, H);
+            ctx.restore();
+        }
+        ctx.fillStyle = 'rgba(90, 20, 28, 0.28)';
+        ctx.fillRect(0, 0, W, 120);
+        ctx.fillStyle = 'rgba(40, 8, 12, 0.35)';
+        ctx.fillRect(0, H - 100, W, 100);
+    } else if (id === 'monolithe') {
+        baseGrad([
+            [0, '#020102'],
+            [0.5, '#1a0c14'],
+            [1, '#020102'],
+        ]);
+        if (bgImg) {
+            ctx.save();
+            ctx.globalAlpha = 0.35;
+            ctx.drawImage(bgImg, 0, 0, W, H);
+            ctx.restore();
+        }
+        const v = ctx.createRadialGradient(W / 2, H * 0.42, 40, W / 2, H * 0.42, 380);
+        v.addColorStop(0, 'rgba(80, 40, 70, 0.35)');
+        v.addColorStop(1, 'rgba(0, 0, 0, 0.55)');
+        ctx.fillStyle = v;
+        ctx.fillRect(0, 0, W, H);
+    } else if (id === 'vitres') {
+        baseGrad([
+            [0, '#100408'],
+            [1, '#180810'],
+        ]);
+        if (bgImg) {
+            ctx.save();
+            ctx.globalAlpha = 0.58;
+            ctx.drawImage(bgImg, 0, 0, W, H);
+            ctx.restore();
+        }
+        ctx.fillStyle = 'rgba(8, 2, 4, 0.2)';
+        ctx.fillRect(0, 0, W, H);
+    } else if (id === 'braise') {
+        baseGrad([
+            [0, '#120804'],
+            [0.5, '#281008'],
+            [1, '#0c0402'],
+        ]);
+        if (bgImg) {
+            ctx.save();
+            ctx.globalAlpha = 0.4;
+            ctx.drawImage(bgImg, 0, 0, W, H);
+            ctx.restore();
+        }
+        const v = ctx.createRadialGradient(W * 0.75, H, 100, W * 0.55, H * 0.55, 500);
+        v.addColorStop(0, 'rgba(255, 140, 40, 0.22)');
+        v.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = v;
+        ctx.fillRect(0, 0, W, H);
+    }
+}
+
+function blzStrokePanel(ctx, x, y, w, h, r, fill, stroke) {
+    rr(ctx, x, y, w, h, r);
+    ctx.fillStyle = fill;
+    ctx.fill();
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+}
+
+async function renderBlzTestProfileVariant(data, variantId, titleFace, textFace) {
+    const {
+        user,
+        member,
+        rank,
+        nextRank,
+        highestRoleName,
+        rankIconPath,
+        totalDebt,
+        debtTimeRemaining,
+        vocalNerfStatus,
+    } = data;
+    const theme = BLZ_THEMES[variantId];
+    const displayName = member?.displayName ?? 'Utilisateur';
+    const ratioXp = user.xp_needed > 0 ? user.xp / user.xp_needed : 0;
+
+    const canvas = createCanvas(W, H);
+    const ctx = canvas.getContext('2d');
+    await applyBlzTestBackdrop(ctx, variantId);
+
+    const pad = 22;
+    const gap = 14;
+    const innerW = W - pad * 2;
+    const y0 = 18;
+    const headerH = variantId === 'banniere' ? 108 : 124;
+
+    blzStrokePanel(ctx, pad, y0, innerW, headerH, 26, theme.header, theme.stroke);
+
+    const avImg = await loadAvatar(member);
+    const avS = 84;
+    const avX = pad + 20;
+    const avY = y0 + 22;
+    ctx.save();
+    rr(ctx, avX, avY, avS, avS, avS / 2);
+    ctx.clip();
+    if (avImg) ctx.drawImage(avImg, avX, avY, avS, avS);
+    else {
+        ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        ctx.fillRect(avX, avY, avS, avS);
+    }
+    ctx.restore();
+    rr(ctx, avX, avY, avS, avS, avS / 2);
+    ctx.strokeStyle = theme.stroke;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = theme.text;
+    ctx.font = `800 34px ${titleFace}, Arial`;
+    ctx.fillText(truncateText(ctx, displayName, innerW - avS - 160), avX + avS + 18, y0 + 56);
+    ctx.font = `600 17px ${textFace}, Arial`;
+    ctx.fillStyle = theme.sub;
+    ctx.fillText(truncateText(ctx, highestRoleName, innerW - avS - 160), avX + avS + 18, y0 + 86);
+
+    ctx.textAlign = 'right';
+    ctx.fillStyle = theme.accent;
+    ctx.font = `800 26px ${titleFace}, Arial`;
+    ctx.fillText(`⭐ ${(user.stars ?? 0).toLocaleString('fr-FR')}`, pad + innerW - 16, y0 + 52);
+    ctx.fillStyle = theme.text;
+    ctx.font = `600 16px ${textFace}, Arial`;
+    ctx.fillText(`🏆 ${(user.points ?? 0).toLocaleString('fr-FR')} RP`, pad + innerW - 16, y0 + 82);
+    ctx.textAlign = 'left';
+
+    const yXp = y0 + headerH + gap;
+    const xpH = 36;
+    blzStrokePanel(ctx, pad, yXp, innerW, xpH + 44, 18, theme.panel, theme.stroke);
+    ctx.fillStyle = theme.text;
+    ctx.font = `700 18px ${titleFace}, Arial`;
+    ctx.fillText(`Niveau ${user.level ?? 1}`, pad + 18, yXp + 26);
+    drawXpBar(ctx, pad + 18, yXp + 36, innerW - 36, 14, ratioXp, theme.xpFill, theme.xpTrack);
+    ctx.font = `600 14px ${textFace}, Arial`;
+    ctx.fillStyle = theme.sub;
+    ctx.fillText(
+        `${(user.xp ?? 0).toLocaleString('fr-FR')} / ${(user.xp_needed ?? 0).toLocaleString('fr-FR')} XP`,
+        pad + 18,
+        yXp + 62
+    );
+
+    const yCards = yXp + xpH + 44 + gap;
+    const cardH = H - yCards - pad - 26;
+    const cw = (innerW - gap * 2) / 3;
+
+    const drawCard = (ix, title, drawBody) => {
+        const x = pad + ix * (cw + gap);
+        blzStrokePanel(ctx, x, yCards, cw, cardH, 16, theme.panel, theme.stroke);
+        ctx.fillStyle = theme.accent;
+        ctx.font = `700 18px ${titleFace}, Arial`;
+        ctx.fillText(title, x + 16, yCards + 30);
+        drawBody(x + 16, yCards + 52, cw - 32);
+    };
+
+    drawCard(0, 'Progression', (x, yy) => {
+        ctx.fillStyle = theme.text;
+        ctx.font = `600 16px ${textFace}, Arial`;
+        ctx.fillText(`XP & niveau`, x, yy);
+        ctx.fillStyle = theme.sub;
+        ctx.font = `500 14px ${textFace}, Arial`;
+        ctx.fillText(`Rang actuel : ${rank?.name ?? '—'}`, x, yy + 28);
+    });
+
+    drawCard(1, 'Économie', (x, yy) => {
+        ctx.fillStyle = theme.text;
+        ctx.font = `600 17px ${textFace}, Arial`;
+        ctx.fillText(`Starss & points`, x, yy);
+        ctx.font = `600 15px ${textFace}, Arial`;
+        ctx.fillText(`⭐ ${(user.stars ?? 0).toLocaleString('fr-FR')}`, x, yy + 30);
+        ctx.fillText(`🏆 ${(user.points ?? 0).toLocaleString('fr-FR')} RP`, x, yy + 54);
+    });
+
+    drawCard(2, 'Rang suivant', (x, yy) => {
+        ctx.fillStyle = theme.sub;
+        ctx.font = `500 14px ${textFace}, Arial`;
+        if (nextRank) {
+            const need = Math.max(0, (nextRank.points ?? 0) - (user.points ?? 0));
+            ctx.fillText(`${nextRank.name}`, x, yy);
+            ctx.fillText(`${need.toLocaleString('fr-FR')} RP restants`, x, yy + 24);
+        } else {
+            ctx.fillText('Rang max atteint', x, yy);
+        }
+        if (rankIconPath && fs.existsSync(rankIconPath)) {
+            try {
+                const ic = await loadImage(fs.readFileSync(rankIconPath));
+                ctx.drawImage(ic, x + cw - 96, yCards + 36, 56, 56);
+            } catch {
+                /* ignore */
+            }
+        }
+    });
+
+    let footY = yCards + cardH - 8;
+    if (totalDebt > 0) {
+        ctx.fillStyle = 'rgba(248, 113, 113, 0.95)';
+        ctx.font = `600 13px ${textFace}, Arial`;
+        ctx.fillText(`Dette : ${totalDebt.toLocaleString('fr-FR')} ⭐${debtTimeRemaining ? ` — ${debtTimeRemaining}` : ''}`, pad + 16, footY);
+        footY -= 20;
+    }
+    if (vocalNerfStatus) {
+        ctx.fillStyle = 'rgba(251, 191, 36, 0.95)';
+        ctx.font = `500 12px ${textFace}, Arial`;
+        ctx.fillText(truncateText(ctx, vocalNerfStatus, innerW - 32), pad + 16, footY);
+    }
+
+    ctx.fillStyle = 'rgba(255, 200, 140, 0.85)';
+    ctx.font = `italic 12px ${textFace}, Arial`;
+    ctx.textAlign = 'right';
+    ctx.fillText(theme.footer, W - 28, H - 18);
+    ctx.textAlign = 'left';
+
+    return canvas.toBuffer('image/png');
+}
+
 /**
  * @param {object} data — même forme que les champs utiles de renderProfileCard
  * @param {string} variant — id parmi PROFILE_PREVIEW_VARIANTS
