@@ -388,8 +388,8 @@ async function renderFiche1(data) {
     const mainW = innerW - colAvatar - gap;
 
     glassCell(ctx, x0, y0, colAvatar, innerH, 16);
-    const avatarForLeft = invokerStaffTitle ? invokerMember || invokerUser || member : member;
-    const avImg = await loadAvatar(avatarForLeft);
+    /* PP = membre affiché (cible) ; invokerStaffTitle = légende staff de celui qui lance la commande. */
+    const avImg = await loadAvatar(member);
     const avR = 40;
     const avCx = x0 + colAvatar / 2;
     const avCy = y0 + 72;
@@ -594,8 +594,8 @@ async function renderFiche2(data) {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    const avatarForLeft = invokerStaffTitle ? invokerMember || invokerUser || member : member;
-    const avImg = await loadAvatar(avatarForLeft);
+    /* PP = membre affiché (cible) ; invokerStaffTitle = légende staff de celui qui lance la commande. */
+    const avImg = await loadAvatar(member);
     const avR = Math.min(leftW * 0.36, innerH * 0.34);
     const avCx = x0 + leftW / 2;
     const avCy = y0 + innerH * 0.5;
