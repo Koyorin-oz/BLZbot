@@ -75,7 +75,7 @@ Les **Starss** sont la monnaie principale du serveur. Tu peux les gagner de plus
 
 Les Starss te permettent d'acheter des items dans la **/boutique**, de prêter de l'argent à d'autres membres, d'améliorer ta guilde, et bien plus encore !
 
-Tu peux voir ton solde à tout moment avec **/profile** 📊`,
+Tu peux voir ton solde à tout moment avec **/profil** 📊`,
         color: 'Gold'
     },
 
