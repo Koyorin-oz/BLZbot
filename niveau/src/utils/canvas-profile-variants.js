@@ -35,7 +35,6 @@ const PROFILE_CARD_THEME = Object.freeze({
     text: '#ffffff',
     sub: '#f2d7d3',
     accent: '#ffd166',
-    labelYellow: '#fff59b',
     outline: 'rgba(255,255,255,0.38)',
     statFontPx: 20,
 });
