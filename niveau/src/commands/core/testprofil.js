@@ -34,7 +34,7 @@ module.exports = {
         try {
             await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-            const variant = normalizeProfileVariant(interaction.options.getString('style') ?? 'fiche_1');
+            const variant = normalizeProfileVariant(interaction.options.getString('style', true));
             const targetUser = interaction.options.getUser('membre') || interaction.user;
             const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
             if (!member) {
