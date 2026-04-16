@@ -119,7 +119,7 @@ module.exports = {
             });
 
             return interaction.editReply({
-                content: `🛡️ **Profil staff** — ${targetMember.displayName}\n_build ${STAFF_CARD_BUILD}_`,
+                content: null,
                 files: [attachment],
             });
         } catch (error) {
