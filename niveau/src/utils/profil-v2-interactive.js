@@ -281,7 +281,7 @@ async function sendProfilV2WithButtons(interaction, session) {
         try {
             if (i.user.id !== interaction.user.id) {
                 const errorText = new TextDisplayBuilder().setContent(
-                    "Seul l'auteur de la commande peut utiliser ces boutons. Utilise `/profil-v2` pour voir le tien."
+                    "Seul l'auteur de la commande peut utiliser ces boutons. Utilise `/profil` pour voir le tien."
                 );
                 const errorContainer = new ContainerBuilder().addTextDisplayComponents(errorText);
                 return i.reply({ components: [errorContainer], flags: MessageFlags.IsComponentsV2, ephemeral: true });
