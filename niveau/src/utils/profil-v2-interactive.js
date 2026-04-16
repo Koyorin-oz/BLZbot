@@ -518,4 +518,4 @@ async function sendProfilV2WithButtons(interaction, session, opts = {}) {
     return message;
 }
 
-module.exports = { sendProfilV2WithButtons };
+module.exports = { loadFiche2ProfileData, sendProfilV2WithButtons };
