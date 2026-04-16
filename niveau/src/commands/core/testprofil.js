@@ -14,7 +14,7 @@ module.exports = {
                 .setRequired(true)
                 .addChoices(
                     { name: 'Fiche 1 — colonne + grille 2×3 (sauvegardée)', value: 'fiche_1' },
-                    { name: 'Fiche 2 — fond /profile (1024×381)', value: 'fiche_2' }
+                    { name: 'Fiche 2 — fond /profil (1024×381)', value: 'fiche_2' }
                 )
         )
         .addUserOption((opt) =>
