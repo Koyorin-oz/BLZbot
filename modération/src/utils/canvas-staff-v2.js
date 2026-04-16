@@ -172,14 +172,6 @@ async function renderStaffProfileCardV2(data) {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    ctx.fillStyle = 'rgba(180, 200, 220, 0.55)';
-    ctx.font = 'italic 14px Inter, Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
-    ctx.fillText(`Staff v2 · ${STAFF_CARD_BUILD}`, x0 + leftW / 2, y0 + innerH - 6);
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
-
     /* Bandeau identité */
     const headH = 88;
     rr(ctx, mainX, y0, mainW, headH, 12);
