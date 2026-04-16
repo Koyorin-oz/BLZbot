@@ -477,10 +477,10 @@ async function renderFiche2(data) {
     const thumbX = mainX + mainW - thumb;
     const thumbY = y0 + 4;
     rr(ctx, thumbX, thumbY, thumb, thumb, 10);
-    ctx.fillStyle = 'rgba(20, 8, 10, 0.55)';
+    ctx.fillStyle = 'rgba(40, 22, 18, 0.62)';
     ctx.fill();
-    ctx.strokeStyle = 'rgba(200, 60, 55, 0.85)';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(190, 120, 88, 0.5)';
+    ctx.lineWidth = 1.25;
     ctx.stroke();
     if (rankIconPath && fs.existsSync(rankIconPath)) {
         try {
