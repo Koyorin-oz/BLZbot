@@ -130,31 +130,29 @@ async function drawBackdrop1(ctx) {
     ctx.fillRect(0, 0, W, H);
 }
 
-/** Fond fiche 2 — tons brique / ref. plus « carte » + fines rayures. */
-async function drawBackdrop2(ctx) {
-    const g = ctx.createLinearGradient(0, 0, W, H);
-    g.addColorStop(0, '#2a1410');
-    g.addColorStop(0.5, '#3d1d18');
-    g.addColorStop(1, '#1a0c0a');
+/** Fond fiche 2 — dégradé brun chaud type ref. (#4a2c24, centre plus clair). */
+async function drawBackdrop2(ctx, cw, ch) {
+    const g = ctx.createRadialGradient(cw * 0.5, ch * 0.42, 0, cw * 0.52, ch * 0.48, Math.hypot(cw, ch) * 0.72);
+    g.addColorStop(0, '#5c3e36');
+    g.addColorStop(0.35, '#4a2c24');
+    g.addColorStop(1, '#261610');
     ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillRect(0, 0, cw, ch);
 
     const bg = await tryLoadBlzBg();
     if (bg) {
         ctx.save();
-        ctx.globalAlpha = 0.18;
-        ctx.drawImage(bg, 0, 0, W, H);
+        ctx.globalAlpha = 0.06;
+        ctx.drawImage(bg, 0, 0, cw, ch);
         ctx.restore();
     }
 
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.18)';
-    ctx.lineWidth = 1;
-    for (let d = -H; d < W + H; d += 36) {
-        ctx.beginPath();
-        ctx.moveTo(d, 0);
-        ctx.lineTo(d + H * 0.85, H);
-        ctx.stroke();
-    }
+    const edge = ctx.createLinearGradient(0, 0, cw, ch);
+    edge.addColorStop(0, 'rgba(0,0,0,0.22)');
+    edge.addColorStop(0.35, 'rgba(0,0,0,0)');
+    edge.addColorStop(1, 'rgba(0,0,0,0.28)');
+    ctx.fillStyle = edge;
+    ctx.fillRect(0, 0, cw, ch);
 }
 
 function glassCell(ctx, x, y, w, h, r) {
