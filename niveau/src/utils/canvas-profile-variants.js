@@ -727,7 +727,7 @@ async function renderFiche2(data) {
     ctx.fillStyle = 'rgba(242, 215, 211, 0.55)';
     ctx.font = 'italic 11px Inter, Arial';
     ctx.textAlign = 'right';
-    ctx.fillText(`Fiche 2 — /testprofil · ${PROFILE_PREVIEW_BUILD}`, W2 - pad - 6, H2 - pad - 4);
+    ctx.fillText(`Fiche 2 — /profil-v2 · ${PROFILE_PREVIEW_BUILD}`, W2 - pad - 6, H2 - pad - 4);
     ctx.textAlign = 'left';
 
     return canvas.toBuffer('image/png');
