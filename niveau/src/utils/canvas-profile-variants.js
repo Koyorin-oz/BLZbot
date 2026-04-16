@@ -529,10 +529,10 @@ async function renderFiche1(data) {
         }
     }
 
-    ctx.fillStyle = 'rgba(255, 200, 170, 0.75)';
-    ctx.font = 'italic 11px "Arial Narrow", Arial';
+    ctx.fillStyle = 'rgba(200, 215, 230, 0.5)';
+    ctx.font = 'italic 9px Inter, Arial';
     ctx.textAlign = 'right';
-    ctx.fillText(`Fiche 1 — /testprofil · ${PROFILE_PREVIEW_BUILD}`, W - pad - 8, H - pad - 6);
+    ctx.fillText(CANVAS_CREDIT_LINE, W - pad - 8, H - pad - 6);
     ctx.textAlign = 'left';
 
     return canvas.toBuffer('image/png');

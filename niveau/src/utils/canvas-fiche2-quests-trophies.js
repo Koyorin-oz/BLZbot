@@ -8,6 +8,8 @@ const path = require('node:path');
 const W = 1024;
 const H = 520;
 
+const CANVAS_CREDIT_LINE = 'Par Koyorin et Roxxor';
+
 const THEME = {
     overlay: 'rgba(0,0,0,0.28)',
     shell: 'rgba(0,0,0,0.44)',
