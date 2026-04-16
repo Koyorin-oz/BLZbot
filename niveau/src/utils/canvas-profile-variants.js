@@ -549,9 +549,9 @@ async function renderFiche2(data) {
         ctx.fillRect(mainX + barH * 0.35, cy - 2, Math.max(0, cx - mainX - barH * 0.5), 4);
         ctx.beginPath();
         ctx.arc(cx, cy, barH / 2 + 2, 0, Math.PI * 2);
-        ctx.fillStyle = '#ff2a2a';
+        ctx.fillStyle = '#e5c07b';
         ctx.fill();
-        ctx.strokeStyle = '#ff6666';
+        ctx.strokeStyle = 'rgba(255, 230, 180, 0.9)';
         ctx.lineWidth = 1;
         ctx.stroke();
     } else if (fillW > 0) {
