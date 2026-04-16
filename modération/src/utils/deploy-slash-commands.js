@@ -143,7 +143,7 @@ async function deployModerationSlashCommands(client, config, opts = {}) {
 
         /** Toujours re-PUT ces commandes (évite un slash obsolète si Discord compare mal). */
         const forceModerationSlashRefresh = new Set(
-            String(process.env.BLZ_FORCE_MOD_SLASH_NAMES || 'profil-staff-v2')
+            String(process.env.BLZ_FORCE_MOD_SLASH_NAMES || 'profil-staff')
                 .split(/[,;]/)
                 .map((s) => s.trim())
                 .filter(Boolean)
