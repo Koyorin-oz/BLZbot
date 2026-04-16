@@ -422,12 +422,12 @@ async function renderFiche2(data) {
     const mainX = x0 + leftW + gap;
     const mainW = innerW - leftW - gap;
 
-    /* Colonne avatar — chocolat chaud semi-transparent */
+    /* Colonne avatar — même « header » que /profile */
     rr(ctx, x0, y0, leftW, innerH, 14);
-    ctx.fillStyle = 'rgba(48, 26, 20, 0.6)';
+    ctx.fillStyle = PROFILE_CARD_THEME.header;
     ctx.fill();
-    ctx.strokeStyle = 'rgba(170, 100, 72, 0.42)';
-    ctx.lineWidth = 1.25;
+    ctx.strokeStyle = PROFILE_CARD_THEME.outline;
+    ctx.lineWidth = 2;
     ctx.stroke();
 
     const avImg = await loadAvatar(member);
