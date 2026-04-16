@@ -323,7 +323,7 @@ async function renderStaffProfileCardV2(data) {
             y += 18;
             if (y > oy + ch - 10) break;
         }
-    });
+    );
 
     drawBottomPanel(mainX + halfW + 10, 'Appréciations', 'Aucune appréciation', (ox, oy, cw, ch) => {
         const appr = (data.appreciations || []).slice(0, 2);
