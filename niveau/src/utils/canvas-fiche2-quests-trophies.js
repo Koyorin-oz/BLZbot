@@ -165,7 +165,7 @@ async function renderQuestsCardFiche2({ quests, footerNote = '/profil-v2' }) {
     ctx.fillStyle = 'rgba(200, 215, 230, 0.45)';
     ctx.font = 'italic 10px Inter, Arial';
     ctx.textAlign = 'right';
-    ctx.fillText('Quêtes — /profil-v2', W - pad - 8, H - pad - 8);
+    ctx.fillText(`Quêtes — ${footerNote}`, W - pad - 8, H - pad - 8);
     ctx.textAlign = 'left';
 
     return canvas.toBuffer('image/png');
