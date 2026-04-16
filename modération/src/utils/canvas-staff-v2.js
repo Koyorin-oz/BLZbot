@@ -334,15 +334,15 @@ async function renderStaffProfileCardV2(data) {
         let y = oy;
         for (const a of appr) {
             ctx.fillStyle = THEME.sub;
-            ctx.font = '500 10px Inter, Arial';
+            ctx.font = '500 12px Inter, Arial';
             ctx.fillText(formatDate(a.date), ox, y);
-            y += 12;
+            y += 14;
             ctx.fillStyle = THEME.text;
-            ctx.font = '500 10px Inter, Arial';
+            ctx.font = '500 12px Inter, Arial';
             const lines = wrapLines(ctx, a.appreciation || '—', cw, 3);
             for (const ln of lines) {
                 ctx.fillText(truncateText(ctx, ln, cw), ox, y);
-                y += 12;
+                y += 14;
                 if (y > oy + ch - 8) return;
             }
             y += 6;
@@ -350,7 +350,7 @@ async function renderStaffProfileCardV2(data) {
     });
 
     ctx.fillStyle = 'rgba(200, 215, 230, 0.45)';
-    ctx.font = 'italic 10px Inter, Arial';
+    ctx.font = 'italic 11px Inter, Arial';
     ctx.textAlign = 'right';
     ctx.fillText(`Carte staff — /profil-staff-v2 · ${STAFF_CARD_BUILD}`, W - pad - 6, H - pad - 4);
     ctx.textAlign = 'left';
