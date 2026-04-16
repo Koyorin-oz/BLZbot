@@ -200,7 +200,7 @@ async function sendProfilV2WithButtons(interaction, session, opts = {}) {
                     }
                 }
                 const totalPages = Math.ceil(completed.length / ACH) || 1;
-                const p = Math.max(0, Math.min(safePage, totalPages - 1));
+                const p = Math.max(0, Math.min(page, totalPages - 1));
                 const sliced = completed.slice(p * ACH, (p + 1) * ACH);
 
                 const png = await renderAchievementsCardFiche2({ achievements: sliced });
