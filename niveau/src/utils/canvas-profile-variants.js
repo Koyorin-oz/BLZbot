@@ -529,10 +529,7 @@ async function renderFiche2(data) {
         ix += iconSize + iconGap;
     }
 
-    const primaryRole =
-        highestRoleName && String(highestRoleName).trim() && String(highestRoleName) !== '@everyone'
-            ? String(highestRoleName).trim()
-            : 'Membre';
+    const primaryRole = pickPrimaryServerRole(member);
     ctx.font = '600 16px InterBold, Arial';
     ctx.fillStyle = PROFILE_CARD_THEME.accent;
     ctx.fillText(primaryRole, mainX, y0 + 54);
