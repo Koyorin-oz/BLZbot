@@ -119,6 +119,80 @@ async function loadAvatar(member) {
     }
 }
 
+async function tryLoadProfileCornerB() {
+    const p = path.join(__dirname, '..', 'assets', 'profile-corner-b.png');
+    if (!fs.existsSync(p)) return null;
+    try {
+        return await loadImage(fs.readFileSync(p));
+    } catch {
+        return null;
+    }
+}
+
+/** Badges « exclusifs » (DB) — mêmes fichiers que /profile. */
+async function loadUserBadgeImages(userId, limit = 8) {
+    if (!userId) return [];
+    const { getUserBadges } = require('../database/db-badges');
+    const rows = getUserBadges(userId, limit);
+    const dir = path.join(__dirname, '..', 'assets', 'badges');
+    const out = [];
+    for (const row of rows) {
+        const fp = path.join(dir, `${row.badge_id}.png`);
+        if (!fs.existsSync(fp)) continue;
+        try {
+            out.push(await loadImage(fs.readFileSync(fp)));
+        } catch {
+            /* ignore */
+        }
+    }
+    return out;
+}
+
+/** Dernière case fiche 2 : guilde (nom + emoji, paix/guerre, niveau). */
+function drawFiche2GuildCell(ctx, cx, cy, cw, ch, user, previewHasGuild) {
+    const padX = 12;
+    let ly = cy + 10;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+
+    if (!previewHasGuild) {
+        ctx.font = '700 15px InterBold, Arial';
+        ctx.fillStyle = PREVIEW_STAFF_TITLE_COLOR;
+        ctx.fillText(truncateText(ctx, user.guild_name || 'Aucune guilde', cw - padX * 2), cx + padX, ly);
+        ctx.font = '500 12px Inter, Arial';
+        ctx.fillStyle = PROFILE_CARD_THEME.sub;
+        ctx.fillText('—', cx + padX, ly + 22);
+        ctx.textBaseline = 'alphabetic';
+        return;
+    }
+
+    const gName = user.guild_name || 'Guilde';
+    let gEmoji = user.guild_emoji || '⚔️';
+    if (typeof gEmoji === 'string' && gEmoji.includes('<')) gEmoji = '⚔️';
+
+    ctx.font = '700 15px InterBold, Arial';
+    ctx.fillStyle = PREVIEW_STAFF_TITLE_COLOR;
+    const emojiSlot = 28;
+    const nameMax = Math.max(40, cw - padX * 2 - emojiSlot);
+    const nameStr = truncateText(ctx, gName, nameMax);
+    ctx.fillText(nameStr, cx + padX, ly);
+    const nw = ctx.measureText(nameStr).width;
+    ctx.font = '18px "Segoe UI Emoji", "Apple Color Emoji", Arial';
+    ctx.fillText(gEmoji, cx + padX + nw + 6, ly - 1);
+
+    ly += 22;
+    const atWar = String(user.guild_state || '').includes('Guerre');
+    ctx.font = '600 13px InterBold, Inter, Arial';
+    ctx.fillStyle = atWar ? '#ef4444' : '#22c55e';
+    ctx.fillText(atWar ? 'En guerre' : 'En paix', cx + padX, ly);
+
+    ly += 20;
+    ctx.font = '700 13px InterBold, Arial';
+    ctx.fillStyle = PREVIEW_STAFF_TITLE_COLOR;
+    ctx.fillText(`Niveau ${user.guild_level ?? 1}`, cx + padX, ly);
+    ctx.textBaseline = 'alphabetic';
+}
+
 /** Fond fiche 1 (oblique + vignette chaude). */
 async function drawBackdrop1(ctx) {
     const g = ctx.createLinearGradient(0, 0, W, H);
