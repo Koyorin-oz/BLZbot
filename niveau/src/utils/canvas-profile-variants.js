@@ -1,5 +1,7 @@
 /**
- * Aperçu /testprofil — une seule fiche compacte type « carte profil » (thème Carmin, stats BLZ).
+ * Aperçus /testprofil — fiches BLZ Carmin.
+ * fiche_1 : colonne + grille 2×3 (version actuelle sauvegardée).
+ * fiche_2 : même dimensions (1040×520), layout type 2ᵉ ref. (3×2, avatar carré gauche, barre jaune-orange).
  */
 const { createCanvas, loadImage, registerFont } = require('canvas');
 const fs = require('node:fs');
@@ -17,33 +19,38 @@ try {
     /* ignore */
 }
 
-/** Carte large, pas trop haute (profil discret comme le screen). */
 const W = 1040;
 const H = 520;
 
 const PROFILE_PREVIEW_VARIANTS = [
     {
-        id: 'fiche_blz',
-        label: 'Fiche compacte BLZ',
-        hint: 'Grille 2×3 Starss / RP / rang / niveau / XP / progression — style Carmin',
+        id: 'fiche_1',
+        label: 'Fiche 1 — colonne + 2×3',
+        hint: 'Colonne avatar + grille 2×3 + barre sous le bloc principal (version sauvegardée)',
+    },
+    {
+        id: 'fiche_2',
+        label: 'Fiche 2 — layout 3×2',
+        hint: 'Grand panneau avatar gauche, grille 3×2, barre pleine largeur zone droite (référence 2ᵉ screen)',
     },
 ];
 
 const LEGACY_PROFILE_VARIANT = Object.freeze({
-    carmin: 'fiche_blz',
-    carmin_atlas: 'fiche_blz',
-    carmin_naos: 'fiche_blz',
-    carmin_medalion: 'fiche_blz',
-    carmin_tribunal: 'fiche_blz',
-    aurora: 'fiche_blz',
-    nocturne: 'fiche_blz',
-    parchment: 'fiche_blz',
-    rubis: 'fiche_blz',
-    forge: 'fiche_blz',
-    banniere: 'fiche_blz',
-    monolithe: 'fiche_blz',
-    vitres: 'fiche_blz',
-    braise: 'fiche_blz',
+    fiche_blz: 'fiche_1',
+    carmin: 'fiche_1',
+    carmin_atlas: 'fiche_1',
+    carmin_naos: 'fiche_1',
+    carmin_medalion: 'fiche_1',
+    carmin_tribunal: 'fiche_1',
+    aurora: 'fiche_1',
+    nocturne: 'fiche_1',
+    parchment: 'fiche_1',
+    rubis: 'fiche_1',
+    forge: 'fiche_1',
+    banniere: 'fiche_1',
+    monolithe: 'fiche_1',
+    vitres: 'fiche_1',
+    braise: 'fiche_1',
 });
 
 function rr(ctx, x, y, w, h, r) {
@@ -89,8 +96,8 @@ async function loadAvatar(member) {
     }
 }
 
-/** Fond Carmin distinct (oblique + vignette, moins « radial coin » que l’ancien pack). */
-async function drawFicheBackdrop(ctx) {
+/** Fond fiche 1 (oblique + vignette chaude). */
+async function drawBackdrop1(ctx) {
     const g = ctx.createLinearGradient(0, 0, W, H);
     g.addColorStop(0, '#14080a');
     g.addColorStop(0.45, '#1e0c10');
@@ -120,6 +127,33 @@ async function drawFicheBackdrop(ctx) {
     ctx.fillRect(0, 0, W, H);
 }
 
+/** Fond fiche 2 — tons brique / ref. plus « carte » + fines rayures. */
+async function drawBackdrop2(ctx) {
+    const g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, '#2a1410');
+    g.addColorStop(0.5, '#3d1d18');
+    g.addColorStop(1, '#1a0c0a');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+
+    const bg = await tryLoadBlzBg();
+    if (bg) {
+        ctx.save();
+        ctx.globalAlpha = 0.18;
+        ctx.drawImage(bg, 0, 0, W, H);
+        ctx.restore();
+    }
+
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.18)';
+    ctx.lineWidth = 1;
+    for (let d = -H; d < W + H; d += 36) {
+        ctx.beginPath();
+        ctx.moveTo(d, 0);
+        ctx.lineTo(d + H * 0.85, H);
+        ctx.stroke();
+    }
+}
+
 function glassCell(ctx, x, y, w, h, r) {
     rr(ctx, x, y, w, h, r);
     ctx.fillStyle = 'rgba(255, 248, 245, 0.09)';
@@ -129,7 +163,16 @@ function glassCell(ctx, x, y, w, h, r) {
     ctx.stroke();
 }
 
-/** Police étroite type screen : Arial Narrow si dispo, sinon Inter resserré. */
+/** Cellules type ref. 2 — brun semi-transparent. */
+function simbaCell(ctx, x, y, w, h, r) {
+    rr(ctx, x, y, w, h, r);
+    ctx.fillStyle = 'rgba(77, 42, 36, 0.58)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(120, 70, 60, 0.35)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+}
+
 function setCondensedTitle(ctx, sizePx, weight) {
     ctx.font = `${weight} ${sizePx}px "Arial Narrow", "Franklin Gothic Medium", Arial`;
 }
@@ -138,21 +181,24 @@ function setCondensedBody(ctx, sizePx, weight) {
     ctx.font = `${weight} ${sizePx}px "Arial Narrow", "Franklin Gothic Medium", Inter, Arial`;
 }
 
-function drawCondensedText(ctx, text, x, y, maxW, sizePx, weight, color, scaleX = 0.92) {
-    setCondensedBody(ctx, sizePx, weight);
-    ctx.fillStyle = color;
-    if (scaleX >= 1) {
-        ctx.fillText(truncateText(ctx, text, maxW), x, y);
-        return;
+function drawXpBarGradient(ctx, x, y, w, h, ratio, c0, c1, c2, track) {
+    rr(ctx, x, y, w, h, h / 2);
+    ctx.fillStyle = track;
+    ctx.fill();
+    const r = Math.max(0, Math.min(1, ratio));
+    if (r > 0) {
+        const fw = Math.max(h, Math.round(w * r));
+        const g = ctx.createLinearGradient(x, 0, x + fw, 0);
+        g.addColorStop(0, c0);
+        g.addColorStop(0.55, c1);
+        g.addColorStop(1, c2);
+        rr(ctx, x, y, fw, h, h / 2);
+        ctx.fillStyle = g;
+        ctx.fill();
     }
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.scale(scaleX, 1);
-    ctx.fillText(truncateText(ctx, text, maxW / scaleX), 0, 0);
-    ctx.restore();
 }
 
-async function renderFicheBlz(data) {
+async function renderFiche1(data) {
     const { user, member, rank, rankIconPath, totalDebt, vocalNerfStatus } = data;
     const displayName = member?.displayName ?? 'Utilisateur';
     const joined = member?.joinedAt
@@ -167,7 +213,7 @@ async function renderFicheBlz(data) {
 
     const canvas = createCanvas(W, H);
     const ctx = canvas.getContext('2d');
-    await drawFicheBackdrop(ctx);
+    await drawBackdrop1(ctx);
 
     const pad = 18;
     const outerR = 22;
@@ -189,12 +235,11 @@ async function renderFicheBlz(data) {
     const mainX = x0 + colAvatar + gap;
     const mainW = innerW - colAvatar - gap;
 
-    /* Colonne avatar (modeste, pas énorme) */
     glassCell(ctx, x0, y0, colAvatar, innerH, 16);
     const avImg = await loadAvatar(member);
     const avR = 40;
     const avCx = x0 + colAvatar / 2;
-    const avCy = y0 + 88;
+    const avCy = y0 + 72;
     ctx.save();
     ctx.beginPath();
     ctx.arc(avCx, avCy, avR, 0, Math.PI * 2);
@@ -211,8 +256,17 @@ async function renderFicheBlz(data) {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    /* Titre + membre depuis */
+    /* Mini barre XP en bas de la colonne gauche */
+    const sbW = colAvatar - 20;
+    const sbX = x0 + 10;
+    const sbY = y0 + innerH - 42;
+    drawXpBarGradient(ctx, sbX, sbY, sbW, 8, ratio, '#fb923c', '#ef4444', '#dc2626', 'rgba(0,0,0,0.35)');
+    setCondensedBody(ctx, 10, 500);
+    ctx.fillStyle = 'rgba(255, 250, 245, 0.88)';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${pct} % vers le niveau ${nextLevel}`, x0 + colAvatar / 2, sbY + 22);
     ctx.textAlign = 'left';
+
     ctx.textBaseline = 'alphabetic';
     setCondensedTitle(ctx, 34, 700);
     ctx.fillStyle = '#ffffff';
@@ -227,7 +281,6 @@ async function renderFicheBlz(data) {
     ctx.fillStyle = 'rgba(255, 245, 240, 0.78)';
     ctx.fillText(`Membre depuis : ${joined}`, mainX, y0 + 58);
 
-    /* Mini vignette rang (coin haut droit) */
     const thumb = 52;
     const thumbX = mainX + mainW - thumb - 4;
     const thumbY = y0 + 6;
@@ -246,7 +299,6 @@ async function renderFicheBlz(data) {
         }
     }
 
-    /* Grille 2 × 3 */
     const gridTop = y0 + 78;
     const gridH = innerH - 78 - 52 - 28;
     const cellGap = 10;
@@ -260,7 +312,7 @@ async function renderFicheBlz(data) {
         { label: 'NIVEAU', value: String(user.level ?? 1) },
         {
             label: 'XP',
-            value: `${(xpCur).toLocaleString('fr-FR')} / ${(user.xp_needed ?? 0).toLocaleString('fr-FR')}`,
+            value: `${xpCur.toLocaleString('fr-FR')} / ${(user.xp_needed ?? 0).toLocaleString('fr-FR')}`,
         },
         { label: 'PROGRESSION', value: `${pct} %` },
     ];
@@ -279,59 +331,235 @@ async function renderFicheBlz(data) {
         ctx.fillText(truncateText(ctx, cells[i].value, cellW - 24), cx + 12, cy + cellH - 14);
     }
 
-    /* Barre progression niveau */
     const barY = y0 + innerH - 46;
-    const barW = innerW;
     const barH = 14;
-    const barX = x0;
-    rr(ctx, barX, barY, barW, barH, barH / 2);
+    rr(ctx, mainX, barY, mainW, barH, barH / 2);
     ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
     ctx.fill();
-    const fillW = Math.max(barH, Math.round(barW * ratio));
-    const grad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+    const fillW = Math.max(barH, Math.round(mainW * ratio));
+    const grad = ctx.createLinearGradient(mainX, 0, mainX + mainW, 0);
     grad.addColorStop(0, '#fb923c');
     grad.addColorStop(0.5, '#ef4444');
     grad.addColorStop(1, '#dc2626');
-    rr(ctx, barX, barY, fillW, barH, barH / 2);
+    rr(ctx, mainX, barY, fillW, barH, barH / 2);
     ctx.fillStyle = grad;
     ctx.fill();
 
     setCondensedBody(ctx, 12, 500);
     ctx.fillStyle = 'rgba(255, 250, 245, 0.88)';
-    ctx.fillText(`${pct} % vers le niveau ${nextLevel}`, barX, barY + barH + 18);
+    ctx.fillText(`${pct} % vers le niveau ${nextLevel}`, mainX, barY + barH + 18);
 
     if (totalDebt > 0 || vocalNerfStatus) {
         setCondensedBody(ctx, 11, 600);
-        ctx.fillStyle = 'rgba(252, 165, 165, 0.95)';
         let ty = barY + barH + 34;
         if (totalDebt > 0) {
-            ctx.fillText(`Dette : ${(totalDebt).toLocaleString('fr-FR')} ⭐`, barX, ty);
+            ctx.fillStyle = 'rgba(252, 165, 165, 0.95)';
+            ctx.fillText(`Dette : ${totalDebt.toLocaleString('fr-FR')} ⭐`, mainX, ty);
             ty += 14;
         }
         if (vocalNerfStatus) {
             ctx.fillStyle = 'rgba(253, 224, 71, 0.95)';
-            ctx.fillText(truncateText(ctx, vocalNerfStatus, barW), barX, ty);
+            ctx.fillText(truncateText(ctx, vocalNerfStatus, mainW), mainX, ty);
         }
     }
 
     ctx.fillStyle = 'rgba(255, 200, 170, 0.75)';
     ctx.font = 'italic 11px "Arial Narrow", Arial';
     ctx.textAlign = 'right';
-    ctx.fillText('Aperçu fiche BLZ — /testprofil', W - pad - 8, H - pad - 6);
+    ctx.fillText('Fiche 1 — /testprofil', W - pad - 8, H - pad - 6);
+    ctx.textAlign = 'left';
+
+    return canvas.toBuffer('image/png');
+}
+
+async function renderFiche2(data) {
+    const { user, member, rank, rankIconPath, totalDebt, vocalNerfStatus } = data;
+    const displayName = member?.displayName ?? 'Utilisateur';
+    const joined = member?.joinedAt
+        ? member.joinedAt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+        : '—';
+
+    const xpNeed = Math.max(1, user.xp_needed ?? 1);
+    const xpCur = user.xp ?? 0;
+    const ratio = Math.max(0, Math.min(1, xpCur / xpNeed));
+    const pct = (ratio * 100).toFixed(1);
+    const nextLevel = (user.level ?? 1) + 1;
+
+    const canvas = createCanvas(W, H);
+    const ctx = canvas.getContext('2d');
+    await drawBackdrop2(ctx);
+
+    const pad = 18;
+    const outerR = 22;
+    rr(ctx, pad, pad, W - pad * 2, H - pad * 2, outerR);
+    ctx.fillStyle = 'rgba(12, 6, 6, 0.5)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(40, 20, 18, 0.9)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    const innerPad = 14;
+    const x0 = pad + innerPad;
+    const y0 = pad + innerPad;
+    const innerW = W - pad * 2 - innerPad * 2;
+    const innerH = H - pad * 2 - innerPad * 2;
+
+    const leftW = Math.round(innerW * 0.32);
+    const gap = 16;
+    const mainX = x0 + leftW + gap;
+    const mainW = innerW - leftW - gap;
+
+    /* Panneau gauche carré arrondi + avatar rond au centre (grand) */
+    rr(ctx, x0, y0, leftW, innerH, 18);
+    ctx.fillStyle = 'rgba(55, 28, 24, 0.55)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(100, 55, 48, 0.45)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    const avImg = await loadAvatar(member);
+    const avR = Math.min(leftW * 0.38, innerH * 0.32);
+    const avCx = x0 + leftW / 2;
+    const avCy = y0 + innerH * 0.42;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(avCx, avCy, avR, 0, Math.PI * 2);
+    ctx.clip();
+    if (avImg) ctx.drawImage(avImg, avCx - avR, avCy - avR, avR * 2, avR * 2);
+    else {
+        ctx.fillStyle = 'rgba(255,255,255,0.12)';
+        ctx.fillRect(avCx - avR, avCy - avR, avR * 2, avR * 2);
+    }
+    ctx.restore();
+    ctx.beginPath();
+    ctx.arc(avCx, avCy, avR + 3, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255, 210, 180, 0.5)';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    /* En-tête zone droite */
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    setCondensedTitle(ctx, 36, 700);
+    ctx.fillStyle = '#ffffff';
+    ctx.save();
+    ctx.translate(mainX, y0 + 38);
+    ctx.scale(0.92, 1);
+    ctx.fillText(truncateText(ctx, displayName, (mainW - 72) / 0.92), 0, 0);
+    ctx.restore();
+
+    setCondensedBody(ctx, 15, 500);
+    ctx.fillStyle = 'rgba(255, 235, 230, 0.75)';
+    ctx.fillText(`Membre depuis : ${joined}`, mainX, y0 + 64);
+
+    const thumb = 56;
+    const thumbX = mainX + mainW - thumb;
+    const thumbY = y0 + 8;
+    rr(ctx, thumbX, thumbY, thumb, thumb, 12);
+    ctx.fillStyle = 'rgba(30, 14, 12, 0.5)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(160, 100, 80, 0.4)';
+    ctx.stroke();
+    if (rankIconPath && fs.existsSync(rankIconPath)) {
+        try {
+            const ic = await loadImage(fs.readFileSync(rankIconPath));
+            const inset = 5;
+            ctx.save();
+            rr(ctx, thumbX + inset, thumbY + inset, thumb - inset * 2, thumb - inset * 2, 8);
+            ctx.clip();
+            ctx.drawImage(ic, thumbX + inset, thumbY + inset, thumb - inset * 2, thumb - inset * 2);
+            ctx.restore();
+        } catch {
+            /* ignore */
+        }
+    }
+
+    /* Grille 3 × 2 */
+    const gridTop = y0 + 88;
+    const bottomBlock = 62;
+    const gridH = innerH - 88 - bottomBlock;
+    const gGap = 12;
+    const cellW = (mainW - gGap * 2) / 3;
+    const cellH = (gridH - gGap) / 2;
+
+    const cells = [
+        { label: 'STARSS', value: `${(user.stars ?? 0).toLocaleString('fr-FR')} ⭐` },
+        { label: 'POINTS RP', value: `${(user.points ?? 0).toLocaleString('fr-FR')} RP` },
+        { label: 'RANG ACTUEL', value: rank?.name ?? '—' },
+        { label: 'NIVEAU', value: String(user.level ?? 1) },
+        {
+            label: 'XP',
+            value: `${xpCur.toLocaleString('fr-FR')}/${(user.xp_needed ?? 0).toLocaleString('fr-FR')}`,
+        },
+        { label: 'PROGRESSION', value: `${pct}%` },
+    ];
+
+    for (let i = 0; i < 6; i++) {
+        const col = i % 3;
+        const row = Math.floor(i / 3);
+        const cx = mainX + col * (cellW + gGap);
+        const cy = gridTop + row * (cellH + gGap);
+        simbaCell(ctx, cx, cy, cellW, cellH, 14);
+        setCondensedBody(ctx, 10, 600);
+        ctx.fillStyle = 'rgba(255, 220, 210, 0.55)';
+        ctx.fillText(cells[i].label, cx + 12, cy + 22);
+        setCondensedTitle(ctx, 22, 700);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(truncateText(ctx, cells[i].value, cellW - 20), cx + 12, cy + cellH - 16);
+    }
+
+    const barY = y0 + innerH - 44;
+    const barH = 16;
+    rr(ctx, mainX, barY, mainW, barH, barH / 2);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    ctx.fill();
+    const fillW = Math.max(barH, Math.round(mainW * ratio));
+    const lg = ctx.createLinearGradient(mainX, 0, mainX + mainW, 0);
+    lg.addColorStop(0, '#ffcc33');
+    lg.addColorStop(0.45, '#f5a623');
+    lg.addColorStop(1, '#e65c00');
+    rr(ctx, mainX, barY, fillW, barH, barH / 2);
+    ctx.fillStyle = lg;
+    ctx.fill();
+
+    setCondensedBody(ctx, 13, 500);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(`${pct}% vers le niveau ${nextLevel}`, mainX, barY + barH + 18);
+
+    if (totalDebt > 0 || vocalNerfStatus) {
+        setCondensedBody(ctx, 10, 600);
+        let ty = barY + barH + 32;
+        if (totalDebt > 0) {
+            ctx.fillStyle = 'rgba(252, 165, 165, 0.95)';
+            ctx.fillText(`Dette : ${totalDebt.toLocaleString('fr-FR')} ⭐`, mainX, ty);
+            ty += 14;
+        }
+        if (vocalNerfStatus) {
+            ctx.fillStyle = 'rgba(253, 224, 71, 0.95)';
+            ctx.fillText(truncateText(ctx, vocalNerfStatus, mainW), mainX, ty);
+        }
+    }
+
+    ctx.fillStyle = 'rgba(255, 200, 170, 0.7)';
+    ctx.font = 'italic 11px "Arial Narrow", Arial';
+    ctx.textAlign = 'right';
+    ctx.fillText('Fiche 2 — /testprofil', W - pad - 8, H - pad - 6);
     ctx.textAlign = 'left';
 
     return canvas.toBuffer('image/png');
 }
 
 async function renderProfilePreviewVariant(data, variant) {
-    void variant;
-    return renderFicheBlz(data);
+    const v = LEGACY_PROFILE_VARIANT[variant] || variant;
+    if (v === 'fiche_2') return renderFiche2(data);
+    return renderFiche1(data);
 }
 
 function normalizeProfileVariant(v) {
     const resolved = LEGACY_PROFILE_VARIANT[v] || v;
-    if (resolved === 'fiche_blz') return 'fiche_blz';
-    return 'fiche_blz';
+    const allowed = PROFILE_PREVIEW_VARIANTS.map((x) => x.id);
+    if (allowed.includes(resolved)) return resolved;
+    return 'fiche_1';
 }
 
 module.exports = {
