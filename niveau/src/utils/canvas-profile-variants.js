@@ -25,16 +25,19 @@ const H = 520;
 const W2 = 1024;
 const H2 = 381;
 
-/** Même base visuelle que `canvas-profile.js` (`/profile`). */
+/** Base /profile + panneaux fiche 2 (un peu moins « noir total », plus lisible). */
 const PROFILE_CARD_THEME = Object.freeze({
     overlay: 'rgba(0,0,0,0.40)',
-    panel: 'rgba(0,0,0,0.62)',
-    header: 'rgba(0,0,0,0.58)',
-    shell: 'rgba(0,0,0,0.50)',
+    /* Fiche 2 : verre bordeaux/chocolat, pas du noir pur à 0.6+ */
+    panel: 'rgba(52, 26, 32, 0.48)',
+    header: 'rgba(48, 22, 28, 0.5)',
+    shell: 'rgba(38, 16, 22, 0.42)',
     text: '#ffffff',
     sub: '#f2d7d3',
     accent: '#ffd166',
+    labelYellow: '#ffe08a',
     outline: 'rgba(255,255,255,0.43)',
+    statFontPx: 20,
 });
 
 const PROFILE_PREVIEW_VARIANTS = [
