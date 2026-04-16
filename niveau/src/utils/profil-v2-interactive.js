@@ -1,3 +1,5 @@
+const path = require('node:path');
+const fs = require('node:fs');
 const {
     AttachmentBuilder,
     ButtonBuilder,
@@ -12,14 +14,183 @@ const {
 } = require('discord.js');
 const { getOrCreateUser, getUserInventory } = require('./db-users');
 const { getGuildOfUser, getGuildById, getGuildMembersWithDetails } = require('./db-guilds');
+const { getDisplayRank, RANKS } = require('./ranks');
 const { getAllUserQuests } = require('./db-quests');
-const { QUESTS, checkQuestProgress } = require('./quests');
+const { QUESTS, checkQuestProgress, syncUserBadges } = require('./quests');
+const { renderProfilePreviewVariant } = require('./canvas-profile-variants');
 const { renderGuildProfileV2 } = require('./canvas-guild-profile-v2');
 const { getOngoingWar } = require('./guild/guild-wars');
+const { getPreviewInvokerStaffTitle } = require('./preview-invoker-staff-title');
 const { handleCommandError } = require('./error-handler');
 const { getItem, PASSIVE_ITEMS } = require('./items');
 const logger = require('./logger');
 const { renderQuestsCardFiche2, renderAchievementsCardFiche2 } = require('./canvas-fiche2-quests-trophies');
+
+/**
+ * Charge tout le contexte nécessaire à la fiche 2 + boutons (/profil-v2).
+ * @param {import('discord.js').ChatInputCommandInteraction} interaction
+ */
+async function loadFiche2ProfileData(interaction) {
+    const targetUser = interaction.options.getUser('membre') || interaction.user;
+    const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
+    if (!member) {
+        return { error: 'Membre introuvable sur ce serveur.' };
+    }
+
+    syncUserBadges(targetUser.id, member);
+
+    const user = getOrCreateUser(targetUser.id, targetUser.username);
+    const guild = getGuildOfUser(targetUser.id);
+    user.guild_name = guild ? guild.name : 'Aucune Guilde';
+    user.guild_level = guild ? guild.level : 1;
+    user.guild_emoji = guild ? guild.emoji : '🛡️';
+    user.guild_treasury = guild ? guild.treasury : 0;
+    user.guild_treasury_capacity = guild ? guild.treasury_capacity : 0;
+    user.guild_upgrade_level = guild ? guild.upgrade_level : 1;
+    user.guild_total_treasury_generated = guild ? guild.total_treasury_generated : 0;
+    user.guild_wars_won = guild ? guild.wars_won : 0;
+
+    if (guild) {
+        const guildMembers = getGuildMembersWithDetails(guild.id);
+        user.guild_members = guildMembers.length;
+        user.guild_member_slots = guild.member_slots;
+        const { calculateDailyIncome } = require('./guild/guild-treasury');
+        user.guild_treasury_income = calculateDailyIncome(guild);
+    } else {
+        user.guild_members = 0;
+        user.guild_member_slots = 5;
+        user.guild_treasury_income = 0;
+    }
+
+    let guildState = 'En Paix';
+    if (guild) {
+        const war = getOngoingWar(guild.id);
+        if (war) guildState = 'En Guerre';
+    }
+    user.guild_state = guildState;
+
+    const rank = getDisplayRank(targetUser.id, user.points);
+    const rankIndex = RANKS.findIndex((r) => r.name === rank.name);
+    const nextRank = rankIndex < RANKS.length - 1 ? RANKS[rankIndex + 1] : null;
+
+    const { getTotalDebt, getClosestDebtDeadline } = require('./loan-system');
+    const totalDebt = getTotalDebt(targetUser.id);
+    const debtTimeRemaining = getClosestDebtDeadline(targetUser.id);
+
+    const today = new Date().setHours(0, 0, 0, 0);
+    let dailyVoiceXP = user.daily_voice_xp || 0;
+    let dailyVoicePoints = user.daily_voice_points || 0;
+    if ((user.daily_voice_last_reset || 0) < today) {
+        dailyVoiceXP = 0;
+        dailyVoicePoints = 0;
+    }
+    let vocalNerfStatus = null;
+    if (dailyVoiceXP >= 15000 || dailyVoicePoints >= 7000) {
+        vocalNerfStatus = '⛔ Limite vocale journalière (0 gains).';
+    } else if (dailyVoiceXP >= 10000 || dailyVoicePoints >= 5000) {
+        vocalNerfStatus = '⚠️ Gains vocaux /5.';
+    }
+
+    let highestRoleName = 'Membre';
+    if (member.roles.highest && member.roles.highest.name !== '@everyone') {
+        highestRoleName = member.roles.highest.name;
+    }
+
+    let rankIconPath = path.resolve(__dirname, '..', 'assets', 'rank-icons', `${rankIndex + 1}.png`);
+    if (!fs.existsSync(rankIconPath)) {
+        rankIconPath = path.resolve(__dirname, '..', 'assets', 'rank-icons', '1.png');
+    }
+
+    const { PROFILE_PREVIEW_VARIANTS } = require('./canvas-profile-variants');
+    const meta = PROFILE_PREVIEW_VARIANTS.find((v) => v.id === 'fiche_2');
+
+    const previewHasGuild = Boolean(guild);
+
+    const renderMainPngBuffer = async () => {
+        const u = getOrCreateUser(targetUser.id, targetUser.username);
+        const g = getGuildOfUser(targetUser.id);
+        u.guild_name = g ? g.name : 'Aucune Guilde';
+        u.guild_level = g ? g.level : 1;
+        u.guild_emoji = g ? g.emoji : '🛡️';
+        u.guild_treasury = g ? g.treasury : 0;
+        u.guild_treasury_capacity = g ? g.treasury_capacity : 0;
+        u.guild_upgrade_level = g ? g.upgrade_level : 1;
+        u.guild_total_treasury_generated = g ? g.total_treasury_generated : 0;
+        u.guild_wars_won = g ? g.wars_won : 0;
+        if (g) {
+            const guildMembers = getGuildMembersWithDetails(g.id);
+            u.guild_members = guildMembers.length;
+            u.guild_member_slots = g.member_slots;
+            const { calculateDailyIncome } = require('./guild/guild-treasury');
+            u.guild_treasury_income = calculateDailyIncome(g);
+        } else {
+            u.guild_members = 0;
+            u.guild_member_slots = 5;
+            u.guild_treasury_income = 0;
+        }
+        let gs = 'En Paix';
+        if (g) {
+            const war = getOngoingWar(g.id);
+            if (war) gs = 'En Guerre';
+        }
+        u.guild_state = gs;
+
+        const todayR = new Date().setHours(0, 0, 0, 0);
+        let dvx = u.daily_voice_xp || 0;
+        let dvp = u.daily_voice_points || 0;
+        if ((u.daily_voice_last_reset || 0) < todayR) {
+            dvx = 0;
+            dvp = 0;
+        }
+        let vns = null;
+        if (dvx >= 15000 || dvp >= 7000) vns = '⛔ Limite vocale journalière (0 gains).';
+        else if (dvx >= 10000 || dvp >= 5000) vns = '⚠️ Gains vocaux /5.';
+
+        const invokerStaffTitle = await getPreviewInvokerStaffTitle(interaction.client, interaction.user.id);
+        const r = getDisplayRank(targetUser.id, u.points);
+        const ri = RANKS.findIndex((x) => x.name === r.name);
+        const nr = ri < RANKS.length - 1 ? RANKS[ri + 1] : null;
+        let rip = path.resolve(__dirname, '..', 'assets', 'rank-icons', `${ri + 1}.png`);
+        if (!fs.existsSync(rip)) rip = path.resolve(__dirname, '..', 'assets', 'rank-icons', '1.png');
+
+        return renderProfilePreviewVariant(
+            {
+                user: u,
+                member,
+                rank: r,
+                nextRank: nr,
+                highestRoleName,
+                rankIconPath: rip,
+                totalDebt: getTotalDebt(targetUser.id),
+                debtTimeRemaining: getClosestDebtDeadline(targetUser.id),
+                vocalNerfStatus: vns,
+                userId: targetUser.id,
+                invokerStaffTitle,
+                invokerMember: interaction.member,
+                invokerUser: interaction.user,
+                previewHasGuild: Boolean(g),
+            },
+            'fiche_2'
+        );
+    };
+
+    return {
+        targetUser,
+        member,
+        user,
+        guild,
+        rank,
+        nextRank,
+        rankIconPath,
+        totalDebt,
+        debtTimeRemaining,
+        vocalNerfStatus,
+        highestRoleName,
+        previewHasGuild,
+        meta,
+        renderMainPngBuffer,
+    };
+}
 
 const Q_PREFIX = 'pv2_q';
 const A_PREFIX = 'pv2_a';
