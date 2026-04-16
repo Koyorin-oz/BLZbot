@@ -219,7 +219,7 @@ async function renderStaffProfileCardV2(data) {
 
     /* Statistiques */
     const statsY = y0 + headH + 10;
-    const statsH = 140;
+    const statsH = 162;
     rr(ctx, mainX, statsY, mainW, statsH, 12);
     ctx.fillStyle = THEME.panel;
     ctx.fill();
