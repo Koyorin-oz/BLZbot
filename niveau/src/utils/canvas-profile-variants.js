@@ -299,7 +299,7 @@ async function renderFiche1(data) {
 
     if (invokerStaffTitle) {
         setCondensedBody(ctx, 13, 600);
-        ctx.fillStyle = '#ffd166';
+        ctx.fillStyle = PREVIEW_STAFF_TITLE_COLOR;
         ctx.fillText(truncateText(ctx, invokerStaffTitle, titleMax), mainX, y0 + 54);
     }
     setCondensedBody(ctx, 14, 500);
