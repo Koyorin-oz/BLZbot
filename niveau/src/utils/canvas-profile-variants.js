@@ -508,8 +508,8 @@ async function renderFiche2(data) {
     ctx.restore();
 
     setCondensedBody(ctx, 12, 500);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText(`Membre depuis: ${joined}`, mainX, y0 + 50);
+    ctx.fillStyle = 'rgba(255, 236, 220, 0.95)';
+    ctx.fillText(`Membre depuis : ${joined}`, mainX, y0 + 50);
 
     const thumbX = mainX + mainW - thumb;
     const thumbY = y0 + 4;
