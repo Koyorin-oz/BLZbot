@@ -25,17 +25,18 @@ const H = 520;
 const W2 = 1024;
 const H2 = 381;
 
-/** Base /profile + panneaux fiche 2 (saturé, lisible). */
+/** Fiche 2 : fond blz_bg plus visible + carrés noirs semi-transparents (type autres modèles). */
 const PROFILE_CARD_THEME = Object.freeze({
-    overlay: 'rgba(0,0,0,0.40)',
-    panel: 'rgba(72, 36, 46, 0.58)',
-    header: 'rgba(65, 30, 40, 0.58)',
-    shell: 'rgba(52, 22, 32, 0.5)',
+    /** Plein /profile sur 1200×700 ; fiche 2 seule : overlay plus léger pour laisser le motif ressortir. */
+    fiche2BackdropOverlay: 'rgba(0,0,0,0.28)',
+    panel: 'rgba(0,0,0,0.56)',
+    header: 'rgba(0,0,0,0.52)',
+    shell: 'rgba(0,0,0,0.44)',
     text: '#ffffff',
-    sub: '#fde8e4',
-    accent: '#ffe566',
+    sub: '#f2d7d3',
+    accent: '#ffd166',
     labelYellow: '#fff59b',
-    outline: 'rgba(255, 235, 220, 0.52)',
+    outline: 'rgba(255,255,255,0.38)',
     statFontPx: 20,
 });
 
