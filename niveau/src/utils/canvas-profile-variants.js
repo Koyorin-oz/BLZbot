@@ -331,9 +331,8 @@ async function renderFiche1(data) {
         }
     }
 
-    const headerBlockH = invokerStaffTitle ? 96 : 78;
-    const gridTop = y0 + headerBlockH;
-    const gridH = innerH - headerBlockH - 52 - 28;
+    const gridTop = y0 + 78;
+    const gridH = innerH - 78 - 52 - 28;
     const cellGap = 10;
     const cellW = (mainW - cellGap) / 2;
     const cellH = (gridH - cellGap * 2) / 3;
