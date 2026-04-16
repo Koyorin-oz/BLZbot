@@ -41,7 +41,7 @@ const PROFILE_PREVIEW_VARIANTS = [
 const LEGACY_PROFILE_VARIANT = Object.freeze({
     fiche_blz: 'fiche_1',
     carmin: 'fiche_1',
-    carmin_atlas: 'fiche_1',
+    carmin_atlas: 'fiche_2',
     carmin_naos: 'fiche_1',
     carmin_medalion: 'fiche_1',
     carmin_tribunal: 'fiche_1',
