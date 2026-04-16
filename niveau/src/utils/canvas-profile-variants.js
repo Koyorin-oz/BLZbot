@@ -277,6 +277,17 @@ async function renderFiche1(data) {
     ctx.lineWidth = 2;
     ctx.stroke();
 
+    if (invokerStaffTitle) {
+        const staffMax = colAvatar - 12;
+        setCondensedBody(ctx, 12, 600);
+        ctx.fillStyle = PREVIEW_STAFF_TITLE_COLOR;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText(truncateText(ctx, invokerStaffTitle, staffMax), avCx, avCy + avR + 8);
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+    }
+
     /* Mini barre XP en bas de la colonne gauche */
     const sbW = colAvatar - 20;
     const sbX = x0 + 10;
