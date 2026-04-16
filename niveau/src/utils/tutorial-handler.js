@@ -129,7 +129,7 @@ En plus des rangs, tu as aussi un système de **niveaux** !
 • **⚡ Boost XP** : Double ton gain d'XP pendant 1 heure (100 000 Starss)
 • **👑 Couronne** : +20% d'XP permanent (400 000 Starss)
 
-Utilise **/profile** pour voir ta progression ! 📊`,
+Utilise **/profil** pour voir ta progression ! 📊`,
         color: 'Green'
     },
 
