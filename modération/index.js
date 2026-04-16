@@ -66,7 +66,9 @@ client.commands = new Collection();
  * Chargement des commandes
  */
 function loadCommands() {
-    const commandFiles = fs.readdirSync(path.join(__dirname, 'src/commands')).filter(file => file.endsWith('.js'));
+    const commandFiles = fs
+        .readdirSync(path.join(__dirname, 'src/commands'))
+        .filter((file) => file.endsWith('.js') && !file.endsWith('-ancien.js'));
     let n = 0;
     for (const file of commandFiles) {
         const command = require(`./src/commands/${file}`);

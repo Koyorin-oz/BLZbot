@@ -187,6 +187,17 @@ async function deployModerationSlashCommands(client, config, opts = {}) {
                 errorCount++;
             }
         }
+
+        const obsoleteModSlash = new Set(['profil-staff-v2', 'profilstaff']);
+        for (const cmd of existingMap.values()) {
+            if (!obsoleteModSlash.has(cmd.name)) continue;
+            try {
+                await cmd.delete();
+                if (!compact) console.log(`🗑️ [${guild.name}] Slash obsolète retiré: /${cmd.name}`);
+            } catch (delErr) {
+                console.warn(`[modération/deploy] Suppression /${cmd.name}: ${delErr?.message || delErr}`);
+            }
+        }
     }
 
     if (!anyGuildOk) {
