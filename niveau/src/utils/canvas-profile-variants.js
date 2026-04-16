@@ -1,7 +1,7 @@
 /**
  * Aperçus /testprofil — fiches BLZ Carmin.
  * fiche_1 : colonne + grille 2×3 (version actuelle sauvegardée).
- * fiche_2 : dimensions ref. PNG 1024×381, layout 3×2 + colonne avatar (identique au screen de référence).
+ * fiche_2 : 1024×381, layout 3×2 + colonne avatar — palette « Carmin · Atlas » (bordeaux #1a0505, or #f0e68c).
  */
 const { createCanvas, loadImage, registerFont } = require('canvas');
 const fs = require('node:fs');
