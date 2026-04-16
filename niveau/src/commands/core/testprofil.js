@@ -19,8 +19,8 @@ module.exports = {
         .addStringOption((opt) =>
             opt
                 .setName('style')
-                .setDescription('Modèle de fiche (défaut : Fiche 1)')
-                .setRequired(false)
+                .setDescription('Modèle de fiche (obligatoire pour forcer la mise à jour Discord)')
+                .setRequired(true)
                 .addChoices(
                     { name: 'Fiche 1 — colonne + grille 2×3 (sauvegardée)', value: 'fiche_1' },
                     { name: 'Fiche 2 — pixel-match ref. (1024×381)', value: 'fiche_2' }
