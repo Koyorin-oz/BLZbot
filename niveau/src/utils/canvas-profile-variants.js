@@ -566,15 +566,15 @@ async function renderFiche2(data) {
     }
 
     const barY = y0 + innerH - 36;
-    const barH = 12;
+    const barH = 13;
     rr(ctx, mainX, barY, mainW, barH, barH / 2);
-    ctx.fillStyle = '#2a1a18';
+    ctx.fillStyle = '#2e1814';
     ctx.fill();
     const fillW = Math.max(barH, Math.round(mainW * ratio));
     const lg = ctx.createLinearGradient(mainX, 0, mainX + mainW, 0);
-    lg.addColorStop(0, '#f0b45b');
-    lg.addColorStop(0.55, '#d07048');
-    lg.addColorStop(1, '#b34a33');
+    lg.addColorStop(0, '#ffd060');
+    lg.addColorStop(0.4, '#ff8c42');
+    lg.addColorStop(1, '#c43828');
     rr(ctx, mainX, barY, fillW, barH, barH / 2);
     ctx.fillStyle = lg;
     ctx.fill();
