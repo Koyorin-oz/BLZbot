@@ -509,8 +509,8 @@ async function renderFiche2(data) {
         { label: 'RANG ACTUEL', value: rank?.name ?? '—' },
         { label: 'NIVEAU', value: String(user.level ?? 1) },
         {
-            label: 'LEVEL POINTS',
-            value: `${xpCur.toLocaleString('fr-FR')}/${(user.xp_needed ?? 0).toLocaleString('fr-FR')}`,
+            label: 'XP',
+            value: `${xpCur.toLocaleString('fr-FR')} / ${(user.xp_needed ?? 0).toLocaleString('fr-FR')}`,
         },
         { label: 'PROGRESSION', value: `${pct}%` },
     ];
