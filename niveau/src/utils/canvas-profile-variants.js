@@ -189,11 +189,9 @@ function simbaCell(ctx, x, y, w, h, r) {
 /** Cellules fiche 2 — verre sombre semi-transparent + bord bordeaux. */
 function refStatCell(ctx, x, y, w, h, r) {
     rr(ctx, x, y, w, h, r);
-    ctx.fillStyle = 'rgba(42, 14, 16, 0.48)';
+    ctx.fillStyle = 'rgba(48, 18, 20, 0.52)';
     ctx.fill();
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(120, 45, 50, 0.7)';
+    ctx.strokeStyle = 'rgba(120, 45, 50, 0.72)';
     ctx.lineWidth = 1.25;
     ctx.stroke();
 }
