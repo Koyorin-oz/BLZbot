@@ -172,7 +172,7 @@ async function renderStaffProfileCardV2(data) {
     ctx.stroke();
 
     ctx.fillStyle = 'rgba(180, 200, 220, 0.55)';
-    ctx.font = 'italic 12px Inter, Arial';
+    ctx.font = 'italic 13px Inter, Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
     ctx.fillText(`Staff v2 · ${STAFF_CARD_BUILD}`, x0 + leftW / 2, y0 + innerH - 6);
