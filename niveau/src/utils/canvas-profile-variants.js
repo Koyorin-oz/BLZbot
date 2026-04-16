@@ -256,7 +256,8 @@ async function renderFiche1(data) {
     const mainW = innerW - colAvatar - gap;
 
     glassCell(ctx, x0, y0, colAvatar, innerH, 16);
-    const avImg = await loadAvatar(member);
+    const avatarForLeft = invokerStaffTitle ? invokerMember || invokerUser || member : member;
+    const avImg = await loadAvatar(avatarForLeft);
     const avR = 40;
     const avCx = x0 + colAvatar / 2;
     const avCy = y0 + 72;
