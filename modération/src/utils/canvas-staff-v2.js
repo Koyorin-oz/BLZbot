@@ -296,10 +296,10 @@ async function renderStaffProfileCardV2(data) {
         ctx.strokeStyle = THEME.outline;
         ctx.lineWidth = 2;
         ctx.stroke();
-        ctx.font = '700 14px InterBold, Arial';
+        ctx.font = '700 16px InterBold, Arial';
         ctx.fillStyle = THEME.accent;
-        ctx.fillText(title, px + 10, bottomY + 20);
-        ctx.font = '500 11px Inter, Arial';
+        ctx.fillText(title, px + 10, bottomY + 22);
+        ctx.font = '500 13px Inter, Arial';
         ctx.fillStyle = THEME.sub;
         if (fillContent) fillContent(px + 10, bottomY + 36, halfW - 20, bottomH - 44);
         else ctx.fillText(emptyText, px + 10, bottomY + 42);
