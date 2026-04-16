@@ -129,6 +129,14 @@ async function deployModerationSlashCommands(client, config, opts = {}) {
         const existingMap = new Map();
         existingCommands.forEach((cmd) => existingMap.set(cmd.name, cmd));
 
+        /** Toujours re-PUT ces commandes (évite un slash obsolète si Discord compare mal). */
+        const forceModerationSlashRefresh = new Set(
+            String(process.env.BLZ_FORCE_MOD_SLASH_NAMES || 'profil-staff-v2')
+                .split(/[,;]/)
+                .map((s) => s.trim())
+                .filter(Boolean)
+        );
+
         for (const commandData of commands) {
             let cmdJson;
             try {
@@ -141,7 +149,9 @@ async function deployModerationSlashCommands(client, config, opts = {}) {
                     const permsOk =
                         permsComparable(existing.defaultMemberPermissions) ===
                         permsComparable(cmdJson.default_member_permissions);
-                    if (existing.description === cmdJson.description && remoteOpts === localOpts && permsOk) {
+                    const unchanged =
+                        existing.description === cmdJson.description && remoteOpts === localOpts && permsOk;
+                    if (unchanged && !forceModerationSlashRefresh.has(cmdJson.name)) {
                         skippedCount++;
                         continue;
                     }
