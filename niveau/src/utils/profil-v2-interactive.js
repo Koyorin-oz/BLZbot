@@ -164,7 +164,7 @@ async function sendProfilV2WithButtons(interaction, session, opts = {}) {
                     }
                 }
                 const totalPages = Math.ceil(pendingQuests.length / QUESTS_PER_PAGE) || 1;
-                const p = Math.max(0, Math.min(safePage, totalPages - 1));
+                const p = Math.max(0, Math.min(page, totalPages - 1));
                 const sliced = pendingQuests.slice(p * QUESTS_PER_PAGE, (p + 1) * QUESTS_PER_PAGE);
 
                 const png = await renderQuestsCardFiche2({ quests: sliced });
