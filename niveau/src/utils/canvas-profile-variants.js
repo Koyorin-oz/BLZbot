@@ -558,7 +558,7 @@ async function renderFiche2(data) {
         const cy = gridTop + row * (cellH + gGap);
         refStatCell(ctx, cx, cy, cellW, cellH, 12);
         setCondensedBody(ctx, 9, 600);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
+        ctx.fillStyle = 'rgba(255, 215, 195, 0.92)';
         ctx.fillText(cells[i].label, cx + 10, cy + 18);
         setCondensedTitle(ctx, 17, 700);
         ctx.fillStyle = '#ffffff';
