@@ -568,16 +568,41 @@ async function renderFiche2(data) {
         ctx.textBaseline = 'alphabetic';
     }
 
+    const [cornerBImg, badgeImgs] = await Promise.all([
+        tryLoadProfileCornerB(),
+        loadUserBadgeImages(data.userId, 8),
+    ]);
+
     const thumb = 48;
     const thumbX = mainX + mainW - thumb;
     const thumbY = y0 + 4;
+    const rowRightLimit = thumbX - 10;
 
+    const badgeSize = 26;
+    const badgeGap = 5;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
     ctx.font = '700 34px InterBold, Arial';
     ctx.fillStyle = PROFILE_CARD_THEME.text;
-    const titleMax = mainW - thumb - 10;
-    ctx.fillText(truncateText(ctx, displayName, titleMax), mainX, y0 + 32);
+
+    let maxB = Math.min(badgeImgs.length, 8);
+    let nameDraw = displayName;
+    for (;;) {
+        const badgeBlock = maxB > 0 ? maxB * (badgeSize + badgeGap) - badgeGap : 0;
+        const nameAvail = rowRightLimit - mainX - badgeBlock - (maxB > 0 ? 10 : 0);
+        nameDraw = truncateText(ctx, displayName, Math.max(48, nameAvail));
+        const nw = ctx.measureText(nameDraw).width;
+        if (nw + badgeBlock + (maxB > 0 ? 10 : 0) <= rowRightLimit - mainX || maxB === 0) break;
+        maxB -= 1;
+    }
+    ctx.fillText(nameDraw, mainX, y0 + 32);
+    const nameW = ctx.measureText(nameDraw).width;
+    let bx = mainX + nameW + 10;
+    const badgeY = y0 + 8;
+    for (let bi = 0; bi < maxB; bi++) {
+        ctx.drawImage(badgeImgs[bi], bx, badgeY, badgeSize, badgeSize);
+        bx += badgeSize + badgeGap;
+    }
 
     ctx.font = '500 14px Inter, Arial';
     ctx.fillStyle = PROFILE_CARD_THEME.sub;
@@ -589,18 +614,25 @@ async function renderFiche2(data) {
     ctx.strokeStyle = PROFILE_CARD_THEME.outline;
     ctx.lineWidth = 2;
     ctx.stroke();
-    if (rankIconPath && fs.existsSync(rankIconPath)) {
-        try {
-            const ic = await loadImage(fs.readFileSync(rankIconPath));
-            const inset = 4;
+    const cornerInset = 4;
+    const innerS = thumb - cornerInset * 2;
+    try {
+        if (cornerBImg) {
             ctx.save();
-            rr(ctx, thumbX + inset, thumbY + inset, thumb - inset * 2, thumb - inset * 2, 7);
+            rr(ctx, thumbX + cornerInset, thumbY + cornerInset, innerS, innerS, 7);
             ctx.clip();
-            ctx.drawImage(ic, thumbX + inset, thumbY + inset, thumb - inset * 2, thumb - inset * 2);
+            ctx.drawImage(cornerBImg, thumbX + cornerInset, thumbY + cornerInset, innerS, innerS);
             ctx.restore();
-        } catch {
-            /* ignore */
+        } else if (rankIconPath && fs.existsSync(rankIconPath)) {
+            const ic = await loadImage(fs.readFileSync(rankIconPath));
+            ctx.save();
+            rr(ctx, thumbX + cornerInset, thumbY + cornerInset, innerS, innerS, 7);
+            ctx.clip();
+            ctx.drawImage(ic, thumbX + cornerInset, thumbY + cornerInset, innerS, innerS);
+            ctx.restore();
         }
+    } catch {
+        /* ignore */
     }
 
     const gridTop = y0 + 70;
