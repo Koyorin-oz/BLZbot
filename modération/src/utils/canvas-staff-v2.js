@@ -3,7 +3,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const W = 1024;
-const H = 420;
+/** Un peu plus haut pour grandes polices sans chevauchement. */
+const H = 468;
 
 const THEME = {
     overlay: 'rgba(0,0,0,0.40)',
