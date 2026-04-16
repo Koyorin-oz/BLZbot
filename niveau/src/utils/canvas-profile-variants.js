@@ -1,7 +1,7 @@
 /**
  * Aperçus /testprofil — fiches BLZ.
  * fiche_1 : colonne + grille 2×3 (version actuelle sauvegardée).
- * fiche_2 : 1024×381, layout 3×2 — même fond que /profile (blz_bg + overlay), panneaux style canvas-profile.
+ * fiche_2 : 1024×381 — blz_bg + voile léger (fond visible), panneaux noirs semi-transparents.
  */
 const { createCanvas, loadImage, registerFont } = require('canvas');
 const fs = require('node:fs');
