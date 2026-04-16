@@ -19,7 +19,7 @@ function buildProfilV2Slash(commandName, description, attachmentPrefix) {
 
         async execute(interaction) {
             try {
-                await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+                await interaction.deferReply();
 
                 const result = await renderProfileFichePreviewFromInteraction(interaction, 'fiche_2', {
                     attachmentPrefix,
