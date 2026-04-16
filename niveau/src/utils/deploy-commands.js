@@ -11,7 +11,10 @@ const { getSlashDeployGuildIds } = require(path.join(__dirname, '..', '..', '..'
 function loadCommandData(filePath) {
     try {
         const resolved = path.resolve(filePath);
-        delete require.cache[resolved];
+        /* Uniquement /testprofil : évite un JSON slash obsolète sans recharger tout le dossier commands. */
+        if (path.basename(filePath) === 'testprofil.js') {
+            delete require.cache[resolved];
+        }
         const command = require(filePath);
         if (command.data && command.execute) {
             const raw =
