@@ -129,7 +129,7 @@ module.exports = async function deployCommands(client) {
 
     if (fs.existsSync(christmasCommandsPath)) {
         fs.readdirSync(christmasCommandsPath)
-            .filter((file) => file.endsWith('.js'))
+            .filter((file) => file.endsWith('.js') && !isArchivedSlashCommandFile(file))
             .forEach((file) => {
                 const commandData = loadCommandData(path.join(christmasCommandsPath, file));
                 if (commandData) localCommands.set(commandData.name, { ...commandData, source: 'christmas' });
