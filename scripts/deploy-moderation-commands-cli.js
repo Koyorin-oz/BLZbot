@@ -48,6 +48,7 @@ async function main() {
 
     try {
         await deployModerationSlashCommands(client, config, { compact: false });
+        console.log('\n💡 Nouvelle commande : /profil-staff-v2 (carte staff compacte). Redémarre le bot modération ou relance ce script après chaque pull.');
     } finally {
         client.destroy();
     }
