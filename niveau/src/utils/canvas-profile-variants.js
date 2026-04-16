@@ -405,87 +405,94 @@ async function renderFiche2(data) {
     const pct = (ratio * 100).toFixed(1);
     const nextLevel = (user.level ?? 1) + 1;
 
-    const canvas = createCanvas(W, H);
+    const canvas = createCanvas(W2, H2);
     const ctx = canvas.getContext('2d');
-    await drawBackdrop2(ctx);
+    await drawBackdrop2(ctx, W2, H2);
 
-    const pad = 18;
-    const outerR = 22;
-    rr(ctx, pad, pad, W - pad * 2, H - pad * 2, outerR);
-    ctx.fillStyle = 'rgba(12, 6, 6, 0.5)';
+    const pad = 12;
+    const outerR = 16;
+    const cardW = W2 - pad * 2;
+    const cardH = H2 - pad * 2;
+    rr(ctx, pad, pad, cardW, cardH, outerR);
+    ctx.fillStyle = '#3d2826';
     ctx.fill();
-    ctx.strokeStyle = 'rgba(40, 20, 18, 0.9)';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.42)';
+    ctx.lineWidth = 1;
     ctx.stroke();
+    ctx.save();
+    rr(ctx, pad + 0.5, pad + 0.5, cardW - 1, cardH - 1, outerR - 0.5);
+    ctx.strokeStyle = 'rgba(255, 235, 220, 0.07)';
+    ctx.stroke();
+    ctx.restore();
 
-    const innerPad = 14;
+    const innerPad = 10;
     const x0 = pad + innerPad;
     const y0 = pad + innerPad;
-    const innerW = W - pad * 2 - innerPad * 2;
-    const innerH = H - pad * 2 - innerPad * 2;
+    const innerW = W2 - pad * 2 - innerPad * 2;
+    const innerH = H2 - pad * 2 - innerPad * 2;
 
-    const leftW = Math.round(innerW * 0.32);
-    const gap = 16;
+    const leftW = Math.round(innerW * 0.292);
+    const gap = 11;
     const mainX = x0 + leftW + gap;
     const mainW = innerW - leftW - gap;
 
-    /* Panneau gauche carré arrondi + avatar rond au centre (grand) */
-    rr(ctx, x0, y0, leftW, innerH, 18);
-    ctx.fillStyle = 'rgba(55, 28, 24, 0.55)';
+    /* Colonne avatar — rectangle arrondi plus sombre que la carte */
+    rr(ctx, x0, y0, leftW, innerH, 14);
+    ctx.fillStyle = '#352018';
     ctx.fill();
-    ctx.strokeStyle = 'rgba(100, 55, 48, 0.45)';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.lineWidth = 1;
     ctx.stroke();
 
     const avImg = await loadAvatar(member);
-    const avR = Math.min(leftW * 0.38, innerH * 0.32);
+    const avR = Math.min(leftW * 0.36, innerH * 0.34);
     const avCx = x0 + leftW / 2;
-    const avCy = y0 + innerH * 0.42;
+    const avCy = y0 + innerH * 0.5;
     ctx.save();
     ctx.beginPath();
     ctx.arc(avCx, avCy, avR, 0, Math.PI * 2);
     ctx.clip();
     if (avImg) ctx.drawImage(avImg, avCx - avR, avCy - avR, avR * 2, avR * 2);
     else {
-        ctx.fillStyle = 'rgba(255,255,255,0.12)';
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
         ctx.fillRect(avCx - avR, avCy - avR, avR * 2, avR * 2);
     }
     ctx.restore();
     ctx.beginPath();
-    ctx.arc(avCx, avCy, avR + 3, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(255, 210, 180, 0.5)';
-    ctx.lineWidth = 2.5;
+    ctx.arc(avCx, avCy, avR + 1.5, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(245, 228, 210, 0.55)';
+    ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    /* En-tête zone droite */
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
-    setCondensedTitle(ctx, 36, 700);
+    setCondensedTitle(ctx, 28, 700);
     ctx.fillStyle = '#ffffff';
+    const thumb = 48;
+    const titleMax = mainW - thumb - 10;
     ctx.save();
-    ctx.translate(mainX, y0 + 38);
+    ctx.translate(mainX, y0 + 30);
     ctx.scale(0.92, 1);
-    ctx.fillText(truncateText(ctx, displayName, (mainW - 72) / 0.92), 0, 0);
+    ctx.fillText(truncateText(ctx, displayName, titleMax / 0.92), 0, 0);
     ctx.restore();
 
-    setCondensedBody(ctx, 15, 500);
-    ctx.fillStyle = 'rgba(255, 235, 230, 0.75)';
-    ctx.fillText(`Membre depuis : ${joined}`, mainX, y0 + 64);
+    setCondensedBody(ctx, 12, 500);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(`Membre depuis: ${joined}`, mainX, y0 + 50);
 
-    const thumb = 56;
     const thumbX = mainX + mainW - thumb;
-    const thumbY = y0 + 8;
-    rr(ctx, thumbX, thumbY, thumb, thumb, 12);
-    ctx.fillStyle = 'rgba(30, 14, 12, 0.5)';
+    const thumbY = y0 + 4;
+    rr(ctx, thumbX, thumbY, thumb, thumb, 10);
+    ctx.fillStyle = '#2a1814';
     ctx.fill();
-    ctx.strokeStyle = 'rgba(160, 100, 80, 0.4)';
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
     ctx.stroke();
     if (rankIconPath && fs.existsSync(rankIconPath)) {
         try {
             const ic = await loadImage(fs.readFileSync(rankIconPath));
-            const inset = 5;
+            const inset = 4;
             ctx.save();
-            rr(ctx, thumbX + inset, thumbY + inset, thumb - inset * 2, thumb - inset * 2, 8);
+            rr(ctx, thumbX + inset, thumbY + inset, thumb - inset * 2, thumb - inset * 2, 7);
             ctx.clip();
             ctx.drawImage(ic, thumbX + inset, thumbY + inset, thumb - inset * 2, thumb - inset * 2);
             ctx.restore();
@@ -494,11 +501,10 @@ async function renderFiche2(data) {
         }
     }
 
-    /* Grille 3 × 2 */
-    const gridTop = y0 + 88;
-    const bottomBlock = 62;
-    const gridH = innerH - 88 - bottomBlock;
-    const gGap = 12;
+    const gridTop = y0 + 64;
+    const bottomBlock = 48;
+    const gridH = innerH - 64 - bottomBlock;
+    const gGap = 10;
     const cellW = (mainW - gGap * 2) / 3;
     const cellH = (gridH - gGap) / 2;
 
@@ -508,7 +514,7 @@ async function renderFiche2(data) {
         { label: 'RANG ACTUEL', value: rank?.name ?? '—' },
         { label: 'NIVEAU', value: String(user.level ?? 1) },
         {
-            label: 'XP',
+            label: 'LEVEL POINTS',
             value: `${xpCur.toLocaleString('fr-FR')}/${(user.xp_needed ?? 0).toLocaleString('fr-FR')}`,
         },
         { label: 'PROGRESSION', value: `${pct}%` },
@@ -519,52 +525,46 @@ async function renderFiche2(data) {
         const row = Math.floor(i / 3);
         const cx = mainX + col * (cellW + gGap);
         const cy = gridTop + row * (cellH + gGap);
-        simbaCell(ctx, cx, cy, cellW, cellH, 14);
-        setCondensedBody(ctx, 10, 600);
-        ctx.fillStyle = 'rgba(255, 220, 210, 0.55)';
-        ctx.fillText(cells[i].label, cx + 12, cy + 22);
-        setCondensedTitle(ctx, 22, 700);
+        refStatCell(ctx, cx, cy, cellW, cellH, 12);
+        setCondensedBody(ctx, 9, 600);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
+        ctx.fillText(cells[i].label, cx + 10, cy + 18);
+        setCondensedTitle(ctx, 17, 700);
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(truncateText(ctx, cells[i].value, cellW - 20), cx + 12, cy + cellH - 16);
+        ctx.fillText(truncateText(ctx, cells[i].value, cellW - 18), cx + 10, cy + cellH - 12);
     }
 
-    const barY = y0 + innerH - 44;
-    const barH = 16;
+    const barY = y0 + innerH - 36;
+    const barH = 12;
     rr(ctx, mainX, barY, mainW, barH, barH / 2);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    ctx.fillStyle = '#2a1a18';
     ctx.fill();
     const fillW = Math.max(barH, Math.round(mainW * ratio));
     const lg = ctx.createLinearGradient(mainX, 0, mainX + mainW, 0);
-    lg.addColorStop(0, '#ffcc33');
-    lg.addColorStop(0.45, '#f5a623');
-    lg.addColorStop(1, '#e65c00');
+    lg.addColorStop(0, '#f0b45b');
+    lg.addColorStop(0.55, '#d07048');
+    lg.addColorStop(1, '#b34a33');
     rr(ctx, mainX, barY, fillW, barH, barH / 2);
     ctx.fillStyle = lg;
     ctx.fill();
 
-    setCondensedBody(ctx, 13, 500);
+    setCondensedBody(ctx, 11, 500);
     ctx.fillStyle = '#ffffff';
-    ctx.fillText(`${pct}% vers le niveau ${nextLevel}`, mainX, barY + barH + 18);
+    ctx.fillText(`${pct}% vers le niveau ${nextLevel}`, mainX, barY + barH + 15);
 
     if (totalDebt > 0 || vocalNerfStatus) {
-        setCondensedBody(ctx, 10, 600);
-        let ty = barY + barH + 32;
+        setCondensedBody(ctx, 9, 600);
+        let ty = barY + barH + 26;
         if (totalDebt > 0) {
             ctx.fillStyle = 'rgba(252, 165, 165, 0.95)';
             ctx.fillText(`Dette : ${totalDebt.toLocaleString('fr-FR')} ⭐`, mainX, ty);
-            ty += 14;
+            ty += 12;
         }
         if (vocalNerfStatus) {
             ctx.fillStyle = 'rgba(253, 224, 71, 0.95)';
             ctx.fillText(truncateText(ctx, vocalNerfStatus, mainW), mainX, ty);
         }
     }
-
-    ctx.fillStyle = 'rgba(255, 200, 170, 0.7)';
-    ctx.font = 'italic 11px "Arial Narrow", Arial';
-    ctx.textAlign = 'right';
-    ctx.fillText('Fiche 2 — /testprofil', W - pad - 8, H - pad - 6);
-    ctx.textAlign = 'left';
 
     return canvas.toBuffer('image/png');
 }
