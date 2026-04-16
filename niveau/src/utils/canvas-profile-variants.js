@@ -186,18 +186,16 @@ function simbaCell(ctx, x, y, w, h, r) {
     ctx.stroke();
 }
 
-/** Cellules fiche 2 — panneaux Carmin (#2a0a0a, bord #7a3a3a). */
+/** Cellules fiche 2 — verre sombre semi-transparent + bord bordeaux. */
 function refStatCell(ctx, x, y, w, h, r) {
     rr(ctx, x, y, w, h, r);
-    ctx.fillStyle = '#2a0a0a';
+    ctx.fillStyle = 'rgba(42, 14, 16, 0.48)';
     ctx.fill();
-    ctx.shadowColor = 'rgba(180, 60, 60, 0.25)';
-    ctx.shadowBlur = 4;
-    ctx.strokeStyle = '#7a3a3a';
-    ctx.lineWidth = 1.5;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(120, 45, 50, 0.7)';
+    ctx.lineWidth = 1.25;
     ctx.stroke();
-    ctx.shadowBlur = 0;
-    ctx.shadowColor = 'transparent';
 }
 
 function setCondensedTitle(ctx, sizePx, weight) {
