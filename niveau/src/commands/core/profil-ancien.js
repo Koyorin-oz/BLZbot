@@ -255,7 +255,7 @@ module.exports = {
                 try {
                     // Check if the user who clicked the button is the one who initiated the command
                     if (i.user.id !== interaction.user.id) {
-                        const errorText = new TextDisplayBuilder().setContent("Seul l'auteur de la commande peut interagir avec ces boutons. Utilisez `/profile` pour voir le vôtre.");
+                        const errorText = new TextDisplayBuilder().setContent("Seul l'auteur de la commande peut interagir avec ces boutons. Utilisez `/profil-ancien` pour voir le vôtre.");
                         const errorContainer = new ContainerBuilder().addTextDisplayComponents(errorText);
                         return i.reply({ 
                             components: [errorContainer], 
