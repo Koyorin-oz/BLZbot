@@ -43,7 +43,7 @@ const PROFILE_CARD_THEME = Object.freeze({
 const PREVIEW_STAFF_TITLE_COLOR = '#e8b83a';
 
 /** Bump manuel pour vérifier que l’hôte exécute bien ce fichier (pied des cartes + message /testprofil). */
-const PROFILE_PREVIEW_BUILD = 'tp20260416c';
+const PROFILE_PREVIEW_BUILD = 'tp20260416d';
 
 const PROFILE_PREVIEW_VARIANTS = [
     {
