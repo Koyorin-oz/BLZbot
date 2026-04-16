@@ -527,7 +527,7 @@ async function renderFiche2(data) {
     const barY = y0 + innerH - 38;
     const barH = 14;
     rr(ctx, mainX, barY, mainW, barH, barH / 2);
-    ctx.fillStyle = 'rgba(20, 10, 14, 0.58)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
     ctx.fill();
     const fillW = Math.max(barH, Math.round(mainW * ratio));
     if (ratio > 0 && ratio < 0.12) {
