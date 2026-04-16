@@ -53,7 +53,7 @@ const PROFILE_PREVIEW_VARIANTS = [
     },
     {
         id: 'fiche_2',
-        label: 'Fiche 2 — fond /profile (1024×381)',
+        label: 'Fiche 2 — fond /profil (1024×381)',
         hint: 'Fond blz_bg bien visible, panneaux noirs transparents — grille 3×2',
     },
 ];
