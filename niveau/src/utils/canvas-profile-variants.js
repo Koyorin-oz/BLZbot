@@ -475,15 +475,16 @@ async function renderFiche2(data) {
     ctx.restore();
 
     setCondensedBody(ctx, 12, 500);
-    ctx.fillStyle = 'rgba(255, 236, 220, 0.95)';
+    ctx.fillStyle = '#b0a0a0';
     ctx.fillText(`Membre depuis : ${joined}`, mainX, y0 + 50);
 
     const thumbX = mainX + mainW - thumb;
     const thumbY = y0 + 4;
     rr(ctx, thumbX, thumbY, thumb, thumb, 10);
-    ctx.fillStyle = '#241210';
+    ctx.fillStyle = '#1a0505';
     ctx.fill();
-    ctx.strokeStyle = 'rgba(255, 170, 130, 0.2)';
+    ctx.strokeStyle = '#7a3a3a';
+    ctx.lineWidth = 1.5;
     ctx.stroke();
     if (rankIconPath && fs.existsSync(rankIconPath)) {
         try {
