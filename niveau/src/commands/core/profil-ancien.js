@@ -326,7 +326,7 @@ module.exports = {
                         const end = start + QUESTS_PER_PAGE;
                         const slicedQuests = pendingQuests.slice(start, end);
 
-                        const png = await renderQuestsCardFiche2({ quests: slicedQuests, footerNote: '/profil-ancien' });
+                        const png = await renderQuestsCardFiche2({ quests: slicedQuests });
                         const file = new AttachmentBuilder(png, { name: 'quests.png' });
 
                         const mediaGallery = new MediaGalleryBuilder()
