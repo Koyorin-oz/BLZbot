@@ -349,7 +349,7 @@ async function renderFiche1(data) {
         const cy = gridTop + row * (cellH + cellGap);
         glassCell(ctx, cx, cy, cellW, cellH, 12);
         setCondensedBody(ctx, 10, 600);
-        ctx.fillStyle = 'rgba(255, 230, 220, 0.65)';
+        ctx.fillStyle = PREVIEW_STAFF_TITLE_COLOR;
         ctx.fillText(cells[i].label, cx + 12, cy + 22);
         setCondensedTitle(ctx, 20, 700);
         ctx.fillStyle = '#ffffff';
