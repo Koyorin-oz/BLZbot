@@ -502,9 +502,10 @@ async function renderFiche2(data) {
         }
     }
 
-    const gridTop = y0 + 70;
+    const headerBlockH2 = invokerStaffTitle ? 92 : 70;
+    const gridTop = y0 + headerBlockH2;
     const bottomBlock = 52;
-    const gridH = innerH - 70 - bottomBlock;
+    const gridH = innerH - headerBlockH2 - bottomBlock;
     const gGap = 10;
     const cellW = (mainW - gGap * 2) / 3;
     const cellH = (gridH - gGap) / 2;
