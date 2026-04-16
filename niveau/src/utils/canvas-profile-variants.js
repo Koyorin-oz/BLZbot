@@ -578,6 +578,12 @@ async function renderFiche2(data) {
         }
     }
 
+    ctx.fillStyle = 'rgba(176, 160, 160, 0.55)';
+    ctx.font = 'italic 10px "Arial Narrow", Arial';
+    ctx.textAlign = 'right';
+    ctx.fillText('Carmin · Atlas — /testprofil', W2 - pad - 6, H2 - pad - 4);
+    ctx.textAlign = 'left';
+
     return canvas.toBuffer('image/png');
 }
 
