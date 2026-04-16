@@ -1,5 +1,5 @@
 /**
- * Titre affiché sous le pseudo sur /testprofil : rôles de l’utilisateur qui lance la commande
+ * Titre staff (colonne gauche) sur /profil-v2 et /testprofil : rôles de l’utilisateur qui lance la commande
  * sur la guilde principale BLZ (BLZ_MAIN_GUILD_ID ou 1097110036192448656).
  * Priorité : du plus haut au plus bas ; « Membre » seulement si aucun des rôles staff/VIP
  * et présence du rôle membre.

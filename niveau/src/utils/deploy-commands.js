@@ -11,8 +11,8 @@ const { getSlashDeployGuildIds } = require(path.join(__dirname, '..', '..', '..'
 function loadCommandData(filePath) {
     try {
         const resolved = path.resolve(filePath);
-        /* Uniquement /testprofil : évite un JSON slash obsolète sans recharger tout le dossier commands. */
-        if (path.basename(filePath) === 'testprofil.js') {
+        /* Slash sensibles aux options : recharger le module pour un toJSON à jour au deploy. */
+        if (path.basename(filePath) === 'testprofil.js' || path.basename(filePath) === 'profil-v2.js') {
             delete require.cache[resolved];
         }
         const command = require(filePath);
