@@ -145,7 +145,7 @@ async function drawBackdrop1(ctx) {
     ctx.fillRect(0, 0, W, H);
 }
 
-/** Fond fiche 2 — identique à `renderProfileCard` dans canvas-profile.js : blz_bg plein cadre + overlay. */
+/** Fond fiche 2 — blz_bg plein cadre + voile plus léger que /profile pour que le motif ressorte. */
 async function drawBackdrop2(ctx, cw, ch) {
     const bg = await tryLoadBlzBg();
     if (bg) {
@@ -154,7 +154,7 @@ async function drawBackdrop2(ctx, cw, ch) {
         ctx.fillStyle = '#1a0a0c';
         ctx.fillRect(0, 0, cw, ch);
     }
-    ctx.fillStyle = PROFILE_CARD_THEME.overlay;
+    ctx.fillStyle = PROFILE_CARD_THEME.fiche2BackdropOverlay;
     ctx.fillRect(0, 0, cw, ch);
 }
 
