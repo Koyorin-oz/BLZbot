@@ -566,8 +566,8 @@ async function renderFiche2(data) {
         }
     }
 
-    ctx.fillStyle = 'rgba(176, 160, 160, 0.6)';
-    ctx.font = 'italic 11px "Arial Narrow", Arial';
+    ctx.fillStyle = 'rgba(242, 215, 211, 0.55)';
+    ctx.font = 'italic 11px Inter, Arial';
     ctx.textAlign = 'right';
     ctx.fillText('Fiche 2 — /testprofil', W2 - pad - 6, H2 - pad - 4);
     ctx.textAlign = 'left';
