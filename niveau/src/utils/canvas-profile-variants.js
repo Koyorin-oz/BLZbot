@@ -495,14 +495,9 @@ async function renderFiche2(data) {
     const titleMax = mainW - thumb - 10;
     ctx.fillText(truncateText(ctx, displayName, titleMax), mainX, y0 + 32);
 
-    if (invokerStaffTitle) {
-        ctx.font = '600 13px InterBold, Inter, Arial';
-        ctx.fillStyle = PREVIEW_STAFF_TITLE_COLOR;
-        ctx.fillText(truncateText(ctx, invokerStaffTitle, titleMax), mainX, y0 + 52);
-    }
     ctx.font = '500 14px Inter, Arial';
     ctx.fillStyle = PROFILE_CARD_THEME.sub;
-    ctx.fillText(`Membre depuis : ${joined}`, mainX, invokerStaffTitle ? y0 + 72 : y0 + 54);
+    ctx.fillText(`Membre depuis : ${joined}`, mainX, y0 + 54);
 
     rr(ctx, thumbX, thumbY, thumb, thumb, 10);
     ctx.fillStyle = PROFILE_CARD_THEME.header;
