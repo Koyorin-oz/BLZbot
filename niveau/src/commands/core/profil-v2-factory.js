@@ -25,10 +25,7 @@ function buildProfilV2Slash(commandName, description, attachmentPrefix) {
                     return interaction.editReply({ content: session.error });
                 }
 
-                const hint = session.meta ? `**${session.meta.label}** — _${session.meta.hint}_` : 'fiche_2';
-                const headerText = `${hint}\n_build ${PROFILE_PREVIEW_BUILD}_`;
-
-                return sendProfilV2WithButtons(interaction, session, { headerText });
+                return sendProfilV2WithButtons(interaction, session);
             } catch (error) {
                 await handleCommandError(interaction, error, interaction.client);
             }
