@@ -142,38 +142,17 @@ async function drawBackdrop1(ctx) {
     ctx.fillRect(0, 0, W, H);
 }
 
-/** Fond fiche 2 — 1ʳᵉ ref. « bois / chocolat » : bruns chauds + obliques (moins pâle qu’avant). */
+/** Fond fiche 2 — identique à `renderProfileCard` dans canvas-profile.js : blz_bg plein cadre + overlay. */
 async function drawBackdrop2(ctx, cw, ch) {
-    const base = ctx.createLinearGradient(0, 0, cw, ch);
-    base.addColorStop(0, '#241612');
-    base.addColorStop(0.45, '#1a100c');
-    base.addColorStop(1, '#120a08');
-    ctx.fillStyle = base;
-    ctx.fillRect(0, 0, cw, ch);
-
-    ctx.strokeStyle = 'rgba(75, 42, 32, 0.55)';
-    ctx.lineWidth = 1.25;
-    for (let d = -ch; d < cw + ch; d += 24) {
-        ctx.beginPath();
-        ctx.moveTo(d, 0);
-        ctx.lineTo(d + ch * 0.94, ch);
-        ctx.stroke();
-    }
-
-    const warm = ctx.createRadialGradient(cw * 0.35, ch * 0.2, 0, cw * 0.5, ch * 0.5, Math.hypot(cw, ch) * 0.9);
-    warm.addColorStop(0, 'rgba(120, 55, 35, 0.18)');
-    warm.addColorStop(0.5, 'rgba(40, 20, 14, 0.12)');
-    warm.addColorStop(1, 'rgba(0, 0, 0, 0.42)');
-    ctx.fillStyle = warm;
-    ctx.fillRect(0, 0, cw, ch);
-
     const bg = await tryLoadBlzBg();
     if (bg) {
-        ctx.save();
-        ctx.globalAlpha = 0.11;
         ctx.drawImage(bg, 0, 0, cw, ch);
-        ctx.restore();
+    } else {
+        ctx.fillStyle = '#1a0a0c';
+        ctx.fillRect(0, 0, cw, ch);
     }
+    ctx.fillStyle = PROFILE_CARD_THEME.overlay;
+    ctx.fillRect(0, 0, cw, ch);
 }
 
 function glassCell(ctx, x, y, w, h, r) {
