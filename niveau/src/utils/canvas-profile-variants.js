@@ -130,45 +130,33 @@ async function drawBackdrop1(ctx) {
     ctx.fillRect(0, 0, W, H);
 }
 
-/** Fond fiche 2 — bruns saturés + léger relief (moins « gris / lavé » que la ref. plate). */
+/** Fond fiche 2 — Carmin · Atlas (#1a0505 + obliques bordeaux). */
 async function drawBackdrop2(ctx, cw, ch) {
-    const g = ctx.createRadialGradient(cw * 0.48, ch * 0.4, 0, cw * 0.5, ch * 0.48, Math.hypot(cw, ch) * 0.78);
-    g.addColorStop(0, '#6b4538');
-    g.addColorStop(0.28, '#523028');
-    g.addColorStop(0.65, '#3d201c');
-    g.addColorStop(1, '#1c0c0a');
-    ctx.fillStyle = g;
+    ctx.fillStyle = '#1a0505';
     ctx.fillRect(0, 0, cw, ch);
 
-    const warm = ctx.createRadialGradient(cw * 0.2, ch * 0.85, 0, cw * 0.35, ch * 0.55, ch * 0.9);
-    warm.addColorStop(0, 'rgba(180, 70, 45, 0.14)');
-    warm.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = warm;
+    ctx.strokeStyle = 'rgba(90, 25, 35, 0.45)';
+    ctx.lineWidth = 1;
+    for (let d = -ch; d < cw + ch; d += 22) {
+        ctx.beginPath();
+        ctx.moveTo(d, 0);
+        ctx.lineTo(d + ch * 0.92, ch);
+        ctx.stroke();
+    }
+
+    const vin = ctx.createRadialGradient(cw * 0.5, ch * 0.5, 0, cw * 0.5, ch * 0.52, Math.hypot(cw, ch) * 0.75);
+    vin.addColorStop(0, 'rgba(45, 12, 18, 0.35)');
+    vin.addColorStop(1, 'rgba(0, 0, 0, 0.5)');
+    ctx.fillStyle = vin;
     ctx.fillRect(0, 0, cw, ch);
 
     const bg = await tryLoadBlzBg();
     if (bg) {
         ctx.save();
-        ctx.globalAlpha = 0.1;
+        ctx.globalAlpha = 0.05;
         ctx.drawImage(bg, 0, 0, cw, ch);
         ctx.restore();
     }
-
-    ctx.strokeStyle = 'rgba(40, 18, 14, 0.2)';
-    ctx.lineWidth = 1;
-    for (let d = -ch; d < cw + ch; d += 28) {
-        ctx.beginPath();
-        ctx.moveTo(d, 0);
-        ctx.lineTo(d + ch * 0.9, ch);
-        ctx.stroke();
-    }
-
-    const edge = ctx.createLinearGradient(0, 0, cw, ch);
-    edge.addColorStop(0, 'rgba(0,0,0,0.14)');
-    edge.addColorStop(0.4, 'rgba(0,0,0,0)');
-    edge.addColorStop(1, 'rgba(0,0,0,0.2)');
-    ctx.fillStyle = edge;
-    ctx.fillRect(0, 0, cw, ch);
 }
 
 function glassCell(ctx, x, y, w, h, r) {
