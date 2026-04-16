@@ -123,6 +123,7 @@ module.exports = {
                     invokerStaffTitle,
                     invokerMember: interaction.member,
                     invokerUser: interaction.user,
+                    previewHasGuild: Boolean(guild),
                 },
                 variant
             );

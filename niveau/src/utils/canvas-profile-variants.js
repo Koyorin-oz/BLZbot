@@ -675,7 +675,7 @@ async function renderFiche2(data) {
         const cx = mainX + col * (cellW + gGap);
         const cy = gridTop + row * (cellH + gGap);
         refStatCell(ctx, cx, cy, cellW, cellH, 12);
-        drawFiche2GuildCell(ctx, cx, cy, cellW, cellH, user, previewHasGuild === true);
+        drawFiche2GuildCell(ctx, cx, cy, cellW, cellH, user, Boolean(previewHasGuild));
     }
 
     const barY = y0 + innerH - 38;
