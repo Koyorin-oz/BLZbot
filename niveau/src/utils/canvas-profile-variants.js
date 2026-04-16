@@ -523,19 +523,19 @@ async function renderFiche2(data) {
     const barY = y0 + innerH - 38;
     const barH = 14;
     rr(ctx, mainX, barY, mainW, barH, barH / 2);
-    ctx.fillStyle = 'rgba(14, 8, 6, 0.92)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.72)';
     ctx.fill();
     const fillW = Math.max(barH, Math.round(mainW * ratio));
     if (ratio > 0 && ratio < 0.12) {
         const cx = mainX + Math.max(barH * 0.5, fillW);
         const cy = barY + barH / 2;
-        ctx.fillStyle = 'rgba(55, 32, 22, 0.9)';
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
         ctx.fillRect(mainX + barH * 0.35, cy - 2, Math.max(0, cx - mainX - barH * 0.5), 4);
         ctx.beginPath();
         ctx.arc(cx, cy, barH / 2 + 2, 0, Math.PI * 2);
-        ctx.fillStyle = '#f0c85a';
+        ctx.fillStyle = PROFILE_CARD_THEME.accent;
         ctx.fill();
-        ctx.strokeStyle = 'rgba(255, 238, 200, 0.95)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
         ctx.lineWidth = 1;
         ctx.stroke();
     } else if (fillW > 0) {
