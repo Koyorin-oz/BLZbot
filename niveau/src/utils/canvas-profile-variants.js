@@ -164,7 +164,7 @@ function glassCell(ctx, x, y, w, h, r) {
     ctx.stroke();
 }
 
-/** Cellules type ref. 2 — brun semi-transparent. */
+/** Cellules type ref. 2 — brun semi-transparent (fiche 1 / ancien). */
 function simbaCell(ctx, x, y, w, h, r) {
     rr(ctx, x, y, w, h, r);
     ctx.fillStyle = 'rgba(77, 42, 36, 0.58)';
@@ -172,6 +172,25 @@ function simbaCell(ctx, x, y, w, h, r) {
     ctx.strokeStyle = 'rgba(120, 70, 60, 0.35)';
     ctx.lineWidth = 1;
     ctx.stroke();
+}
+
+/** Cellules ref. screen — #5c3c34 + léger relief. */
+function refStatCell(ctx, x, y, w, h, r) {
+    rr(ctx, x, y, w, h, r);
+    ctx.fillStyle = '#5c3c34';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.28)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.save();
+    rr(ctx, x + 1, y + 1, w - 2, h - 2, Math.max(0, r - 1));
+    ctx.clip();
+    const hi = ctx.createLinearGradient(x, y, x, y + h * 0.45);
+    hi.addColorStop(0, 'rgba(255, 255, 255, 0.06)');
+    hi.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = hi;
+    ctx.fillRect(x, y, w, h * 0.5);
+    ctx.restore();
 }
 
 function setCondensedTitle(ctx, sizePx, weight) {
