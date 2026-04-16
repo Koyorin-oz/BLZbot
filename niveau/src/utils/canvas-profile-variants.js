@@ -103,6 +103,32 @@ async function tryLoadBlzBg() {
     }
 }
 
+/** Rôle « principal » affiché sous le pseudo : staff connu en priorité, sinon plus haut rôle Discord. */
+const PRIMARY_ROLE_PRIORITY = [
+    'Admin',
+    'Administrateur',
+    'Superviseur',
+    'Employé',
+    'Membre',
+    'Member',
+];
+
+function pickPrimaryServerRole(member) {
+    if (!member?.roles?.cache) return 'Membre';
+    const byLower = new Map();
+    for (const r of member.roles.cache.values()) {
+        if (r.name === '@everyone') continue;
+        byLower.set(r.name.toLowerCase(), r.name);
+    }
+    for (const key of PRIMARY_ROLE_PRIORITY) {
+        const n = byLower.get(key.toLowerCase());
+        if (n) return n;
+    }
+    const h = member.roles.highest;
+    if (h?.name && h.name !== '@everyone') return h.name;
+    return 'Membre';
+}
+
 /** Icônes badges liés aux rôles Discord exclusifs (badge-config), dans l’ordre du fichier. */
 async function loadExclusiveBadgeImages(member) {
     if (!member?.roles?.cache) return [];
