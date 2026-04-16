@@ -12,10 +12,16 @@ function loadCommandData(filePath) {
     try {
         const resolved = path.resolve(filePath);
         /* Slash sensibles aux options : recharger le module pour un toJSON à jour au deploy. */
-        if (path.basename(filePath) === 'testprofil.js' || path.basename(filePath) === 'profil-v2.js') {
+        const slashReloadBasenames = new Set(['testprofil.js', 'profil-v2.js', 'profil.js']);
+        if (slashReloadBasenames.has(path.basename(filePath))) {
             delete require.cache[resolved];
-            const helper = path.resolve(__dirname, 'render-profile-fiche-preview-interaction.js');
-            if (require.cache[helper]) delete require.cache[helper];
+            const helpers = [
+                path.resolve(__dirname, 'render-profile-fiche-preview-interaction.js'),
+                path.resolve(__dirname, '..', 'commands', 'core', 'profil-v2-factory.js'),
+            ];
+            for (const h of helpers) {
+                if (require.cache[h]) delete require.cache[h];
+            }
         }
         const command = require(filePath);
         if (command.data && command.execute) {
