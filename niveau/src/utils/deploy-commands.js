@@ -14,6 +14,8 @@ function loadCommandData(filePath) {
         /* Slash sensibles aux options : recharger le module pour un toJSON à jour au deploy. */
         if (path.basename(filePath) === 'testprofil.js' || path.basename(filePath) === 'profil-v2.js') {
             delete require.cache[resolved];
+            const helper = path.resolve(__dirname, 'render-profile-fiche-preview-interaction.js');
+            if (require.cache[helper]) delete require.cache[helper];
         }
         const command = require(filePath);
         if (command.data && command.execute) {
