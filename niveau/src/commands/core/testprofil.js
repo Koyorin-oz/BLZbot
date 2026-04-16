@@ -23,7 +23,7 @@ module.exports = {
                 .setRequired(true)
                 .addChoices(
                     { name: 'Fiche 1 — colonne + grille 2×3 (sauvegardée)', value: 'fiche_1' },
-                    { name: 'Fiche 2 — pixel-match ref. (1024×381)', value: 'fiche_2' }
+                    { name: 'Fiche 2 — Carmin · Atlas (1024×381)', value: 'fiche_2' }
                 )
         )
         .addUserOption((opt) =>
