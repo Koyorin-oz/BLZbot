@@ -15,23 +15,7 @@ const { getOngoingWar } = require('../../utils/guild/guild-wars');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('testprofil')
-        .setDescription('Aperçu : 5 mises en page thème Carmin (ne remplace pas /profile).')
-        .addStringOption((opt) =>
-            opt
-                .setName('style')
-                .setDescription('Variante à afficher')
-                .setRequired(true)
-                .addChoices(
-                    {
-                        name: 'Carmin — vignette cramoisie, contraste fort',
-                        value: 'carmin',
-                    },
-                    { name: 'Carmin · Atlas — portrait + colonne', value: 'carmin_atlas' },
-                    { name: 'Carmin · Naos — bandeau + 2 blocs', value: 'carmin_naos' },
-                    { name: 'Carmin · Médaillon — compact + gros avatar', value: 'carmin_medalion' },
-                    { name: 'Carmin · Tribunal — estrades', value: 'carmin_tribunal' }
-                )
-        )
+        .setDescription('Aperçu : fiche compacte BLZ (style Carmin, grille Starss / RP / XP).')
         .addUserOption((opt) =>
             opt.setName('membre').setDescription('Membre à prévisualiser (défaut : vous)').setRequired(false)
         ),
@@ -40,7 +24,7 @@ module.exports = {
         try {
             await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-            const variant = normalizeProfileVariant(interaction.options.getString('style', true));
+            const variant = normalizeProfileVariant('fiche_blz');
             const targetUser = interaction.options.getUser('membre') || interaction.user;
             const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
             if (!member) {
@@ -131,8 +115,8 @@ module.exports = {
 
             return interaction.editReply({
                 content:
-                    `🧪 Prévisualisation **${variant}** (${hint})\n` +
-                    `La commande \`/profile\` officielle est inchangée. Thème **Carmin** : 5 dispositions différentes.`,
+                    `🧪 ${hint}\n` +
+                    `La commande \`/profile\` officielle est inchangée.`,
                 files: [file],
             });
         } catch (error) {
