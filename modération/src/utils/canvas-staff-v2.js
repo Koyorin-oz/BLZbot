@@ -189,7 +189,7 @@ async function renderStaffProfileCardV2(data) {
     ctx.stroke();
 
     const displayName = data.member?.displayName ?? 'Utilisateur';
-    ctx.font = '700 28px InterBold, Arial';
+    ctx.font = '700 31px InterBold, Arial';
     ctx.fillStyle = THEME.text;
     const nameMax = mainW - 200;
     ctx.fillText(truncateText(ctx, displayName, nameMax), mainX + 12, y0 + 34);
