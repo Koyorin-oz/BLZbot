@@ -351,7 +351,7 @@ async function renderStaffProfileCardV2(data) {
     });
 
     ctx.fillStyle = 'rgba(200, 215, 230, 0.45)';
-    ctx.font = 'italic 12px Inter, Arial';
+    ctx.font = 'italic 13px Inter, Arial';
     ctx.textAlign = 'right';
     ctx.fillText(`Carte staff — /profil-staff-v2 · ${STAFF_CARD_BUILD}`, W - pad - 6, H - pad - 4);
     ctx.textAlign = 'left';
