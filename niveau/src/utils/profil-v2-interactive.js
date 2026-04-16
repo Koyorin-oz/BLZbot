@@ -131,15 +131,18 @@ async function sendProfilV2WithButtons(interaction, session, opts = {}) {
 
             /* Quêtes */
             if (i.customId.startsWith(`${Q_PREFIX}_`)) {
-                const rest = i.customId.slice(`${Q_PREFIX}_`.length);
-                const page = parseInt(rest.split('_').pop(), 10);
-                const safePage = Number.isFinite(page) ? page : 0;
+                const qBase = `${Q_PREFIX}_${targetUser.id}`;
+                let page = 0;
+                if (i.customId === qBase) page = 0;
+                else if (i.customId.startsWith(`${qBase}_`)) {
+                    page = parseInt(i.customId.slice(qBase.length + 1), 10) || 0;
+                }
                 const QUESTS_PER_PAGE = 5;
 
-                if (!rest.includes('_') || rest === String(targetUser.id)) {
+                if (i.customId === qBase) {
                     const uSync = getOrCreateUser(targetUser.id, targetUser.username);
-                    await checkQuestProgress(i.client, 'LEVEL_REACH', uSync, { newLevel: uSync.level });
-                    await checkQuestProgress(i.client, 'BALANCE_REACH', uSync, { newBalance: uSync.stars });
+                    await checkQuestProgress(interaction.client, 'LEVEL_REACH', uSync, { newLevel: uSync.level });
+                    await checkQuestProgress(interaction.client, 'BALANCE_REACH', uSync, { newBalance: uSync.stars });
                 }
 
                 const userQuestsData = getAllUserQuests(targetUser.id);
