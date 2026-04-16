@@ -1,7 +1,10 @@
 const logger = require('./logger');
 const fs = require('node:fs');
 const path = require('node:path');
-const { MAIN_COMMAND_SUBDIRS: mainCommandSubdirs } = require('./command-loader');
+const {
+    MAIN_COMMAND_SUBDIRS: mainCommandSubdirs,
+    isArchivedSlashCommandFile,
+} = require('./command-loader');
 const { getEventState: getHalloweenState } = require('./db-halloween');
 const { getEventState: getChristmasState } = require('./db-noel');
 const { getEventState: getValentinState } = require('./db-valentin');
