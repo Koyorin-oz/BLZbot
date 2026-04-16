@@ -6,7 +6,7 @@ const { renderProfileFichePreviewFromInteraction } = require('../../utils/render
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('testprofil')
-        .setDescription('Aperçu fiches BLZ : Fiche 1 (2×3) ou Fiche 2 (fond identique à /profile, 1024×381).')
+        .setDescription('Aperçu fiches BLZ : Fiche 1 (2×3) ou Fiche 2 (fond identique à /profil, 1024×381).')
         .addStringOption((opt) =>
             opt
                 .setName('style')
