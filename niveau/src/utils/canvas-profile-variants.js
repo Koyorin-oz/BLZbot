@@ -177,7 +177,7 @@ function simbaCell(ctx, x, y, w, h, r) {
     ctx.stroke();
 }
 
-/** Cellules fiche 2 — chocolat semi-transparent (ref. d’origine), bord chaud. */
+/** Cellules fiche 2 — panneau semi-transparent (moins noir que l’overlay /profile seul). */
 function refStatCell(ctx, x, y, w, h, r) {
     rr(ctx, x, y, w, h, r);
     ctx.fillStyle = PROFILE_CARD_THEME.panel;
