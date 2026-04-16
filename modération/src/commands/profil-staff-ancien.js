@@ -1,11 +1,15 @@
+/**
+ * ARCHIVÉ — non déployé ni chargé par le bot (fichier conservé dans le repo).
+ * Ancienne commande /profilstaff (canvas classique staff / membre).
+ */
 const { SlashCommandBuilder, AttachmentBuilder, PermissionFlagsBits } = require('discord.js');
 const CONFIG = require('../config.js');
 const { renderStaffProfileCard, renderMemberProfileCard } = require('../utils/canvas-staff.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('profilstaff')
-        .setDescription('Affiche le profil détaillé d\'un utilisateur (Staff ou Membre)')
+        .setName('profil-staff-ancien')
+        .setDescription('[ARCHIVE] Ancien profil staff/membre — non enregistré sur Discord.')
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addUserOption(option =>
             option.setName('utilisateur')
