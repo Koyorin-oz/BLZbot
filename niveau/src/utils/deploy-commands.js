@@ -248,6 +248,19 @@ module.exports = async function deployCommands(client) {
                     errorCount++;
                 }
             }
+
+            /* Retrait des anciens slash remplacés par /profil (ex-/profil-v2, ex-/profile). */
+            const obsoleteSlashNames = new Set(['profil-v2', 'profile']);
+            for (const cmd of existingMap.values()) {
+                if (!obsoleteSlashNames.has(cmd.name)) continue;
+                try {
+                    await cmd.delete();
+                    if (!compact) console.log(`🗑️ [${guild.name}] Slash obsolète retiré: /${cmd.name}`);
+                    logger.info(`[DEPLOY] Supprimé slash obsolète /${cmd.name} sur ${guild.id}`);
+                } catch (delErr) {
+                    logger.warn(`[DEPLOY] Impossible de supprimer /${cmd.name}: ${delErr?.message || delErr}`);
+                }
+            }
         }
 
         if (!anyGuildOk) {
