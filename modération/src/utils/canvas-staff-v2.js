@@ -194,17 +194,17 @@ async function renderStaffProfileCardV2(data) {
     const nameMax = mainW - 200;
     ctx.fillText(truncateText(ctx, displayName, nameMax), mainX + 12, y0 + 34);
 
-    ctx.font = '600 14px Inter, Arial';
+    ctx.font = '600 16px Inter, Arial';
     ctx.fillStyle = THEME.roleLavender;
     ctx.fillText(truncateText(ctx, data.staffRole || 'Staff', nameMax), mainX + 12, y0 + 56);
 
     ctx.textAlign = 'right';
-    ctx.font = '600 12px InterBold, Inter, Arial';
+    ctx.font = '600 14px InterBold, Inter, Arial';
     if (data.inSensitivity) {
         ctx.fillStyle = THEME.warn;
         ctx.fillText('Sensibilité : OUI', mainX + mainW - 12, y0 + 28);
         ctx.fillStyle = THEME.sub;
-        ctx.font = '500 11px Inter, Arial';
+        ctx.font = '500 13px Inter, Arial';
         ctx.fillText(
             data.sensitivityEnd ? `Jusqu'au ${formatDate(data.sensitivityEnd)}` : '—',
             mainX + mainW - 12,
