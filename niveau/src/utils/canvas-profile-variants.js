@@ -458,8 +458,8 @@ async function renderFiche2(data) {
     ctx.restore();
     ctx.beginPath();
     ctx.arc(avCx, avCy, avR + 1.5, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(245, 228, 210, 0.55)';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = '#b03030';
+    ctx.lineWidth = 2;
     ctx.stroke();
 
     ctx.textAlign = 'left';
