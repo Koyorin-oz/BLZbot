@@ -396,7 +396,7 @@ async function renderFiche1(data) {
 }
 
 async function renderFiche2(data) {
-    const { user, member, rank, rankIconPath, totalDebt, vocalNerfStatus } = data;
+    const { user, member, rank, rankIconPath, totalDebt, vocalNerfStatus, invokerStaffTitle } = data;
     const displayName = member?.displayName ?? 'Utilisateur';
     const joined = member?.joinedAt
         ? member.joinedAt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
