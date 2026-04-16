@@ -53,7 +53,7 @@ async function main() {
     try {
         await deployModerationSlashCommands(client, config, { compact: false });
         console.log(
-            '\n💡 /profil-staff-v2 : réponse visible par tout le monde dans le salon. Pour prod + test : BLZ_MAIN_GUILD_ID dans le .env, bot invité sur les deux serveurs, puis relance ce script.'
+            '\n💡 /profil-staff : réponse visible par tout le monde dans le salon. Pour prod + test : BLZ_MAIN_GUILD_ID dans le .env, bot invité sur les deux serveurs, puis relance ce script.'
         );
     } finally {
         client.destroy();

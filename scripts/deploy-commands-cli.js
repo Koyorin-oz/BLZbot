@@ -51,7 +51,7 @@ async function main() {
     try {
         await deployCommands(client);
         console.log(
-            '\n💡 /profil et /profil-v2 : réponses visibles par tout le monde dans le salon (plus éphémères).'
+            '\n💡 /profil : réponse visible par tout le monde dans le salon (plus éphémère).'
         );
         console.log(
             '   Pour le **serveur de prod** en plus du test : définis BLZ_MAIN_GUILD_ID dans le .env puis relance ce script (les deux IDs doivent lister le bot). Recharge Discord (Ctrl+Maj+R). Sur l’hôte : SKIP_SLASH_DEPLOY_ON_START=0 pour déployer au démarrage.'
