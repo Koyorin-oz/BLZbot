@@ -4,7 +4,7 @@ const {
     ChannelType,
     MessageFlags,
 } = require('discord.js');
-const { buildWelcomeMessage } = require('../events/welcome.js');
+const { buildWelcomeMessage, logWelcomeMemberMeta } = require('../events/welcome.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
