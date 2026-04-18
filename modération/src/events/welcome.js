@@ -126,7 +126,14 @@ async function handleMemberJoin(member) {
             return;
         }
 
-        const payload = buildWelcomeMessage(member, { joinedAt: member.joinedAt ?? new Date() });
+        const joinedAt = member.joinedAt ?? new Date();
+        console.log(
+            `[Welcome] ${member.user.tag} (${member.id}) — Compte créé le ${formatFrCompactDate(
+                member.user.createdAt
+            )} · Arrivée ${formatFrCompactDateTime(joinedAt)}`
+        );
+
+        const payload = buildWelcomeMessage(member);
         await channel.send({
             components: payload.components,
             flags: payload.flags,
