@@ -42,6 +42,16 @@ function formatFrCompactDateTime(d) {
     });
 }
 
+/** Infos compte / arrivée : uniquement pour les logs (plus affichées dans le message Discord). */
+function logWelcomeMemberMeta(member) {
+    const joinedAt = member.joinedAt ?? new Date();
+    console.log(
+        `[Welcome] ${member.user.tag} (${member.id}) — Compte créé le ${formatFrCompactDate(
+            member.user.createdAt
+        )} · Arrivée ${formatFrCompactDateTime(joinedAt)}`
+    );
+}
+
 /**
  * @param {import('discord.js').GuildMember} member
  * @returns {{ components: import('discord.js').ContainerBuilder[]; flags: number; allowedMentions: { users: string[] } }}
