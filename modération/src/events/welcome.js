@@ -74,11 +74,6 @@ function buildWelcomeMessage(member) {
         .addTextDisplayComponents(mainText)
         .setThumbnailAccessory(thumbnail);
 
-    /** Pied : métadonnées discrètes puis boutons lien (footer visuel). */
-    const footerMeta = new TextDisplayBuilder().setContent(
-        `-# Compte créé le ${formatFrCompactDate(createdAt)} · Arrivée ${formatFrCompactDateTime(joinedAt)}`
-    );
-
     const footerButtons = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setStyle(ButtonStyle.Link)
