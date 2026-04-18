@@ -6,6 +6,8 @@ const {
     TextDisplayBuilder,
     SectionBuilder,
     ThumbnailBuilder,
+    SeparatorBuilder,
+    SeparatorSpacingSize,
     ActionRowBuilder,
     ButtonBuilder,
     ButtonStyle,
