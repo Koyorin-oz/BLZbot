@@ -64,6 +64,7 @@ module.exports = {
                 return;
             }
             try {
+                logWelcomeMemberMeta(member);
                 await ch.send({
                     components: payload.components,
                     flags: payload.flags,
