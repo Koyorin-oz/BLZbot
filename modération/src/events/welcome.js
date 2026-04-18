@@ -100,6 +100,9 @@ function buildWelcomeMessage(member) {
     const container = new ContainerBuilder()
         .setAccentColor(parseAccentColor(w.ACCENT_COLOR))
         .addSectionComponents(mainSection)
+        .addSeparatorComponents(
+            new SeparatorBuilder().setDivider(true).setSpacing(SeparatorSpacingSize.Small)
+        )
         .addActionRowComponents(footerButtons);
 
     return {
