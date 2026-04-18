@@ -57,8 +57,6 @@ function buildWelcomeMessage(member) {
 
     const guildId = member.guild.id;
     const serverName = member.guild.name;
-    const joinedAt = options.joinedAt ?? member.joinedAt ?? new Date();
-    const createdAt = member.user.createdAt;
     /** 128px = vignette plus petite, proche du rendu « embed compact » du screen. */
     const avatar = member.user.displayAvatarURL({ extension: 'png', size: 128 });
 
