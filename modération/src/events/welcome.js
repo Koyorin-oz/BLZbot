@@ -44,10 +44,9 @@ function formatFrCompactDateTime(d) {
 
 /**
  * @param {import('discord.js').GuildMember} member
- * @param {{ joinedAt?: Date }} [options]
  * @returns {{ components: import('discord.js').ContainerBuilder[]; flags: number; allowedMentions: { users: string[] } }}
  */
-function buildWelcomeMessage(member, options = {}) {
+function buildWelcomeMessage(member) {
     const w = CONFIG.WELCOME;
     const regId = w.LINK_REGLEMENT_CHANNEL_ID;
     const ticketsId = w.LINK_TICKETS_CHANNEL_ID;
