@@ -1,4 +1,6 @@
+const path = require('path');
 const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { BLZ_EMBED_STRIP_INT } = require(path.join(__dirname, '..', '..', '..', '..', 'blz-embed-theme'));
 const { getOrCreateUser, getResourceHistory, getResourceSummary, checkUserInventory, getUserInventory } = require('../../utils/db-users');
 const { getGuildOfUser } = require('../../utils/db-guilds');
 const db = require('../../database/database');
