@@ -212,8 +212,8 @@ module.exports = {
         LINK_REGLEMENT_CHANNEL_ID: '1454477663703011439',
         /** Salon ⁠🪢・tickets */
         LINK_TICKETS_CHANNEL_ID: '1454477715494404212',
-        /** Couleur d’accent du container (hex) */
-        ACCENT_COLOR: '#2F3136',
+        /** Couleur de la barre latérale du container Components V2 (hex) */
+        ACCENT_COLOR: '#1B1725',
     },
 
     // ==================== SYSTÈME DE TICKETS ====================

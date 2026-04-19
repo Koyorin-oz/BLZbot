@@ -224,6 +224,7 @@ module.exports = {
 
         // 2. LOG NORMAL : Suppression message
         const executor = await this.findAuditLogEntry(message.guild, AuditLogEvent.MessageDelete, message.author.id);
+        if (shouldSkipMessageDeleteLog(executor, message)) return;
 
         const description = executor
             ? `Message de <@${message.author.id}> supprimé par <@${executor.id}> dans ${message.channel}.`
