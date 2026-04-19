@@ -1,6 +1,7 @@
 /**
  * Module de bienvenue pour les nouveaux membres (Discord Components V2)
  */
+const path = require('path');
 const {
     ContainerBuilder,
     TextDisplayBuilder,
@@ -14,6 +15,7 @@ const {
     MessageFlags,
 } = require('discord.js');
 const CONFIG = require('../config.js');
+const { stripHexToInt } = require(path.join(__dirname, '..', '..', '..', 'blz-embed-theme'));
 
 const recentJoins = new Map();
 const ANTI_DUPLICATE_MS = 5000;
