@@ -12,8 +12,6 @@ module.exports = (client, logger) => {
     // 1. Suppression de message
     client.on(Events.MessageDelete, async (message) => {
         try {
-            console.log(`[DEBUG] MessageDelete event triggered for message ${message.id}`);
-
             if (!message.guild) return;
 
             // 1. SÉCURITÉ : Suppression dans le salon de logs (prod ou test)
@@ -40,11 +38,11 @@ module.exports = (client, logger) => {
                 return;
             }
 
-            console.log(`[DEBUG] Processing message deletion for ${message.author.tag}`);
-
-            // 2. LOG NORMAL : Suppression message
             const executor = await findAuditLogEntry(message.guild, AuditLogEvent.MessageDelete, message.author.id);
             if (shouldSkipMessageDeleteLog(executor, message)) return;
+
+            console.log(`[DEBUG] MessageDelete event triggered for message ${message.id}`);
+            console.log(`[DEBUG] Processing message deletion for ${message.author.tag}`);
 
             const description = executor
                 ? `Message de <@${message.author.id}> supprimé par <@${executor.id}> dans ${message.channel}.`
