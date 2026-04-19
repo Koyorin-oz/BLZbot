@@ -1,3 +1,4 @@
+const path = require('path');
 const {
     ActionRowBuilder,
     ButtonBuilder,
@@ -5,14 +6,16 @@ const {
     EmbedBuilder,
 } = require('discord.js');
 
+const { BLZ_EMBED_STRIP_INT, stripHexToInt } = require(path.join(__dirname, '..', '..', '..', 'blz-embed-theme'));
+
 const PREFIX_BTN = 'pvr';
 
-/** Barre latérale embed : gris anthracite unifié (proche thème Discord sombre). Surcharge : PRIVATE_ROOM_PANEL_COLOR (hex sans #, ex. 2b2d31) */
+/** Bande latérale embed identité BLZbot. Surcharge : PRIVATE_ROOM_PANEL_COLOR (hex sans #, ex. 1b1725) */
 function getPanelEmbedColor() {
-    const raw = String(process.env.PRIVATE_ROOM_PANEL_COLOR || '2b2d31').replace(/^#/, '');
+    const raw = String(process.env.PRIVATE_ROOM_PANEL_COLOR || '1b1725').replace(/^#/, '');
     const n = parseInt(raw, 16);
     if (!Number.isNaN(n) && n >= 0 && n <= 0xffffff) return n;
-    return 0x2b2d31;
+    return BLZ_EMBED_STRIP_INT;
 }
 
 /** Rôle staff autorisé sur le panneau « restreint » (salon créé). Surcharge : PRIVATE_ROOM_STAFF_ROLE_ID */
