@@ -46,6 +46,7 @@ function formatFrCompactDateTime(d) {
 
 /**
  * Texte d’affichage pour l’emoji titre (custom ou 👋).
+ * Cherche dans tout le cache client, puis fetch guilde source + API emojis.
  * @param {import('discord.js').Client} client
  */
 async function resolveWelcomeTitleEmoji(client) {
@@ -56,22 +57,42 @@ async function resolveWelcomeTitleEmoji(client) {
     let emoji = client.emojis.cache.get(id);
     if (emoji) return emoji.toString();
 
+    for (const g of client.guilds.cache.values()) {
+        const e = g.emojis.cache.get(id);
+        if (e) return e.toString();
+    }
+
     const sourceGuildId = String(w.CUSTOM_WELCOME_EMOJI_SOURCE_GUILD_ID || '').trim();
     if (/^\d{17,22}$/.test(sourceGuildId)) {
-        const guild = client.guilds.cache.get(sourceGuildId);
-        if (guild) {
-            try {
-                const fetched = await guild.emojis.fetch(id);
-                if (fetched) return fetched.toString();
-            } catch {
-                /* emoji introuvable sur cette guilde */
-            }
+        try {
+            let guild = client.guilds.cache.get(sourceGuildId);
+            if (!guild) guild = await client.guilds.fetch(sourceGuildId);
+
+            await guild.emojis.fetch().catch(() => {});
+            emoji = guild.emojis.cache.get(id);
+            if (emoji) return emoji.toString();
+
+            const fetched = await guild.emojis.fetch(id).catch(() => null);
+            if (fetched) return fetched.toString();
+        } catch (err) {
+            console.warn('[Welcome] Résolution emoji — guilde source:', err?.message || err);
         }
     }
 
-    const rawName = String(w.CUSTOM_WELCOME_EMOJI_NAME || 'emoji').trim();
-    const name = (rawName || 'emoji').replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 32) || 'emoji';
+    const rawName = String(w.CUSTOM_WELCOME_EMOJI_NAME || '').trim();
+    if (!rawName) {
+        console.warn(
+            '[Welcome] Emoji non résolu (ID ' +
+                id +
+                '). Mets `WELCOME_CUSTOM_EMOJI_NAME` dans le .env avec le nom exact de l’emoji ' +
+                '(sans les deux-points), ou vérifie que le bot est sur la guilde où l’emoji est uploadé.'
+        );
+        return '👋';
+    }
+
+    const name = rawName.replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 32) || 'emoji';
     const animated = Boolean(w.CUSTOM_WELCOME_EMOJI_ANIMATED);
+    console.warn('[Welcome] Fallback <:nom:id> pour l’emoji — si l’image ne s’affiche pas, vérifie le nom.');
     return animated ? `<a:${name}:${id}>` : `<:${name}:${id}>`;
 }
 
