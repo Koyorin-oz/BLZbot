@@ -1,5 +1,6 @@
-
+const path = require('path');
 const { SlashCommandBuilder, TextDisplayBuilder, ContainerBuilder, StringSelectMenuBuilder, ActionRowBuilder, ComponentType, MessageFlags, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { BLZ_EMBED_STRIP_INT } = require(path.join(__dirname, '..', '..', '..', '..', 'blz-embed-theme'));
 const db = require('../../database/database');
 const dbHalloween = require('../../utils/db-halloween');
 const dbNoel = require('../../utils/db-noel');
