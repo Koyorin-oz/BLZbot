@@ -7,8 +7,8 @@ class Logger {
         this.client = client;
     }
 
-    /** Le paramètre `color` est conservé pour compatibilité mais la bande latérale utilise toujours l’identité BLZbot. */
-    async log(guild, title, description, _color, fields = [], author = null, footer = null) {
+    /** Bande latérale de l’embed : couleur par type d’événement (vert / rouge / etc.), comme avant. */
+    async log(guild, title, description, color, fields = [], author = null, footer = null) {
         if (!guild) {
             console.log('[DEBUG] Logger: No guild provided');
             return;
