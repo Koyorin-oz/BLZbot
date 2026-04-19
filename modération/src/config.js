@@ -215,6 +215,21 @@ module.exports = {
         LINK_TICKETS_CHANNEL_ID: '1454477715494404212',
         /** Couleur de la barre latérale du container Components V2 (hex) */
         ACCENT_COLOR: BLZ_EMBED_STRIP_HEX,
+        /**
+         * Emoji personnalisé dans le titre (à la place de 👋). L’ID doit exister sur un serveur où le bot est présent.
+         * Surcharge : WELCOME_CUSTOM_EMOJI_ID dans .env
+         */
+        CUSTOM_WELCOME_EMOJI_ID: process.env.WELCOME_CUSTOM_EMOJI_ID || '1495554515427135568',
+        /** Serveur où l’emoji est uploadé (fetch si pas encore en cache) — ex. serveur de test */
+        CUSTOM_WELCOME_EMOJI_SOURCE_GUILD_ID: process.env.WELCOME_CUSTOM_EMOJI_SOURCE_GUILD_ID || '1493276404643532810',
+        /**
+         * Si l’emoji n’est pas récupérable : nom exact + animé. Sinon chaîne <:name:id> construite sans nom fiable.
+         * Surcharge : WELCOME_CUSTOM_EMOJI_NAME, WELCOME_CUSTOM_EMOJI_ANIMATED=1
+         */
+        CUSTOM_WELCOME_EMOJI_NAME: process.env.WELCOME_CUSTOM_EMOJI_NAME || '',
+        CUSTOM_WELCOME_EMOJI_ANIMATED: ['1', 'true', 'yes', 'on'].includes(
+            String(process.env.WELCOME_CUSTOM_EMOJI_ANIMATED || '').toLowerCase()
+        ),
     },
 
     // ==================== SYSTÈME DE TICKETS ====================
