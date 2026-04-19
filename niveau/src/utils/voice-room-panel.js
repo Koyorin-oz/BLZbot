@@ -6,7 +6,7 @@ const {
     EmbedBuilder,
 } = require('discord.js');
 
-const { BLZ_EMBED_STRIP_INT, stripHexToInt } = require(path.join(__dirname, '..', '..', '..', 'blz-embed-theme'));
+const { BLZ_EMBED_STRIP_INT } = require(path.join(__dirname, '..', '..', '..', 'blz-embed-theme'));
 
 const PREFIX_BTN = 'pvr';
 
