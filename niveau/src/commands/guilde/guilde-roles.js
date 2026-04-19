@@ -161,7 +161,7 @@ async function handleListRoles(interaction, guild) {
     }
 
     const embed = new EmbedBuilder()
-        .setColor('#5865F2')
+        .setColor(BLZ_EMBED_STRIP_INT)
         .setTitle(`📋 Rôles personnalisés de ${guild.name}`)
         .setDescription(`Votre guilde possède **${customRoles.length}/3** rôles personnalisés.`)
         .setTimestamp();
