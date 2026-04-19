@@ -1355,7 +1355,7 @@ async function handleStreamingResponse(message, modelName, queryFunction, existi
 
         if (!thinking && !visibleContent) return;
 
-        const displayContent = thinking ? '🧠' : visibleContent;
+        const displayContent = buildStreamDisplayContent(streamState.content, thinking);
 
         if (displayContent !== lastEditContent) {
             try {
