@@ -1,8 +1,6 @@
-const path = require('path');
 const { EmbedBuilder } = require('discord.js');
 const CONFIG = require('../config.js');
 const { resolveAllLogChannelId } = require('../utils/log-channel-resolve');
-const { BLZ_EMBED_STRIP_INT } = require(path.join(__dirname, '..', '..', '..', 'blz-embed-theme'));
 
 class Logger {
     constructor(client) {
