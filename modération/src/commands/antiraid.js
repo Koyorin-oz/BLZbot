@@ -259,7 +259,7 @@ module.exports = {
                 const embed = new EmbedBuilder()
                     .setTitle('🔒 Lockdown Activé')
                     .setDescription('Le lockdown a été activé manuellement.')
-                    .setColor('#FF0000')
+                    .setColor(BLZ_EMBED_STRIP_INT)
                     .addFields(
                         { name: 'Actions effectuées', value: '• Invitations désactivées\n• DM envoyés aux admins\n• Nouveaux membres recevront le rôle RAID', inline: false },
                         { name: 'Activé par', value: `<@${interaction.user.id}>`, inline: true }
