@@ -44,6 +44,37 @@ function formatFrCompactDateTime(d) {
     });
 }
 
+/**
+ * Texte d’affichage pour l’emoji titre (custom ou 👋).
+ * @param {import('discord.js').Client} client
+ */
+async function resolveWelcomeTitleEmoji(client) {
+    const w = CONFIG.WELCOME;
+    const id = String(w.CUSTOM_WELCOME_EMOJI_ID || '').trim();
+    if (!/^\d{17,22}$/.test(id)) return '👋';
+
+    let emoji = client.emojis.cache.get(id);
+    if (emoji) return emoji.toString();
+
+    const sourceGuildId = String(w.CUSTOM_WELCOME_EMOJI_SOURCE_GUILD_ID || '').trim();
+    if (/^\d{17,22}$/.test(sourceGuildId)) {
+        const guild = client.guilds.cache.get(sourceGuildId);
+        if (guild) {
+            try {
+                const fetched = await guild.emojis.fetch(id);
+                if (fetched) return fetched.toString();
+            } catch {
+                /* emoji introuvable sur cette guilde */
+            }
+        }
+    }
+
+    const rawName = String(w.CUSTOM_WELCOME_EMOJI_NAME || 'emoji').trim();
+    const name = (rawName || 'emoji').replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 32) || 'emoji';
+    const animated = Boolean(w.CUSTOM_WELCOME_EMOJI_ANIMATED);
+    return animated ? `<a:${name}:${id}>` : `<:${name}:${id}>`;
+}
+
 /** Infos compte / arrivée : uniquement pour les logs (plus affichées dans le message Discord). */
 function logWelcomeMemberMeta(member) {
     const joinedAt = member.joinedAt ?? new Date();
