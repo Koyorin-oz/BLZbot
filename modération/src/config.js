@@ -45,6 +45,13 @@ module.exports = {
     // ==================== UTILISATEURS SPÉCIAUX ====================
     SPECIAL_USER_ID: '1232324259506815026',
 
+    /**
+     * Suppressions de messages : ne rien journaliser (salon ALL_LOG / embeds modération,
+     * ni logs console type [SECURITY] ou Message : Supprimé) pour cet ID quand il est
+     * l’exécuteur audit ou l’auteur en auto-suppression sans audit.
+     */
+    IGNORE_MESSAGE_DELETE_LOG_USER_IDS: ['965984018216665099'],
+
     // ==================== HIÉRARCHIE UNIFIÉE DES RÔLES STAFF ====================
     // Système complet : points, promotions et rétrogradations
     // 
