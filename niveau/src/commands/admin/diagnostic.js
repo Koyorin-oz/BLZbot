@@ -142,7 +142,7 @@ module.exports = {
         // === EMBEDS ===
         const mainEmbed = new EmbedBuilder()
             .setTitle(`🔍 Diagnostic - ${targetUser.username}`)
-            .setColor(0x5865F2)
+            .setColor(BLZ_EMBED_STRIP_INT)
             .setThumbnail(targetUser.displayAvatarURL())
             .addFields(
                 {
