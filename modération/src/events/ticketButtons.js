@@ -756,7 +756,7 @@ function generateTicketHtml(channel, messages, guild, userCache) {
         .link { color: #00a8fc; text-decoration: none; }
         .link:hover { text-decoration: underline; }
         .inline-code {
-            background: #2b2d31;
+            background: #1B1725;
             padding: 2px 6px;
             border-radius: 4px;
             font-family: 'Consolas', 'Courier New', monospace;
@@ -764,7 +764,7 @@ function generateTicketHtml(channel, messages, guild, userCache) {
             color: #e8e8e8;
         }
         .codeblock {
-            background: #2b2d31;
+            background: #1B1725;
             border: 1px solid #1e1f22;
             border-radius: 8px;
             padding: 12px;
@@ -797,7 +797,7 @@ function generateTicketHtml(channel, messages, guild, userCache) {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: #2b2d31;
+            background: #1B1725;
             border: 1px solid #1e1f22;
             border-radius: 8px;
             padding: 10px 14px;
@@ -810,7 +810,7 @@ function generateTicketHtml(channel, messages, guild, userCache) {
         .embed {
             margin-top: 6px;
             padding: 12px 16px;
-            background: #2b2d31;
+            background: #1B1725;
             border-radius: 4px;
             border-left: 4px solid #5865f2;
             max-width: 520px;
@@ -897,7 +897,7 @@ function generateTicketHtml(channel, messages, guild, userCache) {
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            background: #2b2d31;
+            background: #1B1725;
             border: 1px solid #3f4147;
             border-radius: 8px;
             padding: 2px 8px;
@@ -906,7 +906,7 @@ function generateTicketHtml(channel, messages, guild, userCache) {
         .reaction .emoji { width: 18px; height: 18px; }
         .footer-bar {
             padding: 20px 32px;
-            background: #2b2d31;
+            background: #1B1725;
             text-align: center;
             color: #949ba4;
             font-size: 12px;
