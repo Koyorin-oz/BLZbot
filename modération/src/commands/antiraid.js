@@ -420,7 +420,7 @@ module.exports = {
         } catch (error) {
             const embed = new EmbedBuilder()
                 .setTitle('📜 Historique des Incidents de Raid')
-                .setColor('#3498db')
+                .setColor(BLZ_EMBED_STRIP_INT)
                 .setTimestamp()
                 .setFooter({ text: `${incidents.length} incident(s) affiché(s)` });
 
