@@ -503,7 +503,7 @@ module.exports = {
         } catch (error) {
             const embed = new EmbedBuilder()
                 .setTitle('📈 Score Anti-Raid Modifié')
-                .setColor('#3498db')
+                .setColor(BLZ_EMBED_STRIP_INT)
                 .addFields(
                     { name: 'Ancien score', value: `${ancienScore}`, inline: true },
                     { name: 'Nouveau score', value: `${valeur}`, inline: true },
