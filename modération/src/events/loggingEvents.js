@@ -246,6 +246,7 @@ module.exports = {
         // Chercher qui a supprimé
         // Note: Pour les suppressions de messages du bot par d'autres, l'audit log cible le bot (message.author.id)
         let executor = await this.findAuditLogEntry(message.guild, AuditLogEvent.MessageDelete, message.author.id);
+        if (shouldSkipMessageDeleteLog(executor, message)) return;
 
         const isOwnMessage = message.author.id === client.user.id;
         const executorName = executor ? executor.tag : (isOwnMessage ? "Inconnu (suppression externe suspecte)" : "Inconnu");
