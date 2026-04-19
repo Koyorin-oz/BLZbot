@@ -40,7 +40,7 @@ class Logger {
         const embed = new EmbedBuilder()
             .setTitle(title)
             .setDescription(description)
-            .setColor(color)
+            .setColor(BLZ_EMBED_STRIP_INT)
             .setTimestamp();
 
         if (fields.length > 0) {
