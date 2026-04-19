@@ -108,7 +108,7 @@ module.exports = {
         const emptyBlocks = 20 - filledBlocks;
         
         let gaugeColor = '🟢'; // Vert
-        let accentColor = 0x00FF00;
+        let accentColor = BLZ_EMBED_STRIP_INT;
         if (status.score >= actionThreshold) {
             gaugeColor = '🟠';
             accentColor = 0xFFA500;
