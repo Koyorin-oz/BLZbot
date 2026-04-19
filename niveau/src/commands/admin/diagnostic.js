@@ -259,7 +259,7 @@ module.exports = {
         // Stats embed
         const statsEmbed = new EmbedBuilder()
             .setTitle('📦 Stats Détaillées')
-            .setColor(0x3498DB)
+            .setColor(BLZ_EMBED_STRIP_INT)
             .addFields(
                 {
                     name: '🛒 Achats Boutique (Aujourd\'hui)',
