@@ -1,5 +1,7 @@
+const path = require('path');
 const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require('discord.js');
 const CONFIG = require('../config.js');
+const { BLZ_EMBED_STRIP_INT } = require(path.join(__dirname, '..', '..', '..', 'blz-embed-theme'));
 
 /**
  * Module de planification pour les tâches automatiques
