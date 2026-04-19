@@ -208,7 +208,7 @@ module.exports = {
 
         const recentEmbed = new EmbedBuilder()
             .setTitle('🕐 10 Derniers Gains')
-            .setColor(0x9B59B6)
+            .setColor(BLZ_EMBED_STRIP_INT)
             .setDescription(recentText || 'Aucun historique disponible');
 
         // === STATS AVANCÉES ===
