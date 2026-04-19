@@ -176,7 +176,7 @@ module.exports = {
 
         const historyEmbed = new EmbedBuilder()
             .setTitle(`📜 Gains des ${period}h dernières`)
-            .setColor(0xFFA500)
+            .setColor(BLZ_EMBED_STRIP_INT)
             .addFields(
                 {
                     name: '💰 Totaux',
