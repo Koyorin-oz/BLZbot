@@ -246,7 +246,7 @@ async function handleCreateTicket(interaction) {
                 `L'équipe ${config.PING_ROLE_ID ? `<@&${config.PING_ROLE_ID}>` : 'staff'} va bientôt venir t'aider.\n\n` +
                 `**Décris ton problème en détail** pour qu'on puisse t'aider au mieux.`
             )
-            .setColor(config.EMBED_COLOR || '#2b2d31')
+            .setColor(config.EMBED_COLOR || BLZ_EMBED_STRIP_HEX)
             .setFooter({ text: `ID: ${ticketId}` })
             .setTimestamp();
 
