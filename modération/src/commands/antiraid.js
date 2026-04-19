@@ -107,15 +107,13 @@ module.exports = {
         const filledBlocks = Math.min(Math.floor((status.score / maxGauge) * 20), 20);
         const emptyBlocks = 20 - filledBlocks;
         
-        let gaugeColor = '🟢'; // Vert
-        let accentColor = BLZ_EMBED_STRIP_INT;
+        let gaugeColor = '🟢';
+        const accentColor = BLZ_EMBED_STRIP_INT;
         if (status.score >= actionThreshold) {
             gaugeColor = '🟠';
-            accentColor = 0xFFA500;
         }
         if (status.score >= criticalThreshold) {
             gaugeColor = '🔴';
-            accentColor = 0xFF0000;
         }
 
         const gauge = `${gaugeColor} ${'█'.repeat(filledBlocks)}${'░'.repeat(emptyBlocks)} ${status.score}/${criticalThreshold}`;
