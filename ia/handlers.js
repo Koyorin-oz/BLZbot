@@ -1456,7 +1456,7 @@ async function handleStreamingResponse(message, modelName, queryFunction, existi
             const facing = userFacingTextFromCompletedOutput(responseText);
             if (!facing) {
                 try {
-                    await streamReplyMessage.edit({ content: EMPTY_REPLY_FALLBACK, components: [] });
+                    await streamReplyMessage.edit({ content: STREAM_PENDING_LABEL, components: [] });
                 } catch { /* ignore */ }
                 return { responseText: null, streamReplyMessage, success: false };
             }
@@ -1465,7 +1465,7 @@ async function handleStreamingResponse(message, modelName, queryFunction, existi
         } else {
             try {
                 if (streamReplyMessage) {
-                    await streamReplyMessage.edit({ content: EMPTY_REPLY_FALLBACK, components: [] });
+                    await streamReplyMessage.edit({ content: STREAM_PENDING_LABEL, components: [] });
                 }
             } catch { /* ignore */ }
             return { responseText: null, streamReplyMessage, success: false };
@@ -1475,10 +1475,7 @@ async function handleStreamingResponse(message, modelName, queryFunction, existi
         utils.log(`❌ Error streaming ${modelName}: ${error.message}`);
         if (streamReplyMessage) {
             try {
-                await streamReplyMessage.edit({
-                    content: `⚠️ Erreur API (${modelName}). Réessaie dans un instant.`,
-                    components: []
-                });
+                await streamReplyMessage.edit({ content: STREAM_PENDING_LABEL, components: [] });
             } catch { /* ignore */ }
         }
         return { responseText: null, streamReplyMessage, success: false };
