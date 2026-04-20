@@ -1,5 +1,4 @@
 const { EmbedBuilder } = require('discord.js');
-const CONFIG = require('../config.js');
 const { resolveAllLogChannelId } = require('../utils/log-channel-resolve');
 
 class Logger {
