@@ -115,9 +115,8 @@ module.exports = {
             console.error(`Erreur lors de la vérification du bannissement pour ${interaction.user.id}:`, error);
             return interaction.reply({
                 content: '❌ Une erreur est survenue lors de la vérification de votre statut de bannissement.',
-                    ephemeral: true
-                });
-            }
+                ephemeral: true
+            });
         }
     },
 
