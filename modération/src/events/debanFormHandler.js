@@ -27,6 +27,12 @@ module.exports = {
             });
         }
 
+        // Bypass : un Administrateur Test peut soumettre une demande même sans être banni (test du flux)
+        const adminTestRoleId = CONFIG.ADMIN_TEST_ROLE_ID;
+        let isAdminTest = Boolean(
+            adminTestRoleId && interaction.member?.roles?.cache?.has(adminTestRoleId)
+        );
+
         // Vérifier si l'utilisateur est banni du serveur principal
         try {
             const mainGuild = await client.guilds.fetch(CONFIG.DEBAN_GUILD_ID);
@@ -37,10 +43,38 @@ module.exports = {
                 });
             }
 
-            // Tenter de récupérer le ban de l'utilisateur
-            await mainGuild.bans.fetch(interaction.user.id);
+            // Le rôle Admin Test vit sur le serveur principal : vérifier aussi là-bas
+            // si le panel est sur un autre serveur (PANEL_GUILD_ID ≠ DEBAN_GUILD_ID).
+            if (!isAdminTest && adminTestRoleId) {
+                try {
+                    const mainMember = await mainGuild.members.fetch(interaction.user.id);
+                    if (mainMember?.roles?.cache?.has(adminTestRoleId)) {
+                        isAdminTest = true;
+                    }
+                } catch { /* user absent du serveur principal : pas admin test */ }
+            }
 
-            // L'utilisateur est banni, ouvrir le formulaire étape 1
+            // Tenter de récupérer le ban de l'utilisateur
+            try {
+                await mainGuild.bans.fetch(interaction.user.id);
+            } catch (banError) {
+                if (banError.code === 10026) {
+                    // Utilisateur non banni : refus sauf si Admin Test (bypass pour test)
+                    if (!isAdminTest) {
+                        return interaction.reply({
+                            content: "❌ Vous n'êtes pas banni du serveur principal.\n\n" +
+                                "Si vous pensez que c'est une erreur, veuillez contacter un modérateur.\n" +
+                                "Si vous souhaitez rejoindre le serveur : https://discord.gg/UJNZxzmmPV",
+                            ephemeral: true
+                        });
+                    }
+                    console.log(`[Deban] Bypass Admin Test : ${interaction.user.tag} (${interaction.user.id}) soumet une demande sans être banni`);
+                } else {
+                    throw banError;
+                }
+            }
+
+            // L'utilisateur est banni (ou Admin Test en test), ouvrir le formulaire étape 1
             const modal = new ModalBuilder()
                 .setCustomId('deban_form_step1')
                 .setTitle('Débannissement - Étape 1/3');
