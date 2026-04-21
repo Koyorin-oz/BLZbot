@@ -4,7 +4,8 @@ const {
     TextInputStyle,
     ActionRowBuilder,
     ButtonBuilder,
-    ButtonStyle
+    ButtonStyle,
+    PermissionFlagsBits
 } = require('discord.js');
 const CONFIG = require('../config.js');
 
