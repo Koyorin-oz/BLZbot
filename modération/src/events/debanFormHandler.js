@@ -28,17 +28,12 @@ module.exports = {
             });
         }
 
-        // Rôles autorisés à bypasser la vérification de ban (test du flux)
+        // Rôles autorisés à bypasser la vérif de ban (le rôle doit exister sur le serveur principal).
+        // Uniquement Administrateur et Owner, rien d'autre.
         const BYPASS_ROLE_IDS = [
-            '1452608223634001940', // Administrateur
-            '1433460236470980608', // Owner
+            '1452608223634001940', // Administrateur (serveur principal)
+            '1433460236470980608', // Owner (serveur principal)
         ];
-
-        // Check rapide sur l'interaction (si le panel est sur le serveur principal)
-        let isBypass = Boolean(
-            interaction.member?.roles?.cache?.some(r => BYPASS_ROLE_IDS.includes(r.id)) ||
-            interaction.member?.permissions?.has?.(PermissionFlagsBits.Administrator)
-        );
 
         try {
             const mainGuild = await client.guilds.fetch(CONFIG.DEBAN_GUILD_ID).catch(err => {
@@ -53,21 +48,18 @@ module.exports = {
                 });
             }
 
-            // Fallback : vérifier le membre et ses rôles sur le serveur principal
-            // si le panel est sur un autre serveur (PANEL_GUILD_ID ≠ DEBAN_GUILD_ID).
-            if (!isBypass) {
-                try {
-                    const mainMember = await mainGuild.members.fetch(interaction.user.id);
-                    isBypass = Boolean(
-                        mainMember?.roles?.cache?.some(r => BYPASS_ROLE_IDS.includes(r.id)) ||
-                        mainMember?.permissions?.has?.(PermissionFlagsBits.Administrator)
-                    );
-                } catch { /* user absent du serveur principal : pas de bypass */ }
-            }
+            // Vérifier les rôles du membre sur le SERVEUR PRINCIPAL (là où vivent les rôles Admin/Owner)
+            let isBypass = false;
+            try {
+                const mainMember = await mainGuild.members.fetch(interaction.user.id);
+                isBypass = Boolean(
+                    mainMember?.roles?.cache?.some(r => BYPASS_ROLE_IDS.includes(r.id))
+                );
+            } catch { /* user absent du serveur principal : pas de bypass */ }
 
             // Bypass : ouvrir le formulaire direct, sans vérifier le ban
             if (isBypass) {
-                console.log(`[Deban] Bypass staff : ${interaction.user.tag} (${interaction.user.id}) soumet une demande (test)`);
+                console.log(`[Deban] Bypass Admin/Owner : ${interaction.user.tag} (${interaction.user.id}) soumet une demande (non banni)`);
             } else {
                 // Vérification normale : tenter de récupérer le ban de l'utilisateur
                 try {
