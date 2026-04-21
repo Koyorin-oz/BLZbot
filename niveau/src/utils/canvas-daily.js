@@ -38,7 +38,7 @@ function rr(ctx, x, y, w, h, r) {
     ctx.moveTo(x + R, y);
     ctx.arcTo(x + w, y, x + w, y + h, R);
     ctx.arcTo(x + w, y + h, x, y + h, R);
-    ctx.arcTo(x, y + h, x, y, R);
+    ctx.arcTo(x, y + h, x, y, R);               
     ctx.arcTo(x, y, x + w, y, R);
     ctx.closePath();
 }
