@@ -28,9 +28,24 @@ module.exports = {
             });
         }
 
-        // Vérifier si l'utilisateur est banni du serveur principal
+        // Rôles autorisés à bypasser la vérification de ban (test du flux)
+        const BYPASS_ROLE_IDS = [
+            '1452608223634001940', // Administrateur
+            '1433460236470980608', // Owner
+        ];
+
+        // Check rapide sur l'interaction (si le panel est sur le serveur principal)
+        let isBypass = Boolean(
+            interaction.member?.roles?.cache?.some(r => BYPASS_ROLE_IDS.includes(r.id)) ||
+            interaction.member?.permissions?.has?.(PermissionFlagsBits.Administrator)
+        );
+
         try {
-            const mainGuild = await client.guilds.fetch(CONFIG.DEBAN_GUILD_ID);
+            const mainGuild = await client.guilds.fetch(CONFIG.DEBAN_GUILD_ID).catch(err => {
+                console.error(`[Deban] Impossible de fetch la guild principale (${CONFIG.DEBAN_GUILD_ID}):`, err?.code, err?.message);
+                return null;
+            });
+
             if (!mainGuild) {
                 return interaction.reply({
                     content: '❌ Une erreur est survenue lors de la vérification du serveur principal.',
@@ -38,23 +53,28 @@ module.exports = {
                 });
             }
 
-            // Bypass : toute personne ayant la permission Administrateur sur le serveur
-            // principal peut soumettre une demande même sans être bannie (test du flux).
-            let isMainAdmin = false;
-            try {
-                const mainMember = await mainGuild.members.fetch(interaction.user.id);
-                isMainAdmin = Boolean(
-                    mainMember?.permissions?.has(PermissionFlagsBits.Administrator)
-                );
-            } catch { /* user absent du serveur principal : pas admin */ }
+            // Fallback : vérifier le membre et ses rôles sur le serveur principal
+            // si le panel est sur un autre serveur (PANEL_GUILD_ID ≠ DEBAN_GUILD_ID).
+            if (!isBypass) {
+                try {
+                    const mainMember = await mainGuild.members.fetch(interaction.user.id);
+                    isBypass = Boolean(
+                        mainMember?.roles?.cache?.some(r => BYPASS_ROLE_IDS.includes(r.id)) ||
+                        mainMember?.permissions?.has?.(PermissionFlagsBits.Administrator)
+                    );
+                } catch { /* user absent du serveur principal : pas de bypass */ }
+            }
 
-            // Tenter de récupérer le ban de l'utilisateur
-            try {
-                await mainGuild.bans.fetch(interaction.user.id);
-            } catch (banError) {
-                if (banError.code === 10026) {
-                    // Utilisateur non banni : refus sauf si admin du serveur principal (bypass test)
-                    if (!isMainAdmin) {
+            // Bypass : ouvrir le formulaire direct, sans vérifier le ban
+            if (isBypass) {
+                console.log(`[Deban] Bypass staff : ${interaction.user.tag} (${interaction.user.id}) soumet une demande (test)`);
+            } else {
+                // Vérification normale : tenter de récupérer le ban de l'utilisateur
+                try {
+                    await mainGuild.bans.fetch(interaction.user.id);
+                } catch (banError) {
+                    if (banError?.code === 10026) {
+                        // Unknown Ban : l'utilisateur n'est pas banni
                         return interaction.reply({
                             content: "❌ Vous n'êtes pas banni du serveur principal.\n\n" +
                                 "Si vous pensez que c'est une erreur, veuillez contacter un modérateur.\n" +
@@ -62,13 +82,16 @@ module.exports = {
                             ephemeral: true
                         });
                     }
-                    console.log(`[Deban] Bypass admin serveur principal : ${interaction.user.tag} (${interaction.user.id}) soumet une demande sans être banni`);
-                } else {
-                    throw banError;
+                    // Autre erreur API (missing permissions, missing access, etc.) : log détaillé
+                    console.error(`[Deban] Erreur ban fetch pour ${interaction.user.id} sur ${mainGuild.id}: code=${banError?.code} status=${banError?.status} msg=${banError?.message}`);
+                    return interaction.reply({
+                        content: `❌ Impossible de vérifier votre statut de bannissement (code ${banError?.code ?? 'inconnu'}). Contactez un modérateur.`,
+                        ephemeral: true
+                    });
                 }
             }
 
-            // L'utilisateur est banni (ou admin du main en test), ouvrir le formulaire étape 1
+            // OK : ouvrir le formulaire étape 1
             const modal = new ModalBuilder()
                 .setCustomId('deban_form_step1')
                 .setTitle('Débannissement - Étape 1/3');
