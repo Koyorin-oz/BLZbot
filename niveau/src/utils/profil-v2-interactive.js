@@ -272,6 +272,12 @@ async function sendProfilV2WithButtons(interaction, session) {
         flags: MessageFlags.IsComponentsV2,
     });
 
+    // Garde une référence du dernier rendu pour pouvoir le réafficher sans boutons quand le collector expire.
+    const currentRender = {
+        attachmentName: 'profil-v2-main.png',
+        buildBuffer: renderMainPngBuffer,
+    };
+
     const collector = message.createMessageComponentCollector({
         componentType: ComponentType.Button,
         time: 10 * 60 * 1000,
