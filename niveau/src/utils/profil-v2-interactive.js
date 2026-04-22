@@ -347,6 +347,30 @@ async function sendProfilV2WithButtons(interaction, session) {
                         ? [new ContainerBuilder().addMediaGalleryComponents(mg).addActionRowComponents(buildPaginationButtons(p, totalPages, 'q'))]
                         : [new ContainerBuilder().addMediaGalleryComponents(mg).addActionRowComponents(buildButtons(true))];
 
+                currentRender.attachmentName = 'profil-v2-quests.png';
+                currentRender.buildBuffer = async () => {
+                    const freshQuestsData = getAllUserQuests(targetUser.id);
+                    const freshPending = [];
+                    for (const qId in QUESTS) {
+                        const qInfo = QUESTS[qId];
+                        if (qInfo.rarity === 'Halloween' || qInfo.rarity === 'Noël') continue;
+                        const up = freshQuestsData.find((q) => q.quest_id === qId);
+                        if (!up || !up.completed) {
+                            freshPending.push({
+                                name: qInfo.name || 'Quête',
+                                description: qInfo.description || '',
+                                progress: up?.progress || 0,
+                                goal: qInfo.goal,
+                                rarity: qInfo.rarity || 'Commune',
+                                isNumeric: typeof qInfo.goal === 'number',
+                            });
+                        }
+                    }
+                    const freshTotal = Math.ceil(freshPending.length / QUESTS_PER_PAGE) || 1;
+                    const pp = Math.max(0, Math.min(p, freshTotal - 1));
+                    return renderQuestsCardFiche2({ quests: freshPending.slice(pp * QUESTS_PER_PAGE, (pp + 1) * QUESTS_PER_PAGE) });
+                };
+
                 await i.editReply({ content: null, files: [qFile], components: comps, flags: MessageFlags.IsComponentsV2 });
             } else if (i.customId.startsWith(`${A_PREFIX}_`)) {
                 const aBase = `${A_PREFIX}_${targetUser.id}`;
