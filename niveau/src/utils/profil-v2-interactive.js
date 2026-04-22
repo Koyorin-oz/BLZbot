@@ -278,9 +278,11 @@ async function sendProfilV2WithButtons(interaction, session) {
         buildBuffer: renderMainPngBuffer,
     };
 
+    // Collector long (24h) — on évite un timeout court qui modifierait le message et ferait disparaître le canvas.
+    // Les boutons restent cliquables tant que le bot tourne ; si le bot redémarre, le message garde son canvas visible.
     const collector = message.createMessageComponentCollector({
         componentType: ComponentType.Button,
-        time: 10 * 60 * 1000,
+        time: 24 * 60 * 60 * 1000,
     });
 
     collector.on('collect', async (i) => {
