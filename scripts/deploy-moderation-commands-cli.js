@@ -8,7 +8,6 @@ const {
     resolveDotenvPath,
     PEBBLE_HOST_ENV_PATH,
     applyTestGuildOverride,
-    getSlashDeployGuildIds,
 } = require(path.join(__dirname, '..', 'blzbot-env.js'));
 
 require('dotenv').config({
