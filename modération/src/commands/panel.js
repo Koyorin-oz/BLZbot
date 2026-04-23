@@ -130,6 +130,8 @@ module.exports = {
         try {
             const focused = interaction.options.getFocused(true);
             const query = String(focused.value || '').toLowerCase().trim();
+            const forDeban = focused.name === 'salon-deban';
+            const typeSet = forDeban ? DEBAN_VOTE_CHANNEL_TYPES : PANEL_DISPLAY_CHANNEL_TYPES;
 
             const suggestions = [];
             for (const gid of ALLOWED_PANEL_GUILD_IDS) {
@@ -138,12 +140,13 @@ module.exports = {
 
                 // Tri : salons par position pour rendre l'autocomplete lisible
                 const channels = [...guild.channels.cache.values()]
-                    .filter(ch => ALLOWED_CHANNEL_TYPES.has(ch.type))
+                    .filter(ch => typeSet.has(ch.type))
                     .sort((a, b) => (a.rawPosition ?? 0) - (b.rawPosition ?? 0));
 
                 for (const ch of channels) {
                     const guildTag = guild.id === '1351221530998345828' ? 'Support' : 'Principal';
-                    const label = `[${guildTag}] #${ch.name}`;
+                    const suffix = ch.type === ChannelType.GuildForum ? ' (forum)' : '';
+                    const label = `[${guildTag}] #${ch.name}${suffix}`;
                     if (query && !label.toLowerCase().includes(query) && !ch.id.includes(query)) continue;
                     suggestions.push({
                         name: label.slice(0, 100),
