@@ -27,7 +27,7 @@ console.log(
     '[deploy-all] Démarrage — si rien ne s’affiche pendant ~10s, c’est normal (chargement SQLite / modules).'
 );
 console.log(
-    '[deploy-all] Fichiers des commandes : modération → modération/src/commands/test-bienvenue.js · niveau → niveau/src/commands/core/panel-voc.js'
+    '[deploy-all] Déploiement : modération (src/utils/deploy-slash-commands) + niveau (src/utils/deploy-commands).'
 );
 
 const { Client, GatewayIntentBits } = require('discord.js');

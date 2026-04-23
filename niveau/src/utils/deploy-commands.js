@@ -9,8 +9,8 @@ const { getEventState: getHalloweenState } = require('./db-halloween');
 const { getEventState: getChristmasState } = require('./db-noel');
 const { getEventState: getValentinState } = require('./db-valentin');
 
-// Slash obsolètes à retirer (ancienne convention, remplacés par /profil).
-const OBSOLETE_SLASH_NAMES = new Set(['profil-v2', 'profile']);
+// Slash obsolètes à retirer (ancienne convention, remplacés par /profil, ou commandes de test retirées).
+const OBSOLETE_SLASH_NAMES = new Set(['profil-v2', 'profile', 'testprofil', 'testprofilguilde']);
 
 function loadCommandData(filePath) {
     try {
