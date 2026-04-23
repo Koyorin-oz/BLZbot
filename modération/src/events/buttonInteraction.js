@@ -404,7 +404,7 @@ async function handleStandardVote(interaction, voteManager, customId) {
 /**
  * Gère les votes de débannissement
  */
-async function handleDebanVote(interaction, voteManager, customId) {
+async function handleDebanVote(interaction, voteManager, customId, client) {
     const parts = customId.split('_');
     const voteType = parts[2]; // 'oui' ou 'non'
     const targetUserId = parts[3];
@@ -414,6 +414,11 @@ async function handleDebanVote(interaction, voteManager, customId) {
 
     if (!voteManager.debanVotes[targetUserId]) {
         return interaction.reply({ content: 'Vote de débannissement introuvable.', ephemeral: true });
+    }
+
+    // Un user ne peut pas voter sur sa propre demande de deban
+    if (interaction.user.id === targetUserId) {
+        return interaction.reply({ content: '❌ Vous ne pouvez pas voter sur votre propre demande de débannissement.', ephemeral: true });
     }
 
     const vote = voteManager.debanVotes[targetUserId];
@@ -449,7 +454,116 @@ async function handleDebanVote(interaction, voteManager, customId) {
         );
 
     await message.edit({ embeds: [updatedEmbed] });
-    await interaction.reply({ content: `Vote enregistré: ${voteType}`, ephemeral: true });
+    await interaction.reply({ content: `Vote enregistré : **${voteType}** (${memberPoints} pts).`, ephemeral: true });
+
+    // Majorité absolue automatique : dès qu'un camp dépasse 50% du total possible, on clôt.
+    try {
+        const totalPossiblePoints = await calculateTotalPossiblePoints(interaction.guild);
+        const majorityNeeded = Math.floor(totalPossiblePoints / 2) + 1;
+
+        if (totalPossiblePoints > 0 && (vote.oui >= majorityNeeded || vote.non >= majorityNeeded)) {
+            const winner = vote.oui >= majorityNeeded ? 'OUI' : 'NON';
+            console.log(`[Deban] Majorité absolue atteinte pour ${targetUserId}: ${winner} (${vote.oui} oui / ${vote.non} non, seuil ${majorityNeeded}/${totalPossiblePoints})`);
+            setTimeout(async () => {
+                try {
+                    await endDebanVoteProgrammatically(message, interaction.guild, voteManager, client, targetUserId);
+                } catch (err) {
+                    console.error('[Deban] Erreur fin auto (majorité):', err);
+                }
+            }, 2000);
+        }
+    } catch (err) {
+        console.error('[Deban] Erreur calcul majorité auto:', err);
+    }
+}
+
+/**
+ * Termine un vote de débannissement de manière programmatique (utilisé par la majorité auto).
+ * Factorise la logique de fin de vote pour éviter la duplication entre le bouton et la majorité auto.
+ */
+async function endDebanVoteProgrammatically(message, guild, voteManager, client, targetUserId) {
+    if (!voteManager.debanVotes[targetUserId]) return { success: false, reason: 'not_found' };
+
+    const vote = voteManager.debanVotes[targetUserId];
+    const accepted = vote.oui > vote.non;
+    const result = accepted ? '✅ ACCEPTÉ' : '❌ REFUSÉ';
+
+    const embed = message.embeds[0];
+    if (embed) {
+        const resultEmbed = EmbedBuilder.from(embed)
+            .setColor(accepted ? '#00FF00' : '#FF0000')
+            .setFooter({ text: `Résultat: ${result}` });
+
+        const disabledRow = message.components[0];
+        if (disabledRow?.components) {
+            disabledRow.components.forEach(button => { if (button.data) button.data.disabled = true; });
+        }
+        await message.edit({ embeds: [resultEmbed], components: disabledRow ? [disabledRow] : [] }).catch(() => null);
+    }
+
+    // Débannir si accepté
+    let unbanOk = true;
+    if (accepted) {
+        try {
+            const mainGuild = await client.guilds.fetch(CONFIG.DEBAN_GUILD_ID);
+            await mainGuild.bans.remove(targetUserId, 'Débannissement accepté par vote');
+        } catch (error) {
+            if (error?.code !== 10026) { // 10026 = Unknown Ban (déjà débanni)
+                console.error('[Deban] Erreur lors du débannissement:', error);
+                unbanOk = false;
+            }
+        }
+    } else {
+        // Refus → cooldown de 30 jours pour empêcher le spam de demandes
+        voteManager.addDebanRefusalCooldown(targetUserId);
+    }
+
+    // Notifier le user en DM (best-effort)
+    try {
+        const user = await client.users.fetch(targetUserId).catch(() => null);
+        if (user) {
+            const dmEmbed = new EmbedBuilder()
+                .setColor(accepted ? '#00FF00' : '#FF0000')
+                .setTitle(accepted ? '✅ Demande de débannissement acceptée' : '❌ Demande de débannissement refusée')
+                .setDescription(accepted
+                    ? `Le staff a voté **en votre faveur**. Vous avez été débanni du serveur.\n\nLien d'invitation : https://discord.gg/UJNZxzmmPV`
+                    : `Le staff a voté **contre** votre demande de débannissement.\n\nVous pourrez soumettre une nouvelle demande dans **30 jours**.`)
+                .setTimestamp();
+            await user.send({ embeds: [dmEmbed] }).catch(() => null);
+        }
+    } catch { /* DM fermés : on ignore */ }
+
+    // Log dans le salon staff
+    try {
+        const logChannel = guild?.channels?.cache?.get(CONFIG.STAFF_WARN_CHANNEL_ID);
+        if (logChannel?.isTextBased?.()) {
+            await logChannel.send(
+                `# Vote de débannissement terminé — <@${targetUserId}> (${targetUserId}) : ${result} (oui: ${vote.oui} / non: ${vote.non})`
+                + (accepted && !unbanOk ? '\n⚠️ Le débannissement API a échoué — vérifiez manuellement.' : '')
+            ).catch(() => null);
+        }
+    } catch (err) {
+        console.error('[Deban] Erreur log salon staff:', err);
+    }
+
+    // Envoyer un message public dans le salon de vote
+    if (message.channel?.isTextBased?.()) {
+        if (accepted) {
+            await message.channel.send(
+                unbanOk
+                    ? `✅ <@${targetUserId}> a été débanni avec succès suite au vote.`
+                    : `⚠️ Le vote est accepté pour <@${targetUserId}>, mais le débannissement API a échoué. Un admin doit vérifier.`
+            ).catch(() => null);
+        } else {
+            await message.channel.send(`❌ La demande de débannissement de <@${targetUserId}> a été refusée.`).catch(() => null);
+        }
+    }
+
+    delete voteManager.debanVotes[targetUserId];
+    voteManager.saveDebanVotes();
+    voteManager.activeDebanRequests.delete(targetUserId);
+
+    return { success: true, accepted, result };
 }
 
 /**
