@@ -68,11 +68,91 @@ class VoteManager {
         this.debanVotes = this.loadDebanVotes();
         this.candidateVotes = this.loadCandidateVotes();
         this.pendingDebanRequests = this.loadPendingDebanRequests();
+        this.debanCooldowns = this.loadDebanCooldowns();
 
         // Données temporaires
         this.modoTestData = {};
+        // Ensemble en mémoire pour traquer les submissions en cours (flow formulaire).
+        // La vérité persistante passe par hasActiveDebanRequest() qui combine debanVotes + pending + cooldowns.
         this.activeDebanRequests = new Set();
         this.formData = new Map();
+        this.formDataTimers = new Map();
+    }
+
+    /**
+     * Vérifie si un utilisateur a déjà une demande en cours (vote actif, en attente ou cooldown).
+     * Source de vérité persistante (survit aux redémarrages).
+     */
+    hasActiveDebanRequest(userId) {
+        if (this.debanVotes?.[userId]) return { active: true, reason: 'vote', data: this.debanVotes[userId] };
+        if (this.pendingDebanRequests?.[userId]) return { active: true, reason: 'pending', data: this.pendingDebanRequests[userId] };
+        const cd = this.debanCooldowns?.[userId];
+        if (cd && Number(cd.until) > Date.now()) return { active: true, reason: 'cooldown', data: cd };
+        if (this.activeDebanRequests.has(userId)) return { active: true, reason: 'in_progress', data: null };
+        return { active: false, reason: null, data: null };
+    }
+
+    /**
+     * Enregistre un cooldown après un refus. Empêche l'utilisateur de resoumettre pendant N ms.
+     */
+    addDebanRefusalCooldown(userId, ms = DEBAN_REFUSAL_COOLDOWN_MS) {
+        this.debanCooldowns = this.debanCooldowns || {};
+        this.debanCooldowns[userId] = {
+            until: Date.now() + ms,
+            createdAt: new Date().toISOString(),
+        };
+        this.saveDebanCooldowns();
+    }
+
+    /**
+     * Supprime le cooldown d'un utilisateur (ex. admin qui rouvre la porte).
+     */
+    clearDebanRefusalCooldown(userId) {
+        if (this.debanCooldowns?.[userId]) {
+            delete this.debanCooldowns[userId];
+            this.saveDebanCooldowns();
+        }
+    }
+
+    /**
+     * Purge les cooldowns expirés (appelé périodiquement par le scheduler).
+     */
+    purgeExpiredDebanCooldowns() {
+        if (!this.debanCooldowns) return 0;
+        const now = Date.now();
+        let removed = 0;
+        for (const [uid, cd] of Object.entries(this.debanCooldowns)) {
+            if (!cd?.until || Number(cd.until) <= now) {
+                delete this.debanCooldowns[uid];
+                removed++;
+            }
+        }
+        if (removed > 0) this.saveDebanCooldowns();
+        return removed;
+    }
+
+    /**
+     * Stocke les données de formulaire en mémoire avec un TTL. Après expiration, elles sont purgées
+     * automatiquement (évite les fuites si le user abandonne le flow en cours de route).
+     */
+    setFormData(userId, data, ttlMs = FORM_DATA_TTL_MS) {
+        this.formData.set(userId, data);
+        if (this.formDataTimers.has(userId)) clearTimeout(this.formDataTimers.get(userId));
+        const timer = setTimeout(() => {
+            this.formData.delete(userId);
+            this.formDataTimers.delete(userId);
+            this.activeDebanRequests.delete(userId);
+        }, ttlMs);
+        // Ne pas maintenir l'event-loop en vie juste pour ce timer
+        if (timer.unref) timer.unref();
+        this.formDataTimers.set(userId, timer);
+    }
+
+    clearFormData(userId) {
+        this.formData.delete(userId);
+        const t = this.formDataTimers.get(userId);
+        if (t) clearTimeout(t);
+        this.formDataTimers.delete(userId);
     }
 
     /**
