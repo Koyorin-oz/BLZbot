@@ -593,17 +593,59 @@ class VoteManager {
             channelId: channelId,
             originalUserId: userData.discordId,
             createdAt: new Date().toISOString(),
+            forumMode: Boolean(isForumChannel),
+            threadId: null,
         };
         this.saveDebanVotes();
 
-        const sentMessage = await targetChannel.send({
-            content: `<@&${mentionRoleId}> Nouvelle demande de débannissement !`,
-            embeds: [embed],
-            components: [row]
-        });
+        let sentMessage;
+        if (isForumChannel) {
+            const testGuildId = findTestGuildIdByForumChannelId(targetChannel.id);
+            if (!testGuildId) {
+                delete this.debanVotes[userData.discordId];
+                this.saveDebanVotes();
+                await interaction.followUp({
+                    content:
+                        '❌ Ce salon forum n\'est pas enregistré pour le mode déban test. Un admin doit exécuter `/panel-deban-test`.',
+                    ephemeral: true,
+                });
+                return { success: false, pending: false };
+            }
+            try {
+                const { thread, starterMessage } = await createDebanPost(
+                    client,
+                    testGuildId,
+                    userData,
+                    reportContent,
+                    mentionRoleId
+                );
+                sentMessage = starterMessage || (await thread.fetchStarterMessage().catch(() => null));
+                if (!sentMessage) {
+                    throw new Error('Starter message introuvable après création du post forum.');
+                }
+                this.debanVotes[userData.discordId].messageId = sentMessage.id;
+                this.debanVotes[userData.discordId].threadId = thread.id;
+                this.saveDebanVotes();
+            } catch (forumErr) {
+                console.error('[Deban] Erreur création post forum:', forumErr);
+                delete this.debanVotes[userData.discordId];
+                this.saveDebanVotes();
+                await interaction.followUp({
+                    content: `❌ Impossible de créer le post forum : ${forumErr?.message || forumErr}`,
+                    ephemeral: true,
+                });
+                return { success: false, pending: false };
+            }
+        } else {
+            sentMessage = await targetChannel.send({
+                content: `<@&${mentionRoleId}> Nouvelle demande de débannissement !`,
+                embeds: [embed],
+                components: [row],
+            });
+            this.debanVotes[userData.discordId].messageId = sentMessage.id;
+            this.saveDebanVotes();
+        }
 
-        this.debanVotes[userData.discordId].messageId = sentMessage.id;
-        this.saveDebanVotes();
         this.activeDebanRequests.add(userData.discordId);
 
         await interaction.followUp({
