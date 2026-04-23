@@ -6,8 +6,15 @@
  * Déployée en GUILDE uniquement sur le serveur de test (voir deploy-slash-commands.js).
  */
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const CONFIG = require('../config.js');
 const { TEST_DEBAN_BYPASS_GUILD_ID, buildPanelPayload } = require('./panel');
 const { createDebanForum } = require('../modules/debanForum');
+
+/** Serveurs où un admin peut créer le forum de votes deban (test + production). */
+const FORUM_SETUP_GUILD_IDS = new Set([
+    String(TEST_DEBAN_BYPASS_GUILD_ID),
+    String(CONFIG.MAIN_GUILD_ID),
+]);
 
 module.exports = {
     /** Lu par deploy-slash-commands : ne pas publier en global Discord. */
