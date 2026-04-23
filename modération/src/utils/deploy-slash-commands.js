@@ -10,8 +10,17 @@
  */
 const fs = require('fs');
 const path = require('path');
+const { TEST_DEBAN_BYPASS_GUILD_ID } = require('../commands/panel');
 
 const COMMANDS_DIR = path.join(__dirname, '..', 'commands');
+
+/**
+ * Commandes déployées uniquement sur certaines guildes (jamais en global).
+ * Map : nom de commande → Set d'IDs de guildes cibles.
+ */
+const GUILD_ONLY_BY_COMMAND = new Map([
+    ['panel-deban-test', new Set([String(TEST_DEBAN_BYPASS_GUILD_ID)])],
+]);
 // Anciens noms à supprimer proprement (renommages / commandes retirées).
 const LEGACY_COMMAND_NAMES_TO_REMOVE = new Set(['panel']);
 // Slash obsolètes à purger (ancienne convention, remplacée par autre chose).
