@@ -79,6 +79,7 @@ function botCanPostIn(channel) {
 module.exports = {
     TEST_DEBAN_BYPASS_GUILD_ID,
     ALLOWED_PANEL_GUILD_IDS,
+    buildPanelPayload,
 
     data: new SlashCommandBuilder()
         .setName('panel-deban')
