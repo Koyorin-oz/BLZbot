@@ -76,7 +76,7 @@ function removeForumConfigForGuild(testGuildId) {
  *
  * @param {import('discord.js').Client} client
  * @param {object} opts
- * @param {string} opts.testGuildId      - Guild où le panel sera posé (mémorise le mapping)
+ * @param {string} opts.testGuildId      - Guild « routage » (clé JSON : où l’admin a lancé la commande)
  * @param {string} opts.forumGuildId     - Guild qui hébergera le forum
  * @param {string} [opts.name]           - Nom du salon forum (défaut: `deban-forum`)
  * @param {string} [opts.parentId]       - ID de la catégorie parent (optionnel)
