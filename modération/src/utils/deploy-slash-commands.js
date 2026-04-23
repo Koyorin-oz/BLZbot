@@ -1,17 +1,21 @@
 /**
- * Enregistre les slash commands modération (guilde principale + serveur panel si besoin).
- * Utilisable depuis le bot ou depuis scripts/deploy-moderation-commands-cli.js
+ * Déploiement GLOBAL des slash commands modération.
+ *
+ * Politique : TOUTES les commandes sont déployées en GLOBAL sur l'application du bot,
+ * donc automatiquement disponibles sur chaque serveur où le bot est invité
+ * (support, test, production, futurs serveurs, etc.).
+ *
+ * Le déployeur nettoie aussi les résidus guild-spécifiques laissés par d'anciennes
+ * versions du déployeur (évite les doublons si Discord affichait deux fois la même commande).
  */
 const fs = require('fs');
 const path = require('path');
-const { getSlashDeployGuildIds } = require(path.join(__dirname, '..', '..', '..', 'blzbot-env.js'));
 
 const COMMANDS_DIR = path.join(__dirname, '..', 'commands');
-// Commandes déployées en GLOBAL (accessibles sur tous les serveurs où le bot est présent).
-// Elles ne sont JAMAIS déployées par guilde (évite les doublons).
-const GLOBAL_COMMAND_NAMES = new Set(['panel-deban', 'envoyer-message']);
-// Anciens noms à supprimer proprement (renommages)
+// Anciens noms à supprimer proprement (renommages / commandes retirées).
 const LEGACY_COMMAND_NAMES_TO_REMOVE = new Set(['panel']);
+// Slash obsolètes à purger (ancienne convention, remplacée par autre chose).
+const OBSOLETE_COMMAND_NAMES = new Set(['profil-staff-v2', 'profilstaff']);
 
 function isArchivedSlashCommandFile(basename) {
     return typeof basename === 'string' && basename.endsWith('-ancien.js');
@@ -28,195 +32,167 @@ function permsComparable(p) {
 }
 
 /**
+ * Compare une commande locale (toJSON) et la version distante Discord pour éviter
+ * de ré-écrire si rien n'a changé.
+ */
+function globalCommandUnchanged(existing, cmdJson) {
+    const remoteOpts = JSON.stringify(
+        existing.options?.map((o) => (o.toJSON ? o.toJSON() : o)) || []
+    );
+    const localOpts = JSON.stringify(cmdJson.options || []);
+    const permsOk =
+        permsComparable(existing.defaultMemberPermissions) ===
+        permsComparable(cmdJson.default_member_permissions);
+    return (
+        existing.description === cmdJson.description &&
+        remoteOpts === localOpts &&
+        permsOk
+    );
+}
+
+/**
  * @param {import('discord.js').Client} client
- * @param {object} config — même export que src/config.js
+ * @param {object} _config — gardé pour compat (non utilisé)
  * @param {{ compact?: boolean }} [opts]
  */
-async function deployModerationSlashCommands(client, config, opts = {}) {
+async function deployModerationSlashCommands(client, _config, opts = {}) {
     const compact = Boolean(opts.compact);
-    const commands = [];
-    const globalCommands = [];
+
+    /** Noms forcés à re-PUT (bypass comparaison) — pour commandes dont Discord skip à tort. */
+    const forceRefreshNames = new Set(
+        String(process.env.BLZ_FORCE_MOD_SLASH_NAMES || 'profil-staff')
+            .split(/[,;]/)
+            .map((s) => s.trim())
+            .filter(Boolean)
+    );
 
     const commandFiles = fs
         .readdirSync(COMMANDS_DIR)
         .filter((f) => f.endsWith('.js') && !isArchivedSlashCommandFile(f));
+
+    /** Commandes locales à déployer, indexées par nom. */
+    const localCommands = new Map();
     for (const file of commandFiles) {
         const command = require(path.join(COMMANDS_DIR, file));
         if (!command.data) continue;
         const cmdJson = toCmdJson(command.data);
         if (!cmdJson || !cmdJson.name) continue;
-        if (GLOBAL_COMMAND_NAMES.has(cmdJson.name)) {
-            globalCommands.push(command.data);
-        } else {
-            commands.push(command.data);
-        }
+        localCommands.set(cmdJson.name, command.data);
     }
 
-    const modNames = [...commands, ...globalCommands].map((c) => toCmdJson(c).name).filter(Boolean);
-    const hasTestBienvenue = modNames.includes('test-bienvenue');
+    const localNames = [...localCommands.keys()];
     console.log(
-        `[modération/deploy] ${modNames.length} commande(s) lues sur disque — /test-bienvenue : ${hasTestBienvenue ? 'OUI ✓' : 'NON ✗ (fichier test-bienvenue.js manquant sur ce serveur ?)'}`
+        `[modération/deploy] ${localNames.length} commande(s) locales → déploiement GLOBAL (toutes guildes).`
     );
 
-    if (!compact) console.log('🔄 Démarrage de l\'enregistrement des commandes slash (Mode Sûr)...');
+    if (!compact) console.log('🔄 Modération — enregistrement GLOBAL des slash commands…');
 
     if (!client.isReady()) {
         await new Promise((resolve) => client.once('clientReady', resolve));
     }
 
-    const mainGuildIds = getSlashDeployGuildIds();
-    if (mainGuildIds.length === 0) {
-        console.error(
-            '❌ Modération — aucun GUILD_ID valide (vérifie le .env / mode TEST et BLZ_MAIN_GUILD_ID).'
-        );
-        return;
-    }
-
-    if (!compact) {
-        console.log(
-            `[modération/deploy] Guildes cibles : ${mainGuildIds.join(', ')} (GUILD_ID + BLZ_MAIN_GUILD_ID si défini). Le bot doit être invité sur chacune.`
-        );
-    }
-
-    // ==================== COMMANDES GLOBALES ====================
-    // Déployées sur toute l'application (disponibles automatiquement sur chaque serveur où le bot est invité).
-    // Propagation Discord : quasi instantanée pour une MAJ, quelques minutes la première fois.
-    if (globalCommands.length > 0) {
-        try {
-            const appCommands = await client.application.commands.fetch();
-            for (const cmdData of globalCommands) {
-                const cmdJsonGlobal = toCmdJson(cmdData);
-                const existingGlobal = appCommands.find((x) => x.name === cmdJsonGlobal.name);
-                if (existingGlobal) {
-                    await client.application.commands.edit(existingGlobal.id, cmdJsonGlobal);
-                    if (!compact) console.log(`🔄 Commande GLOBALE mise à jour : /${cmdJsonGlobal.name}`);
-                } else {
-                    await client.application.commands.create(cmdJsonGlobal);
-                    if (!compact) console.log(`✨ Commande GLOBALE créée : /${cmdJsonGlobal.name}`);
-                }
-            }
-
-            // Nettoyage : si une commande globale a été renommée (ex. /panel → /panel-deban),
-            // on purge l'ancien nom à la fois en global ET sur chaque guilde où il aurait traîné.
-            for (const legacy of LEGACY_COMMAND_NAMES_TO_REMOVE) {
-                const oldGlobal = appCommands.find((x) => x.name === legacy);
-                if (oldGlobal) {
-                    await oldGlobal.delete().catch(() => null);
-                    if (!compact) console.log(`🗑️ Ancienne commande globale supprimée : /${legacy}`);
-                }
-            }
-            for (const gid of mainGuildIds) {
-                const g = await client.guilds.fetch(gid).catch(() => null);
-                if (!g) continue;
-                const ex = await g.commands.fetch().catch(() => null);
-                if (!ex) continue;
-                for (const cmd of ex.values()) {
-                    if (LEGACY_COMMAND_NAMES_TO_REMOVE.has(cmd.name) || GLOBAL_COMMAND_NAMES.has(cmd.name)) {
-                        // On supprime les résidus : legacy (renommé) + doublons guilde d'une commande globale
-                        await cmd.delete().catch(() => null);
-                        if (!compact) console.log(`🗑️ [${g.name}] résidu guilde supprimé : /${cmd.name}`);
-                    }
-                }
-            }
-        } catch (globalError) {
-            console.error('❌ Erreur déploiement commandes globales:', globalError.message || globalError);
-        }
-    }
-
+    // ==================== DÉPLOIEMENT GLOBAL ====================
     let createdCount = 0;
     let updatedCount = 0;
     let skippedCount = 0;
     let errorCount = 0;
-    let anyGuildOk = false;
+    let deletedGlobal = 0;
 
-    for (const gid of mainGuildIds) {
-        const guild = await client.guilds.fetch(gid).catch((e) => {
-            if (e.code === 10004) {
-                console.error(`❌ Modération — guilde ${gid} inconnue ou bot non membre.`);
-            } else {
-                console.error(`❌ Modération — guilde ${gid}:`, e.message || e);
-            }
-            return null;
-        });
-        if (!guild) continue;
-        anyGuildOk = true;
-
-        if (!compact) console.log(`[modération/deploy] — ${guild.name} (${guild.id})`);
-
-        const existingCommands = await guild.commands.fetch();
-        const existingMap = new Map();
-        existingCommands.forEach((cmd) => existingMap.set(cmd.name, cmd));
-
-        /** Toujours re-PUT ces commandes (évite un slash obsolète si Discord compare mal). */
-        const forceModerationSlashRefresh = new Set(
-            String(process.env.BLZ_FORCE_MOD_SLASH_NAMES || 'profil-staff')
-                .split(/[,;]/)
-                .map((s) => s.trim())
-                .filter(Boolean)
+    let appCommands;
+    try {
+        appCommands = await client.application.commands.fetch();
+    } catch (fetchError) {
+        console.error(
+            '❌ Modération — impossible de fetch les commandes globales:',
+            fetchError.message || fetchError
         );
+        return;
+    }
 
-        for (const commandData of commands) {
-            let cmdJson;
-            try {
-                cmdJson = toCmdJson(commandData);
-                const existing = existingMap.get(cmdJson.name);
+    const appMap = new Map();
+    appCommands.forEach((cmd) => appMap.set(cmd.name, cmd));
 
-                if (existing) {
-                    const remoteOpts = JSON.stringify(existing.options?.map((o) => (o.toJSON ? o.toJSON() : o)) || []);
-                    const localOpts = JSON.stringify(cmdJson.options || []);
-                    const permsOk =
-                        permsComparable(existing.defaultMemberPermissions) ===
-                        permsComparable(cmdJson.default_member_permissions);
-                    const unchanged =
-                        existing.description === cmdJson.description && remoteOpts === localOpts && permsOk;
-                    if (unchanged && !forceModerationSlashRefresh.has(cmdJson.name)) {
-                        skippedCount++;
-                        continue;
-                    }
+    for (const [name, data] of localCommands.entries()) {
+        let cmdJson;
+        try {
+            cmdJson = toCmdJson(data);
+            const existing = appMap.get(name);
+            if (existing) {
+                if (globalCommandUnchanged(existing, cmdJson) && !forceRefreshNames.has(name)) {
+                    skippedCount++;
+                    continue;
                 }
-
-                if (existing) {
-                    await guild.commands.edit(existing.id, cmdJson);
-                } else {
-                    await guild.commands.create(cmdJson);
-                }
-                if (!compact) {
-                    const action = existing ? '🔄' : '✨';
-                    console.log(`${action} [${guild.name}] ${existing ? 'mise à jour' : 'créée'}: ${cmdJson.name}`);
-                }
-                if (existing) updatedCount++;
-                else createdCount++;
-            } catch (cmdError) {
-                const errMsg = cmdError?.message || String(cmdError);
-                const name = cmdJson?.name || (typeof commandData?.name === 'string' ? commandData.name : '?');
-                console.error(`❌ Modération [${guild.id}] /${name}: ${errMsg}`);
-                errorCount++;
+                await client.application.commands.edit(existing.id, cmdJson);
+                if (!compact) console.log(`🔄 [GLOBAL] mise à jour : /${name}`);
+                updatedCount++;
+            } else {
+                await client.application.commands.create(cmdJson);
+                if (!compact) console.log(`✨ [GLOBAL] créée : /${name}`);
+                createdCount++;
             }
-        }
-
-        const obsoleteModSlash = new Set(['profil-staff-v2', 'profilstaff']);
-        for (const cmd of existingMap.values()) {
-            if (!obsoleteModSlash.has(cmd.name)) continue;
-            try {
-                await cmd.delete();
-                if (!compact) console.log(`🗑️ [${guild.name}] Slash obsolète retiré: /${cmd.name}`);
-            } catch (delErr) {
-                console.warn(`[modération/deploy] Suppression /${cmd.name}: ${delErr?.message || delErr}`);
-            }
+        } catch (cmdError) {
+            const errMsg = cmdError?.message || String(cmdError);
+            console.error(`❌ Modération [GLOBAL] /${name}: ${errMsg}`);
+            errorCount++;
         }
     }
 
-    if (!anyGuildOk) {
-        console.error('❌ Modération — aucune guilde accessible pour enregistrer les commandes.');
-        return;
+    // Purge des anciens noms globaux (renommages + commandes retirées)
+    for (const cmd of appCommands.values()) {
+        if (LEGACY_COMMAND_NAMES_TO_REMOVE.has(cmd.name) || OBSOLETE_COMMAND_NAMES.has(cmd.name)) {
+            try {
+                await cmd.delete();
+                deletedGlobal++;
+                if (!compact) console.log(`🗑️ [GLOBAL] ancienne commande supprimée : /${cmd.name}`);
+            } catch (_) { /* noop */ }
+        }
+    }
+
+    // ==================== NETTOYAGE PAR GUILDE ====================
+    // On supprime TOUTES les commandes guild-spécifiques qui existent aussi dans notre
+    // liste locale (car elles sont désormais globales) + les legacies.
+    // Résultat : plus aucun doublon dans les serveurs où le bot est invité.
+    let guildCleanupTotal = 0;
+    let guildsVisited = 0;
+    let guildsInError = 0;
+
+    for (const [, guild] of client.guilds.cache) {
+        guildsVisited++;
+        try {
+            const existing = await guild.commands.fetch();
+            for (const cmd of existing.values()) {
+                const shouldDelete =
+                    localCommands.has(cmd.name) ||
+                    LEGACY_COMMAND_NAMES_TO_REMOVE.has(cmd.name) ||
+                    OBSOLETE_COMMAND_NAMES.has(cmd.name);
+                if (!shouldDelete) continue;
+                try {
+                    await cmd.delete();
+                    guildCleanupTotal++;
+                    if (!compact) console.log(`🗑️ [${guild.name}] doublon guilde supprimé : /${cmd.name}`);
+                } catch (_) { /* noop */ }
+            }
+        } catch (guildError) {
+            guildsInError++;
+            if (!compact) {
+                console.warn(
+                    `[modération/deploy] nettoyage ${guild.name} (${guild.id}) : ${guildError?.message || guildError}`
+                );
+            }
+        }
     }
 
     if (compact) {
         console.log(
-            `[modération] Slash : +${createdCount} maj ${updatedCount} skip ${skippedCount} err ${errorCount} · guildes ${mainGuildIds.join(',')}`
+            `[modération] Slash GLOBAL : +${createdCount} maj ${updatedCount} skip ${skippedCount} err ${errorCount} · legacyGlobal ${deletedGlobal} · cleanGuilds ${guildCleanupTotal}/${guildsVisited}${guildsInError ? ` (err ${guildsInError})` : ''}`
         );
     } else {
-        console.log(`✓ Modération: ${createdCount} new, ${updatedCount} updated, ${skippedCount} skipped, ${errorCount} errors`);
+        console.log(
+            `✓ Modération GLOBAL: ${createdCount} new, ${updatedCount} updated, ${skippedCount} skipped, ${errorCount} errors, ${deletedGlobal} legacy supprimée(s).`
+        );
+        console.log(
+            `✓ Modération — nettoyage guildes : ${guildCleanupTotal} doublon(s) supprimé(s) sur ${guildsVisited} guilde(s)${guildsInError ? ` (${guildsInError} erreur(s))` : ''}.`
+        );
     }
 }
 
