@@ -390,7 +390,7 @@ async function renderFiche1(data) {
     const mainW = innerW - colAvatar - gap;
 
     glassCell(ctx, x0, y0, colAvatar, innerH, 16);
-    /* PP = membre affiché (cible) ; invokerStaffTitle = légende staff de celui qui lance la commande. */
+    /* PP + légende staff = membre affiché (cible du /profil). */
     const avImg = await loadAvatar(member);
     const avR = 40;
     const avCx = x0 + colAvatar / 2;
