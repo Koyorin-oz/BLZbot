@@ -71,11 +71,13 @@ module.exports = {
         ];
 
         try {
-            // 1. Bypass global : si le panel est sur le serveur de TEST, on saute intégralement
-            //    la vérif de ban (tout le monde peut tester le flow).
+            // 1. Bypass global : si le panel est sur le serveur de TEST, ou si l'utilisateur
+            //    est bot owner (koyorin), on saute intégralement la vérif de ban.
             const isTestServer = String(interaction.guild?.id) === String(TEST_DEBAN_BYPASS_GUILD_ID);
 
-            if (isTestServer) {
+            if (ownerBypass) {
+                // Déjà loggé plus haut, on saute la vérif ban.
+            } else if (isTestServer) {
                 console.log(`[Deban] Serveur de test (${interaction.guild.id}) : bypass ban check pour ${interaction.user.tag}`);
             } else {
                 // 2. Vérif normale : sur tous les autres serveurs, on regarde le ban sur le serveur principal BLZ.
