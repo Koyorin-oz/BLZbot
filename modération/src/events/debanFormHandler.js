@@ -254,11 +254,8 @@ module.exports = {
         const whenBanned = interaction.fields.getTextInputValue('whenBanned')?.trim();
         const whoBanned = interaction.fields.getTextInputValue('whoBanned')?.trim();
 
-        // Validation immédiate de la date pour éviter qu'un user investisse 3 étapes
-        // pour voir sa demande refusée pour un format invalide à la fin.
-        const { parseAndCheckBanDate } = require('../modules/votes').prototype
-            ? {} : {};
-        // parseAndCheckBanDate est une méthode d'instance — on passe par voteManager
+        // Validation immédiate de la date pour éviter qu'un user complète 3 étapes
+        // avant de voir sa demande refusée pour un format invalide à la fin.
         const banCheck = voteManager.parseAndCheckBanDate(whenBanned);
         if (!banCheck.ok) {
             return interaction.reply({
