@@ -72,10 +72,10 @@ module.exports = {
     async execute(interaction, { client } = {}) {
         const cli = client || interaction.client;
 
-        if (String(interaction.guildId) !== String(TEST_DEBAN_BYPASS_GUILD_ID)) {
+        if (!FORUM_SETUP_GUILD_IDS.has(String(interaction.guildId))) {
             return interaction.reply({
                 content:
-                    '❌ Cette commande n\'est utilisable **que** sur le serveur de test BLZ (mode forum déban).',
+                    '❌ Cette commande n\'est disponible que sur le **serveur principal BLZ** ou le **serveur de test** (configuration forum déban).',
                 ephemeral: true,
             });
         }
