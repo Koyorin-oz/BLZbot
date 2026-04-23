@@ -1,5 +1,5 @@
 /**
- * Aperçus /testprofil (Fiche 1 ou 2) et carte /profil (Fiche 2).
+ * Aperçus fiche profil (Fiche 1 ou 2) et carte /profil (Fiche 2).
  * fiche_1 : colonne + grille 2×3 (version actuelle sauvegardée).
  * fiche_2 : 1024×381 — blz_bg + voile léger (fond visible), panneaux noirs semi-transparents.
  */

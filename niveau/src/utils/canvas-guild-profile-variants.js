@@ -1,5 +1,5 @@
 /**
- * Aperçus /testprofilguilde — thème BLZ saturé (noir, bordeaux, or, jaune, rouge).
+ * Aperçus profil-guilde (variantes) — thème BLZ saturé (noir, bordeaux, or, jaune, rouge).
  * citadelle | rempart | brasier | etendard
  */
 const { createCanvas, loadImage, registerFont } = require('canvas');
