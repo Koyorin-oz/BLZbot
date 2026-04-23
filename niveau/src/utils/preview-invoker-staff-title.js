@@ -1,8 +1,7 @@
 /**
- * Titre staff (colonne gauche) sur /profil et /testprofil : rôles de l’utilisateur qui lance la commande
+ * Titre staff (colonne gauche) sur /profil et /testprofil : rôles d’un utilisateur
  * sur la guilde principale BLZ (BLZ_MAIN_GUILD_ID ou 1097110036192448656).
- * Priorité : du plus haut au plus bas ; « Membre » seulement si aucun des rôles staff/VIP
- * et présence du rôle membre.
+ * Priorité : Owner serveur > rôles staff (du plus haut au plus bas) > Membre.
  */
 const PREVIEW_STAFF_GUILD_ID = String(process.env.BLZ_MAIN_GUILD_ID || '1097110036192448656').trim();
 
@@ -21,17 +20,21 @@ const PREVIEW_INVOKER_STAFF_ROLES = [
 const PREVIEW_INVOKER_MEMBRE_ROLE_ID = '1323236382881222797';
 
 /**
+ * Retourne le titre staff à afficher pour un utilisateur donné.
  * @param {import('discord.js').Client} client
- * @param {string} invokerUserId
+ * @param {string} userId
  * @returns {Promise<string|null>}
  */
-async function getPreviewInvokerStaffTitle(client, invokerUserId) {
-    if (!client || !invokerUserId || !PREVIEW_STAFF_GUILD_ID) return null;
+async function getPreviewStaffTitleForUser(client, userId) {
+    if (!client || !userId || !PREVIEW_STAFF_GUILD_ID) return null;
     const guild =
         client.guilds.cache.get(PREVIEW_STAFF_GUILD_ID) ??
         (await client.guilds.fetch(PREVIEW_STAFF_GUILD_ID).catch(() => null));
     if (!guild) return null;
-    const member = await guild.members.fetch(invokerUserId).catch(() => null);
+
+    if (guild.ownerId === userId) return 'Owner';
+
+    const member = await guild.members.fetch(userId).catch(() => null);
     if (!member) return null;
     for (const { id, label } of PREVIEW_INVOKER_STAFF_ROLES) {
         if (member.roles.cache.has(id)) return label;
@@ -40,7 +43,16 @@ async function getPreviewInvokerStaffTitle(client, invokerUserId) {
     return null;
 }
 
+/**
+ * @deprecated Utiliser `getPreviewStaffTitleForUser` : on affiche le titre de la cible du /profil,
+ *             pas de celui qui lance la commande. Conservé pour compat éventuelle.
+ */
+async function getPreviewInvokerStaffTitle(client, invokerUserId) {
+    return getPreviewStaffTitleForUser(client, invokerUserId);
+}
+
 module.exports = {
+    getPreviewStaffTitleForUser,
     getPreviewInvokerStaffTitle,
     PREVIEW_STAFF_GUILD_ID,
 };
