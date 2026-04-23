@@ -240,12 +240,17 @@ async function deployModerationSlashCommands(client, _config, opts = {}) {
 
     if (compact) {
         console.log(
-            `[modération] Slash GLOBAL : +${createdCount} maj ${updatedCount} skip ${skippedCount} err ${errorCount} · legacyGlobal ${deletedGlobal} · cleanGuilds ${guildCleanupTotal}/${guildsVisited}${guildsInError ? ` (err ${guildsInError})` : ''}`
+            `[modération] Slash GLOBAL : +${createdCount} maj ${updatedCount} skip ${skippedCount} err ${errorCount} · legacyGlobal ${deletedGlobal} · guildOnly +${guildOnlyCreated}/~${guildOnlyUpdated} · cleanGuilds ${guildCleanupTotal}/${guildsVisited}${guildsInError ? ` (err ${guildsInError})` : ''}`
         );
     } else {
         console.log(
-            `✓ Modération GLOBAL: ${createdCount} new, ${updatedCount} updated, ${skippedCount} skipped, ${errorCount} errors, ${deletedGlobal} legacy supprimée(s).`
+            `✓ Modération GLOBAL: ${createdCount} new, ${updatedCount} updated, ${skippedCount} skipped, ${errorCount} errors, ${deletedGlobal} retirée(s) du global.`
         );
+        if (guildOnlyCommandNames.size > 0) {
+            console.log(
+                `✓ Modération guild-only : ${guildOnlyCreated} créée(s), ${guildOnlyUpdated} MAJ — ${[...guildOnlyCommandNames].join(', ')}`
+            );
+        }
         console.log(
             `✓ Modération — nettoyage guildes : ${guildCleanupTotal} doublon(s) supprimé(s) sur ${guildsVisited} guilde(s)${guildsInError ? ` (${guildsInError} erreur(s))` : ''}.`
         );
