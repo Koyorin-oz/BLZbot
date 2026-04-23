@@ -10,7 +10,7 @@ const {
     normalizeProfileVariant,
 } = require('./canvas-profile-variants');
 const { getOngoingWar } = require('./guild/guild-wars');
-const { getPreviewInvokerStaffTitle } = require('./preview-invoker-staff-title');
+const { getPreviewStaffTitleForUser } = require('./preview-invoker-staff-title');
 
 /**
  * Données + PNG pour une fiche d’aperçu profil (Fiche 1 ou 2), depuis une interaction slash.
