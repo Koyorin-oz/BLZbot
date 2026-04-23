@@ -22,10 +22,17 @@ const ALLOWED_PANEL_GUILD_IDS = [
     '1097110036192448656', // Serveur principal BLZ
 ];
 
-/** Types de salons acceptés pour poster le panel ou envoyer les demandes. */
-const ALLOWED_CHANNEL_TYPES = new Set([
+/** Salons où on peut **afficher** le panneau (pas un parent forum : pas de message simple dedans). */
+const PANEL_DISPLAY_CHANNEL_TYPES = new Set([
     ChannelType.GuildText,
     ChannelType.GuildAnnouncement,
+]);
+
+/** Destination des votes (`salon-deban`) : texte, annonces, ou salon forum enregistré via /panel-deban-test. */
+const DEBAN_VOTE_CHANNEL_TYPES = new Set([
+    ChannelType.GuildText,
+    ChannelType.GuildAnnouncement,
+    ChannelType.GuildForum,
 ]);
 
 function buildPanelPayload(debanChannelId) {
