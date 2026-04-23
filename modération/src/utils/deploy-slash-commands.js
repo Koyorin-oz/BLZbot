@@ -10,7 +10,6 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { TEST_DEBAN_BYPASS_GUILD_ID } = require('../commands/panel');
 const CONFIG = require('../config.js');
 
 const COMMANDS_DIR = path.join(__dirname, '..', 'commands');

@@ -9,11 +9,6 @@ const {
 } = require('discord.js');
 
 /**
- * Serveur de test où tout le monde peut faire une demande de deban (bypass du check ban).
- */
-const TEST_DEBAN_BYPASS_GUILD_ID = '1493276404643532810';
-
-/**
  * Serveurs dans lesquels on accepte que /panel-deban poste le panel ou envoie les demandes.
  * On autorise le panel à être posté dans l'un et les demandes à arriver dans l'autre.
  */
