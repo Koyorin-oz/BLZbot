@@ -19,10 +19,7 @@ const COMMANDS_DIR = path.join(__dirname, '..', 'commands');
  * Map : nom de commande → Set d'IDs de guildes cibles.
  */
 const GUILD_ONLY_BY_COMMAND = new Map([
-    [
-        'panel-deban-test',
-        new Set([String(TEST_DEBAN_BYPASS_GUILD_ID), String(CONFIG.MAIN_GUILD_ID)]),
-    ],
+    ['panel-deban-forum', new Set([String(CONFIG.MAIN_GUILD_ID)])],
 ]);
 // Anciens noms à supprimer proprement (renommages / commandes retirées).
 const LEGACY_COMMAND_NAMES_TO_REMOVE = new Set(['panel']);
