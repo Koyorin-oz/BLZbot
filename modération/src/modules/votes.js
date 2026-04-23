@@ -635,6 +635,7 @@ class VoteManager {
                 return { success: false, pending: false };
             }
         } else {
+            const { embed, row } = this._buildDebanVoteComponents(userData, reportContent, targetChannel);
             sentMessage = await targetChannel.send({
                 content: `<@&${mentionRoleId}> Nouvelle demande de débannissement !`,
                 embeds: [embed],
