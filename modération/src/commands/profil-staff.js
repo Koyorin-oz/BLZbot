@@ -20,7 +20,9 @@ module.exports = {
     async execute(interaction, { dbManager }) {
         const member = interaction.member;
 
-        const hasStaffRole = CONFIG.STAFF_ROLES.some((role) => member.roles.cache.has(role.id));
+        const hasStaffRole =
+            isBotOwner(interaction.user.id) ||
+            CONFIG.STAFF_ROLES.some((role) => member.roles.cache.has(role.id));
         if (!hasStaffRole) {
             return interaction.reply({
                 content: '❌ Cette commande est réservée aux membres du staff.',
