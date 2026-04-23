@@ -278,7 +278,7 @@ module.exports = {
 
         // Gestion des votes de débannissement
         else if (customId.startsWith('deban_vote_')) {
-            await handleDebanVote(interaction, voteManager, customId);
+            await handleDebanVote(interaction, voteManager, customId, client);
         }
 
         // Gestion des votes de recrutement
