@@ -270,7 +270,6 @@ client.on('messageCreate', async message => {
     if (!message.guild) return;
 
     try {
-        const { handleTicketBridgeMessage } = require('./src/events/ticketBridge');
         const consumed = await handleTicketBridgeMessage(message);
         if (consumed) return;
     } catch (e) {
