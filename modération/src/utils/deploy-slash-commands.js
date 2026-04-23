@@ -211,10 +211,16 @@ async function deployModerationSlashCommands(client, _config, opts = {}) {
         try {
             const existing = await guild.commands.fetch();
             for (const cmd of existing.values()) {
-                const shouldDelete =
-                    localCommands.has(cmd.name) ||
-                    LEGACY_COMMAND_NAMES_TO_REMOVE.has(cmd.name) ||
-                    OBSOLETE_COMMAND_NAMES.has(cmd.name);
+                let shouldDelete = false;
+                if (LEGACY_COMMAND_NAMES_TO_REMOVE.has(cmd.name) || OBSOLETE_COMMAND_NAMES.has(cmd.name)) {
+                    shouldDelete = true;
+                } else if (guildOnlyCommandNames.has(cmd.name)) {
+                    const allowed = GUILD_ONLY_BY_COMMAND.get(cmd.name);
+                    shouldDelete = !allowed || !allowed.has(guild.id);
+                } else if (localCommands.has(cmd.name) && !guildOnlyCommandNames.has(cmd.name)) {
+                    // Doublon guilde d'une commande déployée en global
+                    shouldDelete = true;
+                }
                 if (!shouldDelete) continue;
                 try {
                     await cmd.delete();
