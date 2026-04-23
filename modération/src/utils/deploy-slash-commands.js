@@ -7,6 +7,10 @@
  *
  * Le déployeur nettoie aussi les résidus guild-spécifiques laissés par d'anciennes
  * versions du déployeur (évite les doublons si Discord affichait deux fois la même commande).
+ *
+ * **Miroir guild** : sur le serveur support (par défaut), `guild.commands.set` republie
+ * toute la liste des commandes en enregistrement **guild**, pour les serveurs où l’invite
+ * n’incluait pas le scope `applications.commands` (les globaux ne s’y affichent pas).
  */
 const fs = require('fs');
 const path = require('path');
