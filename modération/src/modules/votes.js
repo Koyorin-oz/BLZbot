@@ -1,8 +1,16 @@
 const fs = require('fs');
 const path = require('path');
-const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionsBitField } = require('discord.js');
+const {
+    EmbedBuilder,
+    ButtonBuilder,
+    ActionRowBuilder,
+    ButtonStyle,
+    PermissionsBitField,
+    ChannelType,
+} = require('discord.js');
 const CONFIG = require('../config.js');
 const { isBotOwner } = require('../utils/bot-owner');
+const { createDebanPost, findTestGuildIdByForumChannelId } = require('./debanForum');
 
 const _V_COMPACT = process.env.BLZ_COMPACT_LOG === '1';
 
