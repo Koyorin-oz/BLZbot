@@ -35,7 +35,7 @@ function permsComparable(p) {
 async function deployModerationSlashCommands(client, config, opts = {}) {
     const compact = Boolean(opts.compact);
     const commands = [];
-    const panelCommands = [];
+    const globalCommands = [];
 
     const commandFiles = fs
         .readdirSync(COMMANDS_DIR)
@@ -45,14 +45,14 @@ async function deployModerationSlashCommands(client, config, opts = {}) {
         if (!command.data) continue;
         const cmdJson = toCmdJson(command.data);
         if (!cmdJson || !cmdJson.name) continue;
-        if (PANEL_COMMAND_NAMES.has(cmdJson.name)) {
-            panelCommands.push(command.data);
+        if (GLOBAL_COMMAND_NAMES.has(cmdJson.name)) {
+            globalCommands.push(command.data);
         } else {
             commands.push(command.data);
         }
     }
 
-    const modNames = [...commands, ...panelCommands].map((c) => toCmdJson(c).name).filter(Boolean);
+    const modNames = [...commands, ...globalCommands].map((c) => toCmdJson(c).name).filter(Boolean);
     const hasTestBienvenue = modNames.includes('test-bienvenue');
     console.log(
         `[modération/deploy] ${modNames.length} commande(s) lues sur disque — /test-bienvenue : ${hasTestBienvenue ? 'OUI ✓' : 'NON ✗ (fichier test-bienvenue.js manquant sur ce serveur ?)'}`
@@ -78,46 +78,48 @@ async function deployModerationSlashCommands(client, config, opts = {}) {
         );
     }
 
-    if (panelCommands.length > 0) {
+    // ==================== COMMANDES GLOBALES ====================
+    // Déployées sur toute l'application (disponibles automatiquement sur chaque serveur où le bot est invité).
+    // Propagation Discord : quasi instantanée pour une MAJ, quelques minutes la première fois.
+    if (globalCommands.length > 0) {
         try {
-            const panelGuild = await client.guilds.fetch(config.PANEL_GUILD_ID);
-            if (panelGuild) {
-                for (const cmdData of panelCommands) {
-                    const cmdJsonPanel = toCmdJson(cmdData);
-                    const existingPanel = await panelGuild.commands.fetch().then((c) => c.find((x) => x.name === cmdJsonPanel.name));
-                    if (existingPanel) {
-                        await panelGuild.commands.edit(existingPanel.id, cmdJsonPanel);
-                    } else {
-                        await panelGuild.commands.create(cmdJsonPanel);
-                    }
-                    if (!compact) console.log(`✨ Commande déployée sur serveur panel: ${cmdJsonPanel.name}`);
+            const appCommands = await client.application.commands.fetch();
+            for (const cmdData of globalCommands) {
+                const cmdJsonGlobal = toCmdJson(cmdData);
+                const existingGlobal = appCommands.find((x) => x.name === cmdJsonGlobal.name);
+                if (existingGlobal) {
+                    await client.application.commands.edit(existingGlobal.id, cmdJsonGlobal);
+                    if (!compact) console.log(`🔄 Commande GLOBALE mise à jour : /${cmdJsonGlobal.name}`);
+                } else {
+                    await client.application.commands.create(cmdJsonGlobal);
+                    if (!compact) console.log(`✨ Commande GLOBALE créée : /${cmdJsonGlobal.name}`);
                 }
-                for (const gid of mainGuildIds) {
-                    if (String(gid) === String(config.PANEL_GUILD_ID)) continue;
-                    const stripGuild = await client.guilds.fetch(gid).catch(() => null);
-                    if (!stripGuild) continue;
-                    const mainExisting = await stripGuild.commands.fetch();
-                    for (const cmd of mainExisting.values()) {
-                        if (PANEL_COMMAND_NAMES.has(cmd.name)) {
-                            await cmd.delete();
-                            if (!compact) {
-                                console.log(`🗑️ Commande supprimée (${stripGuild.name}): ${cmd.name}`);
-                            }
-                        }
+            }
+
+            // Nettoyage : si une commande globale a été renommée (ex. /panel → /panel-deban),
+            // on purge l'ancien nom à la fois en global ET sur chaque guilde où il aurait traîné.
+            for (const legacy of LEGACY_COMMAND_NAMES_TO_REMOVE) {
+                const oldGlobal = appCommands.find((x) => x.name === legacy);
+                if (oldGlobal) {
+                    await oldGlobal.delete().catch(() => null);
+                    if (!compact) console.log(`🗑️ Ancienne commande globale supprimée : /${legacy}`);
+                }
+            }
+            for (const gid of mainGuildIds) {
+                const g = await client.guilds.fetch(gid).catch(() => null);
+                if (!g) continue;
+                const ex = await g.commands.fetch().catch(() => null);
+                if (!ex) continue;
+                for (const cmd of ex.values()) {
+                    if (LEGACY_COMMAND_NAMES_TO_REMOVE.has(cmd.name) || GLOBAL_COMMAND_NAMES.has(cmd.name)) {
+                        // On supprime les résidus : legacy (renommé) + doublons guilde d'une commande globale
+                        await cmd.delete().catch(() => null);
+                        if (!compact) console.log(`🗑️ [${g.name}] résidu guilde supprimé : /${cmd.name}`);
                     }
                 }
-            } else {
-                console.error('❌ Impossible de trouver le serveur panel pour enregistrer /panel.');
             }
-        } catch (panelError) {
-            if (panelError.code === 10004) {
-                console.warn(
-                    `[modération] Serveur panel (PANEL_GUILD_ID=${config.PANEL_GUILD_ID}) introuvable — /panel non déployé. ` +
-                        'Invite le bot sur ce serveur ou mets PANEL_GUILD_ID=ton GUILD_ID dans le .env.'
-                );
-            } else {
-                console.error('❌ Erreur déploiement commandes panel:', panelError.message || panelError);
-            }
+        } catch (globalError) {
+            console.error('❌ Erreur déploiement commandes globales:', globalError.message || globalError);
         }
     }
 
