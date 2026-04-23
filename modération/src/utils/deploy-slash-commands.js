@@ -7,7 +7,11 @@ const path = require('path');
 const { getSlashDeployGuildIds } = require(path.join(__dirname, '..', '..', '..', 'blzbot-env.js'));
 
 const COMMANDS_DIR = path.join(__dirname, '..', 'commands');
-const PANEL_COMMAND_NAMES = new Set(['panel']);
+// Commandes déployées en GLOBAL (accessibles sur tous les serveurs où le bot est présent).
+// Elles ne sont JAMAIS déployées par guilde (évite les doublons).
+const GLOBAL_COMMAND_NAMES = new Set(['panel-deban']);
+// Anciens noms à supprimer proprement (renommages)
+const LEGACY_COMMAND_NAMES_TO_REMOVE = new Set(['panel']);
 
 function isArchivedSlashCommandFile(basename) {
     return typeof basename === 'string' && basename.endsWith('-ancien.js');
