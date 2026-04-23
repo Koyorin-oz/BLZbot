@@ -283,7 +283,7 @@ async function renderGuildProfilePreviewVariant(opts, variant) {
         ctx.fillText(`Places ${pct} % · 🃏 ${guild.joker_guilde_uses || 0}/3`, rx + 18, yy + 56);
         ctx.fillText(guild.channel_id ? '💬 Salon privé actif' : '💬 Salon : U5', rx + 18, yy + 78);
 
-        drawFooter(ctx, 'Aperçu Citadelle — /testprofilguilde');
+        drawFooter(ctx, 'Aperçu Citadelle');
         return canvas.toBuffer('image/png');
     }
 
