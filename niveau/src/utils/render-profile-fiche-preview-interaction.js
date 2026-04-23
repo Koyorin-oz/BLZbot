@@ -88,7 +88,7 @@ async function renderProfileFichePreviewFromInteraction(interaction, variantRaw,
         rankIconPath = path.resolve(__dirname, '..', 'assets', 'rank-icons', '1.png');
     }
 
-    const invokerStaffTitle = await getPreviewInvokerStaffTitle(interaction.client, interaction.user.id);
+    const invokerStaffTitle = await getPreviewStaffTitleForUser(interaction.client, targetUser.id);
 
     const meta = PROFILE_PREVIEW_VARIANTS.find((v) => v.id === variant);
     const png = await renderProfilePreviewVariant(
