@@ -266,8 +266,17 @@ client.on('messageUpdate', async (oldMsg, newMsg) => {
 const userMessageHistory = new Map();
 
 client.on('messageCreate', async message => {
-    if (message.author.bot) return;
     if (!message.guild) return;
+
+    try {
+        const { handleTicketBridgeMessage } = require('./src/events/ticketBridge');
+        const consumed = await handleTicketBridgeMessage(message);
+        if (consumed) return;
+    } catch (e) {
+        console.error('[TicketBridge]', e?.message || e);
+    }
+
+    if (message.author.bot) return;
 
     const userId = message.author.id;
     const messageContent = message.content.trim().toLowerCase();
