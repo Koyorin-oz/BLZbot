@@ -102,11 +102,7 @@ module.exports = {
             const payload = buildPanelPayload(forumChannel.id);
 
             await interaction.editReply({
-                content:
-                    `✅ Forum **${forumChannel.name}** créé sur **${hostGuild.name}**.\n` +
-                    `Tags : \`En cours\` / \`Deban\` / \`Refuse\`\n` +
-                    `Les demandes créent un **post** dans ce forum. À la fin du vote, le post est **verrouillé** (le staff peut encore écrire).\n` +
-                    `Utilisez \`/panel-deban\` avec \`salon-deban\` = ce forum pour les panneaux publics.`,
+                content: null,
                 ...payload,
             });
         } catch (err) {
