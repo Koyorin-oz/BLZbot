@@ -399,18 +399,24 @@ module.exports = {
         await interaction.deferReply({ ephemeral: true });
 
         try {
+            // Récupère le salon mémorisé à l'étape « Lancer le formulaire ».
+            // Si absent (bot redémarré entre le click et la soumission), on retombe sur le salon par défaut.
+            const chosenChannelId =
+                voteManager.pendingDebanChannels?.get(interaction.user.id) || CONFIG.DEBAN_CHANNEL_ID;
+
             // Lancer le vote de débannissement
             const result = await voteManager.startDebanVote(
                 client,
                 interaction,
                 data,
                 report,
-                CONFIG.DEBAN_CHANNEL_ID,
+                chosenChannelId,
                 CONFIG.STAFF_ROLES.find(r => r.name === 'Staff')?.id || '1172237685763608579'
             );
 
             // Nettoyer les données temporaires de formulaire quoi qu'il arrive
             voteManager.clearFormData(interaction.user.id);
+            voteManager.pendingDebanChannels?.delete(interaction.user.id);
 
             // Si startDebanVote a échoué (salon introuvable ou date invalide), on retire aussi
             // le user du Set in-memory pour qu'il puisse retenter proprement.
@@ -420,6 +426,7 @@ module.exports = {
         } catch (error) {
             console.error('[Deban] Erreur lors du lancement du vote:', error);
             voteManager.clearFormData(interaction.user.id);
+            voteManager.pendingDebanChannels?.delete(interaction.user.id);
             voteManager.activeDebanRequests.delete(interaction.user.id);
             await interaction.followUp({
                 content: '❌ Une erreur est survenue lors de la soumission de votre demande. Réessayez dans quelques instants, ou contactez un administrateur si le problème persiste.',
