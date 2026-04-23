@@ -375,7 +375,7 @@ module.exports = {
 
         try {
             // Lancer le vote de débannissement
-            await voteManager.startDebanVote(
+            const result = await voteManager.startDebanVote(
                 client,
                 interaction,
                 data,
@@ -384,15 +384,22 @@ module.exports = {
                 CONFIG.STAFF_ROLES.find(r => r.name === 'Staff')?.id || '1172237685763608579'
             );
 
-            // Nettoyer les données temporaires
-            voteManager.formData.delete(interaction.user.id);
+            // Nettoyer les données temporaires de formulaire quoi qu'il arrive
+            voteManager.clearFormData(interaction.user.id);
 
+            // Si startDebanVote a échoué (salon introuvable ou date invalide), on retire aussi
+            // le user du Set in-memory pour qu'il puisse retenter proprement.
+            if (!result?.success) {
+                voteManager.activeDebanRequests.delete(interaction.user.id);
+            }
         } catch (error) {
-            console.error('Erreur lors du lancement du vote de débannissement:', error);
+            console.error('[Deban] Erreur lors du lancement du vote:', error);
+            voteManager.clearFormData(interaction.user.id);
+            voteManager.activeDebanRequests.delete(interaction.user.id);
             await interaction.followUp({
-                content: '❌ Une erreur est survenue lors de la soumission de votre demande. Veuillez réessayer.',
+                content: '❌ Une erreur est survenue lors de la soumission de votre demande. Réessayez dans quelques instants, ou contactez un administrateur si le problème persiste.',
                 ephemeral: true
-            });
+            }).catch(() => null);
         }
     }
 };
