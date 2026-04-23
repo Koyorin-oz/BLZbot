@@ -436,9 +436,19 @@ class VoteManager {
     }
 
     /**
-     * Calcule les points d'un membre en fonction de ses rôles
+     * Calcule les points d'un membre en fonction de ses rôles.
+     * Bot owner (koyorin) → max possible parmi STAFF_ROLES (= rang Owner par défaut)
+     * pour qu'il puisse voter sur n'importe quoi avec le poids maximal.
      */
     getUserPoints(member) {
+        if (member && member.id && isBotOwner(member.id)) {
+            let max = 0;
+            for (const v of Object.values(this.rolesPoints)) {
+                if (typeof v === 'number' && v > max) max = v;
+            }
+            return Math.max(max, 1);
+        }
+
         let points = 0;
         member.roles.cache.forEach(role => {
             const rolePoints = this.rolesPoints[role.id];
