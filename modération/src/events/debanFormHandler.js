@@ -307,15 +307,15 @@ module.exports = {
         const avoidRepeat = interaction.fields.getTextInputValue('avoidRepeat');
 
         // Récupérer et mettre à jour les données
-        const data = voteManager.formData.get(interaction.user.id) || {};
-        Object.assign(data, {
-            readRules,
-            brokenRule,
-            whyUnban,
-            lessonLearned,
-            avoidRepeat
-        });
-        voteManager.formData.set(interaction.user.id, data);
+        const data = voteManager.formData.get(interaction.user.id);
+        if (!data) {
+            return interaction.reply({
+                content: '⚠️ Votre session de formulaire a expiré (30 min max). Recommencez depuis le début en cliquant sur « 🚀 Lancer le formulaire ».',
+                ephemeral: true
+            });
+        }
+        Object.assign(data, { readRules, brokenRule, whyUnban, lessonLearned, avoidRepeat });
+        voteManager.setFormData(interaction.user.id, data);
 
         const continueBtn = new ButtonBuilder()
             .setCustomId('deban_continue_step3')
