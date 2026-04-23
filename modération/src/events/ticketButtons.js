@@ -16,6 +16,181 @@ const path = require('path');
 const CONFIG = require('../config.js');
 const { BLZ_EMBED_STRIP_HEX } = require(path.join(__dirname, '..', '..', '..', 'blz-embed-theme'));
 const ticketManager = require('../modules/tickets.js');
+const { syncTicketBridgeOnClose, deleteBridgeSibling } = require('./ticketBridge');
+
+/**
+ * Ticket « pont » : salon miroir sur le support (membre + bot) + salon staff sur le serveur principal.
+ */
+async function createBridgedTicketFromSupport(interaction, config, client) {
+    const userId = interaction.user.id;
+    const mainGuild = await client.guilds.fetch(CONFIG.MAIN_GUILD_ID).catch(() => null);
+    if (!mainGuild) {
+        return interaction.editReply({
+            content: '❌ Le bot n\'est pas présent sur le serveur principal (impossible de créer le ticket staff).',
+        });
+    }
+
+    const supportEveryone = interaction.guild.roles.everyone;
+    const mainEveryone = mainGuild.roles.everyone;
+
+    const supportOverwrites = [
+        { id: supportEveryone, deny: [PermissionsBitField.Flags.ViewChannel] },
+        {
+            id: interaction.member,
+            allow: [
+                PermissionsBitField.Flags.ViewChannel,
+                PermissionsBitField.Flags.SendMessages,
+                PermissionsBitField.Flags.ReadMessageHistory,
+                PermissionsBitField.Flags.AttachFiles,
+            ],
+        },
+    ];
+
+    const mainOverwrites = [
+        { id: mainEveryone, deny: [PermissionsBitField.Flags.ViewChannel] },
+    ];
+    if (config.PING_ROLE_ID) {
+        const pingRole = mainGuild.roles.cache.get(config.PING_ROLE_ID);
+        if (pingRole) {
+            mainOverwrites.push({
+                id: pingRole,
+                allow: [
+                    PermissionsBitField.Flags.ViewChannel,
+                    PermissionsBitField.Flags.SendMessages,
+                    PermissionsBitField.Flags.ReadMessageHistory,
+                ],
+            });
+        } else {
+            console.warn(`[Tickets/bridge] Rôle ping ${config.PING_ROLE_ID} absent sur le serveur principal.`);
+        }
+    }
+    if (config.STAFF_ACCESS_ROLE_ID) {
+        const staffRole = mainGuild.roles.cache.get(config.STAFF_ACCESS_ROLE_ID);
+        if (staffRole) {
+            mainOverwrites.push({
+                id: staffRole,
+                allow: [
+                    PermissionsBitField.Flags.ViewChannel,
+                    PermissionsBitField.Flags.SendMessages,
+                    PermissionsBitField.Flags.ReadMessageHistory,
+                    PermissionsBitField.Flags.AttachFiles,
+                ],
+            });
+        } else {
+            console.warn(`[Tickets/bridge] Rôle staff ${config.STAFF_ACCESS_ROLE_ID} absent sur le serveur principal.`);
+        }
+    }
+
+    const supportCreateOpts = {
+        name: 'ticket-temp',
+        type: ChannelType.GuildText,
+        permissionOverwrites: supportOverwrites,
+        topic: 'Ticket bridge — création...',
+    };
+    if (config.CATEGORY_ID) {
+        const category = interaction.guild.channels.cache.get(config.CATEGORY_ID);
+        if (category && category.type === ChannelType.GuildCategory) {
+            supportCreateOpts.parent = config.CATEGORY_ID;
+        }
+    }
+    const supportChannel = await interaction.guild.channels.create(supportCreateOpts);
+
+    const mainCreateOpts = {
+        name: 'ticket-temp',
+        type: ChannelType.GuildText,
+        permissionOverwrites: mainOverwrites,
+        topic: 'Ticket bridge staff — création...',
+    };
+    const bridgeMainCat = config.BRIDGE?.MAIN_CATEGORY_ID;
+    if (bridgeMainCat) {
+        const cat = mainGuild.channels.cache.get(bridgeMainCat);
+        if (cat && cat.type === ChannelType.GuildCategory) {
+            mainCreateOpts.parent = bridgeMainCat;
+        }
+    }
+    const mainChannel = await mainGuild.channels.create(mainCreateOpts);
+
+    const ticketId = ticketManager.createTicket(userId, mainChannel.id, { supportChannelId: supportChannel.id });
+
+    const topicSupport = `Ticket créé par ${interaction.user.tag} (ID:${userId}) - TICKET_ID:${ticketId}`;
+    const topicMain = `Ticket bridge — demandeur: ${interaction.user.tag} (${userId}) - TICKET_ID:${ticketId}`;
+
+    await supportChannel.edit({ name: `ticket-${ticketId}`, topic: topicSupport });
+    await mainChannel.edit({ name: `ticket-${ticketId}`, topic: topicMain });
+
+    const supportUrl = `https://discord.com/channels/${interaction.guildId}/${supportChannel.id}`;
+
+    const embedSupport = new EmbedBuilder()
+        .setTitle(`🎫 Ticket #${ticketId}`)
+        .setDescription(
+            `Salut <@${userId}> 👋\n\n` +
+                'Tu écris **ici** : chaque message est envoyé **via le bot** à l’équipe sur le serveur principal.\n\n' +
+                'Les réponses du staff te reviennent **ici**, toujours via ce bot.\n\n' +
+                '**Décris ton problème en détail.**'
+        )
+        .setColor(config.EMBED_COLOR || BLZ_EMBED_STRIP_HEX)
+        .setFooter({ text: `ID: ${ticketId} · support` })
+        .setTimestamp();
+
+    const rowSupport = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('ticket_close').setLabel('🔒 Fermer').setStyle(ButtonStyle.Danger)
+    );
+
+    await supportChannel.send({ embeds: [embedSupport], components: [rowSupport] });
+
+    const embedMain = new EmbedBuilder()
+        .setTitle(`🎫 Ticket #${ticketId} (depuis le support)`)
+        .setDescription(
+            'Demande ouverte depuis le **serveur support**.\n\n' +
+                `**Salon côté membre (miroir) :** ${supportUrl}\n\n` +
+                'Le membre ne voit **pas** ce salon : réponds **ici** pour lui répondre sur le support.'
+        )
+        .setColor(config.EMBED_COLOR || BLZ_EMBED_STRIP_HEX)
+        .addFields(
+            { name: 'Demandeur', value: `<@${userId}> (\`${userId}\`)`, inline: false },
+            { name: 'Lien salon membre', value: supportUrl, inline: false }
+        )
+        .setFooter({ text: `ID: ${ticketId} · ${mainGuild.name}` })
+        .setTimestamp();
+
+    const rowMain = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('ticket_add').setLabel('➕ Ajouter').setStyle(ButtonStyle.Success),
+        new ButtonBuilder().setCustomId('ticket_remove').setLabel('➖ Retirer').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('ticket_close').setLabel('🔒 Fermer').setStyle(ButtonStyle.Danger)
+    );
+
+    const welcomeMain = await mainChannel.send({
+        content: config.PING_ROLE_ID ? `<@&${config.PING_ROLE_ID}>` : undefined,
+        embeds: [embedMain],
+        components: [rowMain],
+    });
+    await welcomeMain.pin().catch(() => null);
+
+    await interaction.editReply({
+        content: `✅ Ticket créé.\n**Toi :** ${supportChannel}\n**Staff (serveur principal) :** ${mainChannel}`,
+    });
+
+    if (config.LOG_CHANNEL_ID) {
+        try {
+            const logChannel = await client.channels.fetch(config.LOG_CHANNEL_ID);
+            if (logChannel?.isTextBased?.()) {
+                const logEmbed = new EmbedBuilder()
+                    .setColor('#00FF00')
+                    .setTitle('🎫 Nouveau ticket (pont support → main)')
+                    .addFields(
+                        { name: 'Ticket', value: `#${ticketId}`, inline: true },
+                        { name: 'Créé par', value: `<@${userId}>`, inline: true },
+                        { name: 'Salon support', value: `${supportChannel}`, inline: true },
+                        { name: 'Salon staff (main)', value: `${mainChannel}`, inline: true }
+                    )
+                    .setTimestamp();
+                await logChannel.send({ embeds: [logEmbed] });
+            }
+        } catch (error) {
+            console.error('[Tickets/bridge] Erreur log:', error);
+        }
+    }
+}
 
 /**
  * Gère les interactions de boutons liés aux tickets
