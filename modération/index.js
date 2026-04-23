@@ -150,6 +150,17 @@ client.once('clientReady', async () => {
         console.log('✓ Tâches planifiées configurées');
         console.log('═══════════════════════════════════════════════════════');
     }
+
+    // Au boot : rattraper les demandes de deban en attente qui sont devenues éligibles pendant l'offline
+    // + purger les cooldowns expirés.
+    try {
+        const processed = await voteManager.processPendingDebanRequests(client);
+        if (processed > 0) console.log(`[Deban] Boot : ${processed} demande(s) en attente rattrapée(s).`);
+        const purged = voteManager.purgeExpiredDebanCooldowns();
+        if (purged > 0) console.log(`[Deban] Boot : ${purged} cooldown(s) expiré(s) purgé(s).`);
+    } catch (error) {
+        console.error('[Deban] Erreur rattrapage au boot:', error);
+    }
 });
 
 /**
