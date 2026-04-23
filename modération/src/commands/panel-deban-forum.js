@@ -69,10 +69,10 @@ module.exports = {
     async execute(interaction, { client } = {}) {
         const cli = client || interaction.client;
 
-        if (String(interaction.guildId) !== String(CONFIG.MAIN_GUILD_ID)) {
+        if (!PANEL_DEBAN_FORUM_ALLOWED_GUILDS.has(String(interaction.guildId))) {
             return interaction.reply({
                 content:
-                    '❌ Cette commande n\'est disponible que sur le **serveur principal BLZ**.',
+                    '❌ Cette commande n\'est disponible que sur le **serveur principal** ou le **serveur support**.',
                 ephemeral: true,
             });
         }
