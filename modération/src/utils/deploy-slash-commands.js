@@ -24,7 +24,7 @@ const GUILD_ONLY_BY_COMMAND = new Map([
 // Anciens noms à supprimer proprement (renommages / commandes retirées).
 const LEGACY_COMMAND_NAMES_TO_REMOVE = new Set(['panel']);
 // Slash obsolètes à purger (ancienne convention, remplacée par autre chose).
-const OBSOLETE_COMMAND_NAMES = new Set(['profil-staff-v2', 'profilstaff', 'test-bienvenue']);
+const OBSOLETE_COMMAND_NAMES = new Set(['profil-staff-v2', 'profilstaff', 'test-bienvenue', 'panel-deban-test']);
 
 function isArchivedSlashCommandFile(basename) {
     return typeof basename === 'string' && basename.endsWith('-ancien.js');

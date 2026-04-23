@@ -230,7 +230,7 @@ async function createDebanPost(client, testGuildId, userData, reportContent, men
     const resolved = await ensureTagsValid(client, testGuildId);
     if (!resolved) {
         throw new Error(
-            `Aucune configuration forum trouvée pour la guild ${testGuildId}. Utilisez /panel-deban-test pour créer le forum.`
+            `Aucune configuration forum trouvée pour la guild ${testGuildId}. Utilisez /panel-deban-forum sur le serveur principal pour créer le forum.`
         );
     }
 
