@@ -23,7 +23,7 @@ const PANEL_DISPLAY_CHANNEL_TYPES = new Set([
     ChannelType.GuildAnnouncement,
 ]);
 
-/** Destination des votes (`salon-deban`) : texte, annonces, ou salon forum enregistré via /panel-deban-test. */
+/** Destination des votes (`salon-deban`) : texte, annonces, ou salon forum enregistré via /panel-deban-forum. */
 const DEBAN_VOTE_CHANNEL_TYPES = new Set([
     ChannelType.GuildText,
     ChannelType.GuildAnnouncement,
