@@ -1,7 +1,6 @@
-const path = require('path');
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits, ChannelType } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
 const CONFIG = require('../config.js');
-const { BLZ_EMBED_STRIP_HEX } = require(path.join(__dirname, '..', '..', '..', 'blz-embed-theme'));
+const { buildTicketPanelPayload } = require('../utils/ticket-panel-payload');
 
 module.exports = {
     data: new SlashCommandBuilder()
