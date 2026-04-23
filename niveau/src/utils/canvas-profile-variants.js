@@ -42,7 +42,7 @@ const PROFILE_CARD_THEME = Object.freeze({
 /** Jaune (staff + libellés grille STARSS, POINTS RP, etc.) — un ton plus soutenu que `accent` (barre / déco). */
 const PREVIEW_STAFF_TITLE_COLOR = '#e8b83a';
 
-/** Bump manuel pour le message texte de /testprofil (hors canvas). */
+/** Bump manuel pour le message texte d’aperçu profil (hors canvas). */
 const PROFILE_PREVIEW_BUILD = 'tp20260417';
 
 /** Crédit affiché en bas à droite sur les cartes profil (fiches 1 & 2). */
