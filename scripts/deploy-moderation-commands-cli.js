@@ -47,7 +47,7 @@ async function main() {
 
     console.log(`✅ Connecté : ${client.user.tag}`);
     console.log(
-        `[modération] Guildes slash : ${getSlashDeployGuildIds().join(', ') || config.GUILD_ID} (GUILD_ID + BLZ_MAIN_GUILD_ID)\n`
+        `[modération] Déploiement : commandes **globales** sur l’app + commandes **guild-only** (ex. /panel-deban-test sur le serveur de test uniquement).\n`
     );
 
     try {
