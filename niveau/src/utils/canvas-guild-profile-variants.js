@@ -653,7 +653,7 @@ async function renderGuildProfilePreviewVariant(opts, variant) {
         ctx.fillText(`… +${totalMembers - 10}`, xMain + 18, sy + 10 * lh + 2);
     }
 
-    drawFooter(ctx, 'Aperçu Étendard — /testprofilguilde');
+    drawFooter(ctx, 'Aperçu Étendard');
     return canvas.toBuffer('image/png');
 }
 
