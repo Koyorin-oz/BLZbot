@@ -126,7 +126,7 @@ async function createDebanForum(client, { testGuildId, forumGuildId, name = 'deb
         parent: parentId || undefined,
         availableTags,
         topic: 'Demandes de débannissement (mode test). Chaque post = une demande. Les tags indiquent l\'état.',
-        defaultForumLayout: 1, // 1 = List view (plus lisible quand il y aura beaucoup de demandes)
+        defaultForumLayout: ForumLayoutType.ListView,
     });
 
     const tagsIndex = indexTagsByKey(forumChannel);
