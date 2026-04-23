@@ -406,7 +406,7 @@ async function renderGuildProfilePreviewVariant(opts, variant) {
             }
         }
 
-        drawFooter(ctx, 'Aperçu Bastion (BLZ) — /testprofilguilde');
+        drawFooter(ctx, 'Aperçu Bastion (BLZ)');
         return canvas.toBuffer('image/png');
     }
 
