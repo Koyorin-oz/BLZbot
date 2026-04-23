@@ -615,6 +615,8 @@ async function handleCloseConfirm(interaction, client) {
             }
         }
 
+        await syncTicketBridgeOnClose(interaction, client, ticket);
+
     } catch (error) {
         console.error('[Tickets] Erreur fermeture:', error);
         await interaction.followUp({
