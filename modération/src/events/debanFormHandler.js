@@ -130,15 +130,12 @@ module.exports = {
             }
 
             // Mémorise le salon de deban pour que handleStep3Submit puisse l'utiliser à la soumission.
-            // Sur le serveur de test, si le salon cible est le forum enregistré par /panel-deban-test,
-            // on préfixe `forum:` pour que startDebanVote crée un post plutôt qu'un message texte.
+            // Si le salon cible est un forum enregistré (deban_forum_config.json), préfixe `forum:`
+            // pour que startDebanVote crée un post plutôt qu'un message dans un salon texte.
             voteManager.pendingDebanChannels = voteManager.pendingDebanChannels || new Map();
             let storedDebanTarget = debanChannelId;
-            if (String(interaction.guild?.id) === String(TEST_DEBAN_BYPASS_GUILD_ID)) {
-                const fc = getForumConfigForGuild(TEST_DEBAN_BYPASS_GUILD_ID);
-                if (fc?.forumChannelId && String(fc.forumChannelId) === String(debanChannelId)) {
-                    storedDebanTarget = `forum:${debanChannelId}`;
-                }
+            if (findTestGuildIdByForumChannelId(debanChannelId)) {
+                storedDebanTarget = `forum:${debanChannelId}`;
             }
             voteManager.pendingDebanChannels.set(interaction.user.id, storedDebanTarget);
 
