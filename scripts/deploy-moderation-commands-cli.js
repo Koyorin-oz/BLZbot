@@ -46,7 +46,7 @@ async function main() {
 
     console.log(`✅ Connecté : ${client.user.tag}`);
     console.log(
-        `[modération] Déploiement : commandes **globales** sur l’app + commandes **guild-only** (ex. /panel-deban-test sur le serveur de test uniquement).\n`
+        `[modération] Déploiement : commandes **globales** sur l’app + commandes **guild-only** (ex. /panel-deban-forum sur le serveur principal).\n`
     );
 
     try {

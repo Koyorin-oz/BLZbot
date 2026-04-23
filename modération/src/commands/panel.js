@@ -92,7 +92,6 @@ function botCanPostIn(channel, opts = {}) {
 }
 
 module.exports = {
-    TEST_DEBAN_BYPASS_GUILD_ID,
     ALLOWED_PANEL_GUILD_IDS,
     buildPanelPayload,
 
