@@ -18,15 +18,52 @@ const COMMANDS_DIR = path.join(__dirname, '..', 'commands');
  * Commandes déployées uniquement sur certaines guildes (jamais en global).
  * Map : nom de commande → Set d'IDs de guildes cibles.
  */
+const DEFAULT_SUPPORT_GUILD_ID = String(CONFIG.TICKETS?.SUPPORT_GUILD_ID || '1351221530998345828');
+
 const GUILD_ONLY_BY_COMMAND = new Map([
     [
         'panel-deban-forum',
-        new Set([
-            String(CONFIG.MAIN_GUILD_ID),
-            String(CONFIG.TICKETS?.SUPPORT_GUILD_ID || '1351221530998345828'),
-        ]),
+        new Set([String(CONFIG.MAIN_GUILD_ID), DEFAULT_SUPPORT_GUILD_ID]),
     ],
 ]);
+
+/**
+ * Guildes où on enregistre **toutes** les commandes modération en guild (`commands.set`),
+ * en plus du déploiement global. Utile si l’invite du bot n’avait pas `applications.commands`
+ * (les slash globaux n’apparaissent pas, seules d’éventuelles commandes guild restaient visibles).
+ *
+ * Défaut : serveur support. Surcharge : `BLZ_MOD_SLASH_MIRROR_GUILD_IDS=id1,id2`
+ */
+function getSlashMirrorGuildIds() {
+    const raw = String(process.env.BLZ_MOD_SLASH_MIRROR_GUILD_IDS || '').trim();
+    if (raw) {
+        return [
+            ...new Set(
+                raw
+                    .split(/[,;]/)
+                    .map((s) => s.trim())
+                    .filter((id) => /^\d{17,22}$/.test(id))
+            ),
+        ];
+    }
+    return /^\d{17,22}$/.test(DEFAULT_SUPPORT_GUILD_ID) ? [DEFAULT_SUPPORT_GUILD_ID] : [];
+}
+
+/**
+ * Payload complet des slash pour une guilde (globales + guild-only autorisées sur cette guilde).
+ */
+function buildGuildSlashPayloadForMirror(localCommands, guildOnlyCommandNames, guildId) {
+    const out = [];
+    for (const [name, data] of localCommands.entries()) {
+        if (guildOnlyCommandNames.has(name)) {
+            const allowed = GUILD_ONLY_BY_COMMAND.get(name);
+            if (!allowed || !allowed.has(String(guildId))) continue;
+        }
+        const cmdJson = toCmdJson(data);
+        if (cmdJson) out.push(cmdJson);
+    }
+    return out;
+}
 // Anciens noms à supprimer proprement (renommages / commandes retirées).
 const LEGACY_COMMAND_NAMES_TO_REMOVE = new Set(['panel']);
 // Slash obsolètes à purger (ancienne convention, remplacée par autre chose).
