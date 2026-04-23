@@ -171,7 +171,7 @@ module.exports = {
         const panelChannelIdInput = interaction.options.getString('salon');
 
         // Résolution du salon de destination (requis)
-        const debanChannel = await resolveAllowedChannel(cli, debanChannelIdInput);
+        const debanChannel = await resolveAllowedChannel(cli, debanChannelIdInput, { forDebanDestination: true });
         if (!debanChannel) {
             return interaction.reply({
                 content:
@@ -179,9 +179,13 @@ module.exports = {
                 ephemeral: true,
             });
         }
-        if (!botCanPostIn(debanChannel)) {
+        if (!botCanPostIn(debanChannel, { forDebanDestination: true })) {
+            const forumHint =
+                debanChannel.type === ChannelType.GuildForum
+                    ? ' Pour un **forum**, il me faut **Voir le salon**, **Créer des fils publics** et **Envoyer des messages dans les fils**.'
+                    : ' Il me faut **Voir le salon** et **Envoyer des messages**.';
             return interaction.reply({
-                content: `❌ Je n'ai pas les permissions pour poster dans ${debanChannel} (serveur **${debanChannel.guild.name}**). Il me faut **Voir le salon** et **Envoyer des messages**.`,
+                content: `❌ Je n'ai pas les permissions pour utiliser ${debanChannel} (serveur **${debanChannel.guild.name}**).${forumHint}`,
                 ephemeral: true,
             });
         }
@@ -189,15 +193,15 @@ module.exports = {
         // Résolution du salon où poster le panel (optionnel : défaut = salon courant de la commande)
         let target = interaction.channel;
         if (panelChannelIdInput) {
-            const resolved = await resolveAllowedChannel(cli, panelChannelIdInput);
+            const resolved = await resolveAllowedChannel(cli, panelChannelIdInput, { forDebanDestination: false });
             if (!resolved) {
                 return interaction.reply({
                     content:
-                        '❌ Salon d\'affichage du panel (`salon`) invalide. Utilisez l\'autocomplétion pour choisir un salon des serveurs **Support** ou **Principal**.',
+                        '❌ Salon d\'affichage du panel (`salon`) invalide. Utilisez l\'autocomplétion pour choisir un salon **texte ou annonces** (Support ou Principal).',
                     ephemeral: true,
                 });
             }
-            if (!botCanPostIn(resolved)) {
+            if (!botCanPostIn(resolved, { forDebanDestination: false })) {
                 return interaction.reply({
                     content: `❌ Je n'ai pas les permissions pour poster dans ${resolved} (serveur **${resolved.guild.name}**).`,
                     ephemeral: true,
