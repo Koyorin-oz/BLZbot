@@ -136,6 +136,9 @@ async function deployModerationSlashCommands(client, _config, opts = {}) {
         localCommands.set(cmdJson.name, command.data);
     }
 
+    const mirrorGuildIds = getSlashMirrorGuildIds();
+    const mirrorGuildIdSet = new Set(mirrorGuildIds);
+
     const localNames = [...localCommands.keys()];
     console.log(
         `[modération/deploy] ${localNames.length} commande(s) locales — global sauf guild-only (${guildOnlyCommandNames.size}).`
