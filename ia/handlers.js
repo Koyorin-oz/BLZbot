@@ -144,6 +144,22 @@ async function handleMessageCreate(message, client, activeThreads) {
     // 3. Normal Bot Routing (Non-admins, or Admins in inactive channels without +)
     if (!isBotActiveChannel) return;
 
+    // ⭐ Garde hors salons IA :
+    //   - pas de reply-ping : il faut une mention explicite (déjà filtré dans isGuildWideMention)
+    //   - l'utilisateur doit être staff (admin serveur ou rôle staff)
+    // Les salons IA (whitelist + threads IA + IA_EXTRA_PUBLIC_CHANNEL_IDS) gardent leur
+    // comportement normal : tout le monde peut interagir, replies incluses.
+    if (!isIaContext) {
+        if (!isRealMention) {
+            utils.log(`[IAGuard] Ignoré (pas de mention explicite) — ${message.author.tag} dans #${message.channel.name}`);
+            return;
+        }
+        if (!isAllowedUser) {
+            utils.log(`[IAGuard] Ignoré (non-staff hors salon IA) — ${message.author.tag} dans #${message.channel.name}`);
+            return;
+        }
+    }
+
     if (
         isGuildWideMention &&
         !isListedPublicMention &&
