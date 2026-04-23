@@ -113,7 +113,7 @@ async function createDebanForum(client, { testGuildId, forumGuildId, name = 'deb
         type: ChannelType.GuildForum,
         parent: parentId || undefined,
         availableTags,
-        topic: 'Demandes de débannissement (mode test). Chaque post = une demande. Les tags indiquent l\'état.',
+        topic: 'Demandes de débannissement — chaque post = une demande. Les tags indiquent l’état.',
         defaultForumLayout: ForumLayoutType.ListView,
     });
 
