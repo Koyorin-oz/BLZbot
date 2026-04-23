@@ -1,9 +1,9 @@
 /**
- * Commande réservée au serveur de TEST : crée un salon forum de débannissement
- * (tags En cours / Deban / Refuse) sur un serveur au choix où le bot est présent,
- * enregistre la config, puis poste le panneau « Lancer le formulaire » dans le salon courant.
+ * Crée un salon forum de débannissement (tags En cours / Deban / Refuse) sur un serveur
+ * où le bot est présent, enregistre la config (clé = guild où la commande est lancée),
+ * puis poste le panneau « Lancer le formulaire » dans la réponse.
  *
- * Déployée en GUILDE uniquement sur le serveur de test (voir deploy-slash-commands.js).
+ * Utilisable sur le serveur de test **ou** le serveur principal (déploiement guild-only).
  */
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const CONFIG = require('../config.js');
