@@ -143,6 +143,8 @@ client.once('clientReady', async () => {
     schedule.scheduleJob('*/30 * * * *', () => checkExpiredBans()); // Vérifier les bans expirés toutes les 30 minutes
     schedule.scheduleJob('0 0 * * *', () => cleanupExpiredWarns()); // Nettoyage des warns expirés chaque jour à minuit
     schedule.scheduleJob('*/10 * * * *', () => checkExpiredAbsences()); // Vérifier les absences expirées toutes les 10 minutes
+    schedule.scheduleJob('*/15 * * * *', () => checkPendingDebanRequests()); // Demandes de deban en attente (toutes les 15 min)
+    schedule.scheduleJob('0 4 * * *', () => voteManager.purgeExpiredDebanCooldowns()); // Purge cooldowns deban expirés (1×/jour)
 
     if (!BLZ_COMPACT) {
         console.log('✓ Tâches planifiées configurées');
