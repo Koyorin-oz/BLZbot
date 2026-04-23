@@ -490,17 +490,11 @@ async function endDebanVoteProgrammatically(message, guild, voteManager, client,
     const result = accepted ? '✅ ACCEPTÉ' : '❌ REFUSÉ';
 
     const embed = message.embeds[0];
-    if (embed) {
-        const resultEmbed = EmbedBuilder.from(embed)
+    const resultEmbed =
+        embed &&
+        EmbedBuilder.from(embed)
             .setColor(accepted ? '#00FF00' : '#FF0000')
             .setFooter({ text: `Résultat: ${result}` });
-
-        const disabledRow = message.components[0];
-        if (disabledRow?.components) {
-            disabledRow.components.forEach(button => { if (button.data) button.data.disabled = true; });
-        }
-        await message.edit({ embeds: [resultEmbed], components: disabledRow ? [disabledRow] : [] }).catch(() => null);
-    }
 
     // Débannir si accepté
     let unbanOk = true;

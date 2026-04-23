@@ -420,8 +420,11 @@ module.exports = {
         try {
             // Récupère le salon mémorisé à l'étape « Lancer le formulaire ».
             // Si absent (bot redémarré entre le click et la soumission), on retombe sur le salon par défaut.
-            const chosenChannelId =
+            let chosenChannelId =
                 voteManager.pendingDebanChannels?.get(interaction.user.id) || CONFIG.DEBAN_CHANNEL_ID;
+            if (String(chosenChannelId).startsWith('forum:')) {
+                chosenChannelId = String(chosenChannelId).slice('forum:'.length);
+            }
 
             // Lancer le vote de débannissement
             const result = await voteManager.startDebanVote(
