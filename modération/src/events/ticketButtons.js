@@ -333,7 +333,17 @@ async function handleCreateTicket(interaction) {
     await interaction.deferReply({ ephemeral: true });
 
     try {
-        // Permissions du ticket
+        const useBridge =
+            config.BRIDGE?.ENABLED &&
+            String(interaction.guildId) === String(config.SUPPORT_GUILD_ID) &&
+            CONFIG.MAIN_GUILD_ID;
+
+        if (useBridge) {
+            await createBridgedTicketFromSupport(interaction, config, interaction.client);
+            return;
+        }
+
+        // Permissions du ticket (serveur classique = même serveur que le panneau)
         const overwrites = [
             {
                 id: interaction.guild.roles.everyone,
