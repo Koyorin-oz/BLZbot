@@ -24,25 +24,7 @@ module.exports = {
             });
         }
 
-        const embed = new EmbedBuilder()
-            .setTitle('📩 Support - Ouvrir un ticket')
-            .setDescription(
-                '**Besoin d\'aide ?**\n\n' +
-                'Clique sur le bouton ci-dessous pour créer un ticket et contacter l\'équipe.\n\n' +
-                '> ⚠️ **Merci de ne pas ouvrir de ticket pour rien**\n' +
-                '> Les abus seront sanctionnés.'
-            )
-            .setColor(CONFIG.TICKETS?.EMBED_COLOR || BLZ_EMBED_STRIP_HEX)
-            .setFooter({ text: 'BLZstarss - Système de tickets' });
-
-        const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-                .setCustomId('ticket_create')
-                .setLabel('🎟️ Créer un ticket')
-                .setStyle(ButtonStyle.Primary)
-        );
-
-        await channel.send({ embeds: [embed], components: [row] });
+        await channel.send(buildTicketPanelPayload());
 
         await interaction.reply({
             content: `✅ Panneau de ticket envoyé dans ${channel} !`,

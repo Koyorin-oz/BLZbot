@@ -236,7 +236,8 @@ module.exports = {
     // ==================== SYSTÈME DE TICKETS ====================
     TICKETS: {
         ENABLED: true,
-        PANEL_CHANNEL_ID: '1454477715494404212',     // Salon où afficher le panneau
+        /** Salon support : panneau auto au boot + cible doc /setup-ticket. */
+        PANEL_CHANNEL_ID: '1496896791465955338',
         CATEGORY_ID: '1454508411122221139',                            // Catégorie pour les tickets (null = pas de catégorie)
         PING_ROLE_ID: '1461142125801639988',         // Rôle à ping lors de la création
         STAFF_ACCESS_ROLE_ID: '1172237685763608579',  // Rôle staff qui peut voir tous les tickets

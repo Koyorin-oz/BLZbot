@@ -163,6 +163,12 @@ client.once('clientReady', async () => {
     } catch (error) {
         console.error('[Deban] Erreur rattrapage au boot:', error);
     }
+
+    try {
+        await ensureTicketPanelIfMissing(client);
+    } catch (e) {
+        console.error('[Tickets] Panneau auto au boot:', e?.message || e);
+    }
 });
 
 /**
