@@ -109,7 +109,7 @@ module.exports = {
         .addStringOption(option =>
             option
                 .setName('salon-deban')
-                .setDescription('Salon où les demandes/votes de deban seront envoyés (support OU principal).')
+                .setDescription('Salon des votes (texte, annonces ou forum sur support / principal).')
                 .setRequired(true)
                 .setAutocomplete(true)
         )
