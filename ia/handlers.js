@@ -61,16 +61,35 @@ async function handleMessageCreate(message, client, activeThreads) {
     const mentionAnyGuild = iaMentionAnyGuildEnabled();
     const hasBotMention = message.mentions.has(client.user.id);
 
+    // Distinguer une VRAIE mention (l'utilisateur a tapé <@botId> dans son message)
+    // d'un simple reply-ping (Discord ajoute automatiquement le ping quand on répond
+    // à un message du bot, même si l'utilisateur n'a rien tapé).
+    // ignoreRepliedUser=true ⇒ on ignore le ping ajouté par la feature "Répondre".
+    const isRealMention = message.mentions.has(client.user.id, { ignoreRepliedUser: true });
+
     // Admin MCP Trigger
     // 1. Identify Context
     const isPrivateIaThread = message.channel.isThread() && activeThreads.has(message.channel.id);
     const isPublicIaThread = message.channel.isThread() && message.channel.parentId === config.IA_PANEL_CHANNEL_ID && message.channel.name.startsWith('IA-');
+
+    // Salons « IA » explicitement autorisés à un comportement libre
+    // (réponses aux replies, mentions, conversations naturelles).
+    // Hors de ces salons, l'IA n'interviendra QUE sur mention réelle + par un staff.
+    const IA_WHITELIST_CHANNEL_IDS = new Set([
+        config.PUBLIC_IA_CHANNEL_ID,   // 1454467497066762352 — salon IA public
+        config.HARD_MODE_CHANNEL_ID,    // 1461100993889566975 — salon Hard Mode
+    ].filter(Boolean));
+    const isInIaWhitelistChannel = IA_WHITELIST_CHANNEL_IDS.has(message.channel.id);
+
     const isListedPublicMention =
         hasBotMention &&
         (message.channel.id === config.PUBLIC_IA_CHANNEL_ID ||
             IA_EXTRA_PUBLIC_CHANNEL_IDS.has(message.channel.id));
+    // Mention "guild-wide" (dans n'importe quel salon texte) : on exige désormais
+    // une mention EXPLICITE (pas un reply-ping), pour ne plus déclencher l'IA
+    // quand quelqu'un répond à un embed ou un message du bot.
     const isGuildWideMention =
-        mentionAnyGuild && hasBotMention && message.channel.isTextBased?.();
+        mentionAnyGuild && isRealMention && message.channel.isTextBased?.();
     const isPublicChannelMention = isListedPublicMention || isGuildWideMention;
     const isHardModeChannelMention = message.channel.id === config.HARD_MODE_CHANNEL_ID && hasBotMention;
     const isBotActiveChannel = isPrivateIaThread || isPublicIaThread || isPublicChannelMention || isHardModeChannelMention;
@@ -79,6 +98,17 @@ async function handleMessageCreate(message, client, activeThreads) {
     const isAdmin = member && member.permissions.has(PermissionsBitField.Flags.Administrator);
     const isMod = member && member.roles.cache.has('1172237685763608579');
     const isAllowedUser = isAdmin || isMod;
+
+    // ⭐ Contexte "IA" : salons IA whitelistés, threads IA privés, threads IA publics,
+    //   ou salons supplémentaires configurés via IA_EXTRA_PUBLIC_CHANNEL_IDS.
+    // Hors de ce contexte, l'IA n'intervient QUE si :
+    //   1) l'utilisateur la mentionne explicitement (pas un simple reply-ping),
+    //   2) l'utilisateur est staff (admin serveur ou rôle staff).
+    const isIaContext =
+        isPrivateIaThread ||
+        isPublicIaThread ||
+        isInIaWhitelistChannel ||
+        IA_EXTRA_PUBLIC_CHANNEL_IDS.has(message.channel.id);
 
     // Check for '+' prefix (start or after mention)
     const mentionRegex = new RegExp(`<@!?${client.user.id}>`, 'g');
