@@ -123,7 +123,7 @@ module.exports = {
         .toJSON(),
 
     /**
-     * Autocomplete partagé par les deux options : liste les salons textuels des 2 serveurs autorisés.
+     * Autocomplete : pour `salon-deban` inclut les forums ; pour `salon` (panneau) uniquement texte/annonces.
      * Filtrage par nom de salon / nom de serveur / ID, tronqué à 25 résultats (limite Discord).
      */
     async autocomplete(interaction) {
