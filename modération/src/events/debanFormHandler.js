@@ -32,8 +32,15 @@ module.exports = {
             const extracted = cid.slice('launch_form_'.length).trim();
             if (/^\d{15,25}$/.test(extracted)) debanChannelId = extracted;
         }
+        // Bot owner (koyorin) : bypass total — pas de check demande active, pas de cooldown,
+        // pas de check ban. On va directement à l'ouverture du modal.
+        const ownerBypass = isBotOwner(interaction.user.id);
+        if (ownerBypass) {
+            console.log(`[Deban] Bot owner bypass : ${interaction.user.tag} (${interaction.user.id})`);
+        }
+
         // Vérifier si l'utilisateur a déjà une demande en cours (persistant : survit aux redémarrages)
-        const activeCheck = voteManager.hasActiveDebanRequest(interaction.user.id);
+        const activeCheck = ownerBypass ? { active: false } : voteManager.hasActiveDebanRequest(interaction.user.id);
         if (activeCheck.active) {
             let msg;
             switch (activeCheck.reason) {
