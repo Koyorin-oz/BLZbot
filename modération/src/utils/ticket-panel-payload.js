@@ -70,7 +70,7 @@ async function ensureTicketPanelIfMissing(client) {
                 for (const row of rows) {
                     for (const comp of row.components || []) {
                         if (comp.data?.custom_id === 'ticket_create' || comp.customId === 'ticket_create') {
-                            if (!process.env.BLZ_COMPACT_LOG === '1') {
+                            if (process.env.BLZ_COMPACT_LOG !== '1') {
                                 console.log(`[Tickets] Panneau déjà présent dans #${channel.name} (${channel.id}), rien à envoyer.`);
                             }
                             return;
