@@ -325,13 +325,18 @@ async function deployModerationSlashCommands(client, _config, opts = {}) {
         console.log(
             `✓ Modération GLOBAL: ${createdCount} new, ${updatedCount} updated, ${skippedCount} skipped, ${errorCount} errors, ${deletedGlobal} retirée(s) du global.`
         );
+        if (mirrorGuildIds.length > 0) {
+            console.log(
+                `✓ Modération slash miroir (guild complète) : ${mirrorGuildSetOk}/${mirrorGuildIds.length} guilde(s) — ${mirrorGuildIds.join(', ')}`
+            );
+        }
         if (guildOnlyCommandNames.size > 0) {
             console.log(
                 `✓ Modération guild-only : ${guildOnlyCreated} créée(s), ${guildOnlyUpdated} MAJ — ${[...guildOnlyCommandNames].join(', ')}`
             );
         }
         console.log(
-            `✓ Modération — nettoyage guildes : ${guildCleanupTotal} doublon(s) supprimé(s) sur ${guildsVisited} guilde(s)${guildsInError ? ` (${guildsInError} erreur(s))` : ''}.`
+            `✓ Modération — nettoyage guildes : ${guildCleanupTotal} doublon(s) supprimé(s) sur ${guildsVisited} guilde(s) (miroirs exclus)${guildsInError ? ` (${guildsInError} erreur(s))` : ''}.`
         );
     }
 }
