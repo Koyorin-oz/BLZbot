@@ -675,6 +675,20 @@ async function checkVotesPeriod() {
 }
 
 /**
+ * Traite les demandes de débannissement mises en attente dont la date d'éligibilité est atteinte.
+ */
+async function checkPendingDebanRequests() {
+    try {
+        const processed = await voteManager.processPendingDebanRequests(client);
+        if (processed > 0) {
+            console.log(`[Deban] ${processed} demande(s) en attente traitée(s) automatiquement.`);
+        }
+    } catch (error) {
+        console.error('[Deban] Erreur checkPendingDebanRequests:', error);
+    }
+}
+
+/**
  * Vérification des absences expirées
  */
 async function checkExpiredAbsences() {
