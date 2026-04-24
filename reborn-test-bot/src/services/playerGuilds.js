@@ -303,6 +303,45 @@ function useFocus(hubDiscordId, attackerGuildId, targetGuildId, mode, actorUserI
   return { ok: true };
 }
 
+function kickMember(hubDiscordId, guildId, actorId, targetId) {
+  const g = getGuild(guildId);
+  if (!g || g.hub_discord_id !== hubDiscordId) return { ok: false, error: 'Guilde invalide.' };
+  if (g.leader_id === targetId) return { ok: false, error: 'Impossible d’expulser le chef.' };
+  if (!memberRow(guildId, targetId)) return { ok: false, error: 'Cible pas dans cette guilde.' };
+  if (!canKickMember(guildId, actorId)) return { ok: false, error: 'Pas autorisé à expulser (chef ou permission « kick »).' };
+  db.prepare('DELETE FROM player_guild_members WHERE guild_id = ? AND user_id = ?').run(guildId, targetId);
+  return { ok: true };
+}
+
+function transferLeadership(hubDiscordId, guildId, leaderId, newLeaderId) {
+  const g = getGuild(guildId);
+  if (!g || g.hub_discord_id !== hubDiscordId) return { ok: false, error: 'Guilde invalide.' };
+  if (g.leader_id !== leaderId) return { ok: false, error: 'Seul le chef peut transférer.' };
+  if (newLeaderId === leaderId) return { ok: false, error: 'Cible invalide.' };
+  if (!memberRow(guildId, newLeaderId)) return { ok: false, error: 'Le nouveau chef doit être membre de la guilde.' };
+  db.prepare('UPDATE player_guilds SET leader_id = ? WHERE id = ?').run(newLeaderId, guildId);
+  db.prepare('UPDATE player_guild_members SET perms_json = ? WHERE guild_id = ? AND user_id = ?').run(
+    permsJsonString(LEADER_PERMS),
+    guildId,
+    newLeaderId,
+  );
+  db.prepare('UPDATE player_guild_members SET perms_json = ? WHERE guild_id = ? AND user_id = ?').run(
+    permsJsonString(DEFAULT_PERMS),
+    guildId,
+    leaderId,
+  );
+  return { ok: true };
+}
+
+function dissolveGuild(hubDiscordId, guildId, leaderId) {
+  const g = getGuild(guildId);
+  if (!g || g.hub_discord_id !== hubDiscordId) return { ok: false, error: 'Guilde invalide.' };
+  if (g.leader_id !== leaderId) return { ok: false, error: 'Seul le chef peut dissoudre.' };
+  db.prepare('DELETE FROM player_guild_members WHERE guild_id = ?').run(guildId);
+  db.prepare('DELETE FROM player_guilds WHERE id = ?').run(guildId);
+  return { ok: true };
+}
+
 function getMemberPerms(guildId, userId) {
   const g = getGuild(guildId);
   const m = memberRow(guildId, userId);
