@@ -44,8 +44,6 @@ module.exports = {
                 }
             });
 
-            const targetPosition = mostPopulatedRole ? mostPopulatedRole.position : 1;
-
             // 2. Créer les rôles
             const createdRoles = [];
             for (const rank of rolesToCreate) {
