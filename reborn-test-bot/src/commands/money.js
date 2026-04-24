@@ -9,7 +9,8 @@ function parseAmount(raw) {
 }
 
 function canMod(interaction) {
-  return interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) || isOwner(interaction.user.id);
+  const admin = interaction.memberPermissions?.has(PermissionFlagsBits.Administrator);
+  return Boolean(admin) || isOwner(interaction.user.id);
 }
 
 module.exports = {
