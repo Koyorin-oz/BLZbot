@@ -108,10 +108,10 @@ async function handlePurchase(interaction, parts) {
       }
     } else if (sub === 'catl') {
       price = CHEST_CATL;
-      label = 'CATL';
+      label = 'CATL (légendaire)';
     } else if (sub === 'cats') {
       price = CHEST_CATS;
-      label = 'CATS';
+      label = 'CATS (star)';
     } else {
       await interaction.reply({ content: 'Coffre inconnu.', ephemeral: true });
       return;
