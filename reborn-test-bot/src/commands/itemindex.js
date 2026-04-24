@@ -36,10 +36,12 @@ module.exports = {
     if (sub === 'voir') {
       const r = idx.getRow(uid);
       const claimed = idx.parseClaimed(r.claimed_json);
-      const lines = idx.STEPS.map(
-        (s) =>
-          `• **${s.pct} %** → +${s.stars.toLocaleString('fr-FR')} starss ${claimed.includes(s.pct) ? '✅' : ''}`,
-      );
+      const lines = idx.STEPS.map((s) => {
+        const chest = (s.chests || []).map((c) => `${c.qty > 1 ? `${c.qty}× ` : ''}\`${c.id}\``).join(', ');
+        const chestPart = chest ? ` + ${chest}` : '';
+        const rolePart = s.roleNote ? ` + ${s.roleNote}` : '';
+        return `• **${s.pct} %** → +${s.stars.toLocaleString('fr-FR')} starss${chestPart}${rolePart} ${claimed.includes(s.pct) ? '✅' : ''}`;
+      });
       const e = new EmbedBuilder()
         .setTitle('Index items')
         .setDescription(`Complétion : **${r.completion_pct} %**\n\n${lines.join('\n')}`)
