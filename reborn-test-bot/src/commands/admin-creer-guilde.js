@@ -30,12 +30,12 @@ module.exports = {
       { bypassLevel: true },
     );
     if (!r.ok) {
-      return interaction.reply({ content: r.error, flags: 64 });
+      return interaction.reply({ content: r.error, flags: MessageFlags.Ephemeral });
     }
     const leaderLine = leader.id === interaction.user.id ? 'Toi' : `${leader} (${leader.tag})`;
     return interaction.reply({
       content: `Guilde **${nom.slice(0, 80)}** créée — ID \`${r.guildId}\` · chef : ${leaderLine}.`,
-      flags: 64,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };
