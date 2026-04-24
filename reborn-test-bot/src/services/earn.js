@@ -51,8 +51,7 @@ function registerEarn(client) {
         gm.addGxp(hub, uid, gr.msg * mult);
       }
       grpSeason.maybeResetMonthlyGrp(hub);
-      const gmult = grpMultForUser(hub, uid);
-      gm.addGrp(hub, uid, C.grpRatesForMessage().msg * gmult);
+      gm.addGrp(hub, uid, C.grpRatesForMessage().msg);
       const after = gm.getMemberRow(hub, uid);
       grpSeason.recordGrpPeaksIfNeeded(hub, uid, after.grp);
       playerGuilds.addGxpFromMemberActivity(hub, uid, gr.msg * mult);
