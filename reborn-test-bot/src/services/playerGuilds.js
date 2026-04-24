@@ -306,4 +306,7 @@ module.exports = {
   guildLevelFromTotalGxp,
   memberCapForGuildLevel,
   B,
+  getMemberPerms,
+  setMemberPerm,
+  canDepositToTreasury,
 };
