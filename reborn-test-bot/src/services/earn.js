@@ -43,7 +43,7 @@ function grantVoiceMinutes(guildId, userId, minutes) {
   const baseGrp = C.grpRatesForMessage().vocMin * minutes;
   const grpBp = skillTree.guildGrpMultBp(userId);
   const focus = grpFocusMultForUser(guildId, userId);
-  gm.addGrp(guildId, userId, (baseGrp * BigInt(grpBp) * focus) / (10000n * 100n));
+  gm.addGrp(guildId, userId, (baseGrp * BigInt(grpBp) * focus) / 1_000_000n);
   grpSeason.maybeResetMonthlyGrp(guildId);
   const after = gm.getMemberRow(guildId, userId);
   grpSeason.recordGrpPeaksIfNeeded(guildId, userId, after.grp);
