@@ -111,6 +111,7 @@ function rankedRpBonuses(userId) {
 module.exports = {
   BRANCHES,
   getTree,
+  saveTree,
   buy,
   step,
   onLevelUp,
