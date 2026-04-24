@@ -1,8 +1,9 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const gm = require('../services/guildMember');
 const grpSeason = require('../services/grpSeason');
-const { GRP_RANK_KEYS, GRP_THRESHOLDS, grpRankFromTotal, label: gradeLabel } = require('../reborn/grades');
+const { grpRankFromTotal } = require('../reborn/grades');
 const db = require('../db');
+const users = require('../services/users');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -41,20 +42,19 @@ module.exports = {
     }
 
     if (sub === 'classement') {
-      const rows = db
-        .prepare(
-          `SELECT user_id, grp FROM guild_member_gxp WHERE guild_id = ? ORDER BY CAST(grp AS INTEGER) DESC LIMIT 15`,
-        )
-        .all(hub);
-      const lines = rows.map((r, i) => {
-        const g = gm.getMemberRow(hub, r.user_id).grp;
-        const rk = grpRankFromTotal(g);
-        return `**${i + 1}.** <@${r.user_id}> — **${g.toLocaleString('fr-FR')}** GRP (${rk || '—'})`;
+      const rows = db.prepare('SELECT user_id, grp FROM guild_member_gxp WHERE guild_id = ?').all(hub);
+      const sorted = rows
+        .map((r) => ({ user_id: r.user_id, grp: users.B(r.grp) }))
+        .sort((a, b) => (a.grp < b.grp ? 1 : a.grp > b.grp ? -1 : 0))
+        .slice(0, 15);
+      const lines = sorted.map((r, i) => {
+        const rk = grpRankFromTotal(r.grp);
+        return `**${i + 1}.** <@${r.user_id}> — **${r.grp.toLocaleString('fr-FR')}** GRP (${rk || '—'})`;
       });
       const e = new EmbedBuilder()
         .setTitle(`Top GRP — saison ${season}`)
         .setDescription(lines.length ? lines.join('\n') : 'Aucune donnée.')
-        .setFooter({ text: 'Tri sur valeur stockée (test-bot).' })
+        .setFooter({ text: 'Classement calculé en mémoire (test-bot).' })
         .setColor(0x1abc9c);
       return interaction.reply({ embeds: [e], ephemeral: true });
     }
