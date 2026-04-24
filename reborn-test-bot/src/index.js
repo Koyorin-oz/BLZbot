@@ -3,6 +3,7 @@ const fs = require('fs');
 const {
   Client,
   Collection,
+  Events,
   GatewayIntentBits,
   Partials,
   ActivityType,
