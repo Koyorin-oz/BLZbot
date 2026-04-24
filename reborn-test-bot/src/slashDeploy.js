@@ -116,7 +116,7 @@ function makeNiveauMirrorStub(commandName) {
 function registerNiveauMirrorStubs(client) {
   if (String(process.env.REBORN_MIRROR_NIVEAU_SLASH || '1').trim() === '0') return;
   const useExecute = cfg.mirrorNiveauExecute;
-  for (const { name, filePath, mod: preloaded } of iterNiveauMirrorCommandFiles()) {
+  for (const { name, mod: preloaded } of iterNiveauMirrorCommandFiles()) {
     if (client.commands.has(name)) continue;
     if (useExecute) {
       try {
