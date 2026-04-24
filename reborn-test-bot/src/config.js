@@ -32,6 +32,14 @@ const hackerRoleId = (process.env.REBORN_HACKER_ROLE_ID || '').trim() || null;
 
 const HACKER_SALON_COOLDOWN_MS = 12 * 60 * 60 * 1000;
 
+/**
+ * Si le miroir `niveau` est actif : exécuter le vrai handler dans `niveau/src/commands/**`
+ * (même BDD / canvas que le bot principal — dépendances du monorepo racine).
+ * Mettre à `0` pour revenir au message d’aide type « utiliser BLZbot ».
+ */
+const mirrorNiveauExecute =
+  String(process.env.REBORN_MIRROR_NIVEAU_EXECUTE || '1').trim() !== '0';
+
 function assertToken() {
   if (!token) {
     console.error(
