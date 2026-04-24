@@ -309,4 +309,5 @@ module.exports = {
   getMemberPerms,
   setMemberPerm,
   canDepositToTreasury,
+  memberRow,
 };
