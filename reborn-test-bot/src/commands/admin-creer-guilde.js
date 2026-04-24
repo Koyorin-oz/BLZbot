@@ -15,10 +15,10 @@ module.exports = {
     ),
   async execute(interaction) {
     if (!interaction.guildId) {
-      return interaction.reply({ content: 'Sur un serveur uniquement.', flags: 64 });
+      return interaction.reply({ content: 'Sur un serveur uniquement.', flags: MessageFlags.Ephemeral });
     }
     if (!interaction.member?.permissions.has(PermissionFlagsBits.Administrator)) {
-      return interaction.reply({ content: 'Permission **Administrateur** requise.', flags: 64 });
+      return interaction.reply({ content: 'Permission **Administrateur** requise.', flags: MessageFlags.Ephemeral });
     }
     const nom = interaction.options.getString('nom', true);
     const leader = interaction.options.getUser('chef') ?? interaction.user;
