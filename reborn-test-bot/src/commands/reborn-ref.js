@@ -13,7 +13,7 @@ module.exports = {
           '**Économie** — `/solde`, `/payer`, `/daily`, `/money` ; gains msg + vocal ; boosts.',
           '**Boutique** — `/boutique` (slots, coffres CAT*, boosts).',
           '**Guilde joueur** — `/guilde` (créer, trésor, perms, focus, expulsion, transfert, dissolution…) + **`/profil-guilde`** (fiche embed, nom ou ID optionnel).',
-          '**Miroir slash BLZbot** — avec `REBORN_MIRROR_NIVEAU_SLASH=1` (défaut), les slash **niveau** (core/guilde/admin/misc) sont aussi déployés ici ; sans code local → message pour utiliser BLZbot (plafond **100** commandes Discord).',
+          '**Miroir slash BLZbot** — `REBORN_MIRROR_NIVEAU_SLASH=1` (défaut) : slash **niveau** + avec `REBORN_MIRROR_NIVEAU_EXECUTE=1` (défaut) exécution **identique** au module `niveau` (même BDD / deps que BLZbot ; `0` = message « utiliser BLZbot »), priorité **locale** si même nom — plafond **100** commandes.',
           '**GRP** — `/grp voir` + `/grp classement` ; reset mensuel auto + pics (grades guilde).',
           '**Séparation** — `/separation` + tick 60s.',
           '**Échanges** — `/echange` règle 40 % (starss + objets `item:qty`).',
