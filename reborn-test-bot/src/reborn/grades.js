@@ -35,6 +35,14 @@ function nextGrade(current) {
   return ORDER[idx + 1];
 }
 
+function rankAtLeast(currentRank, requiredRank) {
+  const ir = GRP_RANK_KEYS.indexOf(requiredRank);
+  const ic = GRP_RANK_KEYS.indexOf(currentRank);
+  if (ir < 0) return true;
+  if (ic < 0) return false;
+  return ic >= ir;
+}
+
 function label(fr) {
   const m = {
     '': 'Aucun',
