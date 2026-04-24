@@ -40,16 +40,8 @@ function* iterNiveauMirrorCommandFiles() {
       } catch {
         continue;
       }
-      if (!j?.name || NIVEAU_SLASH_OBSOLETE.has(j.name) || MIRROR_EXCLUDE_COMMAND_NAMES.has(j.name) || seen.has(j.name)) {
-        if (j?.name && MIRROR_EXCLUDE_COMMAND_NAMES.has(j.name)) {
-          /* laisser uniquement la commande locale */
-        } else if (j?.name) {
-          /* noop */
-        }
-        if (!j?.name || NIVEAU_SLASH_OBSOLETE.has(j.name) || seen.has(j.name)) continue;
-      }
+      if (!j?.name || NIVEAU_SLASH_OBSOLETE.has(j.name) || seen.has(j.name)) continue;
       if (MIRROR_EXCLUDE_COMMAND_NAMES.has(j.name)) continue;
-      if (!j?.name || seen.has(j.name)) continue;
       seen.add(j.name);
       yield { name: j.name, filePath, mod };
     }
