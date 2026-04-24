@@ -15,8 +15,8 @@ const db = require('../db');
 const pg = require('../services/playerGuilds');
 const gm = require('../services/guildMember');
 const users = require('../services/users');
-const { label } = require('../reborn/grades');
-const { grpRankFromTotal } = require('../reborn/grades');
+const { label, grpRankFromTotal } = require('../reborn/grades');
+const { totalToLevelState } = require('../reborn/xpCurve');
 
 const { renderGuildProfileV2 } = require(path.join(
   __dirname,
