@@ -46,6 +46,8 @@ module.exports = {
   guildId,
   ownerIds,
   autoDeploySlashOnReady,
+  hackerRoleId,
+  HACKER_SALON_COOLDOWN_MS,
   assertToken,
   assertClientIdForDeploy,
 };
