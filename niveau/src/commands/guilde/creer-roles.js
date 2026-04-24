@@ -9,6 +9,13 @@ function resolveColor(color) {
     return color;
 }
 
+/** Même tri que `discord.js` (rawPosition, puis id) — indice 0 = @everyone, dernier = rôle le plus haut. */
+function sortRolesByGuildOrder(guild) {
+    return Array.from(guild.roles.cache.values()).sort(
+        (a, b) => a.rawPosition - b.rawPosition || Number(BigInt(a.id) - BigInt(b.id)),
+    );
+}
+
 
 module.exports = {
     data: new SlashCommandBuilder()
