@@ -118,9 +118,14 @@ function memberCount(guildId) {
   return db.prepare('SELECT COUNT(*) AS c FROM player_guild_members WHERE guild_id = ?').get(guildId).c;
 }
 
-function createGuild(hubDiscordId, leaderId, leaderName, name) {
+/**
+ * @param {object} [options]
+ * @param {boolean} [options.bypassLevel] — staff : ignore l’exigence nv 15 (ex. `/admin-creer-guilde`).
+ */
+function createGuild(hubDiscordId, leaderId, leaderName, name, options = {}) {
+  const bypassLevel = options.bypassLevel === true;
   const u = users.getOrCreate(leaderId, leaderName);
-  const canCreate = cfg.TEST_NO_LIMITS || (u.level || 1) >= 15;
+  const canCreate = bypassLevel || cfg.TEST_NO_LIMITS || (u.level || 1) >= 15;
   if (!canCreate) {
     return { ok: false, error: 'Niveau 15 minimum pour créer une guilde.' };
   }
