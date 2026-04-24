@@ -40,6 +40,7 @@ module.exports = {
   clientId,
   guildId,
   ownerIds,
+  autoDeploySlashOnReady,
   assertToken,
   assertClientIdForDeploy,
 };
