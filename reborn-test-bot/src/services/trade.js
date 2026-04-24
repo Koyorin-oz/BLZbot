@@ -140,42 +140,41 @@ function createTrade(hubDiscordId, fromUser, toUser, fromStars, toStars, fromIte
 }
 
 function acceptTrade(tradeId, userId) {
-  const run = db.transaction(() => {
-    const t = db.prepare('SELECT * FROM trades WHERE id = ?').get(tradeId);
-    if (!t || t.status !== 'pending') return { ok: false, error: 'Trade introuvable.' };
-    if (t.to_user !== userId) return { ok: false, error: 'Pas le destinataire.' };
-    users.getOrCreate(t.from_user, '');
-    users.getOrCreate(t.to_user, '');
-    const fs = BigInt(t.from_stars || '0');
-    const ts = BigInt(t.to_stars || '0');
-    const fromItems = deserializeItems(t.from_items_json);
-    const toItems = deserializeItems(t.to_items_json);
-    const fromRowsCheck = itemsToRows(t.from_user, fromItems);
-    if (!fromRowsCheck.ok) return fromRowsCheck;
-    const toRowsCheck = itemsToRows(t.to_user, toItems);
-    if (!toRowsCheck.ok) return toRowsCheck;
-    const chk = tradeAllowed(fs, fromRowsCheck.rows, ts, toRowsCheck.rows);
-    if (!chk.ok) return chk;
-    if (users.getStars(t.from_user) < fs || users.getStars(t.to_user) < ts) {
-      return { ok: false, error: 'Solde starss insuffisant.' };
-    }
-    for (const { id, qty } of fromItems) {
-      if (!users.takeInventory(t.from_user, id, qty)) return { ok: false, error: `Retrait impossible : ${id}` };
-    }
-    for (const { id, qty } of toItems) {
-      if (!users.takeInventory(t.to_user, id, qty)) return { ok: false, error: `Retrait impossible : ${id}` };
-    }
-    users.addStars(t.from_user, -fs);
-    users.addStars(t.to_user, fs);
-    users.addStars(t.to_user, -ts);
-    users.addStars(t.from_user, ts);
-    for (const { id, qty } of fromItems) users.addInventory(t.to_user, id, qty);
-    for (const { id, qty } of toItems) users.addInventory(t.from_user, id, qty);
-    db.prepare('UPDATE trades SET status = ? WHERE id = ?').run('accepted', tradeId);
-    return { ok: true };
-  });
   try {
-    return run();
+    return db.transaction(() => {
+      const t = db.prepare('SELECT * FROM trades WHERE id = ?').get(tradeId);
+      if (!t || t.status !== 'pending') throw new Error('Trade introuvable.');
+      if (t.to_user !== userId) throw new Error('Pas le destinataire.');
+      users.getOrCreate(t.from_user, '');
+      users.getOrCreate(t.to_user, '');
+      const fs = BigInt(t.from_stars || '0');
+      const ts = BigInt(t.to_stars || '0');
+      const fromItems = deserializeItems(t.from_items_json);
+      const toItems = deserializeItems(t.to_items_json);
+      const fromRowsCheck = itemsToRows(t.from_user, fromItems);
+      if (!fromRowsCheck.ok) throw new Error(fromRowsCheck.error);
+      const toRowsCheck = itemsToRows(t.to_user, toItems);
+      if (!toRowsCheck.ok) throw new Error(toRowsCheck.error);
+      const chk = tradeAllowed(fs, fromRowsCheck.rows, ts, toRowsCheck.rows);
+      if (!chk.ok) throw new Error(chk.error);
+      if (users.getStars(t.from_user) < fs || users.getStars(t.to_user) < ts) {
+        throw new Error('Solde starss insuffisant.');
+      }
+      for (const { id, qty } of fromItems) {
+        if (!users.takeInventory(t.from_user, id, qty)) throw new Error(`Retrait impossible : ${id}`);
+      }
+      for (const { id, qty } of toItems) {
+        if (!users.takeInventory(t.to_user, id, qty)) throw new Error(`Retrait impossible : ${id}`);
+      }
+      users.addStars(t.from_user, -fs);
+      users.addStars(t.to_user, fs);
+      users.addStars(t.to_user, -ts);
+      users.addStars(t.from_user, ts);
+      for (const { id, qty } of fromItems) users.addInventory(t.to_user, id, qty);
+      for (const { id, qty } of toItems) users.addInventory(t.from_user, id, qty);
+      db.prepare('UPDATE trades SET status = ? WHERE id = ?').run('accepted', tradeId);
+      return { ok: true };
+    })();
   } catch (e) {
     return { ok: false, error: e?.message || String(e) };
   }
