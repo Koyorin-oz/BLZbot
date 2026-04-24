@@ -152,20 +152,6 @@ function countRarity(userId, rarity) {
   return n;
 }
 
-function hasGrpPeak(hubDiscordId, userId, rankKey, seasonKey) {
-  return !!db
-    .prepare(
-      'SELECT 1 FROM user_grp_peaks WHERE hub_discord_id = ? AND user_id = ? AND rank_key = ? AND season_key = ?',
-    )
-    .get(hubDiscordId, userId, rankKey, seasonKey);
-}
-
-function recordGrpPeak(hubDiscordId, userId, rankKey, seasonKey) {
-  db.prepare(
-    'INSERT OR IGNORE INTO user_grp_peaks (hub_discord_id, user_id, rank_key, season_key) VALUES (?, ?, ?, ?)',
-  ).run(hubDiscordId, userId, rankKey, seasonKey);
-}
-
 function tryBuyNextGrade(hubDiscordId, userId) {
   const row = getMembershipInHub(userId, hubDiscordId);
   if (!row) return { ok: false, error: 'Pas dans une guilde.' };
@@ -176,20 +162,14 @@ function tryBuyNextGrade(hubDiscordId, userId) {
   if (!nxt) return { ok: false, error: 'Grade max atteint (Star).' };
   const req = NEXT_REQUIREMENTS[nxt];
   if (!req) return { ok: false, error: 'Grade inconnu.' };
-  const u = users.getUser(userId);
-  const grpTotal = require('./guildMember').getMemberRow(hubDiscordId, userId).grp;
+  const gm = require('./guildMember');
+  const grpTotal = gm.getMemberRow(hubDiscordId, userId).grp;
   const peakRank = grpRankFromTotal(grpTotal);
-  const seasonKey = require('./grpSeason').currentSeasonKey();
-  if (!hasGrpPeak(hubDiscordId, userId, req.minGrpRank, seasonKey) && peakRank !== req.minGrpRank) {
-    const peaks = db
-      .prepare(
-        'SELECT rank_key FROM user_grp_peaks WHERE hub_discord_id = ? AND user_id = ? AND season_key = ?',
-      )
-      .all(hubDiscordId, userId, seasonKey);
-    const hasEver = peaks.some((p) => p.rank_key === req.minGrpRank);
-    if (!hasEver && peakRank !== req.minGrpRank) {
-      return { ok: false, error: `Pic GR requis : **${req.minGrpRank}** (saison actuelle ou pic enregistré).` };
-    }
+  if (!rankAtLeast(peakRank, req.minGrpRank)) {
+    return {
+      ok: false,
+      error: `Rang GR insuffisant : besoin **${req.minGrpRank}**, actuel **${peakRank || 'aucun'}**.`,
+    };
   }
   if (users.getStars(userId) < req.stars) {
     return { ok: false, error: `Il manque des starss (besoin **${req.stars.toLocaleString('fr-FR')}**).` };
