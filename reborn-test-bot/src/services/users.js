@@ -130,7 +130,12 @@ function resetCatmIfNewDay(userId, dayKey) {
   if (u.catm_day !== dayKey) catmStmt.run(dayKey, 0, userId);
 }
 
+function getUser(userId) {
+  return getStmt.get(userId);
+}
+
 module.exports = {
+  getUser,
   getOrCreate,
   getStars,
   setStars,
