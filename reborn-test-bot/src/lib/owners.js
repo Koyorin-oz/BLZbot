@@ -11,11 +11,6 @@ async function refreshApplicationOwners(client) {
     const app = await client.application.fetch();
     if (app.owner?.id) applicationOwnerIds.add(app.owner.id);
     if (app.team?.ownerUserId) applicationOwnerIds.add(app.team.ownerUserId);
-    if (app.team?.members) {
-      for (const m of app.team.members.values()) {
-        if (m.permissions?.has?.('Administrator')) applicationOwnerIds.add(m.id);
-      }
-    }
   } catch {
     /* ignore */
   }
