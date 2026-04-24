@@ -64,7 +64,17 @@ module.exports = {
       } catch (e) {
         return interaction.reply({ content: e.message || String(e), ephemeral: true });
       }
-      const r = trade.createTrade(hub, interaction.user.id, to.id, a, b, fromItems, toItems);
+      let fe = 0n;
+      let te = 0n;
+      try {
+        const rawFe = interaction.options.getString('tu_donnes_event');
+        const rawTe = interaction.options.getString('tu_recois_event');
+        if (rawFe) fe = BigInt(rawFe.replace(/\s/g, ''));
+        if (rawTe) te = BigInt(rawTe.replace(/\s/g, ''));
+      } catch {
+        return interaction.reply({ content: 'Montants monnaie d’évent invalides.', ephemeral: true });
+      }
+      const r = trade.createTrade(hub, interaction.user.id, to.id, a, b, fromItems, toItems, fe, te);
       if (!r.ok) return interaction.reply({ content: r.error, ephemeral: true });
       return interaction.reply({
         content: `Trade **${r.tradeId}** créé. ${to}, utilise \`/echange accepter\` avec l’ID **${r.tradeId}**.`,
