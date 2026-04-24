@@ -1,6 +1,8 @@
 const users = require('./users');
 const gm = require('./guildMember');
 const C = require('../reborn/constants');
+const grpSeason = require('./grpSeason');
+const playerGuilds = require('./playerGuilds');
 
 /** @type {Map<string, { guildId: string, since: number }>} */
 const voiceSince = new Map();
@@ -9,6 +11,13 @@ function gxpMultForUser(userId) {
   const u = users.getUser(userId);
   if (!u) return 1n;
   return Date.now() < (u.gxp_boost_ms || 0) ? 2n : 1n;
+}
+
+function grpMultForUser(hubId, userId) {
+  const raw = require('./meta').get(`grp_half:${hubId}:${userId}`);
+  if (!raw) return 1n;
+  if (Date.now() < Number(raw)) return 1n; // placeholder: could be /2
+  return 1n;
 }
 
 function grantVoiceMinutes(guildId, userId, minutes) {
@@ -21,7 +30,12 @@ function grantVoiceMinutes(guildId, userId, minutes) {
   const gr = C.gxpRatesForPlayerLevel(row?.level || 1);
   const mult = gxpMultForUser(userId);
   gm.addGxp(guildId, userId, gr.vocMin * minutes * mult);
-  gm.addGrp(guildId, userId, C.grpRatesForMessage().vocMin * minutes);
+  const gmult = grpMultForUser(guildId, userId);
+  gm.addGrp(guildId, userId, C.grpRatesForMessage().vocMin * minutes * gmult);
+  grpSeason.maybeResetMonthlyGrp(guildId);
+  const after = gm.getMemberRow(guildId, userId);
+  grpSeason.recordGrpPeaksIfNeeded(guildId, userId, after.grp);
+  playerGuilds.addGxpFromMemberActivity(guildId, userId, gr.vocMin * minutes * mult);
 }
 
 /**
@@ -32,6 +46,7 @@ function registerEarn(client) {
     try {
       if (!msg.guild || msg.author.bot) return;
       const uid = msg.author.id;
+      const hub = msg.guild.id;
       users.getOrCreate(uid, msg.author.username);
       const base = BigInt(C.STARSS_PER_MESSAGE);
       const gain = users.applyStarssMultiplier(uid, base);
@@ -39,11 +54,16 @@ function registerEarn(client) {
       users.addXp(uid, 1);
       const u = users.getUser(uid);
       const gr = C.gxpRatesForPlayerLevel(u?.level || 1);
+      const mult = gxpMultForUser(uid);
       if (gr.msg > 0n) {
-        const mult = gxpMultForUser(uid);
-        gm.addGxp(msg.guild.id, uid, gr.msg * mult);
+        gm.addGxp(hub, uid, gr.msg * mult);
       }
-      gm.addGrp(msg.guild.id, uid, C.grpRatesForMessage().msg);
+      grpSeason.maybeResetMonthlyGrp(hub);
+      const gmult = grpMultForUser(hub, uid);
+      gm.addGrp(hub, uid, C.grpRatesForMessage().msg * gmult);
+      const after = gm.getMemberRow(hub, uid);
+      grpSeason.recordGrpPeaksIfNeeded(hub, uid, after.grp);
+      playerGuilds.addGxpFromMemberActivity(hub, uid, gr.msg * mult);
     } catch (e) {
       console.error('[earn message]', e);
     }
