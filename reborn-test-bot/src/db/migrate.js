@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { totalToLevelState } = require('../reborn/xpCurve');
 
 function addColumnIfMissing(db, table, name, sqlTypeDefault) {
   const cols = db.prepare(`PRAGMA table_info(${table})`).all();
