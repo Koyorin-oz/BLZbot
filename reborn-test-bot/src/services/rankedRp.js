@@ -87,11 +87,6 @@ function grantFromActivity(userId, kind, units = 1n) {
       : ((r.vocMin + rb.flatVoc) * units * BigInt(rb.pctBp)) / 10000n;
   if (gain <= 0n) return;
 
-  const gGuild = skillTree.guildGrpMultBp(userId);
-  if (kind === 'msg') {
-    /* GRP handled in earn.js with same mult */
-  }
-
   const capped = clampGainForPool(userId, p, gain);
   if (capped <= 0n) return;
 
