@@ -78,7 +78,7 @@ function registerEarn(client) {
       const baseGrp = C.grpRatesForMessage().msg;
       const grpBp = skillTree.guildGrpMultBp(uid);
       const focus = grpFocusMultForUser(hub, uid);
-      gm.addGrp(hub, uid, (baseGrp * BigInt(grpBp) * focus) / (10000n * 100n));
+      gm.addGrp(hub, uid, (baseGrp * BigInt(grpBp) * focus) / 1_000_000n);
       const after = gm.getMemberRow(hub, uid);
       grpSeason.recordGrpPeaksIfNeeded(hub, uid, after.grp);
       playerGuilds.addGxpFromMemberActivity(hub, uid, gxpGain);
