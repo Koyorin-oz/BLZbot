@@ -110,8 +110,10 @@ function deserializeItems(json) {
  * @param {bigint|string} toStars
  * @param {{ id: string, qty: number }[]} fromItems
  * @param {{ id: string, qty: number }[]} toItems
+ * @param {bigint} [fromEvent]
+ * @param {bigint} [toEvent]
  */
-function createTrade(hubDiscordId, fromUser, toUser, fromStars, toStars, fromItems = [], toItems = []) {
+function createTrade(hubDiscordId, fromUser, toUser, fromStars, toStars, fromItems = [], toItems = [], fromEvent = 0n, toEvent = 0n) {
   users.getOrCreate(fromUser, '');
   users.getOrCreate(toUser, '');
   const fi = mergeItems(fromItems);
@@ -120,12 +122,14 @@ function createTrade(hubDiscordId, fromUser, toUser, fromStars, toStars, fromIte
   if (!fromRowsCheck.ok) return fromRowsCheck;
   const toRowsCheck = itemsToRows(toUser, ti);
   if (!toRowsCheck.ok) return toRowsCheck;
-  const chk = tradeAllowed(fromStars, fromRowsCheck.rows, toStars, toRowsCheck.rows);
+  const fe = typeof fromEvent === 'bigint' ? fromEvent : B(fromEvent);
+  const te = typeof toEvent === 'bigint' ? toEvent : B(toEvent);
+  const chk = tradeAllowed(fromStars, fromRowsCheck.rows, toStars, toRowsCheck.rows, fe, te);
   if (!chk.ok) return chk;
   const id = genId();
   db.prepare(
-    `INSERT INTO trades (id, hub_discord_id, from_user, to_user, from_stars, to_stars, from_items_json, to_items_json, status, created_ms)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
+    `INSERT INTO trades (id, hub_discord_id, from_user, to_user, from_stars, to_stars, from_items_json, to_items_json, from_event, to_event, status, created_ms)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
   ).run(
     id,
     hubDiscordId,
@@ -135,6 +139,8 @@ function createTrade(hubDiscordId, fromUser, toUser, fromStars, toStars, fromIte
     String(toStars),
     serializeItems(fi),
     serializeItems(ti),
+    fe.toString(),
+    te.toString(),
     Date.now(),
   );
   return { ok: true, tradeId: id };
