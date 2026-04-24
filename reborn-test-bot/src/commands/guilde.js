@@ -73,8 +73,25 @@ module.exports = {
     )
     .addSubcommand((sc) =>
       sc
+        .setName('expulser')
+        .setDescription('Expulser un membre (chef ou permission « kick »)')
+        .addUserOption((o) => o.setName('membre').setDescription('Membre à expulser').setRequired(true)),
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('transferer_chef')
+        .setDescription('Transférer le lead à un membre (chef actuel)')
+        .addUserOption((o) => o.setName('nouveau_chef').setDescription('Membre').setRequired(true)),
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('dissoudre')
+        .setDescription('Supprimer la guilde (chef, irréversible)'),
+    )
+    .addSubcommand((sc) =>
+      sc
         .setName('focus')
-        .setDescription('Focus guilde (500k trésorerie, CD 7j)')
+        .setDescription('Focus guilde (500k trésorerie, CD 7j) — chef ou permission « focus »')
         .addStringOption((o) =>
           o
             .setName('cible_guild_id')
