@@ -23,7 +23,11 @@ module.exports = {
     .addSubcommand((sc) => sc.setName('reclamer').setDescription('Réclamer la prochaine étape disponible')),
   async execute(interaction, ctx) {
     const uid = interaction.options.getUser('membre')?.id || interaction.user.id;
-    if (uid !== interaction.user.id && !ctx.isOwner() && !interaction.memberPermissions?.has('Administrator')) {
+    if (
+      uid !== interaction.user.id &&
+      !ctx.isOwner() &&
+      !interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)
+    ) {
       return interaction.reply({ content: 'Interdit.', ephemeral: true });
     }
     users.getOrCreate(uid, interaction.options.getUser('membre')?.username || interaction.user.username);
