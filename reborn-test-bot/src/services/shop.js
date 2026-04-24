@@ -53,4 +53,8 @@ function getSlot(userId, slot) {
     .get(userId, utcDateKey(), slot);
 }
 
-module.exports = { utcDateKey, ensureShopSlots, getTodaySlots, getSlot, rollRarity };
+function removeSlot(userId, slot) {
+  db.prepare('DELETE FROM user_shop WHERE user_id = ? AND shop_date = ? AND slot = ?').run(userId, utcDateKey(), slot);
+}
+
+module.exports = { utcDateKey, ensureShopSlots, getTodaySlots, getSlot, removeSlot, rollRarity };
