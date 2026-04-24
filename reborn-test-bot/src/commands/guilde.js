@@ -47,6 +47,32 @@ module.exports = {
     .addSubcommand((sc) => sc.setName('grade_up').setDescription('Acheter le prochain grade (chef)'))
     .addSubcommand((sc) =>
       sc
+        .setName('perm_voir')
+        .setDescription('Voir les permissions guilde (toi ou un membre)')
+        .addUserOption((o) => o.setName('membre').setDescription('Membre (chef)').setRequired(false)),
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('perm_set')
+        .setDescription('Définir une permission pour un membre (chef)')
+        .addUserOption((o) => o.setName('membre').setDescription('Membre').setRequired(true))
+        .addStringOption((o) =>
+          o
+            .setName('cle')
+            .setDescription('Permission')
+            .setRequired(true)
+            .addChoices(
+              { name: 'Dépôt trésorerie', value: 'depot' },
+              { name: 'Retrait trésorerie', value: 'retrait' },
+              { name: 'Expulsion (futur)', value: 'kick' },
+              { name: 'Rôles (futur)', value: 'roles' },
+              { name: 'Focus (futur)', value: 'focus' },
+            ),
+        )
+        .addBooleanOption((o) => o.setName('actif').setDescription('Activé').setRequired(true)),
+    )
+    .addSubcommand((sc) =>
+      sc
         .setName('focus')
         .setDescription('Focus guilde (500k trésorerie, CD 7j)')
         .addStringOption((o) =>
