@@ -64,16 +64,47 @@ function applyStarssMultiplier(userId, base) {
   return base;
 }
 
+const { totalToLevelState } = require('../reborn/xpCurve');
+
 function addXp(userId, delta) {
   const u = getOrCreate(userId, '');
-  let xp = (u.xp || 0) + delta;
-  let level = Math.max(1, u.level || 1);
-  while (xp >= level * 100) {
-    xp -= level * 100;
-    level += 1;
+  let d = Math.floor(Number(delta) || 0);
+  if (d <= 0) {
+    const t = u.xp_total ?? 0;
+    const st = totalToLevelState(t);
+    return { xp: st.xpInto, level: st.level, xpTotal: t };
   }
-  xpStmt.run(xp, level, userId);
-  return { xp, level };
+  const mult = Date.now() < (u.xp_boost_ms || 0) ? 2 : 1;
+  d *= mult;
+  const oldTotal = u.xp_total ?? 0;
+  const oldLevel = totalToLevelState(oldTotal).level;
+  const newTotal = oldTotal + d;
+  const st = totalToLevelState(newTotal);
+  xpStmt.run(st.xpInto, st.level, newTotal, userId);
+  if (st.level > oldLevel) {
+    try {
+      require('./skillTree').onLevelUp(userId, st.level - oldLevel);
+    } catch {
+      /* ignore */
+    }
+  }
+  return { xp: st.xpInto, level: st.level, xpTotal: newTotal };
+}
+
+function getEventCurrency(userId) {
+  const u = getStmt.get(userId);
+  return u ? B(u.event_currency) : 0n;
+}
+
+function setEventCurrency(userId, amount) {
+  const v = typeof amount === 'bigint' ? amount : B(amount);
+  db.prepare('UPDATE users SET event_currency = ? WHERE id = ?').run(v.toString(), userId);
+}
+
+function addEventCurrency(userId, delta) {
+  const n = getEventCurrency(userId) + (typeof delta === 'bigint' ? delta : B(delta));
+  setEventCurrency(userId, n);
+  return n;
 }
 
 function setBoostField(userId, field, untilMs) {
