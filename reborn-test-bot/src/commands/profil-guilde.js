@@ -235,7 +235,7 @@ module.exports = {
               }
             }
             const st = users.getUser(user_id);
-            const lv = st ? require('../reborn/xpCurve').totalToLevelState(st.xp_total ?? 0).level : 1;
+            const lv = st ? totalToLevelState(st.xp_total ?? 0).level : 1;
             lines.push(`${idx + 1}. ${mark} **${un}** — nv ${lv}`);
           }
           const listText = new TextDisplayBuilder().setContent(
