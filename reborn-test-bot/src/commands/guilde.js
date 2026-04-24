@@ -196,6 +196,35 @@ module.exports = {
       return interaction.reply({ content: `Grade acquis : **${r.label}**`, ephemeral: true });
     }
 
+    if (sub === 'perm_voir') {
+      const m = pg.getMembershipInHub(uid, hub);
+      if (!m) return interaction.reply({ content: 'Pas de guilde.', ephemeral: true });
+      const target = interaction.options.getUser('membre') || interaction.user;
+      if (target.id !== uid && m.leader_id !== uid) {
+        return interaction.reply({ content: 'Voir les perms d’un autre : chef uniquement.', ephemeral: true });
+      }
+      const tm = pg.memberRow(m.guild_id, target.id);
+      if (!tm) return interaction.reply({ content: 'Cible pas dans ta guilde.', ephemeral: true });
+      const p = pg.getMemberPerms(m.guild_id, target.id);
+      const txt = p
+        ? `depot **${p.depot}** · retrait **${p.retrait}** · kick **${p.kick}** · roles **${p.roles}** · focus **${p.focus}**`
+        : '—';
+      return interaction.reply({ content: `Permissions <@${target.id}> : ${txt}`, ephemeral: true });
+    }
+
+    if (sub === 'perm_set') {
+      const m = pg.getMembershipInHub(uid, hub);
+      if (!m || m.leader_id !== uid) return interaction.reply({ content: 'Chef uniquement.', ephemeral: true });
+      const target = interaction.options.getUser('membre', true);
+      const cle = interaction.options.getString('cle', true);
+      const actif = interaction.options.getBoolean('actif', true);
+      const tm = pg.memberRow(m.guild_id, target.id);
+      if (!tm) return interaction.reply({ content: 'Membre pas dans la guilde.', ephemeral: true });
+      const r = pg.setMemberPerm(m.guild_id, uid, target.id, cle, actif);
+      if (!r.ok) return interaction.reply({ content: r.error, ephemeral: true });
+      return interaction.reply({ content: `Permission **${cle}** → **${actif ? 'oui' : 'non'}** pour ${target}.`, ephemeral: true });
+    }
+
     if (sub === 'focus') {
       const m = pg.getMembershipInHub(uid, hub);
       if (!m || m.leader_id !== uid) return interaction.reply({ content: 'Chef uniquement.', ephemeral: true });
