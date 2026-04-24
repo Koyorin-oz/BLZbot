@@ -87,8 +87,8 @@ function makeNiveauMirrorStub(commandName) {
     async execute(interaction) {
       await interaction.reply({
         content:
-          `La commande \`/${interaction.commandName}\` est enregistrée comme sur le **bot principal** (niveau), mais **reborn-test-bot** ne l’exécute pas ici — seules les commandes du sandbox sont pleinement actives.\n` +
-          `→ Utilise **BLZbot** pour cette action, ou vois **/reborn-ref** pour les équivalents REBORN.`,
+          `La commande \`/${interaction.commandName}\` est en **miroir** du bot principal (niveau) : le menu Discord reprend la définition BLZbot, mais **reborn-test-bot** ne l’exécute pas ici.\n` +
+          `→ Utilise **BLZbot** pour cette action, ou **/reborn-ref** pour les commandes vraiment branchées sur ce sandbox.`,
         ephemeral: true,
       });
     },
