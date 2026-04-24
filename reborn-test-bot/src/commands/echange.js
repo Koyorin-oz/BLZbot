@@ -23,6 +23,12 @@ module.exports = {
             .setName('objets_recus')
             .setDescription('Optionnel : items demandés au destinataire (même format)')
             .setRequired(false),
+        )
+        .addStringOption((o) =>
+          o.setName('tu_donnes_event').setDescription('Monnaie d’évent que tu donnes (entier, 1 = 5 valeur)').setRequired(false),
+        )
+        .addStringOption((o) =>
+          o.setName('tu_recois_event').setDescription('Monnaie d’évent demandée au destinataire').setRequired(false),
         ),
     )
     .addSubcommand((sc) =>
