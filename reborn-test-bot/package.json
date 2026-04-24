@@ -7,10 +7,15 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "deploy": "node src/deploy.js"
+    "deploy": "node src/deploy.js",
+    "fix:sqlite": "npm rebuild better-sqlite3",
+    "reinstall:sqlite": "npm uninstall better-sqlite3 && npm install better-sqlite3@^12.9.0"
   },
   "engines": {
     "node": ">=20"
+  },
+  "comments": {
+    "sqlite": "Sur Windows, better-sqlite3 fournit un binaire précompilé par version de Node. Avec Node 25, si erreur ABI : utiliser Node 22 LTS (voir .nvmrc) ou installer VS Build Tools C++ puis npm run fix:sqlite."
   },
   "dependencies": {
     "better-sqlite3": "^12.9.0",
