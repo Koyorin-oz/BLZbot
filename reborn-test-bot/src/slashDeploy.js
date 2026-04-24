@@ -106,14 +106,26 @@ function makeNiveauMirrorStub(commandName) {
 }
 
 /**
- * Enregistre des handlers « stub » pour chaque slash mirroir niveau absent du dossier `commands/`.
+ * Enregistre les handlers miroir `niveau` (vraie exécution ou stub) pour chaque slash absent du dossier `commands/`.
  * @param {import('discord.js').Client} client
  */
 function registerNiveauMirrorStubs(client) {
   if (String(process.env.REBORN_MIRROR_NIVEAU_SLASH || '1').trim() === '0') return;
-  for (const j of collectNiveauSlashBodiesForMirror()) {
-    if (client.commands.has(j.name)) continue;
-    client.commands.set(j.name, makeNiveauMirrorStub(j.name));
+  const useExecute = cfg.mirrorNiveauExecute;
+  for (const { name, filePath, mod: preloaded } of iterNiveauMirrorCommandFiles()) {
+    if (client.commands.has(name)) continue;
+    if (useExecute) {
+      try {
+        const mod = preloaded;
+        if (mod?.data && typeof mod.execute === 'function') {
+          client.commands.set(name, mod);
+          continue;
+        }
+      } catch (e) {
+        console.warn(`[reborn-test-bot] Miroir niveau exéc. — /${name} :`, e?.message || e);
+      }
+    }
+    client.commands.set(name, makeNiveauMirrorStub(name));
   }
 }
 
