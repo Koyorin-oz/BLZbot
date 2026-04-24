@@ -57,4 +57,4 @@ function label(fr) {
   return m[fr] || fr;
 }
 
-module.exports = { ORDER, NEXT_REQUIREMENTS, GRP_RANK_KEYS, GRP_THRESHOLDS, grpRankFromTotal, nextGrade, label };
+module.exports = { ORDER, NEXT_REQUIREMENTS, GRP_RANK_KEYS, GRP_THRESHOLDS, grpRankFromTotal, nextGrade, label, rankAtLeast };
