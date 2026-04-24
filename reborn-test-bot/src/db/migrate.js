@@ -178,6 +178,17 @@ function migrate(db) {
   addColumnIfMissing(db, 'trades', 'to_items_json', "TEXT NOT NULL DEFAULT '[]'");
   addColumnIfMissing(db, 'player_guild_members', 'perms_json', "TEXT NOT NULL DEFAULT '{}'");
   addColumnIfMissing(db, 'user_quest_state', 'lifetime_msgs', 'INTEGER NOT NULL DEFAULT 0');
+
+  addColumnIfMissing(db, 'users', 'xp_total', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'users', 'rp_last_activity_ms', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'users', 'event_currency', "TEXT NOT NULL DEFAULT '0'");
+  addColumnIfMissing(db, 'users', 'skill_points', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'users', 'skill_tree_json', "TEXT NOT NULL DEFAULT '{}'");
+  addColumnIfMissing(db, 'users', 'temple_points', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'users', 'temple_sources_json', "TEXT NOT NULL DEFAULT '[]'");
+  addColumnIfMissing(db, 'users', 'temple_unlocked', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'trades', 'from_event', "TEXT NOT NULL DEFAULT '0'");
+  addColumnIfMissing(db, 'trades', 'to_event', "TEXT NOT NULL DEFAULT '0'");
 }
 
 module.exports = { migrate };
