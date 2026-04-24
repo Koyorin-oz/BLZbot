@@ -64,9 +64,9 @@ module.exports = {
             .addChoices(
               { name: 'Dépôt trésorerie', value: 'depot' },
               { name: 'Retrait trésorerie', value: 'retrait' },
-              { name: 'Expulsion (futur)', value: 'kick' },
-              { name: 'Rôles (futur)', value: 'roles' },
-              { name: 'Focus (futur)', value: 'focus' },
+              { name: 'Expulsion membre', value: 'kick' },
+              { name: 'Invitations', value: 'roles' },
+              { name: 'Lancer un focus', value: 'focus' },
             ),
         )
         .addBooleanOption((o) => o.setName('actif').setDescription('Activé').setRequired(true)),
