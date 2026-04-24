@@ -46,7 +46,7 @@ module.exports = {
                 if (!existingRole) {
                     const newRole = await guild.roles.create({
                         name: rank.name,
-                        color: resolveColor(rank.color),
+                        colors: resolveColor(rank.color) != null ? [resolveColor(rank.color)] : undefined,
                         permissions: [],
                     });
                     createdRoles.push(newRole);
@@ -55,14 +55,33 @@ module.exports = {
             }
 
             // 3. Positionner les rôles
-            // On positionne du plus bas (Plastique I) au plus haut (GOAT)
-            const orderedRolesToPosition = createdRoles.reverse();
-            for (let i = 0; i < orderedRolesToPosition.length; i++) {
-                const role = orderedRolesToPosition[i];
-                await role.setPosition(targetPosition + i + 1);
+            // Plafonner : le bot ne peut placer un rôle qu’en dessous de son propre rôle (API 50013 sinon).
+            const me = await guild.members.fetch(guild.client.user.id);
+            const maxPos = me.roles.highest.position - 1;
+            if (maxPos < 1) {
+                await interaction.followUp(
+                    'Rôles créés, mais le rôle **du bot** est trop bas : place-le **au-dessus** des rôles de rang, avec **Gérer les rôles**, puis relance la commande pour les positionner (ou place-les à la main).',
+                );
+                return;
             }
 
-            await interaction.followUp('Tous les rôles de rangs ont été créés et positionnés avec succès !');
+            // On positionne du plus bas (Plastique I) au plus haut (GOAT)
+            const orderedRolesToPosition = createdRoles.reverse();
+            let anyClamped = false;
+            for (let i = 0; i < orderedRolesToPosition.length; i++) {
+                const role = orderedRolesToPosition[i];
+                const desired = targetPosition + i + 1;
+                const pos = Math.max(1, Math.min(desired, maxPos));
+                if (pos < desired) anyClamped = true;
+                await role.setPosition(pos);
+            }
+
+            let msg = 'Tous les rôles de rangs ont été créés et positionnés avec succès !';
+            if (anyClamped) {
+                msg +=
+                    ' *(Certaines positions ont été plafonnées : le rôle du bot doit rester **au-dessus** de ces rôles — ajuste l’ordre manuellement si besoin.)*';
+            }
+            await interaction.followUp({ content: msg, ephemeral: true });
 
         } catch (error) {
             console.error('Erreur lors de la création des rôles :', error);
