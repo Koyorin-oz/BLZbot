@@ -18,7 +18,7 @@ function maybeRecoverSecu(userId) {
 }
 
 function addWarn(hubDiscordId, targetId, modId, degree, reason) {
-  const loss = degree === 'fort' ? 5 : degree === 'moyen' ? 2 : 1;
+  const loss = { leger: 1, moyen: 2, fort: 5 }[degree] ?? 1;
   users.getOrCreate(targetId, '');
   maybeRecoverSecu(targetId);
   const u = users.getUser(targetId);
