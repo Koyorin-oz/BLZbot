@@ -26,7 +26,7 @@ function* iterNiveauMirrorCommandFiles() {
         mod = require(filePath);
       } catch (e) {
         console.warn(
-          `[reborn-test-bot] Miroir niveau — chargement ignoré (${file.replace(REPO_ROOT + path.sep, '')}):`,
+          `[reborn-test-bot] Miroir niveau — chargement ignoré (${path.relative(REPO_ROOT, filePath)}):`,
           e?.message || e,
         );
         continue;
