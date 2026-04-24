@@ -22,14 +22,15 @@ function valueFromInventoryRows(rows) {
   return v;
 }
 
-function totalOfferValue(stars, invRows) {
-  return BigInt(stars || '0') + valueFromInventoryRows(invRows);
+function totalOfferValue(stars, invRows, eventCurrency = 0n) {
+  const ev = typeof eventCurrency === 'bigint' ? eventCurrency : B(eventCurrency);
+  return BigInt(stars || '0') + valueFromInventoryRows(invRows) + ev * 5n;
 }
 
-/** Écart max 40 % (doc). */
-function tradeAllowed(aStars, aInv, bStars, bInv) {
-  const va = totalOfferValue(aStars, aInv);
-  const vb = totalOfferValue(bStars, bInv);
+/** Écart max 40 % (doc). Monnaie d’évent : 1 = 5 valeur. */
+function tradeAllowed(aStars, aInv, bStars, bInv, aEvent = 0n, bEvent = 0n) {
+  const va = totalOfferValue(aStars, aInv, aEvent);
+  const vb = totalOfferValue(bStars, bInv, bEvent);
   if (va === 0n && vb === 0n) return { ok: false, error: 'Offres vides.' };
   const hi = va > vb ? va : vb;
   const lo = va > vb ? vb : va;
