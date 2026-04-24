@@ -1,7 +1,7 @@
 const db = require('../db');
 const users = require('./users');
 const { getItem } = require('../reborn/catalog');
-const { NEXT_REQUIREMENTS, grpRankFromTotal, nextGrade, label } = require('../reborn/grades');
+const { NEXT_REQUIREMENTS, grpRankFromTotal, nextGrade, label, rankAtLeast } = require('../reborn/grades');
 
 function B(s) {
   try {
