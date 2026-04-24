@@ -40,7 +40,7 @@ module.exports = {
     .addSubcommand((sc) =>
       sc
         .setName('tresor_retrait')
-        .setDescription('Retirer des starss (chef)')
+        .setDescription('Retirer des starss (chef ou permission « retrait »)')
         .addStringOption((o) => o.setName('montant').setDescription('Starss').setRequired(true)),
     )
     .addSubcommand((sc) => sc.setName('tresor_voir').setDescription('Voir la trésorerie'))
