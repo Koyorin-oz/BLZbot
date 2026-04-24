@@ -56,7 +56,12 @@ module.exports = {
     const mem = interaction.options.getUser('membre', true);
     if (sub === 'set') {
       const raw = interaction.options.getString('montant', true);
-      wallet.setBalance(mem.id, BigInt(raw.replace(/\s/g, '')));
+      try {
+        wallet.setBalance(mem.id, BigInt(raw.replace(/\s/g, '')));
+      } catch (err) {
+        await interaction.reply({ content: `Montant invalide: ${err?.message || err}`, ephemeral: true });
+        return;
+      }
       await interaction.reply({
         content: `Solde **${mem.tag}** → **${fmtStarss(wallet.getBalance(mem.id))}** starss`,
         ephemeral: true,
@@ -65,7 +70,12 @@ module.exports = {
     }
     if (sub === 'add') {
       const raw = interaction.options.getString('delta', true);
-      wallet.addBalance(mem.id, BigInt(raw.replace(/\s/g, '')));
+      try {
+        wallet.addBalance(mem.id, BigInt(raw.replace(/\s/g, '')));
+      } catch (err) {
+        await interaction.reply({ content: `Delta invalide: ${err?.message || err}`, ephemeral: true });
+        return;
+      }
       await interaction.reply({
         content: `**${mem.tag}** — nouveau solde **${fmtStarss(wallet.getBalance(mem.id))}** starss`,
         ephemeral: true,
