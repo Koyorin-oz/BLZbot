@@ -310,11 +310,22 @@ async function renderGuildProfileV2({ guild, members, owner, warInfo, totalMembe
     ctx.fillText(`📅 Créée le ${createdDate}`, 780, 700);
   }
 
+  // Ligne optionnelle (ex. sandbox REBORN : grade, GXP guilde, anti-séparation…)
+  if (guild.reborn_extras) {
+    ctx.font = `600 14px ${textFace}`;
+    ctx.fillStyle = '#7bed9f';
+    ctx.textAlign = 'left';
+    ctx.fillText(truncateText(ctx, String(guild.reborn_extras), 680), 470, 752);
+  }
+
   // Footer - Note pour boutons
   ctx.font = `italic 14px ${textFace}`;
   ctx.fillStyle = THEME.sub;
   ctx.textAlign = 'center';
-  ctx.fillText('💡 Utilisez les boutons ci-dessous pour voir la liste complète, les carrières ou les quêtes', W / 2, H - 20);
+  const footerTip =
+    guild.reborn_footer ||
+    '💡 Utilisez les boutons ci-dessous pour voir la liste complète, les carrières ou les quêtes';
+  ctx.fillText(truncateText(ctx, footerTip, 1100), W / 2, H - 20);
   ctx.textAlign = 'left';
 
   return canvas.toBuffer('image/png');
