@@ -1,7 +1,13 @@
 const db = require('../db');
-const meta = require('./meta');
 const playerGuilds = require('./playerGuilds');
-const { B } = require('./playerGuilds');
+
+function B(s) {
+  try {
+    return BigInt(s || '0');
+  } catch {
+    return 0n;
+  }
+}
 
 function genId() {
   return `sep${Date.now()}${Math.random().toString(36).slice(2, 8)}`;
