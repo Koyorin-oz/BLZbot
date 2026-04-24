@@ -167,4 +167,5 @@ module.exports = {
   collectNiveauSlashBodiesForMirror,
   registerNiveauMirrorStubs,
   deploySlashCommands,
+  MIRROR_EXCLUDE_COMMAND_NAMES,
 };
