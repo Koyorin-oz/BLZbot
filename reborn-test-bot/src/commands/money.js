@@ -17,7 +17,6 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('money')
     .setDescription('Gérer starss / points (admin serveur ou owner app) — aligné BLZbot.')
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand((sc) =>
       sc
         .setName('give')
