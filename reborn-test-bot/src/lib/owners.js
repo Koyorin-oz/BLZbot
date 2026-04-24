@@ -1,4 +1,4 @@
-const { config } = require('./config-bridge');
+const base = require('../config');
 
 let applicationOwnerIds = new Set();
 
@@ -22,7 +22,7 @@ async function refreshApplicationOwners(client) {
 }
 
 function isOwner(userId) {
-  if (config.ownerIds.has(userId)) return true;
+  if (base.ownerIds.has(userId)) return true;
   if (applicationOwnerIds.has(userId)) return true;
   return false;
 }
