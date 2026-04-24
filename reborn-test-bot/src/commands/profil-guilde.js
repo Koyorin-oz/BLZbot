@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const db = require('../db');
 const pg = require('../services/playerGuilds');
 const gm = require('../services/guildMember');
 const { label } = require('../reborn/grades');
