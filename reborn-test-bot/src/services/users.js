@@ -54,6 +54,7 @@ function setPoints(userId, amount) {
 function addPoints(userId, delta) {
   const n = getPoints(userId) + (typeof delta === 'bigint' ? delta : B(delta));
   setPoints(userId, n);
+  db.prepare('UPDATE users SET rp_last_activity_ms = ? WHERE id = ?').run(Date.now(), userId);
   return n;
 }
 
