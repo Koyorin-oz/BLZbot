@@ -48,7 +48,7 @@ module.exports = {
     }
 
     if (sub === 'definir') {
-      if (!ctx.isOwner() && !interaction.memberPermissions?.has('Administrator')) {
+      if (!ctx.isOwner() && !interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
         return interaction.reply({ content: 'Admin / owner.', ephemeral: true });
       }
       const p = interaction.options.getInteger('pourcent', true);
