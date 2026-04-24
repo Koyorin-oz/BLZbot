@@ -5,6 +5,8 @@ const cfg = require('./config');
 
 const NIVEAU_COMMAND_SUBDIRS = ['core', 'guilde', 'admin', 'misc'];
 const NIVEAU_SLASH_OBSOLETE = new Set(['profil-v2', 'profile', 'testprofil', 'testprofilguilde']);
+/** Ne jamais prendre la définition `niveau` pour ces noms (versions REBORN du dossier `commands/` + canvas). */
+const MIRROR_EXCLUDE_COMMAND_NAMES = new Set(['profil-guilde']);
 const DISCORD_APPLICATION_COMMAND_MAX = 100;
 const REPO_ROOT = path.join(__dirname, '..', '..');
 
