@@ -1,5 +1,13 @@
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+
+const localEnv = path.join(__dirname, '..', '.env');
+const monorepoRootEnv = path.join(__dirname, '..', '..', '.env');
+
+require('dotenv').config({ path: localEnv });
+/** Si le token n’est que dans le `.env` racine du repo (monorepo), on le charge en secours. */
+if (!String(process.env.REBORN_TEST_BOT_TOKEN || '').trim()) {
+  require('dotenv').config({ path: monorepoRootEnv });
+}
 
 /** Aucune limite artificielle côté bot (cooldowns, caps internes désactivés). */
 const TEST_NO_LIMITS = true;
