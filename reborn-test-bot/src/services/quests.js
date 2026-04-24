@@ -7,6 +7,23 @@ const DAILY_REWARD = 25_000n;
 const WEEKLY_MSG_TARGET = 50;
 const WEEKLY_REWARD = 150_000n;
 
+/** Quête « choix » hebdomadaire (une par semaine). */
+const SELECTIONS = {
+  chasse_messages: {
+    label: 'Chasse : 20 messages cette semaine',
+    kind: 'msgs',
+    target: 20,
+    reward: 40_000n,
+  },
+  offre_corail: {
+    label: 'Offrir 1× corail à la cagnotte (retiré à la réclamation)',
+    kind: 'item',
+    itemId: 'corail',
+    qty: 1,
+    reward: 80_000n,
+  },
+};
+
 function weekBucketMs() {
   return Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000));
 }
@@ -14,9 +31,7 @@ function weekBucketMs() {
 function getState(userId) {
   let r = db.prepare('SELECT * FROM user_quest_state WHERE user_id = ?').get(userId);
   if (!r) {
-    db.prepare(
-      `INSERT INTO user_quest_state (user_id) VALUES (?)`,
-    ).run(userId);
+    db.prepare(`INSERT INTO user_quest_state (user_id) VALUES (?)`).run(userId);
     r = db.prepare('SELECT * FROM user_quest_state WHERE user_id = ?').get(userId);
   }
   return r;
@@ -27,12 +42,7 @@ function syncDayWeek(row) {
   const wk = String(weekBucketMs());
   let patch = {};
   if (row.day_key !== day) {
-    patch = {
-      ...patch,
-      day_key: day,
-      msgs_today: 0,
-      daily_claimed: 0,
-    };
+    patch = { ...patch, day_key: day, msgs_today: 0, daily_claimed: 0 };
   }
   if (row.week_key !== wk) {
     patch = {
@@ -40,6 +50,9 @@ function syncDayWeek(row) {
       week_key: wk,
       week_points: 0,
       weekly_claimed: 0,
+      selection_id: '',
+      selection_progress: 0,
+      selection_claimed: 0,
     };
   }
   if (Object.keys(patch).length) {
@@ -49,6 +62,15 @@ function syncDayWeek(row) {
     return { ...row, ...patch };
   }
   return row;
+}
+
+function bumpSelectionProgress(userId, row) {
+  const sid = row.selection_id || '';
+  if (!sid || row.selection_claimed) return;
+  const def = SELECTIONS[sid];
+  if (!def || def.kind !== 'msgs') return;
+  const p = (row.selection_progress || 0) + 1;
+  db.prepare('UPDATE user_quest_state SET selection_progress = ? WHERE user_id = ?').run(p, userId);
 }
 
 /** Compteur messages + progression (appelé depuis earn). */
@@ -65,6 +87,8 @@ function onMessage(userId) {
     life,
     userId,
   );
+  row = { ...row, msgs_today: msgs, week_points: wp, lifetime_msgs: life };
+  bumpSelectionProgress(userId, row);
   return { msgs_today: msgs, week_points: wp, day_key: row.day_key, lifetime_msgs: life };
 }
 
@@ -92,9 +116,56 @@ function claimWeekly(userId) {
   return { ok: true, reward: WEEKLY_REWARD };
 }
 
+function pickSelection(userId, selectionKey) {
+  users.getOrCreate(userId, '');
+  let row = syncDayWeek(getState(userId));
+  if (!SELECTIONS[selectionKey]) return { ok: false, error: 'Choix inconnu.' };
+  if (row.selection_claimed) return { ok: false, error: 'Tu as déjà terminé ta quête à choix cette semaine.' };
+  if (row.selection_id && row.selection_id === selectionKey) {
+    return { ok: false, error: 'Tu as déjà ce choix actif.' };
+  }
+  db.prepare(
+    'UPDATE user_quest_state SET selection_id = ?, selection_progress = 0, selection_claimed = 0 WHERE user_id = ?',
+  ).run(selectionKey, userId);
+  return { ok: true, def: SELECTIONS[selectionKey] };
+}
+
+function claimSelection(userId) {
+  users.getOrCreate(userId, '');
+  let row = syncDayWeek(getState(userId));
+  const sid = row.selection_id || '';
+  if (!sid) return { ok: false, error: 'Choisis d’abord une quête avec `/quete choisir`.' };
+  if (row.selection_claimed) return { ok: false, error: 'Déjà réclamée cette semaine.' };
+  const def = SELECTIONS[sid];
+  if (!def) return { ok: false, error: 'Quête invalide.' };
+  if (def.kind === 'msgs') {
+    if ((row.selection_progress || 0) < def.target) {
+      return { ok: false, error: `Progression **${row.selection_progress || 0}** / **${def.target}** messages.` };
+    }
+  } else if (def.kind === 'item') {
+    if (!users.takeInventory(userId, def.itemId, def.qty)) {
+      return { ok: false, error: `Il te faut **${def.qty}×** item \`${def.itemId}\` en inventaire.` };
+    }
+  }
+  db.prepare('UPDATE user_quest_state SET selection_claimed = 1 WHERE user_id = ?').run(userId);
+  users.addStars(userId, def.reward);
+  return { ok: true, reward: def.reward, label: def.label };
+}
+
 function summary(userId) {
   users.getOrCreate(userId, '');
   const row = syncDayWeek(getState(userId));
+  const sid = row.selection_id || '';
+  const def = sid ? SELECTIONS[sid] : null;
+  let selLine = 'Aucune quête à choix (prends-en une avec `/quete choisir`).';
+  if (def) {
+    if (row.selection_claimed) selLine = `**${def.label}** — terminée cette semaine.`;
+    else if (def.kind === 'msgs') {
+      selLine = `**${def.label}** — **${row.selection_progress || 0}** / **${def.target}**`;
+    } else {
+      selLine = `**${def.label}** — prêt à réclamer si tu as l’item (voir \`/quete reclamer_selection\`).`;
+    }
+  }
   return {
     msgs_today: row.msgs_today || 0,
     lifetime_msgs: row.lifetime_msgs ?? 0,
@@ -105,6 +176,8 @@ function summary(userId) {
     weekly_target: WEEKLY_MSG_TARGET,
     weekly_claimed: !!row.weekly_claimed,
     weekly_reward: WEEKLY_REWARD,
+    selection_line: selLine,
+    selection_id: sid,
   };
 }
 
@@ -112,7 +185,10 @@ module.exports = {
   onMessage,
   claimDaily,
   claimWeekly,
+  pickSelection,
+  claimSelection,
   summary,
+  SELECTIONS,
   DAILY_MSG_TARGET,
   WEEKLY_MSG_TARGET,
 };
