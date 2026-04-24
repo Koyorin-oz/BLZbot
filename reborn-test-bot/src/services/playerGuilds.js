@@ -300,7 +300,7 @@ function useFocus(hubDiscordId, attackerGuildId, targetGuildId, mode, actorUserI
       gm.addGrp(hubDiscordId, user_id, share);
     }
   } else if (mode === '3') {
-    require('./meta').set(`focus_half_grp_${tgt.id}_${now}`, String(now + 2 * 3600000));
+    require('./meta').set(`grp_half_${targetGuildId}`, String(now + 2 * 3600000));
   }
   return { ok: true };
 }
