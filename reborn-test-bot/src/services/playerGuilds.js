@@ -262,6 +262,33 @@ function useFocus(hubDiscordId, attackerGuildId, targetGuildId, mode) {
   return { ok: true };
 }
 
+function getMemberPerms(guildId, userId) {
+  const g = getGuild(guildId);
+  const m = memberRow(guildId, userId);
+  if (!g || !m) return null;
+  if (g.leader_id === userId) return { ...LEADER_PERMS };
+  return parsePermsJson(m.perms_json);
+}
+
+function setMemberPerm(guildId, leaderId, targetUserId, key, value) {
+  const g = getGuild(guildId);
+  if (!g || g.leader_id !== leaderId) return { ok: false, error: 'Chef uniquement.' };
+  if (targetUserId === leaderId) return { ok: false, error: 'Le chef a déjà toutes les permissions.' };
+  const m = memberRow(guildId, targetUserId);
+  if (!m) return { ok: false, error: 'Membre introuvable.' };
+  const allowed = new Set(['depot', 'retrait', 'kick', 'roles', 'focus']);
+  if (!allowed.has(key)) return { ok: false, error: 'Clé inconnue.' };
+  const v = value ? 1 : 0;
+  const cur = parsePermsJson(m.perms_json);
+  cur[key] = v;
+  db.prepare('UPDATE player_guild_members SET perms_json = ? WHERE guild_id = ? AND user_id = ?').run(
+    permsJsonString(cur),
+    guildId,
+    targetUserId,
+  );
+  return { ok: true, perms: cur };
+}
+
 module.exports = {
   getGuild,
   getMembershipInHub,
