@@ -1,7 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const users = require('../services/users');
 const passport = require('../services/passport');
-const { listWarns } = require('../services/passport');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -15,7 +14,7 @@ module.exports = {
     users.getOrCreate(target.id, target.username);
     passport.maybeRecoverSecu(target.id);
     const u = users.getUser(target.id);
-    const warns = listWarns(hub, target.id, 10);
+    const warns = passport.listWarns(hub, target.id, 10);
     const wtxt = warns.length
       ? warns.map((w) => `• −${w.degree} pts — <@${w.mod_id}> — ${w.reason || '—'}`).join('\n')
       : 'Aucun warn enregistré ici.';
