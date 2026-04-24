@@ -52,6 +52,7 @@ module.exports = {
         { name: 'Niveau / XP', value: `Nv **${u.level}** · **${u.xp}** XP`, inline: true },
         { name: 'GXP (ce serveur)', value: fmt(gxp), inline: true },
         { name: 'GRP (ce serveur)', value: fmt(grp), inline: true },
+        { name: 'Guilde REBORN', value: pgLine, inline: false },
         {
           name: 'Boosts actifs',
           value: `XP ×2 : ${fmtMs(u.xp_boost_ms)}\nGXP ×2 : ${fmtMs(u.gxp_boost_ms)}\nStarss ×2 : ${fmtMs(u.starss_boost_ms)}`,
