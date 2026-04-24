@@ -148,10 +148,40 @@ function migrate(db) {
       reason TEXT NOT NULL DEFAULT '',
       created_ms INTEGER NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS user_quest_state (
+      user_id TEXT PRIMARY KEY,
+      day_key TEXT NOT NULL DEFAULT '',
+      msgs_today INTEGER NOT NULL DEFAULT 0,
+      daily_claimed INTEGER NOT NULL DEFAULT 0,
+      week_key TEXT NOT NULL DEFAULT '',
+      week_points INTEGER NOT NULL DEFAULT 0,
+      weekly_claimed INTEGER NOT NULL DEFAULT 0,
+      selection_id TEXT NOT NULL DEFAULT '',
+      selection_progress INTEGER NOT NULL DEFAULT 0,
+      selection_claimed INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS trophies_unlocked (
+      user_id TEXT NOT NULL,
+      trophy_id TEXT NOT NULL,
+      unlocked_ms INTEGER NOT NULL,
+      PRIMARY KEY (user_id, trophy_id)
+    );
   `);
 
   addColumnIfMissing(db, 'users', 'secu_points', 'INTEGER NOT NULL DEFAULT 10');
   addColumnIfMissing(db, 'users', 'secu_last_recovery_ms', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'users', 'mod_tests_score', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'users', 'candidature_status', "TEXT NOT NULL DEFAULT 'aucune'");
+  addColumnIfMissing(db, 'trades', 'from_items_json', "TEXT NOT NULL DEFAULT '[]'");
+  addColumnIfMissing(db, 'trades', 'to_items_json', "TEXT NOT NULL DEFAULT '[]'");
+  addColumnIfMissing(
+    db,
+    'player_guild_members',
+    'perms_json',
+    "TEXT NOT NULL DEFAULT '{\"depot\":1,\"retrait\":0,\"kick\":0,\"roles\":0,\"focus\":0}'",
+  );
 }
 
 module.exports = { migrate };
