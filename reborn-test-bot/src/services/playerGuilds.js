@@ -267,12 +267,15 @@ function listGuildsOnHub(hubDiscordId) {
   return db.prepare('SELECT id, name, leader_id, member_cap, guild_level, grade, treasury FROM player_guilds WHERE hub_discord_id = ? ORDER BY created_ms DESC').all(hubDiscordId);
 }
 
-function useFocus(hubDiscordId, attackerGuildId, targetGuildId, mode) {
+function useFocus(hubDiscordId, attackerGuildId, targetGuildId, mode, actorUserId) {
   const now = Date.now();
   const CD = 168 * 60 * 60 * 1000;
   const COST = 500_000n;
   const att = getGuild(attackerGuildId);
   const tgt = getGuild(targetGuildId);
+  if (!actorUserId || !canLaunchFocus(attackerGuildId, actorUserId)) {
+    return { ok: false, error: 'Pas autorisé à lancer un focus (chef ou permission « focus »).' };
+  }
   if (!att || !tgt || att.hub_discord_id !== hubDiscordId || tgt.hub_discord_id !== hubDiscordId) {
     return { ok: false, error: 'Guildes invalides.' };
   }
