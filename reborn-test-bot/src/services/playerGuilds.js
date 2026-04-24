@@ -244,7 +244,6 @@ module.exports = {
   tryBuyNextGrade,
   listGuildsOnHub,
   useFocus,
-  recordGrpPeak,
   guildLevelFromTotalGxp,
   memberCapForGuildLevel,
   B,
