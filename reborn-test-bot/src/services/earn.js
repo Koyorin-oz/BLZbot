@@ -3,6 +3,8 @@ const gm = require('./guildMember');
 const C = require('../reborn/constants');
 const grpSeason = require('./grpSeason');
 const playerGuilds = require('./playerGuilds');
+const quests = require('./quests');
+const trophies = require('./trophies');
 
 /** @type {Map<string, { guildId: string, since: number }>} */
 const voiceSince = new Map();
