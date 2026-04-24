@@ -182,8 +182,9 @@ function tryBuyNextGrade(hubDiscordId, userId) {
   }
   if (req.needDiamond) {
     const h = require('./meta').diamondHolder();
-    if (h !== userId && countRarity(userId, 'Staresque') < 1) {
-      return { ok: false, error: 'Il faut posséder le **Diamant** (unique) ou un item staresque en stock.' };
+    const hasDiamItem = countRarity(userId, 'Staresque') >= 1 || users.getInventory(userId).some((r) => r.item_id === 'diamant' && r.qty > 0);
+    if (h !== userId && !hasDiamItem) {
+      return { ok: false, error: 'Il faut être détenteur du **Diamant** ou avoir l’item en inventaire / un item staresque.' };
     }
   }
   users.addStars(userId, -req.stars);
