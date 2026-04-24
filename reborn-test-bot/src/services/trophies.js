@@ -3,7 +3,6 @@ const users = require('./users');
 const indexProgress = require('./indexProgress');
 const quests = require('./quests');
 const gm = require('./guildMember');
-const { grpRankFromTotal } = require('../reborn/grades');
 const pg = require('./playerGuilds');
 
 /** @typedef {{ id: string, name: string, desc: string, check: (ctx: Record<string, unknown>) => boolean }} TrophyDef */
