@@ -99,7 +99,9 @@ function createGuild(hubDiscordId, leaderId, leaderName, name) {
     `INSERT INTO player_guilds (id, hub_discord_id, name, leader_id, created_ms, member_cap, gxp, guild_level, grade, treasury, anti_separation, last_focus_ms)
      VALUES (?, ?, ?, ?, ?, ?, '0', 1, '', '0', 0, 0)`,
   ).run(id, hubDiscordId, name.slice(0, 80), leaderId, now, 5);
-  db.prepare('INSERT INTO player_guild_members (guild_id, user_id, joined_ms) VALUES (?, ?, ?)').run(id, leaderId, now);
+  db.prepare(
+    'INSERT INTO player_guild_members (guild_id, user_id, joined_ms, perms_json) VALUES (?, ?, ?, ?)',
+  ).run(id, leaderId, now, permsJsonString(LEADER_PERMS));
   return { ok: true, guildId: id };
 }
 
