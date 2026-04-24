@@ -7,7 +7,7 @@ module.exports = {
     .addIntegerOption((o) =>
       o
         .setName('nombre')
-        .setDescription('1 à 1000 (traité par paquets de 100, &lt;14 j)')
+        .setDescription('1 à 1000 (paquets de 100 ; messages de moins de 14 j)')
         .setRequired(true)
         .setMinValue(1)
         .setMaxValue(1000),

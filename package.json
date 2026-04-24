@@ -17,6 +17,9 @@
     "deploy:commands:all:test": "cross-env BLZ_TEST_MODE=1 node scripts/run-deploy-all.js",
     "points-bot": "node legacy/points-bot/index.js",
     "rate-limit-test": "node scripts/dev/test-rate-limit.js",
+    "reborn-test-bot:install": "npm install --prefix reborn-test-bot",
+    "reborn-test-bot:start": "npm start --prefix reborn-test-bot",
+    "reborn-test-bot:deploy": "npm run deploy --prefix reborn-test-bot",
     "git:hooks": "git config core.hooksPath .githooks",
     "git:push": "git push origin HEAD"
   },

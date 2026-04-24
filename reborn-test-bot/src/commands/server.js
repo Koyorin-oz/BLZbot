@@ -11,7 +11,6 @@ module.exports = {
       await interaction.reply({ content: 'Hors serveur.', ephemeral: true });
       return;
     }
-    await g.members.fetch().catch(() => {});
     const e = new EmbedBuilder()
       .setTitle(g.name)
       .setThumbnail(g.iconURL({ size: 256 }))
