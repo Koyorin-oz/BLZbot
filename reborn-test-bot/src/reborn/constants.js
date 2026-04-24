@@ -46,7 +46,6 @@ function gxpRatesForPlayerLevel(level) {
   if (lv < 40) return { msg: 3n, vocMin: 6n };
   if (lv < 50) return { msg: 4n, vocMin: 8n };
   if (lv < 60) return { msg: 5n, vocMin: 10n };
-  if (lv >= 70) return { msg: 6n, vocMin: 12n };
   return { msg: 6n, vocMin: 12n };
 }
 
