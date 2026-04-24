@@ -3,7 +3,7 @@ const users = require('./users');
 const indexProgress = require('./indexProgress');
 const quests = require('./quests');
 
-/** @typedef {{ id: string, name: string, desc: string, check: (ctx: any) => boolean }} TrophyDef */
+/** @typedef {{ id: string, name: string, desc: string, check: (ctx: { lifetime_msgs: number; msgs_today: number; stars: bigint; level: number; index_pct: number }) => boolean }} TrophyDef */
 
 /** @type {TrophyDef[]} */
 const DEFS = [
@@ -11,12 +11,12 @@ const DEFS = [
     id: 'premier_pas',
     name: 'Premier pas',
     desc: 'Envoyer au moins 1 message sur un serveur.',
-    check: (ctx) => ctx.msgs_lifetime >= 1,
+    check: (ctx) => ctx.lifetime_msgs >= 1,
   },
   {
     id: 'bavard',
     name: 'Bavard',
-    desc: '10 messages dans la même journée (quête).',
+    desc: '10 messages dans la même journée (compteur quête).',
     check: (ctx) => ctx.msgs_today >= 10,
   },
   {
@@ -56,28 +56,21 @@ function unlock(userId, trophyId) {
 function buildContext(userId) {
   users.getOrCreate(userId, '');
   const u = users.getUser(userId);
-  const q = quests.summary(userId);
+  const qsum = quests.summary(userId);
+  const row = db.prepare('SELECT lifetime_msgs FROM user_quest_state WHERE user_id = ?').get(userId);
   const ir = indexProgress.getRow(userId);
   return {
-    msgs_lifetime: 0,
-    msgs_today: q.msgs_today,
+    lifetime_msgs: row?.lifetime_msgs || 0,
+    msgs_today: qsum.msgs_today,
     stars: users.getStars(userId),
     level: u?.level || 1,
     index_pct: ir?.completion_pct || 0,
   };
 }
 
-/** Évalue les trophées ; retourne la liste des nouveaux ids débloqués. */
+/** Retourne les ids nouvellement débloqués. */
 function evaluate(userId) {
   const ctx = buildContext(userId);
-  const st = quests.getState ? null : null;
-  void st;
-  const row = require('../db').prepare('SELECT SUM(msgs_today) AS s FROM user_quest_state WHERE user_id = ?').get(userId);
-  void row;
-  ctx.msgs_lifetime = ctx.msgs_today > 0 ? 1 : 0;
-  const r2 = require('../db').prepare('SELECT msgs_today FROM user_quest_state WHERE user_id = ?').get(userId);
-  if (r2 && (r2.msgs_today || 0) >= 1) ctx.msgs_lifetime = 1;
-
   const newly = [];
   for (const t of DEFS) {
     if (isUnlocked(userId, t.id)) continue;
@@ -86,14 +79,10 @@ function evaluate(userId) {
   return newly;
 }
 
-function getState(userId) {
-  return require('../db').prepare('SELECT msgs_today FROM user_quest_state WHERE user_id = ?').get(userId);
-}
-
-module.exports = { DEFS, evaluate, isUnlocked, listUnlocked, buildContext };
-
 function listUnlocked(userId) {
   return db
     .prepare('SELECT trophy_id, unlocked_ms FROM trophies_unlocked WHERE user_id = ? ORDER BY unlocked_ms')
     .all(userId);
 }
+
+module.exports = { DEFS, evaluate, isUnlocked, unlock, listUnlocked, buildContext };
