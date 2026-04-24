@@ -48,7 +48,17 @@ module.exports = {
       } catch {
         return interaction.reply({ content: 'Montants invalides.', ephemeral: true });
       }
-      const r = trade.createTrade(hub, interaction.user.id, to.id, a, b);
+      let fromItems = [];
+      let toItems = [];
+      try {
+        const rawA = interaction.options.getString('objets_donnes');
+        const rawB = interaction.options.getString('objets_recus');
+        if (rawA) fromItems = trade.parseItemsSpec(rawA);
+        if (rawB) toItems = trade.parseItemsSpec(rawB);
+      } catch (e) {
+        return interaction.reply({ content: e.message || String(e), ephemeral: true });
+      }
+      const r = trade.createTrade(hub, interaction.user.id, to.id, a, b, fromItems, toItems);
       if (!r.ok) return interaction.reply({ content: r.error, ephemeral: true });
       return interaction.reply({
         content: `Trade **${r.tradeId}** créé. ${to}, utilise \`/echange accepter\` avec l’ID **${r.tradeId}**.`,
