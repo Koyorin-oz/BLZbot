@@ -182,6 +182,10 @@ function acceptTrade(tradeId, userId) {
       users.addStars(t.to_user, fs);
       users.addStars(t.to_user, -ts);
       users.addStars(t.from_user, ts);
+      users.addEventCurrency(t.from_user, -fe);
+      users.addEventCurrency(t.to_user, fe);
+      users.addEventCurrency(t.to_user, -te);
+      users.addEventCurrency(t.from_user, te);
       for (const { id, qty } of fromItems) users.addInventory(t.to_user, id, qty);
       for (const { id, qty } of toItems) users.addInventory(t.from_user, id, qty);
       db.prepare('UPDATE trades SET status = ? WHERE id = ?').run('accepted', tradeId);
