@@ -157,7 +157,9 @@ function joinGuild(hubDiscordId, userId, username, guildId) {
 function leaveGuild(hubDiscordId, userId) {
   const row = getMembershipInHub(userId, hubDiscordId);
   if (!row) return { ok: false, error: 'Pas dans une guilde.' };
-  if (row.leader_id === userId) return { ok: false, error: 'Transfère le lead ou dissous (non implémenté) — un lead ne peut pas quitter pour l’instant.' };
+  if (row.leader_id === userId) {
+    return { ok: false, error: 'Chef : utilise `/guilde transferer_chef` puis `/guilde quitter`, ou `/guilde dissoudre`.' };
+  }
   db.prepare('DELETE FROM player_guild_members WHERE guild_id = ? AND user_id = ?').run(row.guild_id, userId);
   return { ok: true };
 }
