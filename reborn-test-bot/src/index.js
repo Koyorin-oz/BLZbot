@@ -77,6 +77,14 @@ client.once(Events.ClientReady, async () => {
     `[reborn-test-bot] Connecté en tant que ${client.user?.tag} — TEST_NO_LIMITS=${cfg.TEST_NO_LIMITS}`,
   );
   client.user?.setActivity('REBORN sandbox', { type: ActivityType.Playing });
+
+  setInterval(() => {
+    try {
+      tickSeparations();
+    } catch (e) {
+      console.error('[separation tick]', e);
+    }
+  }, 60_000);
 });
 
 client.on('interactionCreate', async (interaction) => {
