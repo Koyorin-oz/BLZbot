@@ -58,7 +58,7 @@ function registerEarn(client) {
       grpSeason.recordGrpPeaksIfNeeded(hub, uid, after.grp);
       playerGuilds.addGxpFromMemberActivity(hub, uid, gr.msg * mult);
       quests.onMessage(uid);
-      trophies.evaluate(uid);
+      trophies.evaluate(uid, hub);
     } catch (e) {
       console.error('[earn message]', e);
     }
