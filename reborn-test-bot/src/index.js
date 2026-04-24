@@ -15,6 +15,7 @@ const { registerEarn } = require('./services/earn');
 const { handlePurchase } = require('./services/purchase');
 const { deploySlashCommands, registerNiveauMirrorStubs } = require('./slashDeploy');
 const { tickSeparations } = require('./services/separation');
+const grpSeason = require('./services/grpSeason');
 
 cfg.assertToken();
 
