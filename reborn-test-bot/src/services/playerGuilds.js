@@ -202,7 +202,8 @@ function treasuryDeposit(guildId, userId, amount) {
 
 function treasuryWithdraw(guildId, userId, amount) {
   const g = getGuild(guildId);
-  if (!g || g.leader_id !== userId) return { ok: false, error: 'Réservé au chef.' };
+  if (!g) return { ok: false, error: 'Guilde introuvable.' };
+  if (!canWithdrawTreasury(guildId, userId)) return { ok: false, error: 'Pas autorisé à retirer (chef ou permission « retrait »).' };
   if (amount <= 0n) return { ok: false, error: 'Montant invalide.' };
   const t = B(g.treasury);
   if (t < amount) return { ok: false, error: 'Trésorerie insuffisante.' };
