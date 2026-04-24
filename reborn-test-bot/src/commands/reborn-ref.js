@@ -10,16 +10,18 @@ module.exports = {
       .setColor(0x9b59b6)
       .setDescription(
         [
-          '**Économie** — starss / points / XP, gains 15/msg & 40/min voc, boosts, daily.',
-          '**Boutique** — 5 slots/j (UTC), coffres, achats boutons.',
-          '**Guilde joueur** — `/guilde` créer/rejoindre/trésorerie/grades/focus (GRP cible).',
-          '**GRP** — reset mensuel auto (clé mois UTC) + pics pour grades.',
-          '**Séparation** — `/separation` + tick 60s (12h → 48h guerre GRP).',
-          '**Échanges** — `/echange` règle 40 % (starss).',
-          '**Index** — `/itemindex` paliers 10→100 %.',
-          '**Staff** — `/passeport`, `/warn` (points sécu).',
+          '**Économie** — `/solde`, `/payer`, `/daily`, `/money` ; gains msg + vocal ; boosts.',
+          '**Boutique** — `/boutique` (slots, coffres CAT*, boosts).',
+          '**Guilde joueur** — `/guilde` créer, rejoindre, quitter, trésor (dépôt/retrait perms), grades, focus, perms, **expulser**, **transferer_chef**, **dissoudre**.',
+          '**GRP** — `/grp voir` + `/grp classement` ; reset mensuel auto + pics (grades guilde).',
+          '**Séparation** — `/separation` + tick 60s.',
+          '**Échanges** — `/echange` règle 40 % (starss + objets `item:qty`).',
+          '**Index** — `/itemindex`.',
+          '**Quêtes** — `/quete` voir, quotidienne, hebdo, **choisir**, **reclamer_selection**.',
+          '**Trophées** — `/trophees`. **Hacker** — `/hacker`.',
+          '**Staff** — `/passeport`, `/warn`, `/purge`.',
           '',
-          '_Tout est local à `reborn-test-bot` + SQLite `data/reborn.sqlite`._',
+          '_Données : `reborn-test-bot` + SQLite `data/reborn.sqlite`._',
         ].join('\n'),
       );
     await interaction.reply({ embeds: [embed], ephemeral: true });
