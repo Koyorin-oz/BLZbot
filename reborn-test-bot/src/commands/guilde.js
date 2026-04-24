@@ -244,12 +244,38 @@ module.exports = {
       return interaction.reply({ content: `Permission **${cle}** → **${actif ? 'oui' : 'non'}** pour ${target}.`, ephemeral: true });
     }
 
+    if (sub === 'expulser') {
+      const target = interaction.options.getUser('membre', true);
+      const m = pg.getMembershipInHub(uid, hub);
+      if (!m) return interaction.reply({ content: 'Pas de guilde.', ephemeral: true });
+      const r = pg.kickMember(hub, m.guild_id, uid, target.id);
+      if (!r.ok) return interaction.reply({ content: r.error, ephemeral: true });
+      return interaction.reply({ content: `${target} a été expulsé de la guilde.`, ephemeral: true });
+    }
+
+    if (sub === 'transferer_chef') {
+      const neo = interaction.options.getUser('nouveau_chef', true);
+      const m = pg.getMembershipInHub(uid, hub);
+      if (!m) return interaction.reply({ content: 'Pas de guilde.', ephemeral: true });
+      const r = pg.transferLeadership(hub, m.guild_id, uid, neo.id);
+      if (!r.ok) return interaction.reply({ content: r.error, ephemeral: true });
+      return interaction.reply({ content: `Lead transféré à ${neo}. Tu restes membre avec les perms par défaut.`, ephemeral: true });
+    }
+
+    if (sub === 'dissoudre') {
+      const m = pg.getMembershipInHub(uid, hub);
+      if (!m) return interaction.reply({ content: 'Pas de guilde.', ephemeral: true });
+      const r = pg.dissolveGuild(hub, m.guild_id, uid);
+      if (!r.ok) return interaction.reply({ content: r.error, ephemeral: true });
+      return interaction.reply({ content: 'Guilde dissoute (données effacées pour ce test-bot).', ephemeral: true });
+    }
+
     if (sub === 'focus') {
       const m = pg.getMembershipInHub(uid, hub);
-      if (!m || m.leader_id !== uid) return interaction.reply({ content: 'Chef uniquement.', ephemeral: true });
+      if (!m) return interaction.reply({ content: 'Pas de guilde.', ephemeral: true });
       const target = interaction.options.getString('cible_guild_id', true).trim();
       const mode = interaction.options.getString('mode', true);
-      const r = pg.useFocus(hub, m.guild_id, target, mode);
+      const r = pg.useFocus(hub, m.guild_id, target, mode, uid);
       if (!r.ok) return interaction.reply({ content: r.error, ephemeral: true });
       return interaction.reply({ content: 'Focus appliqué.', ephemeral: true });
     }
