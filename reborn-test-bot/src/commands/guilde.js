@@ -163,12 +163,22 @@ module.exports = {
       if (!m) return interaction.reply({ content: 'Pas de guilde.' });
       const g = pg.getGuild(m.guild_id);
       const n = pg.memberCount(m.guild_id);
-      const e = new EmbedBuilder()
-        .setTitle(g.name)
-        .setDescription(
-          `ID \`${g.id}\`\nChef <@${g.leader_id}>\nMembres **${n}** / **${g.member_cap}**\nNiveau guilde **${g.guild_level}**\nGrade **${label(g.grade || '')}**\nGXP **${BigInt(g.gxp || '0').toLocaleString('fr-FR')}**\nTrésorerie **${BigInt(g.treasury || '0').toLocaleString('fr-FR')}** starss\nAnti-séparation : **${g.anti_separation ? 'oui' : 'non'}**`,
-        )
-        .setColor(0xe67e22);
+      const cap = pg.effectiveMemberCap(g);
+      const treasuryB = BigInt(g.treasury || '0');
+      const gxpB = BigInt(g.gxp || '0');
+      const desc = [
+        `ID \`${g.id}\``,
+        `Chef <@${g.leader_id}>`,
+        `Membres **${n}** / **${cap}** ${cap !== g.member_cap ? `*(stocké ${g.member_cap})*` : ''}`,
+        `Niveau guilde **${g.guild_level}**`,
+        `Grade **${label(g.grade || '')}**`,
+        `GXP **${gxpB.toLocaleString('fr-FR')}**`,
+        `Trésorerie **${treasuryB.toLocaleString('fr-FR')}** starss`,
+        `Anti-séparation : **${g.anti_separation ? 'oui' : 'non'}**`,
+        g.salon_channel_id ? `Salon : <#${g.salon_channel_id}>` : 'Salon : *aucun* (utilise \`/guilde salon\`).',
+        g.description ? `Description : ${g.description}` : '',
+      ].filter(Boolean).join('\n');
+      const e = new EmbedBuilder().setTitle(g.name).setDescription(desc).setColor(0xe67e22);
       return interaction.reply({ embeds: [e] });
     }
 
