@@ -876,20 +876,20 @@ function drawProgressArc(ctx, cx, cy, r, ratio) {
 }
 
 function drawSanctum(ctx, cx, cy, r, unlocked) {
-  // Halo doré central.
+  // Halo central — flammes rouges si ouvert, brume dépolie si scellé.
   ctx.save();
   if (unlocked) {
     const halo = ctx.createRadialGradient(cx, cy, 4, cx, cy, r * 1.8);
-    halo.addColorStop(0, 'rgba(255, 220, 140, 0.65)');
-    halo.addColorStop(0.5, 'rgba(255, 150, 90, 0.25)');
-    halo.addColorStop(1, 'rgba(255, 100, 60, 0)');
+    halo.addColorStop(0, 'rgba(255, 130, 110, 0.7)');
+    halo.addColorStop(0.5, 'rgba(220, 50, 40, 0.28)');
+    halo.addColorStop(1, 'rgba(150, 20, 20, 0)');
     ctx.fillStyle = halo;
     ctx.beginPath();
     ctx.arc(cx, cy, r * 1.8, 0, Math.PI * 2);
     ctx.fill();
   } else {
     const dim = ctx.createRadialGradient(cx, cy, 2, cx, cy, r * 1.4);
-    dim.addColorStop(0, 'rgba(80, 60, 110, 0.45)');
+    dim.addColorStop(0, 'rgba(90, 30, 30, 0.45)');
     dim.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = dim;
     ctx.beginPath();
@@ -899,8 +899,8 @@ function drawSanctum(ctx, cx, cy, r, unlocked) {
 
   // Disque sombre du sanctuaire.
   const inner = ctx.createRadialGradient(cx - r * 0.25, cy - r * 0.3, r * 0.1, cx, cy, r);
-  inner.addColorStop(0, '#1a1530');
-  inner.addColorStop(1, '#080514');
+  inner.addColorStop(0, '#2a0d0d');
+  inner.addColorStop(1, '#0a0303');
   ctx.fillStyle = inner;
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
