@@ -27,7 +27,7 @@ function buildPassportTextV2({ target, u, hub, wlines }) {
   const t = new TextDisplayBuilder().setContent(
     [
       `# 🪪 Passeport : **${target.username}**`,
-      '**À quoi ça sert ?** Fiche **staff / recrutement** : on centralise ici le **niveau « sécu** » (points, warns), le **score des tests mod** et l’**état de candidature** — le même rôle qu’une **fiche RH** légère pour trancher un accès staff, sans remplacer un vrai outil d’audit.',
+      '**À quoi ça sert ?** Fiche **staff / recrutement** : on centralise ici le **niveau « sécu »** (points, warns), le **score des tests mod** et l’**état de candidature** — le même rôle qu’une **fiche RH** légère pour trancher un accès staff, sans remplacer un vrai outil d’audit.',
       '',
       `**Points de sécurité** : \`${u.secu_points ?? 10}\` · **Tests mod** : \`${u.mod_tests_score ?? 0} / 100\` · **Candidature** : \`${u.candidature_status ?? 'aucune'}\``,
       '',
