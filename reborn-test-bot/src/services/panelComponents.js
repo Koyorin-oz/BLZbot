@@ -10,6 +10,7 @@ const {
   StringSelectMenuBuilder,
   MessageFlags,
 } = require('discord.js');
+const { buildPassportTextV2 } = require('../lib/passportV2Ui');
 const pick = require('../lib/componentPickCache');
 const { buildBoutiquePayload, buildInventairePayload } = require('../lib/shopV2Ui');
 const { handlePurchase } = require('./purchase');
