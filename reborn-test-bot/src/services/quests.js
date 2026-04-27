@@ -178,8 +178,9 @@ function claimSelection(userId) {
     }
   }
   db.prepare('UPDATE user_quest_state SET selection_claimed = 1 WHERE user_id = ?').run(userId);
-  users.addStars(userId, def.reward);
-  return { ok: true, reward: def.reward, label: def.label };
+  const reward = def.reward * skillTree.questRewardMult(userId);
+  users.addStars(userId, reward);
+  return { ok: true, reward, label: def.label };
 }
 
 function summary(userId) {
