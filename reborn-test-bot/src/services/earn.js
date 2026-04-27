@@ -114,7 +114,10 @@ function registerEarn(client) {
       const after = gm.getMemberRow(hub, uid);
       grpSeason.recordGrpPeaksIfNeeded(hub, uid, after.grp);
       playerGuilds.addGxpFromMemberActivity(hub, uid, gxpGain);
-      quests.onMessage(uid);
+      const qResult = quests.onMessage(uid);
+      if (qResult?.unlocked) {
+        notifyQuestUnlocks(msg.client, uid, qResult.unlocked).catch(() => { /* ignore */ });
+      }
       trophies.evaluate(uid, hub);
     } catch (e) {
       console.error('[earn message]', e);
