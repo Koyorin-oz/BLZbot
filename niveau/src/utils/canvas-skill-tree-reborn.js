@@ -169,8 +169,8 @@ async function renderSkillTreePng(opts) {
       if (unlocked) {
         ctx.fillText(String(p.k + 1), x, y + 1);
       } else {
-        ctx.font = '12px "Segoe UI", sans-serif';
-        ctx.fillText('◆', x, y + 1);
+        ctx.font = '14px "Segoe UI", sans-serif';
+        ctx.fillText('🔒', x, y + 1);
       }
     }
   }
