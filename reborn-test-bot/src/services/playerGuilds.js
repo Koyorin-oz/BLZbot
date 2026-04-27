@@ -119,13 +119,24 @@ function getGuild(guildId) {
 }
 
 function getMembershipInHub(userId, hubDiscordId) {
-  return db
-    .prepare(
-      `SELECT m.*, g.* FROM player_guild_members m
+  const stmt = db.prepare(
+    `SELECT m.*, g.* FROM player_guild_members m
      JOIN player_guilds g ON g.id = m.guild_id
      WHERE m.user_id = ? AND g.hub_discord_id = ?`,
-    )
-    .get(userId, hubDiscordId);
+  );
+  let row = stmt.get(userId, hubDiscordId);
+  if (row) return row;
+  // Pont auto vers le système de guildes niveau (legacy BLZ).
+  try {
+    const bridge = require('./niveauGuildBridge');
+    const result = bridge.bridgeMembership(userId, hubDiscordId);
+    if (result?.rebornGuildId) {
+      row = stmt.get(userId, hubDiscordId);
+    }
+  } catch (e) {
+    /* niveau bridge optional */
+  }
+  return row || null;
 }
 
 function memberCount(guildId) {
