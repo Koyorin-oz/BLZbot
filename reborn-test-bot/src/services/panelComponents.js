@@ -17,19 +17,6 @@ const { handlePurchase } = require('./purchase');
 const users = require('./users');
 const skillTree = require('./skillTree');
 const passport = require('./passport');
-const db = require('../db');
-
-const ARBRE_BG_VALUES = ['noir', 'profil'];
-function getArbreBg(userId) {
-  const u = users.getUser(userId);
-  const v = u?.arbre_bg;
-  return ARBRE_BG_VALUES.includes(v) ? v : 'profil';
-}
-function setArbreBg(userId, bg) {
-  const v = ARBRE_BG_VALUES.includes(bg) ? bg : 'profil';
-  db.prepare('UPDATE users SET arbre_bg = ? WHERE id = ?').run(v, userId);
-  return v;
-}
 
 const CANVAS_SK = path.join(
   __dirname,
