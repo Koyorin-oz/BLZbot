@@ -23,7 +23,81 @@ const SELECTIONS = {
     qty: 1,
     reward: 80_000n,
   },
+  defi_400k: {
+    label: 'Défi 400k : accumuler 400 000 starss cette semaine',
+    kind: 'starss_gain',
+    target: 400_000n,
+    reward: 100_000n,
+  },
+  defi_catl: {
+    label: 'Défi CATL : ouvrir 1× Coffre Au Trésor Légendaire',
+    kind: 'catl_open',
+    target: 1,
+    reward: 250_000n,
+  },
 };
+
+/**
+ * Ladder « ligne définitive » 10→1000 messages cumulés.
+ * Chaque palier débloque une récompense one-shot (claimée auto par /quetes).
+ */
+const LIFETIME_LADDER = [
+  { id: 'life_10', target: 10, reward: 5_000n, label: 'Ligne — 10 messages' },
+  { id: 'life_50', target: 50, reward: 25_000n, label: 'Ligne — 50 messages' },
+  { id: 'life_100', target: 100, reward: 75_000n, label: 'Ligne — 100 messages' },
+  { id: 'life_250', target: 250, reward: 200_000n, label: 'Ligne — 250 messages' },
+  { id: 'life_500', target: 500, reward: 500_000n, label: 'Ligne — 500 messages' },
+  { id: 'life_1000', target: 1000, reward: 1_500_000n, label: 'Ligne — 1 000 messages' },
+];
+
+function isMilestoneClaimed(userId, key) {
+  return !!db.prepare('SELECT 1 FROM quest_milestones WHERE user_id = ? AND milestone_key = ?').get(userId, key);
+}
+
+function claimMilestone(userId, key) {
+  if (isMilestoneClaimed(userId, key)) return false;
+  db.prepare('INSERT INTO quest_milestones (user_id, milestone_key, claimed_ms) VALUES (?, ?, ?)').run(
+    userId,
+    key,
+    Date.now(),
+  );
+  return true;
+}
+
+/** Notifie un déblocage de quête (CATL / starss / défi). */
+function trackCatlOpen(userId) {
+  let row = syncDayWeek(getState(userId));
+  const sid = row.selection_id;
+  if (sid !== 'defi_catl') return null;
+  if (row.selection_claimed) return null;
+  const next = (row.selection_progress || 0) + 1;
+  db.prepare('UPDATE user_quest_state SET selection_progress = ? WHERE user_id = ?').run(next, userId);
+  if (next >= SELECTIONS.defi_catl.target) {
+    db.prepare('UPDATE user_quest_state SET selection_claimed = 1 WHERE user_id = ?').run(userId);
+    const reward = SELECTIONS.defi_catl.reward * skillTree.questRewardMult(userId);
+    users.addStars(userId, reward);
+    return { reward, label: SELECTIONS.defi_catl.label };
+  }
+  return null;
+}
+
+function trackStarssGain(userId, amount) {
+  let row = syncDayWeek(getState(userId));
+  const sid = row.selection_id;
+  if (sid !== 'defi_400k') return null;
+  if (row.selection_claimed) return null;
+  const cur = BigInt(row.selection_progress || 0);
+  const next = cur + (amount > 0n ? amount : 0n);
+  const clipped = next > Number.MAX_SAFE_INTEGER ? Number.MAX_SAFE_INTEGER : Number(next);
+  db.prepare('UPDATE user_quest_state SET selection_progress = ? WHERE user_id = ?').run(clipped, userId);
+  if (next >= SELECTIONS.defi_400k.target) {
+    db.prepare('UPDATE user_quest_state SET selection_claimed = 1 WHERE user_id = ?').run(userId);
+    const reward = SELECTIONS.defi_400k.reward * skillTree.questRewardMult(userId);
+    users.addStars(userId, reward);
+    return { reward, label: SELECTIONS.defi_400k.label };
+  }
+  return null;
+}
 
 function weekBucketMs() {
   return Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000));
