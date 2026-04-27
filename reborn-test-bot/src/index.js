@@ -159,7 +159,8 @@ client.on('interactionCreate', async (interaction) => {
       interaction.customId.startsWith('rb:shop:') ||
       interaction.customId.startsWith('rb:inv:') ||
       interaction.customId.startsWith('rb:tree:') ||
-      interaction.customId.startsWith('rb:ps:')
+      interaction.customId.startsWith('rb:ps:') ||
+      interaction.customId.startsWith('rb:q:')
     ) {
       try {
         await handlePanelInteraction(interaction);
