@@ -13,10 +13,13 @@ const {
 const { buildPassportTextV2 } = require('../lib/passportV2Ui');
 const pick = require('../lib/componentPickCache');
 const { buildBoutiquePayload, buildInventairePayload } = require('../lib/shopV2Ui');
+const { buildQuetesPayload } = require('../lib/quetesPanelUi');
 const { handlePurchase } = require('./purchase');
 const users = require('./users');
 const skillTree = require('./skillTree');
 const passport = require('./passport');
+const quests = require('./quests');
+const db = require('../db');
 
 const CANVAS_SK = path.join(
   __dirname,
