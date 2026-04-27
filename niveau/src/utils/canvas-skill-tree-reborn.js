@@ -419,30 +419,29 @@ async function renderSkillTreePng(opts) {
     const { color, label, rgb } = BRANCH[tree.branch];
     const s = sOf(tree.branch);
 
-    // Étiquette : label en majuscules + grand chiffre (style « Endurance 12 »)
+    // Étiquette : label en majuscules + grand chiffre (style sobre)
     ctx.save();
-    // Halo doux derrière le texte
-    const haloR = 70;
-    const halo = ctx.createRadialGradient(tree.tipX, tree.tipY, 4, tree.tipX, tree.tipY, haloR);
-    halo.addColorStop(0, rgba(rgb, 0.32));
-    halo.addColorStop(1, rgba(rgb, 0));
-    ctx.fillStyle = halo;
-    ctx.beginPath();
-    ctx.arc(tree.tipX, tree.tipY, haloR, 0, Math.PI * 2);
-    ctx.fill();
+    // Halo très léger derrière le texte (ou rien si vide)
+    if (s > 0) {
+      const haloR = 52;
+      const halo = ctx.createRadialGradient(tree.tipX, tree.tipY, 4, tree.tipX, tree.tipY, haloR);
+      halo.addColorStop(0, rgba(rgb, 0.16));
+      halo.addColorStop(1, rgba(rgb, 0));
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(tree.tipX, tree.tipY, haloR, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.shadowColor = rgba(rgb, 0.6);
-    ctx.shadowBlur = 8;
     ctx.fillStyle = color;
-    ctx.font = 'bold 18px "Segoe UI", "Helvetica", sans-serif';
+    ctx.font = 'bold 17px "Segoe UI", "Helvetica", sans-serif';
     ctx.fillText(label, tree.tipX, tree.tipY - 16);
 
-    ctx.shadowBlur = 12;
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 30px "Segoe UI", "Helvetica", sans-serif';
-    ctx.fillText(`${s}/5`, tree.tipX, tree.tipY + 14);
+    ctx.fillStyle = s > 0 ? '#f0eef7' : '#9b97ad';
+    ctx.font = 'bold 26px "Segoe UI", "Helvetica", sans-serif';
+    ctx.fillText(`${s}/5`, tree.tipX, tree.tipY + 12);
     ctx.restore();
   }
 
