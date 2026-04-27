@@ -760,19 +760,19 @@ const TEMPLE_TEXT_HOT = '#ffd6cf';
 const TEMPLE_TEXT_DIM = '#c89890';
 
 function drawCosmicBackground(ctx, w, h) {
-  // Dégradé radial très sombre, dominante rouge sang.
+  // Dégradé radial — rouge plus chaud / lumineux qu'avant.
   const g = ctx.createRadialGradient(w / 2, h / 2, 40, w / 2, h / 2, w);
-  g.addColorStop(0, '#3a0d0d');
-  g.addColorStop(0.45, '#1d0606');
-  g.addColorStop(1, '#070202');
+  g.addColorStop(0, '#5e1a1a');
+  g.addColorStop(0.45, '#330b0b');
+  g.addColorStop(1, '#120505');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
 
-  // Nébuleuses douces (3 blobs rouge/braise/cendre).
+  // Nébuleuses douces (3 blobs rouge/braise/cendre) — plus marquées.
   const blobs = [
-    { x: w * 0.18, y: h * 0.25, r: 280, c: 'rgba(220, 50, 40, 0.20)' },
-    { x: w * 0.85, y: h * 0.78, r: 320, c: 'rgba(255, 110, 70, 0.16)' },
-    { x: w * 0.78, y: h * 0.18, r: 240, c: 'rgba(140, 20, 30, 0.20)' },
+    { x: w * 0.18, y: h * 0.25, r: 300, c: 'rgba(230, 70, 60, 0.26)' },
+    { x: w * 0.85, y: h * 0.78, r: 340, c: 'rgba(255, 130, 90, 0.20)' },
+    { x: w * 0.78, y: h * 0.18, r: 260, c: 'rgba(170, 30, 40, 0.24)' },
   ];
   for (const b of blobs) {
     const ng = ctx.createRadialGradient(b.x, b.y, 5, b.x, b.y, b.r);
