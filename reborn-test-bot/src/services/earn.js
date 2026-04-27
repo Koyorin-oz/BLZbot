@@ -26,6 +26,26 @@ function grpFocusMultForUser(hubDiscordId, userId) {
   return Date.now() < until ? 50n : 100n;
 }
 
+/**
+ * Multiplicateur GRP « camp loyal pendant séparation » (bp/10000).
+ * Si une séparation est active et que l'utilisateur appartient au camp loyal
+ * (= NON inscrit dans `camp_split`), il bénéficie du bonus de palier 5 du chef.
+ */
+function loyalCampGrpMultBp(hubDiscordId, userId) {
+  const m = playerGuilds.getMembershipInHub(userId, hubDiscordId);
+  if (!m) return 10000;
+  const sep = db
+    .prepare("SELECT camp_split FROM separations WHERE guild_id = ? AND cancelled = 0 AND winner = '' AND phase > 0")
+    .get(m.guild_id);
+  if (!sep) return 10000;
+  let camp = [];
+  try { camp = JSON.parse(sep.camp_split || '[]'); } catch { /* ignore */ }
+  if (camp.includes(userId)) return 10000;
+  const g = playerGuilds.getGuild(m.guild_id);
+  if (!g) return 10000;
+  return skillTree.loyalGrpBonusBp(g.leader_id);
+}
+
 function grantVoiceMinutes(guildId, userId, minutes) {
   if (minutes <= 0n) return;
   users.getOrCreate(userId, '');
