@@ -211,17 +211,20 @@ async function handlePanelInteraction(interaction) {
     if (kind === 'card') {
       let buf;
       try {
-        const { renderPassportCardPng } = require(CANVAS_SK);
+        const { renderPassportCardStaffStyle } = require(CANVAS_PASS);
         const warns = passport.listWarns(hub, viewId, 8);
-        const wtxt = warns.length
-          ? warns.map((w) => `• −${w.degree} <@${w.mod_id}> — ${(w.reason || '—').slice(0, 32)}`)
-          : ['(aucun)'];
-        buf = await renderPassportCardPng({
-          displayName: targetUser.username,
-          secu: String(u.secu_points ?? 10),
-          modScore: String(u.mod_tests_score ?? 0),
-          candidature: String(u.candidature_status ?? 'aucune'),
-          warnsBlock: wtxt.join('\n'),
+        const targetMember = await interaction.guild.members.fetch(viewId).catch(() => null);
+        buf = await renderPassportCardStaffStyle({
+          member: targetMember,
+          displayName: targetMember?.displayName || targetUser.username,
+          secuPoints: u.secu_points ?? 10,
+          modScore: u.mod_tests_score ?? 0,
+          candidature: u.candidature_status ?? 'aucune',
+          warns: warns.map((w) => ({
+            degree: w.degree,
+            modId: w.mod_id,
+            reason: w.reason,
+          })),
         });
       } catch (e) {
         console.error('[passeport card]', e);
