@@ -249,7 +249,8 @@ async function renderPassportCardStaffStyle(data) {
     ctx.fillText('Aucun sur ce serveur.', mainX + 10, wy);
   } else {
     for (const wv of warns) {
-      const line = `−${wv.degree} <@${wv.modId}>${wv.reason ? ` — ${String(wv.reason).slice(0, 24)}` : ''}`;
+      const mid = wv.modId || wv.mod_id;
+      const line = `−${wv.degree} mod…${String(mid).slice(-6)}${wv.reason ? ` — ${String(wv.reason).slice(0, 28)}` : ''}`;
       ctx.fillStyle = THEME.text;
       ctx.font = '600 14px Inter, Arial';
       ctx.fillText(truncateText(ctx, line, halfW - 20), mainX + 10, wy);
