@@ -55,6 +55,14 @@ function grantVoiceMinutes(guildId, userId, minutes) {
   const stars = users.applyStarssMultiplier(userId, baseStars);
   users.addStars(userId, stars);
   users.addXp(userId, Number(minutes) * C.XP_PER_VOICE_MINUTE);
+  try {
+    db.prepare('UPDATE users SET voice_minutes_total = COALESCE(voice_minutes_total, 0) + ? WHERE id = ?').run(
+      Number(minutes),
+      userId,
+    );
+  } catch {
+    /* ignore */
+  }
   rankedRp.decayForUserIfIdle(userId);
   rankedRp.grantFromActivity(userId, 'voc', minutes);
   const gr = C.gxpRatesForPlayerLevel(row?.level || 1);
