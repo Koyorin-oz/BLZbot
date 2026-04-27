@@ -28,6 +28,16 @@ const CANVAS_SK = path.join(
   'utils',
   'canvas-skill-tree-reborn',
 );
+const CANVAS_PASS = path.join(
+  __dirname,
+  '..',
+  '..',
+  '..',
+  'niveau',
+  'src',
+  'utils',
+  'canvas-passport-staff-style',
+);
 
 const BR_LABEL = { quest: 'Quête', guild: 'Guilde', shop: 'Boutique', ranked: 'Ranked', event: 'Événement' };
 
