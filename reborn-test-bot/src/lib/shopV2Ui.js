@@ -42,17 +42,41 @@ async function buildBoutiquePayload(uid, username) {
   }
 
   const time = new Date().toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-  const text = new TextDisplayBuilder().setContent(
-    [
-      '# ⭐ Boutique',
-      'Bienvenue ! Ici tu peux acheter des items du **jour**, des **coffres** et des **boosts 1h** avec tes **Starss**.',
-      '➜ **Choisis un article** dans le menu déroulant, puis clique sur **Acheter**.',
-      '',
-      `Tu possèdes actuellement **${fmt(bal)}** Starss — clé du jour : \`${dayKey}\` · *${time}*`,
-      '',
-      `**Coffres** — limite **CATM** aujourd’hui : **${catmCount}/${CATM_DAILY_LIMIT}**.`,
-    ].join('\n'),
-  );
+  const shopTier = skillTree.step(uid, 'shop');
+  const discountPct = Math.round(skillTree.shopDiscountFrac(uid) * 100);
+  const lines = [
+    '# ⭐ Boutique',
+    'Bienvenue ! Ici tu peux acheter des items du **jour**, des **coffres** et des **boosts 1h** avec tes **Starss**.',
+    '➜ **Choisis un article** dans le menu déroulant, puis clique sur **Acheter**.',
+    '',
+    `Tu possèdes actuellement **${fmt(bal)}** Starss — clé du jour : \`${dayKey}\` · *${time}*`,
+    '',
+    `**Coffres** — limite **CATM** aujourd’hui : **${catmCount}/${CATM_DAILY_LIMIT}**.`,
+  ];
+  if (shopTier >= 1) {
+    const free = shopExtras.freeResetAvailable(uid);
+    lines.push(
+      `**Arbre Boutique** : tier **${shopTier}/5** ${
+        discountPct > 0 ? `· remise **−${discountPct}%**` : ''
+      } ${shopTier >= 2 ? '· ×2 contenu coffres' : ''} ${
+        shopTier >= 3 ? '· rotation midi Paris' : ''
+      } ${shopTier >= 5 ? '· **CATL gratuit / 3h**' : ''}`.replace(/\s+/g, ' ').trim(),
+    );
+    lines.push(
+      `Reset boutique : ${free ? '**gratuit dispo cette semaine**' : 'consomme 1× *Reset boutique*'}.`,
+    );
+  }
+  if (shopTier >= 5) {
+    const ready = shopExtras.nextCatlReadyMs(uid);
+    const left = ready - Date.now();
+    if (left > 0) {
+      const mins = Math.ceil(left / 60000);
+      lines.push(`*Prochain CATL gratuit dans ~**${mins} min**.*`);
+    } else {
+      lines.push('*✨ **CATL gratuit prêt à réclamer** (bouton ci-dessous).*');
+    }
+  }
+  const text = new TextDisplayBuilder().setContent(lines.join('\n'));
   container.addTextDisplayComponents(text);
 
   const options = [];
