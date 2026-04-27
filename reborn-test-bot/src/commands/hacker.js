@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, ContainerBuilder, TextDisplayBuilder, MessageFlags } = require('discord.js');
 const cfg = require('../config');
 const meta = require('../services/meta');
 const users = require('../services/users');
@@ -14,7 +14,7 @@ function hasHackerRole(member) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('hacker')
-    .setDescription('Salon Hacker : tirage d’item pondéré (cooldown 12 h, rôle requis si configuré).'),
+    .setDescription('Salon Hacker : loot pondéré (cooldown 12 h, rôle si configuré).'),
   async execute(interaction) {
     if (!interaction.guild) return interaction.reply({ content: 'Serveur uniquement.', ephemeral: true });
     const uid = interaction.user.id;
@@ -23,7 +23,7 @@ module.exports = {
     const owner = isOwner(uid);
     if (!owner && cfg.hackerRoleId && !hasHackerRole(member)) {
       return interaction.reply({
-        content: 'Tu n’as pas le rôle **Hacker** (ou demande à un admin de définir `REBORN_HACKER_ROLE_ID`). Les owners bypass.',
+        content: 'Tu n’as pas le rôle **Hacker** (ou `REBORN_HACKER_ROLE_ID`). Les owners outrepassent.',
         ephemeral: true,
       });
     }
@@ -32,14 +32,22 @@ module.exports = {
     const now = Date.now();
     if (!cfg.TEST_NO_LIMITS && now - last < cfg.HACKER_SALON_COOLDOWN_MS) {
       const left = Math.ceil((cfg.HACKER_SALON_COOLDOWN_MS - (now - last)) / 3600000);
-      return interaction.reply({ content: `Cooldown salon : encore ~**${left}** h.`, ephemeral: true });
+      return interaction.reply({ content: `Salon Hacker : cooldown **~${left} h** restante.`, ephemeral: true });
     }
     const loot = rollHackerSalon();
     users.addInventory(uid, loot.itemId, 1);
     meta.set(key, String(now));
-    return interaction.reply({
-      content: `Salon **Hacker** — tu reçois : **${loot.name}** (\`${loot.itemId}\`).`,
-      ephemeral: true,
-    });
+    const body = new TextDisplayBuilder().setContent(
+      [
+        '# 🕶️ Salon **Hacker**',
+        '**Qu’est-ce que c’est ?** Un **tirage d’item** (pondéré) lié à l’**univers hack / exploit** côté RP : utile pour les tests d’inventaire et le flux loot **sans** casser l’économie classique.',
+        '',
+        `**Tu reçois** : **${loot.name}** · \`${loot.itemId}\``,
+        '» Vérifie \`/inventaire\` pour l’**empilement** · Cooldown **12 h** (sauf owner / sandbox).',
+        cfg.hackerRoleId ? `» Rôle requis : <@&${cfg.hackerRoleId}>.` : '» Aucun rôle requis (sandbox).',
+      ].join('\n'),
+    );
+    const c = new ContainerBuilder().addTextDisplayComponents(body);
+    return interaction.reply({ components: [c], flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral });
   },
 };
