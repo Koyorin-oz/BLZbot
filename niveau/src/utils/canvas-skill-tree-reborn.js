@@ -35,11 +35,7 @@ async function renderSkillTreePng(opts) {
   ctx.fillText('Arbre de compétences REBORN', 40, 50);
   ctx.font = '22px "Segoe UI", sans-serif';
   ctx.fillStyle = '#bdc3c7';
-  ctx.fillText(
-    `** Points disponibles : ${points} ** — Coût étape n = n points · 5 paliers / branche`,
-    40,
-    86,
-  );
+  ctx.fillText(`Points disponibles : ${points} — coût palier n = n points · 5 paliers / branche`, 40, 86);
 
   const nBranch = ORDER.length;
   const marginX = 100;
