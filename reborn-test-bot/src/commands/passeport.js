@@ -1,7 +1,8 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const users = require('../services/users');
 const passport = require('../services/passport');
 const { isOwner } = require('../lib/owners');
+const { buildPassportTextV2 } = require('../lib/passportV2Ui');
 
 function canStaff(interaction) {
   const admin = interaction.memberPermissions?.has(PermissionFlagsBits.Administrator);
@@ -11,11 +12,11 @@ function canStaff(interaction) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('passeport')
-    .setDescription('Passeport staff / sécu (REBORN).')
+    .setDescription('Passeport staff / sécu (fiche + vue canvas).')
     .addSubcommand((sc) =>
       sc
         .setName('voir')
-        .setDescription('Afficher le passeport')
+        .setDescription('Afficher le passeport (composants v2)')
         .addUserOption((o) => o.setName('membre').setDescription('Cible').setRequired(false)),
     )
     .addSubcommand((sc) =>
@@ -64,20 +65,11 @@ module.exports = {
     users.getOrCreate(target.id, target.username);
     passport.maybeRecoverSecu(target.id);
     const u = users.getUser(target.id);
-    const warns = passport.listWarns(hub, target.id, 10);
-    const wtxt = warns.length
-      ? warns.map((w) => `• −${w.degree} pts — <@${w.mod_id}> — ${w.reason || '—'}`).join('\n')
-      : 'Aucun warn enregistré ici.';
-    const e = new EmbedBuilder()
-      .setTitle(`Passeport — ${target.username}`)
-      .addFields(
-        { name: 'Points de sécu', value: String(u.secu_points ?? 10), inline: true },
-        { name: 'Tests mod (score)', value: String(u.mod_tests_score ?? 0), inline: true },
-        { name: 'Candidature staff', value: String(u.candidature_status ?? 'aucune'), inline: true },
-        { name: 'Warns (ce serveur)', value: wtxt.slice(0, 900), inline: false },
-      )
-      .setFooter({ text: 'Récupération +2 pts / 30 j si perte (auto au prochain affichage).' })
-      .setColor(0x95a5a6);
-    return interaction.reply({ embeds: [e], ephemeral: true });
+    const warns = passport.listWarns(hub, target.id, 20);
+    const wlines = warns.length
+      ? warns.map((w) => `−${w.degree} <@${w.mod_id}> — ${(w.reason || '—').slice(0, 80)}`)
+      : [];
+    const p = buildPassportTextV2({ target, u, hub, wlines });
+    return interaction.reply({ ...p, flags: p.flags | MessageFlags.Ephemeral });
   },
 };
