@@ -749,11 +749,15 @@ const TEMPLE_KEYS = [
   { id: 'index_full', label: 'Codex Complet', hint: 'Index 100 %', glyph: '☷' },
 ];
 
-const TEMPLE_GOLD = '#f5c842';
-const TEMPLE_GOLD_RGB = [245, 200, 66];
-const TEMPLE_VERMIL = '#d4493e';
-const TEMPLE_VERMIL_RGB = [212, 73, 62];
-const TEMPLE_INK = '#0d0820';
+// Palette « temple rouge » : on garde le nom `TEMPLE_GOLD` pour éviter
+// de toucher à toutes les références — seule la valeur change.
+const TEMPLE_GOLD = '#ff4d3a';
+const TEMPLE_GOLD_RGB = [255, 77, 58];
+const TEMPLE_VERMIL = '#c8221d';
+const TEMPLE_VERMIL_RGB = [200, 34, 29];
+const TEMPLE_INK = '#1a0606';
+const TEMPLE_TEXT_HOT = '#ffd6cf';
+const TEMPLE_TEXT_DIM = '#c89890';
 
 function drawCosmicBackground(ctx, w, h) {
   // Dégradé radial très sombre, un peu mauve.
