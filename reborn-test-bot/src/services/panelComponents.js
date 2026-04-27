@@ -186,27 +186,25 @@ async function handlePanelInteraction(interaction) {
     return interaction.editReply({ files: [b.file], components: [b.container], flags: b.flags });
   }
 
-  const pPass = partsForPassportButton(interaction.customId);
-  if (pPass && (pPass.kind === 'card' || pPass.kind === 'txt')) {
+  const pm = interaction.customId.match(/^rb:ps:(card|txt):(\d+)$/);
+  if (pm) {
     if (!interaction.guild) {
       return interaction.reply({ content: 'Serveur uniquement.', ephemeral: true });
     }
-    const targetId = pPass.targetId || interaction.user.id;
-    if (targetId !== interaction.user.id) {
-      return interaction.reply({ content: 'Utilise le bouton sur **ta** propre commande, ou relance `/passeport`.', ephemeral: true });
-    }
+    const kind = pm[1];
+    const viewId = pm[2];
     const hub = /** @type {string} */ (interaction.guildId);
-    users.getOrCreate(targetId, 'u');
-    passport.maybeRecoverSecu(targetId);
-    const u = users.getUser(targetId);
-    const targetUser = await interaction.client.users.fetch(targetId);
-    if (pPass.kind === 'card') {
+    users.getOrCreate(viewId, 'u');
+    passport.maybeRecoverSecu(viewId);
+    const u = users.getUser(viewId);
+    const targetUser = await interaction.client.users.fetch(viewId);
+    if (kind === 'card') {
       let buf;
       try {
         const { renderPassportCardPng } = require(CANVAS_SK);
-        const warns = passport.listWarns(hub, targetId, 8);
+        const warns = passport.listWarns(hub, viewId, 8);
         const wtxt = warns.length
-          ? warns.map((w) => `• −${w.degree} — <@${w.mod_id}>`)
+          ? warns.map((w) => `• −${w.degree} <@${w.mod_id}> — ${(w.reason || '—').slice(0, 32)}`)
           : ['(aucun)'];
         buf = await renderPassportCardPng({
           displayName: targetUser.username,
@@ -217,7 +215,7 @@ async function handlePanelInteraction(interaction) {
         });
       } catch (e) {
         console.error('[passeport card]', e);
-        return interaction.reply({ content: 'Canvas passeport indisponible (module `canvas` / recompil).', ephemeral: true });
+        return interaction.reply({ content: 'Canvas indisponible (module `canvas` / binaire).', ephemeral: true });
       }
       const f = new AttachmentBuilder(buf, { name: 'passeport_reborn.png' });
       const c = new ContainerBuilder();
@@ -225,30 +223,32 @@ async function handlePanelInteraction(interaction) {
         new MediaGalleryBuilder().addItems({ media: { url: 'attachment://passeport_reborn.png' } }),
       );
       c.addTextDisplayComponents(
-        new TextDisplayBuilder().setContent('### Passeport — **vue carte**\n*Même bannière que le profil BLZ (`blz_bg`).*'),
+        new TextDisplayBuilder().setContent(
+          '### Passeport — **vue carte**\n*Arrière-plan : même \`blz_bg\` que le profil BLZ.*',
+        ),
       );
       c.addActionRowComponents(
         new ActionRowBuilder().addComponents(
           new ButtonBuilder()
-            .setCustomId('rb:ps:txt')
-            .setLabel('Fiche texte')
+            .setCustomId(`rb:ps:txt:${viewId}`)
+            .setLabel('Retour fiche texte')
             .setStyle(ButtonStyle.Secondary)
-            .setEmoji('📋'),
+            .setEmoji('📄'),
         ),
       );
       await interaction.deferUpdate();
       return interaction.editReply({ files: [f], components: [c], flags: MessageFlags.IsComponentsV2 });
     }
-    if (pPass.kind === 'txt') {
-      const p = require('../commands/passeport').buildPassportTextV2
-        ? require('../commands/passeport').buildPassportTextV2(targetUser, u, interaction.guildId, passport)
-        : null;
-      if (p) {
-        await interaction.deferUpdate();
-        return interaction.editReply(p);
-      }
+    if (kind === 'txt') {
+      const warns = passport.listWarns(hub, viewId, 20);
+      const wlines = warns.length
+        ? warns.map((w) => `−${w.degree} <@${w.mod_id}> — ${(w.reason || '—').slice(0, 80)}`)
+        : [];
+      const p = buildPassportTextV2({ target: targetUser, u, hub, wlines });
+      await interaction.deferUpdate();
+      return interaction.editReply(p);
     }
   }
 }
 
-module.exports = { handlePanelInteraction, tryRenderTreePng, buildArbreContainer, partsForPassportButton };
+module.exports = { handlePanelInteraction, tryRenderTreePng, buildArbreContainer };
