@@ -115,36 +115,31 @@ function canLaunchFocus(guildId, actorId) {
 }
 
 function getGuild(guildId) {
-  let row = db.prepare('SELECT * FROM player_guilds WHERE id = ?').get(guildId);
-  if (row) return row;
-  // Si on cherche avec un ID niveau brut (numérique), essayer le pont.
-  if (/^\d+$/.test(String(guildId || ''))) {
-    const bridgedId = `niv_${guildId}`;
-    row = db.prepare('SELECT * FROM player_guilds WHERE id = ?').get(bridgedId);
-    if (row) return row;
+  let id = guildId;
+  if (/^\d+$/.test(String(id || ''))) id = `niv_${id}`;
+  // Si guilde pontée, on rafraîchit depuis niveau avant de lire.
+  if (String(id).startsWith('niv_')) {
+    try {
+      const bridge = require('./niveauGuildBridge');
+      bridge.refreshBridgedGuild(id);
+    } catch { /* optional */ }
   }
-  return undefined;
+  return db.prepare('SELECT * FROM player_guilds WHERE id = ?').get(id);
 }
 
 function getMembershipInHub(userId, hubDiscordId) {
-  const stmt = db.prepare(
-    `SELECT m.*, g.* FROM player_guild_members m
-     JOIN player_guilds g ON g.id = m.guild_id
-     WHERE m.user_id = ? AND g.hub_discord_id = ?`,
-  );
-  let row = stmt.get(userId, hubDiscordId);
-  if (row) return row;
-  // Pont auto vers le système de guildes niveau (legacy BLZ).
+  // On synchronise toujours depuis niveau avant de lire (best-effort).
   try {
     const bridge = require('./niveauGuildBridge');
-    const result = bridge.bridgeMembership(userId, hubDiscordId);
-    if (result?.rebornGuildId) {
-      row = stmt.get(userId, hubDiscordId);
-    }
-  } catch (e) {
-    /* niveau bridge optional */
-  }
-  return row || null;
+    bridge.bridgeMembership(userId, hubDiscordId);
+  } catch { /* optional */ }
+  return db
+    .prepare(
+      `SELECT m.*, g.* FROM player_guild_members m
+       JOIN player_guilds g ON g.id = m.guild_id
+       WHERE m.user_id = ? AND g.hub_discord_id = ?`,
+    )
+    .get(userId, hubDiscordId) || null;
 }
 
 function memberCount(guildId) {
