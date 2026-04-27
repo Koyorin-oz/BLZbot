@@ -34,11 +34,11 @@ const ITEMS = [
   { id: 'galaxie', name: 'Galaxie', rarity: 'Goatesque', kind: 'consumable' },
   { id: 'univers', name: 'The Univers', rarity: 'Staresque', kind: 'consumable' },
   { id: 'poisson', name: 'Poisson', rarity: 'Rare', kind: 'consumable' },
-  { id: 'coffre_classique', name: 'Coffre aux trésors (classique)', rarity: 'Epique', price: 100_000n, kind: 'consumable' },
-  { id: 'coffre_catm', name: 'CATM (coffre mieux)', rarity: 'Légendaire', price: 500_000n, kind: 'consumable' },
-  { id: 'coffre_catl', name: 'CATL (légendaire)', rarity: 'Mythique', price: 1_000_000n, kind: 'consumable' },
-  { id: 'coffre_cats', name: 'CATS (star)', rarity: 'Goatesque', price: 3_000_000n, kind: 'consumable' },
-  { id: 'hacker_token', name: 'Jeton accès Hacker', rarity: 'Mythique', kind: 'consumable' },
+  { id: 'coffre_classique', name: 'Coffre Au Trésor Classique', rarity: 'Epique', price: 100_000n, kind: 'consumable' },
+  { id: 'coffre_catm', name: 'Coffre Au Trésor Mieux (CATM)', rarity: 'Légendaire', price: 500_000n, kind: 'consumable' },
+  { id: 'coffre_catl', name: 'Coffre Au Trésor Légendaire (CATL)', rarity: 'Mythique', price: 1_000_000n, kind: 'consumable' },
+  { id: 'coffre_cats', name: 'Coffre Au Trésor Starss (CATS)', rarity: 'Goatesque', price: 3_000_000n, kind: 'consumable' },
+  { id: 'hacker_token', name: 'Jeton d’accès Hacker', rarity: 'Mythique', kind: 'consumable' },
 ];
 
 const byId = new Map(ITEMS.map((i) => [i.id, i]));
