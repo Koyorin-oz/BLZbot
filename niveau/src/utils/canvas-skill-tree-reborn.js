@@ -1031,6 +1031,84 @@ function drawTorii(ctx, cx, cy, scale, unlocked) {
   ctx.restore();
 }
 
+/**
+ * Médaillon central : icône du serveur clippée dans un disque circulaire,
+ * avec halo rouge et anneau lumineux. Remplace le torii dans le sanctuaire.
+ */
+function drawServerMedallion(ctx, img, cx, cy, r, unlocked) {
+  ctx.save();
+
+  // Halo derrière le médaillon (plus chaud si ouvert).
+  const halo = ctx.createRadialGradient(cx, cy, r * 0.6, cx, cy, r * 1.35);
+  if (unlocked) {
+    halo.addColorStop(0, 'rgba(255, 130, 110, 0.55)');
+    halo.addColorStop(0.6, 'rgba(220, 50, 40, 0.22)');
+    halo.addColorStop(1, 'rgba(150, 20, 20, 0)');
+  } else {
+    halo.addColorStop(0, 'rgba(255, 90, 70, 0.32)');
+    halo.addColorStop(0.6, 'rgba(180, 40, 35, 0.14)');
+    halo.addColorStop(1, 'rgba(0,0,0,0)');
+  }
+  ctx.fillStyle = halo;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 1.35, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Clip circulaire pour la PP du serveur.
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.clip();
+
+  // Dessine l'image en couvrant le cercle.
+  if (img) {
+    const iw = img.width || 1;
+    const ih = img.height || 1;
+    const side = r * 2;
+    const scale = Math.max(side / iw, side / ih);
+    const dw = iw * scale;
+    const dh = ih * scale;
+    const dx = cx - dw / 2;
+    const dy = cy - dh / 2;
+    if (!unlocked) {
+      ctx.filter = 'grayscale(70%) brightness(0.55)';
+    }
+    ctx.drawImage(img, dx, dy, dw, dh);
+    ctx.filter = 'none';
+  } else {
+    // Fallback : disque rouge dégradé si pas d'image.
+    const fallback = ctx.createRadialGradient(cx - r * 0.25, cy - r * 0.3, r * 0.1, cx, cy, r);
+    fallback.addColorStop(0, '#5a1818');
+    fallback.addColorStop(1, '#1a0606');
+    ctx.fillStyle = fallback;
+    ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+  }
+
+  ctx.restore();
+
+  // Anneau extérieur rouge.
+  ctx.strokeStyle = unlocked ? '#ff7a66' : rgba(TEMPLE_VERMIL_RGB, 0.55);
+  ctx.lineWidth = unlocked ? 3.2 : 2.4;
+  if (unlocked) {
+    ctx.shadowColor = 'rgba(255, 90, 70, 0.85)';
+    ctx.shadowBlur = 14;
+  }
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + 1, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Liseré intérieur fin.
+  ctx.strokeStyle = rgba(TEMPLE_GOLD_RGB, unlocked ? 0.45 : 0.28);
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r - 4, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
 function drawConstellationLine(ctx, a, b) {
   ctx.save();
   ctx.strokeStyle = rgba(TEMPLE_GOLD_RGB, 0.18);
