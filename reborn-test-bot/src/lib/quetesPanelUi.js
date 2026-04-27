@@ -261,7 +261,7 @@ async function buildNiveauPage(userId, niveauPageIdx) {
     );
   }
   navRow.addComponents(
-    new ButtonBuilder().setCustomId(`rb:q:page:${niveauPageIdx}`).setLabel('Rafraîchir').setStyle(ButtonStyle.Secondary).setEmoji('🔄'),
+    new ButtonBuilder().setCustomId(`pv2_back_${userId}`).setLabel('Retour').setStyle(ButtonStyle.Secondary).setEmoji('⬅️'),
   );
   c.addActionRowComponents(navRow);
 
