@@ -188,6 +188,7 @@ function migrate(db) {
   addColumnIfMissing(db, 'users', 'temple_points', 'INTEGER NOT NULL DEFAULT 0');
   addColumnIfMissing(db, 'users', 'temple_sources_json', "TEXT NOT NULL DEFAULT '[]'");
   addColumnIfMissing(db, 'users', 'temple_unlocked', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'users', 'arbre_bg', "TEXT NOT NULL DEFAULT 'profil'");
   addColumnIfMissing(db, 'trades', 'from_event', "TEXT NOT NULL DEFAULT '0'");
   addColumnIfMissing(db, 'trades', 'to_event', "TEXT NOT NULL DEFAULT '0'");
 
