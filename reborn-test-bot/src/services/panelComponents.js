@@ -50,7 +50,12 @@ function partsFromShopValue(v) {
   return null;
 }
 
-async function tryRenderTreePng(userId, displayName, avatarUrl) {
+const TREE_LAYOUTS = ['star', 'demi'];
+function normalizeLayout(layout) {
+  return TREE_LAYOUTS.includes(layout) ? layout : 'star';
+}
+
+async function tryRenderTreePng(userId, displayName, avatarUrl, layout = 'star') {
   try {
     const { renderSkillTreePng } = require(CANVAS_SK);
     const steps = {};
@@ -61,6 +66,7 @@ async function tryRenderTreePng(userId, displayName, avatarUrl) {
       points: u?.skill_points ?? 0,
       steps,
       avatarUrl: avatarUrl || null,
+      layout: normalizeLayout(layout),
     });
   } catch (e) {
     console.error('[arbre canvas]', e?.message || e);
@@ -70,10 +76,13 @@ async function tryRenderTreePng(userId, displayName, avatarUrl) {
 
 /**
  * @param {string} userId
- * @param {import('discord.js').ContainerBuilder} [base] — si fourni, on y ajoute galerie + texte (déjà partial)
+ * @param {string} displayName
+ * @param {string} avatarUrl
+ * @param {'star' | 'demi'} [layout]
  */
-async function buildArbreContainer(userId, displayName, avatarUrl) {
-  const buf = await tryRenderTreePng(userId, displayName, avatarUrl);
+async function buildArbreContainer(userId, displayName, avatarUrl, layout = 'star') {
+  const lay = normalizeLayout(layout);
+  const buf = await tryRenderTreePng(userId, displayName, avatarUrl, lay);
   if (!buf) return null;
   const file = new AttachmentBuilder(buf, { name: 'arbre_reborn.png' });
   const c = new ContainerBuilder();
@@ -106,12 +115,12 @@ async function buildArbreContainer(userId, displayName, avatarUrl) {
   const row0 = new ActionRowBuilder().addComponents(select);
   const row1 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
-      .setCustomId('rb:tree:go')
+      .setCustomId(`rb:tree:go:${lay}`)
       .setLabel('Débloquer')
       .setStyle(ButtonStyle.Success)
       .setEmoji('✨'),
     new ButtonBuilder()
-      .setCustomId('rb:tree:re')
+      .setCustomId(`rb:tree:re:${lay}`)
       .setLabel('Rafraîchir')
       .setStyle(ButtonStyle.Secondary)
       .setEmoji('🔄'),
