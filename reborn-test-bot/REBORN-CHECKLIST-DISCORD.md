@@ -1,6 +1,6 @@
 **Checklist REBORN (format Discord)**
 
-Légende : `= ✅` fait · `= ⚙️` en cours · `= ❌` pas fait
+Légende : = ✅ fait · = ⚙️ en cours · = ❌ pas fait
 
 **Vision & déploiement**  
 Merge REBORN live sur BLZbot (niveau + migrations + com) = ⚙️  
