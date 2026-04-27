@@ -116,7 +116,7 @@ function buildCanvasGuildViewModel(g, totalMembers) {
     member_cap: memberSlots,
     total_value: totalValue,
     upgrade_level: upgradeLevel,
-    level: g.guild_level || gxpNum || 1,
+    level: nivG ? Number(nivG.level || 1) : (g.guild_level || 1),
     treasury: treasuryNum,
     treasury_capacity: treasuryCap,
     treasury_multiplier_purchased: treasuryMult,
