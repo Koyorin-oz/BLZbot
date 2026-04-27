@@ -115,7 +115,15 @@ function canLaunchFocus(guildId, actorId) {
 }
 
 function getGuild(guildId) {
-  return db.prepare('SELECT * FROM player_guilds WHERE id = ?').get(guildId);
+  let row = db.prepare('SELECT * FROM player_guilds WHERE id = ?').get(guildId);
+  if (row) return row;
+  // Si on cherche avec un ID niveau brut (numérique), essayer le pont.
+  if (/^\d+$/.test(String(guildId || ''))) {
+    const bridgedId = `niv_${guildId}`;
+    row = db.prepare('SELECT * FROM player_guilds WHERE id = ?').get(bridgedId);
+    if (row) return row;
+  }
+  return undefined;
 }
 
 function getMembershipInHub(userId, hubDiscordId) {
