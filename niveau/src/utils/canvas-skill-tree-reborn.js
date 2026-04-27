@@ -1101,13 +1101,13 @@ function drawKeyStar(ctx, p, angle) {
   // Étoile au centre (acquise) ou cadenas (verrouillée).
   if (lit) {
     drawStarShape(ctx, x, y, 11, 4.5, 5);
-    ctx.fillStyle = '#0e0a16';
+    ctx.fillStyle = '#160606';
     ctx.fill();
     ctx.lineWidth = 0.8;
-    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+    ctx.strokeStyle = 'rgba(0,0,0,0.55)';
     ctx.stroke();
   } else {
-    drawLockGlyph(ctx, x, y, 18, rgba(TEMPLE_GOLD_RGB, 0.45));
+    drawLockGlyph(ctx, x, y, 18, rgba(TEMPLE_GOLD_RGB, 0.55));
   }
 
   // Étiquettes (label + hint), positionnées vers l’extérieur de l’anneau.
