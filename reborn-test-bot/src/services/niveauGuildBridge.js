@@ -211,11 +211,14 @@ function bridgeMembership(userId, hubDiscordId) {
            AND guild_id IN (SELECT id FROM player_guilds WHERE id LIKE 'niv_%' AND hub_discord_id = ?)`,
       ).run(userId, hubDiscordId);
     } catch { /* ignore */ }
+    _cache(memberSyncCache, cacheKey);
     return null;
   }
   const members = fetchNiveauMembers(g.id);
   const list = members.length ? members : [g.owner_id];
   const rid = importNiveauGuild(hubDiscordId, g, list);
+  _cache(memberSyncCache, cacheKey);
+  if (rid) _cache(guildSyncCache, rid);
   return rid ? { rebornGuildId: rid } : null;
 }
 
