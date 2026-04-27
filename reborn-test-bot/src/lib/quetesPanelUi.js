@@ -210,7 +210,8 @@ async function buildRebornPage(userId, niveauPages, ctx = {}) {
   }
 
   if (rows.length) c.addActionRowComponents(...rows);
-  return { components: [c], flags: MessageFlags.IsComponentsV2, files: [], totalPages };
+  const files = canvasFile ? [canvasFile] : [];
+  return { components: [c], flags: MessageFlags.IsComponentsV2, files, totalPages };
 }
 
 // ─── Pages 1+ : Archives niveau (canvas) ────────────────────────────────────
