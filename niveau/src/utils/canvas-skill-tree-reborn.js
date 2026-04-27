@@ -323,8 +323,8 @@ function drawSideNode(ctx, p, rgb, color, lit) {
 }
 
 /** Cœur central : petit orbe doré, point de départ des 5 branches. */
-function drawRoot(ctx) {
-  const { x, y } = CENTER;
+function drawRoot(ctx, center) {
+  const { x, y } = center;
   const halo = ctx.createRadialGradient(x, y, 4, x, y, 56);
   halo.addColorStop(0, 'rgba(255, 235, 190, 0.55)');
   halo.addColorStop(0.5, 'rgba(255, 200, 130, 0.18)');
