@@ -17,6 +17,33 @@ const db = require('../db');
 let niveauDbGuilds = null;
 let loadAttempted = false;
 
+// Cache de coalescing : évite de re-synchroniser la même guilde / le même joueur
+// plusieurs fois en quelques ms (par ex. quand `getGuild` est appelé en boucle
+// pendant le rendu d'une commande). TTL court : ~3 s.
+const CACHE_TTL_MS = 3000;
+const guildSyncCache = new Map(); // rebornId -> ts
+const memberSyncCache = new Map(); // `${userId}|${hubId}` -> ts
+
+function _isCached(map, key) {
+  const ts = map.get(key);
+  if (!ts) return false;
+  if (Date.now() - ts > CACHE_TTL_MS) {
+    map.delete(key);
+    return false;
+  }
+  return true;
+}
+
+function _cache(map, key) {
+  map.set(key, Date.now());
+}
+
+/** Vide le cache (appelé après création / dissolution / join / leave). */
+function invalidateBridgeCache() {
+  guildSyncCache.clear();
+  memberSyncCache.clear();
+}
+
 function loadNiveau() {
   if (loadAttempted) return niveauDbGuilds;
   loadAttempted = true;
