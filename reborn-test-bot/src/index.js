@@ -120,7 +120,7 @@ client.on('interactionCreate', async (interaction) => {
       } catch (e) {
         console.error('[panel select]', e);
         if (!interaction.replied && !interaction.deferred) {
-          await interaction.reply({ content: `Erreur: \`${e?.message || e}\``, ephemeral: true }).catch(() => {});
+          await interaction.reply({ content: `Erreur: \`${e?.message || e}\`` }).catch(() => {});
         }
       }
       return;
@@ -138,7 +138,7 @@ client.on('interactionCreate', async (interaction) => {
         await handlePanelInteraction(interaction);
       } catch (e) {
         console.error('[panel bouton]', e);
-        const msg = { content: `Erreur: \`${e?.message || e}\``, ephemeral: true };
+        const msg = { content: `Erreur: \`${e?.message || e}\`` };
         if (interaction.replied || interaction.deferred) await interaction.followUp(msg).catch(() => {});
         else await interaction.reply(msg).catch(() => {});
       }
@@ -148,7 +148,7 @@ client.on('interactionCreate', async (interaction) => {
       await handlePurchase(interaction, interaction.customId.split(':'));
     } catch (e) {
       console.error('[boutique bouton]', e);
-      const msg = { content: `Erreur: \`${e?.message || e}\``, ephemeral: true };
+      const msg = { content: `Erreur: \`${e?.message || e}\`` };
       if (interaction.replied || interaction.deferred) await interaction.followUp(msg).catch(() => {});
       else await interaction.reply(msg).catch(() => {});
     }
@@ -162,7 +162,7 @@ client.on('interactionCreate', async (interaction) => {
     await cmd.execute(interaction, { client, isOwner: () => isOwner(interaction.user.id) });
   } catch (e) {
     console.error(`[cmd ${interaction.commandName}]`, e);
-    const msg = { content: `Erreur: \`${e?.message || e}\``, ephemeral: true };
+    const msg = { content: `Erreur: \`${e?.message || e}\`` };
     if (interaction.replied || interaction.deferred) await interaction.followUp(msg).catch(() => {});
     else await interaction.reply(msg).catch(() => {});
   }

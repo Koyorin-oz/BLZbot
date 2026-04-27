@@ -8,7 +8,7 @@ module.exports = {
   async execute(interaction) {
     const g = interaction.guild;
     if (!g) {
-      await interaction.reply({ content: 'Hors serveur.', ephemeral: true });
+      await interaction.reply({ content: 'Hors serveur.' });
       return;
     }
     const e = new EmbedBuilder()
@@ -20,6 +20,6 @@ module.exports = {
         { name: 'Boost', value: `Niveau ${g.premiumTier}`, inline: true },
       )
       .setTimestamp();
-    await interaction.reply({ embeds: [e], ephemeral: true });
+    await interaction.reply({ embeds: [e] });
   },
 };

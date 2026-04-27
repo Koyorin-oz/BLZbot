@@ -25,6 +25,6 @@ module.exports = {
           '_Données : `reborn-test-bot` + SQLite `data/reborn.sqlite`._',
         ].join('\n'),
       );
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    await interaction.reply({ embeds: [embed] });
   },
 };

@@ -157,7 +157,7 @@ async function handlePanelInteraction(interaction) {
     if (!parts) {
       return interaction.reply({
         content: 'Choisis d’abord un article dans le **menu**.',
-        ephemeral: true,
+        
       });
     }
     return handlePurchase(interaction, parts);
@@ -180,11 +180,11 @@ async function handlePanelInteraction(interaction) {
     const lay = normalizeLayout(goMatch[1]);
     const br = pick.get(interaction.user.id, interaction.message.id);
     if (!br || !skillTree.BRANCHES.includes(br)) {
-      return interaction.reply({ content: 'Sélectionne une **branche** dans le menu déroulant.', ephemeral: true });
+      return interaction.reply({ content: 'Sélectionne une **branche** dans le menu déroulant.' });
     }
     const uid = interaction.user.id;
     const r = skillTree.buy(uid, br);
-    if (!r.ok) return interaction.reply({ content: `❌ ${r.error}`, ephemeral: true });
+    if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
     const b = await buildArbreContainer(
       uid,
       interaction.member?.displayName || interaction.user.username,
@@ -194,7 +194,7 @@ async function handlePanelInteraction(interaction) {
     if (!b) {
       return interaction.reply({
         content: `✅ **${BR_LABEL[br] || br}** → **${r.newStep}** / 5 (canvas indisponible)`,
-        ephemeral: true,
+        
       });
     }
     await interaction.deferUpdate();
@@ -216,7 +216,7 @@ async function handlePanelInteraction(interaction) {
       lay,
     );
     if (!b) {
-      return interaction.followUp({ content: 'Génération image indisponible (canvas).', ephemeral: true });
+      return interaction.followUp({ content: 'Génération image indisponible (canvas).' });
     }
     return interaction.editReply({ files: [b.file], components: [b.container], flags: b.flags });
   }
@@ -224,7 +224,7 @@ async function handlePanelInteraction(interaction) {
   const pm = interaction.customId.match(/^rb:ps:(card|txt):(\d+)$/);
   if (pm) {
     if (!interaction.guild) {
-      return interaction.reply({ content: 'Serveur uniquement.', ephemeral: true });
+      return interaction.reply({ content: 'Serveur uniquement.' });
     }
     const kind = pm[1];
     const viewId = pm[2];
@@ -253,7 +253,7 @@ async function handlePanelInteraction(interaction) {
         });
       } catch (e) {
         console.error('[passeport card]', e);
-        return interaction.reply({ content: 'Canvas indisponible (module `canvas` / binaire).', ephemeral: true });
+        return interaction.reply({ content: 'Canvas indisponible (module `canvas` / binaire).' });
       }
       const f = new AttachmentBuilder(buf, { name: 'passeport_reborn.png' });
       const c = new ContainerBuilder();

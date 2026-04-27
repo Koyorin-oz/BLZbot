@@ -16,33 +16,33 @@ module.exports = {
     .addSubcommand((sc) => sc.setName('statut').setDescription('Séparations actives sur ce serveur')),
   async execute(interaction) {
     const hub = interaction.guildId;
-    if (!hub) return interaction.reply({ content: 'Serveur uniquement.', ephemeral: true });
+    if (!hub) return interaction.reply({ content: 'Serveur uniquement.' });
     const uid = interaction.user.id;
     const sub = interaction.options.getSubcommand();
 
     if (sub === 'lancer') {
       const m = pg.getMembershipInHub(uid, hub);
-      if (!m) return interaction.reply({ content: 'Tu dois être dans une guilde.', ephemeral: true });
+      if (!m) return interaction.reply({ content: 'Tu dois être dans une guilde.' });
       const r = sep.startSeparation(hub, m.guild_id, uid);
-      if (!r.ok) return interaction.reply({ content: r.error, ephemeral: true });
+      if (!r.ok) return interaction.reply({ content: r.error });
       return interaction.reply({
         content: `Séparation lancée — ID **${r.separationId}**\nPhase 1 fin <t:${Math.floor(r.phase1End / 1000)}:R>`,
-        ephemeral: true,
+        
       });
     }
 
     if (sub === 'rejoindre') {
       const id = interaction.options.getString('id', true).trim();
       const r = sep.joinSeparationCamp(hub, uid, id);
-      if (!r.ok) return interaction.reply({ content: r.error, ephemeral: true });
-      return interaction.reply({ content: 'Tu as rejoint le camp séparatiste.', ephemeral: true });
+      if (!r.ok) return interaction.reply({ content: r.error });
+      return interaction.reply({ content: 'Tu as rejoint le camp séparatiste.' });
     }
 
     if (sub === 'statut') {
       const db = require('../db');
       const rows = db.prepare('SELECT * FROM separations WHERE hub_discord_id = ? AND cancelled = 0').all(hub);
       const active = rows.filter((s) => !s.winner || String(s.winner).length === 0);
-      if (!active.length) return interaction.reply({ content: 'Aucune séparation active.', ephemeral: true });
+      if (!active.length) return interaction.reply({ content: 'Aucune séparation active.' });
       const e = new EmbedBuilder().setTitle('Séparations').setColor(0xe74c3c);
       for (const s of active.slice(0, 8)) {
         let camp = [];
@@ -57,7 +57,7 @@ module.exports = {
           inline: false,
         });
       }
-      return interaction.reply({ embeds: [e], ephemeral: true });
+      return interaction.reply({ embeds: [e] });
     }
   },
 };

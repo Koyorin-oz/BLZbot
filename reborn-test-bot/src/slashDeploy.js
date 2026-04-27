@@ -106,7 +106,7 @@ function makeNiveauMirrorStub(commandName) {
         content:
           `La commande \`/${interaction.commandName}\` est en **miroir** du bot principal (niveau) : le menu Discord reprend la définition BLZbot, mais **reborn-test-bot** ne l’exécute pas ici.\n` +
           `→ Utilise **BLZbot** pour cette action, ou **/reborn-ref** pour les commandes vraiment branchées sur ce sandbox.`,
-        ephemeral: true,
+        
       });
     },
   };

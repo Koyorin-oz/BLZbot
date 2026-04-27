@@ -18,7 +18,7 @@ module.exports = {
     .addSubcommand((sc) => sc.setName('classement').setDescription('Top 15 GRP du serveur (approx.)')),
   async execute(interaction) {
     const hub = interaction.guildId;
-    if (!hub) return interaction.reply({ content: 'Serveur uniquement.', ephemeral: true });
+    if (!hub) return interaction.reply({ content: 'Serveur uniquement.' });
     const sub = interaction.options.getSubcommand();
     const season = grpSeason.currentSeasonKey();
 
@@ -38,7 +38,7 @@ module.exports = {
           `Saison **${season}** (reset mensuel auto)\nTotal GRP : **${grp.toLocaleString('fr-FR')}**\nRang actuel : **${rank || 'aucun'}**\nPics enregistrés : ${peakTxt}`,
         )
         .setColor(0x3498db);
-      return interaction.reply({ embeds: [e], ephemeral: true });
+      return interaction.reply({ embeds: [e] });
     }
 
     if (sub === 'classement') {
@@ -56,7 +56,7 @@ module.exports = {
         .setDescription(lines.length ? lines.join('\n') : 'Aucune donnée.')
         .setFooter({ text: 'Classement calculé en mémoire (test-bot).' })
         .setColor(0x1abc9c);
-      return interaction.reply({ embeds: [e], ephemeral: true });
+      return interaction.reply({ embeds: [e] });
     }
   },
 };

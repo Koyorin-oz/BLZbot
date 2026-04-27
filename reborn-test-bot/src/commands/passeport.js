@@ -60,29 +60,29 @@ module.exports = {
     ),
   async execute(interaction) {
     const hub = interaction.guildId;
-    if (!hub) return interaction.reply({ content: 'Serveur uniquement.', ephemeral: true });
+    if (!hub) return interaction.reply({ content: 'Serveur uniquement.' });
     const sub = interaction.options.getSubcommand();
 
     if (sub === 'maj_staff') {
       if (!canStaff(interaction)) {
-        return interaction.reply({ content: 'Permission refusée.', ephemeral: true });
+        return interaction.reply({ content: 'Permission refusée.' });
       }
       const target = interaction.options.getUser('membre', true);
-      if (target.bot) return interaction.reply({ content: 'Impossible sur un bot.', ephemeral: true });
+      if (target.bot) return interaction.reply({ content: 'Impossible sur un bot.' });
       users.getOrCreate(target.id, target.username);
       const score = interaction.options.getInteger('score_tests');
       const cand = interaction.options.getString('candidature');
       if (score == null && !cand) {
         return interaction.reply({
           content: 'Indique au moins **score_tests** ou **candidature**.',
-          ephemeral: true,
+          
         });
       }
       if (score != null) users.setModTestsScore(target.id, score);
       if (cand) users.setCandidatureStatus(target.id, cand);
       return interaction.reply({
         content: `Passeport staff mis à jour pour **${target.username}**.`,
-        ephemeral: true,
+        
       });
     }
 
@@ -92,7 +92,7 @@ module.exports = {
     const u = users.getUser(target.id);
     const warns = passport.listWarns(hub, target.id, 8);
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ });
 
     let buf;
     try {

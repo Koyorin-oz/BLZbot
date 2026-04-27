@@ -25,7 +25,7 @@ module.exports = {
     )
     .addSubcommand((sc) => sc.setName('reclamer_selection').setDescription('Réclamer la récompense de ta quête à choix')),
   async execute(interaction) {
-    if (!interaction.guildId) return interaction.reply({ content: 'Serveur uniquement.', ephemeral: true });
+    if (!interaction.guildId) return interaction.reply({ content: 'Serveur uniquement.' });
     const sub = interaction.options.getSubcommand();
     const uid = interaction.user.id;
     if (sub === 'voir') {
@@ -36,40 +36,40 @@ module.exports = {
           `**Semaine** : **${s.week_points}** / ${s.weekly_target} pts — **${s.weekly_reward.toLocaleString('fr-FR')}** starss (${s.weekly_claimed ? 'déjà pris' : 'réclamable avec \`/quete hebdo\`'})\n` +
           `**À choix** : ${s.selection_line}\n` +
           `Messages (total suivi) : **${s.lifetime_msgs}**`,
-        ephemeral: true,
+        
       });
     }
     if (sub === 'quotidienne') {
       const r = quests.claimDaily(uid);
-      if (!r.ok) return interaction.reply({ content: r.error, ephemeral: true });
+      if (!r.ok) return interaction.reply({ content: r.error });
       return interaction.reply({
         content: `Récompense quotidienne : **+${r.reward.toLocaleString('fr-FR')}** starss.`,
-        ephemeral: true,
+        
       });
     }
     if (sub === 'hebdo') {
       const r = quests.claimWeekly(uid);
-      if (!r.ok) return interaction.reply({ content: r.error, ephemeral: true });
+      if (!r.ok) return interaction.reply({ content: r.error });
       return interaction.reply({
         content: `Récompense hebdo : **+${r.reward.toLocaleString('fr-FR')}** starss.`,
-        ephemeral: true,
+        
       });
     }
     if (sub === 'choisir') {
       const key = interaction.options.getString('type', true);
       const r = quests.pickSelection(uid, key);
-      if (!r.ok) return interaction.reply({ content: r.error, ephemeral: true });
+      if (!r.ok) return interaction.reply({ content: r.error });
       return interaction.reply({
         content: `Quête activée : **${r.def.label}**. Récompense **${r.def.reward.toLocaleString('fr-FR')}** starss (voir \`/quete voir\` puis \`/quete reclamer_selection\`).`,
-        ephemeral: true,
+        
       });
     }
     if (sub === 'reclamer_selection') {
       const r = quests.claimSelection(uid);
-      if (!r.ok) return interaction.reply({ content: r.error, ephemeral: true });
+      if (!r.ok) return interaction.reply({ content: r.error });
       return interaction.reply({
         content: `**${r.label}** — **+${r.reward.toLocaleString('fr-FR')}** starss.`,
-        ephemeral: true,
+        
       });
     }
   },

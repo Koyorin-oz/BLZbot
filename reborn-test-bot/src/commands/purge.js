@@ -18,21 +18,21 @@ module.exports = {
    */
   async execute(interaction, ctx) {
     if (!ctx.isOwner()) {
-      await interaction.reply({ content: 'Réservé au propriétaire de l’app / REBORN_TEST_OWNER_IDS.', ephemeral: true });
+      await interaction.reply({ content: 'Réservé au propriétaire de l’app / REBORN_TEST_OWNER_IDS.' });
       return;
     }
     const ch = interaction.channel;
     if (!ch || !ch.isTextBased() || ch.isDMBased()) {
-      await interaction.reply({ content: 'Utilisable dans un salon texte du serveur.', ephemeral: true });
+      await interaction.reply({ content: 'Utilisable dans un salon texte du serveur.' });
       return;
     }
     const me = interaction.guild?.members.me;
     if (!me?.permissionsIn(ch).has(PermissionFlagsBits.ManageMessages)) {
-      await interaction.reply({ content: 'Le bot a besoin de **Gérer les messages**.', ephemeral: true });
+      await interaction.reply({ content: 'Le bot a besoin de **Gérer les messages**.' });
       return;
     }
     let remaining = interaction.options.getInteger('nombre', true);
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ });
     let deleted = 0;
     while (remaining > 0) {
       const batch = Math.min(remaining, 100);

@@ -11,7 +11,7 @@ module.exports = {
     return interaction.reply({
       files: p.files,
       components: p.components,
-      flags: p.flags | MessageFlags.Ephemeral,
+      flags: p.flags,
     });
   },
 };

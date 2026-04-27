@@ -122,7 +122,7 @@ module.exports = {
   async execute(interaction) {
     const hub = interaction.guildId;
     if (!hub) {
-      return interaction.reply({ content: 'Serveur uniquement.', flags: MessageFlags.Ephemeral });
+      return interaction.reply({ content: 'Serveur uniquement.' });
     }
     const uid = interaction.user.id;
     const raw = interaction.options.getString('nom');
@@ -130,21 +130,21 @@ module.exports = {
     if (raw && raw.trim()) {
       gRow = findGuildOnHub(hub, raw);
       if (!gRow) {
-        return interaction.reply({ content: 'Guilde introuvable sur ce serveur (nom ou ID).', flags: MessageFlags.Ephemeral });
+        return interaction.reply({ content: 'Guilde introuvable sur ce serveur (nom ou ID).' });
       }
     } else {
       const m = pg.getMembershipInHub(uid, hub);
       if (!m) {
         return interaction.reply({
           content: 'Tu n’es dans aucune guilde **joueur** sur ce serveur. Indique un **nom** ou **ID** (`/guilde liste`).',
-          flags: MessageFlags.Ephemeral,
+          
         });
       }
       gRow = pg.getGuild(m.guild_id);
     }
     const g = pg.getGuild(gRow.id);
     if (!g || g.hub_discord_id !== hub) {
-      return interaction.reply({ content: 'Guilde invalide.', flags: MessageFlags.Ephemeral });
+      return interaction.reply({ content: 'Guilde invalide.' });
     }
 
     await interaction.deferReply();
@@ -220,7 +220,7 @@ module.exports = {
         const gid = i.customId.split('_').pop();
         const gFresh = pg.getGuild(gid);
         if (!gFresh || gFresh.hub_discord_id !== i.guildId) {
-          return i.reply({ content: 'Guilde invalide.', flags: MessageFlags.Ephemeral });
+          return i.reply({ content: 'Guilde invalide.' });
         }
         if (i.customId.startsWith('rb_pg_list_')) {
           await i.deferUpdate();
@@ -250,7 +250,7 @@ module.exports = {
           await i.followUp({
             components: [new ContainerBuilder().addTextDisplayComponents(listText)],
             flags: MessageFlags.IsComponentsV2,
-            ephemeral: true,
+            
           });
         } else if (i.customId.startsWith('rb_pg_careers_')) {
           await i.deferUpdate();
@@ -275,7 +275,7 @@ module.exports = {
           await i.followUp({
             components: [new ContainerBuilder().addTextDisplayComponents(td)],
             flags: MessageFlags.IsComponentsV2,
-            ephemeral: true,
+            
           });
         } else if (i.customId.startsWith('rb_pg_quests_')) {
           await i.deferUpdate();
@@ -290,12 +290,12 @@ module.exports = {
           await i.followUp({
             components: [new ContainerBuilder().addTextDisplayComponents(questText)],
             flags: MessageFlags.IsComponentsV2,
-            ephemeral: true,
+            
           });
         }
       } catch (err) {
         console.error('[profil-guilde button]', err);
-        await i.reply({ content: '❌ Erreur.', flags: MessageFlags.Ephemeral }).catch(() => {});
+        await i.reply({ content: '❌ Erreur.' }).catch(() => {});
       }
     });
   },

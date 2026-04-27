@@ -8,7 +8,7 @@ module.exports = {
   async execute(interaction) {
     const ws = interaction.client.ws.ping;
     const t0 = Date.now();
-    await interaction.reply({ content: 'Mesure…', ephemeral: true });
+    await interaction.reply({ content: 'Mesure…' });
     const rest = Date.now() - t0;
     await interaction.editReply({ content: `Pong — WS: **${ws}** ms · REST (edit): **${rest}** ms` });
   },

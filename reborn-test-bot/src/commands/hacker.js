@@ -16,7 +16,7 @@ module.exports = {
     .setName('hacker')
     .setDescription('Salon Hacker : loot pondéré (cooldown 12 h, rôle si configuré).'),
   async execute(interaction) {
-    if (!interaction.guild) return interaction.reply({ content: 'Serveur uniquement.', ephemeral: true });
+    if (!interaction.guild) return interaction.reply({ content: 'Serveur uniquement.' });
     const uid = interaction.user.id;
     users.getOrCreate(uid, interaction.user.username);
     const member = interaction.member;
@@ -24,7 +24,7 @@ module.exports = {
     if (!owner && cfg.hackerRoleId && !hasHackerRole(member)) {
       return interaction.reply({
         content: 'Tu n’as pas le rôle **Hacker** (ou `REBORN_HACKER_ROLE_ID`). Les owners outrepassent.',
-        ephemeral: true,
+        
       });
     }
     const key = `hacker_salon_last_${uid}`;
@@ -32,7 +32,7 @@ module.exports = {
     const now = Date.now();
     if (!cfg.TEST_NO_LIMITS && now - last < cfg.HACKER_SALON_COOLDOWN_MS) {
       const left = Math.ceil((cfg.HACKER_SALON_COOLDOWN_MS - (now - last)) / 3600000);
-      return interaction.reply({ content: `Salon Hacker : cooldown **~${left} h** restante.`, ephemeral: true });
+      return interaction.reply({ content: `Salon Hacker : cooldown **~${left} h** restante.` });
     }
     const loot = rollHackerSalon();
     users.addInventory(uid, loot.itemId, 1);
@@ -48,6 +48,6 @@ module.exports = {
       ].join('\n'),
     );
     const c = new ContainerBuilder().addTextDisplayComponents(body);
-    return interaction.reply({ components: [c], flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral });
+    return interaction.reply({ components: [c], flags: MessageFlags.IsComponentsV2 });
   },
 };

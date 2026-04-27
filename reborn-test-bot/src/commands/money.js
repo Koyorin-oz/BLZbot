@@ -50,13 +50,13 @@ module.exports = {
     ),
   async execute(interaction) {
     if (!canMod(interaction)) {
-      await interaction.reply({ content: 'Permission refusée.', ephemeral: true });
+      await interaction.reply({ content: 'Permission refusée.' });
       return;
     }
     const sub = interaction.options.getSubcommand();
     const target = interaction.options.getUser('membre', true);
     if (target.bot) {
-      await interaction.reply({ content: 'Impossible sur un bot.', ephemeral: true });
+      await interaction.reply({ content: 'Impossible sur un bot.' });
       return;
     }
     users.getOrCreate(target.id, target.username);
@@ -67,7 +67,7 @@ module.exports = {
         users.addStars(target.id, a);
         await interaction.reply({
           content: `✅ **+${a.toLocaleString('fr-FR')}** starss pour **${target.username}**.`,
-          ephemeral: true,
+          
         });
         return;
       }
@@ -76,24 +76,24 @@ module.exports = {
         users.addStars(target.id, -a);
         await interaction.reply({
           content: `✅ **-${a.toLocaleString('fr-FR')}** starss pour **${target.username}**.`,
-          ephemeral: true,
+          
         });
         return;
       }
       const type = interaction.options.getString('type', true);
       const a = parseAmount(interaction.options.getString('montant', true));
       if (a < 0n) {
-        await interaction.reply({ content: 'Montant négatif interdit pour set.', ephemeral: true });
+        await interaction.reply({ content: 'Montant négatif interdit pour set.' });
         return;
       }
       if (type === 'stars') users.setStars(target.id, a);
       else users.setPoints(target.id, a);
       await interaction.reply({
         content: `✅ **${type === 'stars' ? 'Starss' : 'Points'}** de **${target.username}** → **${a.toLocaleString('fr-FR')}**.`,
-        ephemeral: true,
+        
       });
     } catch (e) {
-      await interaction.reply({ content: `❌ ${e.message || e}`, ephemeral: true });
+      await interaction.reply({ content: `❌ ${e.message || e}` });
     }
   },
 };

@@ -39,12 +39,12 @@ module.exports = {
     ),
   async execute(interaction) {
     const hub = interaction.guildId;
-    if (!hub) return interaction.reply({ content: 'Serveur uniquement.', ephemeral: true });
+    if (!hub) return interaction.reply({ content: 'Serveur uniquement.' });
     const sub = interaction.options.getSubcommand();
     if (sub === 'proposer') {
       const to = interaction.options.getUser('vers', true);
       if (to.id === interaction.user.id || to.bot) {
-        return interaction.reply({ content: 'Destinataire invalide.', ephemeral: true });
+        return interaction.reply({ content: 'Destinataire invalide.' });
       }
       let a;
       let b;
@@ -52,7 +52,7 @@ module.exports = {
         a = BigInt(interaction.options.getString('tu_donnes', true).replace(/\s/g, ''));
         b = BigInt(interaction.options.getString('tu_recois', true).replace(/\s/g, ''));
       } catch {
-        return interaction.reply({ content: 'Montants invalides.', ephemeral: true });
+        return interaction.reply({ content: 'Montants invalides.' });
       }
       let fromItems = [];
       let toItems = [];
@@ -62,7 +62,7 @@ module.exports = {
         if (rawA) fromItems = trade.parseItemsSpec(rawA);
         if (rawB) toItems = trade.parseItemsSpec(rawB);
       } catch (e) {
-        return interaction.reply({ content: e.message || String(e), ephemeral: true });
+        return interaction.reply({ content: e.message || String(e) });
       }
       let fe = 0n;
       let te = 0n;
@@ -72,10 +72,10 @@ module.exports = {
         if (rawFe) fe = BigInt(rawFe.replace(/\s/g, ''));
         if (rawTe) te = BigInt(rawTe.replace(/\s/g, ''));
       } catch {
-        return interaction.reply({ content: 'Montants monnaie d’évent invalides.', ephemeral: true });
+        return interaction.reply({ content: 'Montants monnaie d’évent invalides.' });
       }
       const r = trade.createTrade(hub, interaction.user.id, to.id, a, b, fromItems, toItems, fe, te);
-      if (!r.ok) return interaction.reply({ content: r.error, ephemeral: true });
+      if (!r.ok) return interaction.reply({ content: r.error });
       return interaction.reply({
         content: `Trade **${r.tradeId}** créé. ${to}, utilise \`/echange accepter\` avec l’ID **${r.tradeId}**.`,
         ephemeral: false,
@@ -84,8 +84,8 @@ module.exports = {
     if (sub === 'accepter') {
       const id = interaction.options.getString('trade_id', true).trim();
       const r = trade.acceptTrade(id, interaction.user.id);
-      if (!r.ok) return interaction.reply({ content: r.error, ephemeral: true });
-      return interaction.reply({ content: 'Échange accepté.', ephemeral: true });
+      if (!r.ok) return interaction.reply({ content: r.error });
+      return interaction.reply({ content: 'Échange accepté.' });
     }
   },
 };

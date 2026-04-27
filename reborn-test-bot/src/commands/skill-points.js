@@ -59,12 +59,12 @@ module.exports = {
     ),
   async execute(interaction) {
     if (!canMod(interaction)) {
-      return interaction.reply({ content: 'Permission refusée.', ephemeral: true });
+      return interaction.reply({ content: 'Permission refusée.' });
     }
     const sub = interaction.options.getSubcommand();
     const target = interaction.options.getUser('membre', true);
     if (target.bot) {
-      return interaction.reply({ content: 'Impossible sur un bot.', ephemeral: true });
+      return interaction.reply({ content: 'Impossible sur un bot.' });
     }
     users.getOrCreate(target.id, target.username);
 
@@ -74,7 +74,7 @@ module.exports = {
         db.prepare('UPDATE users SET skill_points = COALESCE(skill_points, 0) + ? WHERE id = ?').run(n, target.id);
         return interaction.reply({
           content: `✅ **+${n}** point(s) de compétence pour **${target.username}** (total : **${getSp(target.id)}**).`,
-          ephemeral: true,
+          
         });
       }
       if (sub === 'remove') {
@@ -84,7 +84,7 @@ module.exports = {
         db.prepare('UPDATE users SET skill_points = ? WHERE id = ?').run(next, target.id);
         return interaction.reply({
           content: `✅ **−${n}** point(s) de compétence pour **${target.username}** (total : **${next}**).`,
-          ephemeral: true,
+          
         });
       }
       if (sub === 'set') {
@@ -92,7 +92,7 @@ module.exports = {
         db.prepare('UPDATE users SET skill_points = ? WHERE id = ?').run(n, target.id);
         return interaction.reply({
           content: `✅ Points de compétence de **${target.username}** → **${n}**.`,
-          ephemeral: true,
+          
         });
       }
       if (sub === 'voir') {
@@ -108,7 +108,7 @@ module.exports = {
             `Points dispo : **${sp}**`,
             ...lines,
           ].join('\n'),
-          ephemeral: true,
+          
         });
       }
       if (sub === 'reset-arbre') {
@@ -118,11 +118,11 @@ module.exports = {
           content:
             `✅ Arbre de **${target.username}** réinitialisé (toutes branches à 0/5). ` +
             'Le temple a été resynchronisé. *Note : les points dépensés ne sont pas remboursés ; utilise `set` ou `give` pour rééquilibrer.*',
-          ephemeral: true,
+          
         });
       }
     } catch (e) {
-      return interaction.reply({ content: `❌ ${e.message || e}`, ephemeral: true });
+      return interaction.reply({ content: `❌ ${e.message || e}` });
     }
   },
 };

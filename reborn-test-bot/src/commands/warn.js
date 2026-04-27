@@ -21,19 +21,19 @@ module.exports = {
     .addStringOption((o) => o.setName('raison').setDescription('Motif')),
   async execute(interaction) {
     const hub = interaction.guildId;
-    if (!hub) return interaction.reply({ content: 'Serveur uniquement.', ephemeral: true });
+    if (!hub) return interaction.reply({ content: 'Serveur uniquement.' });
     const admin = interaction.memberPermissions?.has(PermissionFlagsBits.Administrator);
     if (!admin && !isOwner(interaction.user.id)) {
-      return interaction.reply({ content: 'Permission refusée.', ephemeral: true });
+      return interaction.reply({ content: 'Permission refusée.' });
     }
     const t = interaction.options.getUser('membre', true);
-    if (t.bot) return interaction.reply({ content: 'Pas sur un bot.', ephemeral: true });
+    if (t.bot) return interaction.reply({ content: 'Pas sur un bot.' });
     const deg = interaction.options.getString('degre', true);
     const raison = interaction.options.getString('raison') || '';
     const r = passport.addWarn(hub, t.id, interaction.user.id, deg, raison);
     return interaction.reply({
       content: `Warn **${deg}** → <@${t.id}> — points de sécu : **${r.newPoints}**`,
-      ephemeral: true,
+      
     });
   },
 };

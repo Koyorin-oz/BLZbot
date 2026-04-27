@@ -15,10 +15,10 @@ module.exports = {
     ),
   async execute(interaction) {
     if (!interaction.guildId) {
-      return interaction.reply({ content: 'Sur un serveur uniquement.', flags: MessageFlags.Ephemeral });
+      return interaction.reply({ content: 'Sur un serveur uniquement.' });
     }
     if (!interaction.member?.permissions.has(PermissionFlagsBits.Administrator)) {
-      return interaction.reply({ content: 'Permission **Administrateur** requise.', flags: MessageFlags.Ephemeral });
+      return interaction.reply({ content: 'Permission **Administrateur** requise.' });
     }
     const nom = interaction.options.getString('nom', true);
     const leader = interaction.options.getUser('chef') ?? interaction.user;
@@ -30,12 +30,12 @@ module.exports = {
       { bypassLevel: true },
     );
     if (!r.ok) {
-      return interaction.reply({ content: r.error, flags: MessageFlags.Ephemeral });
+      return interaction.reply({ content: r.error });
     }
     const leaderLine = leader.id === interaction.user.id ? 'Toi' : `${leader} (${leader.tag})`;
     return interaction.reply({
       content: `Guilde **${nom.slice(0, 80)}** créée — ID \`${r.guildId}\` · chef : ${leaderLine}.`,
-      flags: MessageFlags.Ephemeral,
+      
     });
   },
 };

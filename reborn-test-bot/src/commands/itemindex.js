@@ -28,7 +28,7 @@ module.exports = {
       !ctx.isOwner() &&
       !interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)
     ) {
-      return interaction.reply({ content: 'Interdit.', ephemeral: true });
+      return interaction.reply({ content: 'Interdit.' });
     }
     users.getOrCreate(uid, interaction.options.getUser('membre')?.username || interaction.user.username);
     const sub = interaction.options.getSubcommand();
@@ -46,28 +46,28 @@ module.exports = {
         .setTitle('Index items')
         .setDescription(`Complétion : **${r.completion_pct} %**\n\n${lines.join('\n')}`)
         .setColor(0x3498db);
-      return interaction.reply({ embeds: [e], ephemeral: true });
+      return interaction.reply({ embeds: [e] });
     }
 
     if (sub === 'definir') {
       if (!ctx.isOwner() && !interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
-        return interaction.reply({ content: 'Admin / owner.', ephemeral: true });
+        return interaction.reply({ content: 'Admin / owner.' });
       }
       const p = interaction.options.getInteger('pourcent', true);
       idx.setCompletion(uid, p);
-      return interaction.reply({ content: `Index **${uid}** → **${p} %**`, ephemeral: true });
+      return interaction.reply({ content: `Index **${uid}** → **${p} %**` });
     }
 
     if (sub === 'reclamer') {
       const r = idx.claimNext(uid, users);
-      if (!r.ok) return interaction.reply({ content: r.error, ephemeral: true });
+      if (!r.ok) return interaction.reply({ content: r.error });
       const chest = (r.step.chests || [])
         .map((c) => `+**${c.qty || 1}** \`${c.id}\``)
         .join(' ');
       const extra = [chest, r.step.roleNote].filter(Boolean).join(' ');
       return interaction.reply({
         content: `Étape **${r.step.pct} %** : +**${r.step.stars.toLocaleString('fr-FR')}** starss${extra ? ` · ${extra}` : ''}`,
-        ephemeral: true,
+        
       });
     }
   },

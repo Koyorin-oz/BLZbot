@@ -63,7 +63,7 @@ module.exports = {
       return interaction.reply({
         files: [file],
         components: [c],
-        flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+        flags: MessageFlags.IsComponentsV2,
       });
     }
 
@@ -85,6 +85,6 @@ module.exports = {
         { name: 'Statut', value: unlocked, inline: false },
         { name: 'Clés (sync)', value: r.keys.length ? r.keys.map((k) => `\`${k}\``).join(', ') : '—', inline: false },
       );
-    return interaction.reply({ embeds: [embed], ephemeral: true });
+    return interaction.reply({ embeds: [embed] });
   },
 };

@@ -15,28 +15,28 @@ module.exports = {
     const from = interaction.user.id;
     const to = interaction.options.getUser('membre', true);
     if (to.bot) {
-      await interaction.reply({ content: 'Impossible vers un bot.', ephemeral: true });
+      await interaction.reply({ content: 'Impossible vers un bot.' });
       return;
     }
     if (to.id === from) {
-      await interaction.reply({ content: 'Tu ne peux pas te payer toi-même.', ephemeral: true });
+      await interaction.reply({ content: 'Tu ne peux pas te payer toi-même.' });
       return;
     }
     let amount;
     try {
       amount = parseAmount(interaction.options.getString('montant', true));
     } catch {
-      await interaction.reply({ content: 'Montant invalide.', ephemeral: true });
+      await interaction.reply({ content: 'Montant invalide.' });
       return;
     }
     if (amount <= 0n) {
-      await interaction.reply({ content: 'Montant doit être > 0.', ephemeral: true });
+      await interaction.reply({ content: 'Montant doit être > 0.' });
       return;
     }
     users.getOrCreate(from, interaction.user.username);
     users.getOrCreate(to.id, to.username);
     if (users.getStars(from) < amount) {
-      await interaction.reply({ content: 'Solde insuffisant.', ephemeral: true });
+      await interaction.reply({ content: 'Solde insuffisant.' });
       return;
     }
     users.addStars(from, -amount);

@@ -14,7 +14,7 @@ module.exports = {
     if (sub === 'verifier') {
       const newly = trophies.evaluate(uid, hub);
       const extra = newly.length ? `\nNouveau(x) : **${newly.join('**, **')}**` : '\nAucun nouveau trophée.';
-      return interaction.reply({ content: `Vérification terminée.${extra}`, ephemeral: true });
+      return interaction.reply({ content: `Vérification terminée.${extra}` });
     }
     trophies.evaluate(uid, hub);
     const unlocked = new Set(trophies.listUnlocked(uid).map((r) => r.trophy_id));
@@ -26,6 +26,6 @@ module.exports = {
       .setTitle('Trophées')
       .setDescription(lines.join('\n').slice(0, 3900))
       .setColor(0xf1c40f);
-    return interaction.reply({ embeds: [e], ephemeral: true });
+    return interaction.reply({ embeds: [e] });
   },
 };

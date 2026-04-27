@@ -43,23 +43,23 @@ async function handlePurchase(interaction, parts) {
   if (kind === 's') {
     const slot = parseInt(sub, 10);
     if (Number.isNaN(slot) || slot < 0 || slot > 4) {
-      await interaction.reply({ content: 'Slot invalide.', ephemeral: true });
+      await interaction.reply({ content: 'Slot invalide.' });
       return;
     }
     shop.ensureShopSlots(uid);
     const row = shop.getSlot(uid, slot);
     if (!row) {
-      await interaction.reply({ content: 'Slot introuvable.', ephemeral: true });
+      await interaction.reply({ content: 'Slot introuvable.' });
       return;
     }
     const item = getItem(row.item_id);
     if (!item) {
-      await interaction.reply({ content: 'Item inconnu.', ephemeral: true });
+      await interaction.reply({ content: 'Item inconnu.' });
       return;
     }
     const price = discountedPrice(uid, BigInt(row.price));
     if (users.getStars(uid) < price) {
-      await interaction.reply({ content: `Pas assez de starss (besoin **${price.toLocaleString('fr-FR')}**).`, ephemeral: true });
+      await interaction.reply({ content: `Pas assez de starss (besoin **${price.toLocaleString('fr-FR')}**).` });
       return;
     }
     users.addStars(uid, -price);
@@ -67,7 +67,7 @@ async function handlePurchase(interaction, parts) {
       const h = meta.diamondHolder();
       if (h && h !== uid) {
         users.addStars(uid, price);
-        await interaction.reply({ content: 'Le diamant est déjà possédé par un autre joueur.', ephemeral: true });
+        await interaction.reply({ content: 'Le diamant est déjà possédé par un autre joueur.' });
         return;
       }
       meta.setDiamondHolder(uid);
@@ -76,7 +76,7 @@ async function handlePurchase(interaction, parts) {
     shop.removeSlot(uid, slot);
     await interaction.reply({
       content: `Achat : **${item.name}** pour **${price.toLocaleString('fr-FR')}** starss.`,
-      ephemeral: true,
+      
     });
     return;
   }
@@ -84,7 +84,7 @@ async function handlePurchase(interaction, parts) {
   if (kind === 'b') {
     const price = discountedPrice(uid, BOOST_ROW_PRICE);
     if (users.getStars(uid) < price) {
-      await interaction.reply({ content: 'Pas assez de starss pour ce boost.', ephemeral: true });
+      await interaction.reply({ content: 'Pas assez de starss pour ce boost.' });
       return;
     }
     users.addStars(uid, -price);
@@ -93,10 +93,10 @@ async function handlePurchase(interaction, parts) {
     else if (sub === 'starss') extendBoost(uid, 'starss_boost_ms');
     else {
       users.addStars(uid, price);
-      await interaction.reply({ content: 'Boost inconnu.', ephemeral: true });
+      await interaction.reply({ content: 'Boost inconnu.' });
       return;
     }
-    await interaction.reply({ content: `Boost ×2 (**${sub}**) activé +1h (cumulable).`, ephemeral: true });
+    await interaction.reply({ content: `Boost ×2 (**${sub}**) activé +1h (cumulable).` });
     return;
   }
 
@@ -113,7 +113,7 @@ async function handlePurchase(interaction, parts) {
       users.resetCatmIfNewDay(uid, day);
       const { count } = users.getCatmState(uid);
       if (count >= CATM_DAILY_LIMIT) {
-        await interaction.reply({ content: `Limite journalière CATM (**${CATM_DAILY_LIMIT}**/jour).`, ephemeral: true });
+        await interaction.reply({ content: `Limite journalière CATM (**${CATM_DAILY_LIMIT}**/jour).` });
         return;
       }
     } else if (sub === 'catl') {
@@ -123,12 +123,12 @@ async function handlePurchase(interaction, parts) {
       price = CHEST_CATS;
       label = 'CATS (star)';
     } else {
-      await interaction.reply({ content: 'Coffre inconnu.', ephemeral: true });
+      await interaction.reply({ content: 'Coffre inconnu.' });
       return;
     }
     const pay = discountedPrice(uid, price);
     if (users.getStars(uid) < pay) {
-      await interaction.reply({ content: 'Pas assez de starss.', ephemeral: true });
+      await interaction.reply({ content: 'Pas assez de starss.' });
       return;
     }
     users.addStars(uid, -pay);
@@ -178,7 +178,7 @@ async function handlePurchase(interaction, parts) {
     const body = lines.length ? `\n${lines.map((l) => `• ${l}`).join('\n')}` : '';
     await interaction.reply({
       content: `**${label}** ouvert${head ? ` — ${head}` : ''}.${body}`.slice(0, 1900),
-      ephemeral: true,
+      
     });
   }
 }

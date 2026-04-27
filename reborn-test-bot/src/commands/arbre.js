@@ -59,7 +59,7 @@ module.exports = {
         return interaction.reply({
           files: [b.file],
           components: [b.container],
-          flags: b.flags | MessageFlags.Ephemeral,
+          flags: b.flags,
         });
       }
       const lines = skillTree.BRANCHES.map((b) => {
@@ -77,7 +77,7 @@ module.exports = {
       const c = new ContainerBuilder().addTextDisplayComponents(txt);
       return interaction.reply({
         components: [c],
-        flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+        flags: MessageFlags.IsComponentsV2,
       });
     }
 
@@ -87,7 +87,7 @@ module.exports = {
       const err = new TextDisplayBuilder().setContent(`❌ ${r.error}`);
       return interaction.reply({
         components: [new ContainerBuilder().addTextDisplayComponents(err)],
-        flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+        flags: MessageFlags.IsComponentsV2,
       });
     }
     const ok = new TextDisplayBuilder().setContent(
@@ -95,7 +95,7 @@ module.exports = {
     );
     return interaction.reply({
       components: [new ContainerBuilder().addTextDisplayComponents(ok)],
-      flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+      flags: MessageFlags.IsComponentsV2,
     });
   },
 };

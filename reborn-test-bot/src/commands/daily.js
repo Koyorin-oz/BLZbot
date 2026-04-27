@@ -185,7 +185,7 @@ async function sendDailyCanvasReply(interaction, pngBuffer) {
 
   collector.on('collect', async (i) => {
     if (i.user.id !== interaction.user.id) {
-      return i.reply({ content: "Seul l'auteur de la commande peut utiliser ce bouton.", ephemeral: true });
+      return i.reply({ content: "Seul l'auteur de la commande peut utiliser ce bouton." });
     }
     if (i.customId === 'daily_close') {
       try {
