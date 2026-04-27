@@ -399,6 +399,12 @@ function dissolveGuild(hubDiscordId, guildId, leaderId) {
   if (g.leader_id !== leaderId) return { ok: false, error: 'Seul le chef peut dissoudre.' };
   db.prepare('DELETE FROM player_guild_members WHERE guild_id = ?').run(guildId);
   db.prepare('DELETE FROM player_guilds WHERE id = ?').run(guildId);
+  // Si guilde pontée niveau, on dissout aussi côté niveau pour cohérence.
+  try {
+    const bridge = require('./niveauGuildBridge');
+    const nivId = bridge.niveauIdFromReborn(guildId);
+    if (nivId) bridge.dissolveNiveauGuild(nivId);
+  } catch { /* optional */ }
   return { ok: true };
 }
 
