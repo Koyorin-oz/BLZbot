@@ -46,34 +46,83 @@ function safeNumBig(s) {
   }
 }
 
+/**
+ * Si la guilde est pontée (`niv_*`), retourne les données niveau authoritatives
+ * (gxp, member_slots, treasury, upgrade_level, wars, treasury_capacity…).
+ * Sinon retourne null → on utilisera les données REBORN.
+ */
+function fetchNiveauOriginal(rebornGuildId) {
+  if (!String(rebornGuildId || '').startsWith('niv_')) return null;
+  const niveauId = Number(String(rebornGuildId).slice(4));
+  if (!Number.isFinite(niveauId) || niveauId <= 0) return null;
+  try {
+    const niv = require(path.join(__dirname, '..', '..', '..', 'niveau', 'src', 'utils', 'db-guilds'));
+    const g = typeof niv.getGuildById === 'function' ? niv.getGuildById(niveauId) : null;
+    return g || null;
+  } catch {
+    return null;
+  }
+}
+
 /** Objet « guilde » compatible avec `renderGuildProfileV2` + champs REBORN optionnels canvas. */
 function buildCanvasGuildViewModel(g, totalMembers) {
-  const treasuryN = safeNumBig(g.treasury);
-  const gxpN = safeNumBig(g.gxp);
-  const cap = Math.max(treasuryN * 2, 5_000_000);
-  const gradeLbl = label(g.grade || '') || '—';
+  const nivG = fetchNiveauOriginal(g.id);
+  // Champs niveau (autorité) avec fallback sur REBORN si pas de pont.
+  const treasuryNum = nivG ? Number(nivG.treasury || 0) : safeNumBig(g.treasury);
+  const gxpNum = nivG ? Number(nivG.level || 0) : safeNumBig(g.gxp);
+  const upgradeLevel = nivG ? Number(nivG.upgrade_level || 1) : 10;
+  const treasuryCap = nivG && Number(nivG.treasury_capacity) > 0
+    ? Number(nivG.treasury_capacity)
+    : Math.max(treasuryNum * 2, 5_000_000);
+  const memberSlots = nivG ? Number(nivG.member_slots || g.member_cap || 5) : (g.member_cap || 5);
+  const warsWon = nivG ? Number(nivG.wars_won || 0) : 0;
+  const warsWon70 = nivG ? Number(nivG.wars_won_70 || 0) : 0;
+  const warsWon80 = nivG ? Number(nivG.wars_won_80 || 0) : 0;
+  const warsWon90 = nivG ? Number(nivG.wars_won_90 || 0) : 0;
+  const totalTreasuryGen = nivG ? Number(nivG.total_treasury_generated || 0) : treasuryNum;
+  const channelId = nivG?.channel_id || g.salon_channel_id || null;
+  const jokerUses = nivG ? Number(nivG.joker_guilde_uses || 0) : 0;
+  const emoji = nivG?.emoji || '🛡️';
+  const createdAt = nivG?.created_at || g.created_ms;
+  const subChiefs = Array.isArray(nivG?.sub_chiefs) ? nivG.sub_chiefs : [];
+  const treasuryMult = nivG ? Number(nivG.treasury_multiplier_purchased || 1) : 1;
+
+  // Total value cohérent avec /profil bouton Guilde (basé sur niveau/users.total_value).
+  let totalValue = treasuryNum + (gxpNum * 1000); // approximation
+  if (nivG) {
+    // Reproduit la formule niveau : addition des total_value des membres.
+    try {
+      const niv = require(path.join(__dirname, '..', '..', '..', 'niveau', 'src', 'utils', 'db-guilds'));
+      if (typeof niv.getGuildMembersWithDetails === 'function') {
+        const list = niv.getGuildMembersWithDetails(Number(String(g.id).slice(4)));
+        totalValue = list.reduce((s, m) => s + Number(m.total_value || 0), 0);
+      }
+    } catch { /* ignore */ }
+  }
+
+  const gradeLbl = label(g.grade || '') || 'Aucun';
   return {
     id: g.id,
-    name: g.name || 'Guilde',
-    owner_id: g.leader_id,
-    emoji: '🛡️',
-    member_slots: g.member_cap || 5,
-    member_cap: g.member_cap || 5,
-    total_value: gxpN + treasuryN,
-    upgrade_level: 10,
-    level: g.guild_level || 1,
-    treasury: treasuryN,
-    treasury_capacity: cap,
-    treasury_multiplier_purchased: 1,
-    total_treasury_generated: treasuryN,
-    wars_won: 0,
-    wars_won_70: 0,
-    wars_won_80: 0,
-    wars_won_90: 0,
-    channel_id: null,
-    joker_guilde_uses: 0,
-    sub_chiefs: [],
-    created_at: g.created_ms,
+    name: g.name || nivG?.name || 'Guilde',
+    owner_id: g.leader_id || nivG?.owner_id,
+    emoji,
+    member_slots: memberSlots,
+    member_cap: memberSlots,
+    total_value: totalValue,
+    upgrade_level: upgradeLevel,
+    level: g.guild_level || gxpNum || 1,
+    treasury: treasuryNum,
+    treasury_capacity: treasuryCap,
+    treasury_multiplier_purchased: treasuryMult,
+    total_treasury_generated: totalTreasuryGen,
+    wars_won: warsWon,
+    wars_won_70: warsWon70,
+    wars_won_80: warsWon80,
+    wars_won_90: warsWon90,
+    channel_id: channelId,
+    joker_guilde_uses: jokerUses,
+    sub_chiefs: subChiefs,
+    created_at: createdAt,
     reborn_extras: `REBORN · Grade ${gradeLbl} · GXP ${BigInt(g.gxp || '0').toLocaleString('fr-FR')} · Anti-séparation ${g.anti_separation ? 'oui' : 'non'}`,
     reborn_footer:
       '💡 REBORN — boutons : liste complète des membres · stats guilde (GXP, trésorerie, GRP chef…)',
