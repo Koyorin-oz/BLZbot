@@ -106,8 +106,17 @@ module.exports = {
             .addChoices(
               { name: '-500 GRP / membre cible', value: '1' },
               { name: '-3000 GRP total réparti', value: '2' },
-              { name: 'Marqueur ÷2 GRP (placeholder)', value: '3' },
+              { name: '÷2 GRP de la cible pendant 2h', value: '3' },
             ),
+        ),
+    )
+    .addSubcommand((sc) => sc.setName('salon').setDescription('Créer le salon privé de ta guilde (chef).'))
+    .addSubcommand((sc) =>
+      sc
+        .setName('decrire')
+        .setDescription('Définir la description publique de ta guilde (chef).')
+        .addStringOption((o) =>
+          o.setName('texte').setDescription('Description (≤ 200 caractères)').setRequired(true),
         ),
     ),
   async execute(interaction) {
