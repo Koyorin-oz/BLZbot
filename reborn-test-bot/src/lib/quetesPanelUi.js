@@ -271,15 +271,16 @@ async function buildNiveauPage(userId, niveauPageIdx) {
 /**
  * Construit le payload Components V2 pour `/quetes`.
  * @param {string} userId
- * @param {number} [page] - 0 = REBORN, ≥1 = archives niveau (paginées)
+ * @param {number} [page] - 0 = REBORN (canvas), ≥1 = archives niveau (paginées)
+ * @param {{ displayName?: string, avatarUrl?: string }} [ctx]
  */
-async function buildQuetesPayload(userId, page = 0) {
+async function buildQuetesPayload(userId, page = 0, ctx = {}) {
   const niveauPages = countNiveauPages(userId);
   if (page <= 0) {
-    return buildRebornPage(userId, niveauPages);
+    return buildRebornPage(userId, niveauPages, ctx);
   }
   const built = await buildNiveauPage(userId, page);
-  if (!built) return buildRebornPage(userId, niveauPages);
+  if (!built) return buildRebornPage(userId, niveauPages, ctx);
   return built;
 }
 
