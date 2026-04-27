@@ -19,7 +19,10 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('arbre')
     .setDescription('Arbre de compétences (canvas + menu) ou achat par / sous-commande.')
-    .addSubcommand((sc) => sc.setName('voir').setDescription('Image arbre (fond sombre) + branche + Débloquer'))
+    .addSubcommand((sc) => sc.setName('voir').setDescription('Image arbre (étoile, racine au centre) + Débloquer'))
+    .addSubcommand((sc) =>
+      sc.setName('voir2').setDescription('Image arbre (demi-cercle, racine dorée en bas) + Débloquer'),
+    )
     .addSubcommand((sc) =>
       sc
         .setName('acheter')
