@@ -187,35 +187,35 @@ async function handlePanelInteraction(interaction) {
   // ─── Panel Quêtes ──────────────────────────────────────────────────────────
   if (interaction.customId === 'rb:q:re') {
     await interaction.deferUpdate();
-    const p = await buildQuetesPayload(interaction.user.id, 0);
+    const p = await buildQuetesPayload(interaction.user.id, 0, qCtx(interaction));
     return interaction.editReply(p);
   }
   const pageMatch = interaction.customId.match(/^rb:q:page:(\d+)$/);
   if (pageMatch) {
     await interaction.deferUpdate();
     const pageIdx = parseInt(pageMatch[1], 10) || 0;
-    const p = await buildQuetesPayload(interaction.user.id, pageIdx);
+    const p = await buildQuetesPayload(interaction.user.id, pageIdx, qCtx(interaction));
     return interaction.editReply(p);
   }
   if (interaction.customId === 'rb:q:skip:d') {
     const r = quests.skipDaily(interaction.user.id);
     if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
     await interaction.deferUpdate();
-    const p = await buildQuetesPayload(interaction.user.id, 0);
+    const p = await buildQuetesPayload(interaction.user.id, 0, qCtx(interaction));
     return interaction.editReply(p);
   }
   if (interaction.customId === 'rb:q:skip:w') {
     const r = quests.skipWeekly(interaction.user.id);
     if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
     await interaction.deferUpdate();
-    const p = await buildQuetesPayload(interaction.user.id, 0);
+    const p = await buildQuetesPayload(interaction.user.id, 0, qCtx(interaction));
     return interaction.editReply(p);
   }
   if (interaction.customId === 'rb:q:sel_claim') {
     const r = quests.claimSelection(interaction.user.id);
     if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
     await interaction.deferUpdate();
-    const p = await buildQuetesPayload(interaction.user.id, 0);
+    const p = await buildQuetesPayload(interaction.user.id, 0, qCtx(interaction));
     return interaction.editReply(p);
   }
   if (interaction.customId === 'rb:q:spawner') {
@@ -233,7 +233,7 @@ async function handlePanelInteraction(interaction) {
     db.prepare('UPDATE users SET last_event_spawner_claim_ms = ? WHERE id = ?').run(now, uid);
     users.addInventory(uid, 'event_spawner', 1);
     await interaction.deferUpdate();
-    const p = await buildQuetesPayload(uid, 0);
+    const p = await buildQuetesPayload(uid, 0, qCtx(interaction));
     return interaction.editReply(p);
   }
 
