@@ -95,9 +95,10 @@ function tickSeparations() {
         sumA += gm.getMemberRow(s.hub_discord_id, uid).grp;
       }
       const others = db.prepare('SELECT user_id FROM player_guild_members WHERE guild_id = ?').all(s.guild_id);
+      const loyalIds = others.map((r) => r.user_id).filter((id) => !camp.includes(id));
       let sumB = 0n;
-      for (const { user_id } of others) {
-        if (!camp.includes(user_id)) sumB += gm.getMemberRow(s.hub_discord_id, user_id).grp;
+      for (const uid of loyalIds) {
+        sumB += gm.getMemberRow(s.hub_discord_id, uid).grp;
       }
       const snapA = B(s.grp_snapshot_a);
       const snapB = B(s.grp_snapshot_b);
@@ -105,6 +106,27 @@ function tickSeparations() {
       const gainB = sumB - snapB;
       const win = gainA > gainB ? 'split' : gainA < gainB ? 'loyal' : 'loyal';
       db.prepare('UPDATE separations SET winner = ?, phase = 0 WHERE id = ?').run(win, s.id);
+
+      // Récompense gagnant : +25% des starss courants (cap 1M / membre) + point Temple + compteur trophée.
+      try {
+        const users = require('./users');
+        const temple = require('./temple');
+        const winners = win === 'split' ? camp : loyalIds;
+        const cap = 1_000_000n;
+        for (const uid of winners) {
+          const cur = users.getStars(uid);
+          let bonus = (cur * 25n) / 100n;
+          if (bonus > cap) bonus = cap;
+          if (bonus < 5_000n) bonus = 5_000n;
+          users.addStars(uid, bonus);
+          temple.markKey(uid, 'separation_won');
+          try {
+            db.prepare('UPDATE users SET separations_won = COALESCE(separations_won, 0) + 1 WHERE id = ?').run(uid);
+          } catch { /* ignore */ }
+        }
+      } catch (e) {
+        console.error('[separation reward]', e?.message || e);
+      }
     }
   }
 }
