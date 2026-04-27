@@ -37,4 +37,4 @@ function totalToLevelState(totalXp) {
   return { level, xpInto, xpTotal: t };
 }
 
-module.exports = { totalToLevelState, T_START };
+module.exports = { totalToLevelState, T_START, MAX_LEVEL };
