@@ -655,7 +655,8 @@ async function renderSkillTreePng(opts = {}) {
 
   const avatarImg = await loadAvatarSafe(avatarUrl);
 
-  const { center, trees } = buildLayout(layout);
+  const { center, trees, tune } = buildLayout(layout);
+  const sizes = { mainR: tune.mainR, capR: tune.capR, sideR: tune.sideR };
   const sOf = (br) => Math.min(5, Math.max(0, Math.floor(steps[br] || 0)));
 
   // 1) Liaisons latérales (toujours fines, en arrière-plan).
@@ -695,12 +696,16 @@ async function renderSkillTreePng(opts = {}) {
     const { color, rgb } = BRANCH[tree.branch];
     const s = sOf(tree.branch);
     for (const side of tree.sides) {
-      drawSideNode(ctx, side, rgb, color, s > side.parentK);
+      drawSideNode(ctx, side, rgb, color, s > side.parentK, sizes);
     }
   }
 
-  // 5) Cœur central (en bas pour le layout demi).
-  drawRoot(ctx, center);
+  // 5) Cœur central : avatar du membre pour le layout demi, orbe doré pour étoile.
+  if (layout === 'demi') {
+    drawRoot(ctx, center, avatarImg);
+  } else {
+    drawRoot(ctx, center);
+  }
 
   // 6) Nœuds principaux (capstone = dernier de la branche, plus gros).
   for (const tree of trees) {
@@ -710,7 +715,7 @@ async function renderSkillTreePng(opts = {}) {
       const lit = s > m.k;
       const isCurrent = !lit && m.k === s;
       const isCapstone = m.k === NODES_PER_BRANCH - 1;
-      drawMainNode(ctx, m, rgb, color, icon, lit, isCurrent, isCapstone);
+      drawMainNode(ctx, m, rgb, color, icon, lit, isCurrent, isCapstone, sizes);
     }
   }
 
