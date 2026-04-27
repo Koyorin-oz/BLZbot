@@ -1303,15 +1303,21 @@ function drawTempleFooter(ctx, unlocked, keysCount, keysTotal) {
 }
 
 /**
- * Carte « temple céleste » : torii central, 6 clés disposées en constellation,
- * arc de progression doré, fond cosmique.
+ * Carte « temple céleste » : icône du serveur en médaillon central,
+ * 6 clés disposées en constellation, arc de progression rouge, fond cosmique.
  *
  * @param {object} p
  * @param {number} [p.points]
  * @param {string[]} [p.keys] ids de clés acquises (cf. `services/temple.js`)
  * @param {boolean} [p.templeUnlocked]
+ * @param {string|null} [p.guildIconUrl] URL de la PP du serveur (Discord CDN)
  */
-async function renderTemplePng({ points = 0, keys = [], templeUnlocked = false } = {}) {
+async function renderTemplePng({
+  points = 0,
+  keys = [],
+  templeUnlocked = false,
+  guildIconUrl = null,
+} = {}) {
   const canvas = createCanvas(TEMPLE_W, TEMPLE_H);
   const ctx = canvas.getContext('2d');
 
@@ -1346,24 +1352,31 @@ async function renderTemplePng({ points = 0, keys = [], templeUnlocked = false }
     if (a.lit && b.lit) drawConstellationLine(ctx, a, b);
   }
 
-  // 5. Arc de progression doré.
+  // 5. Arc de progression rouge.
   const ratio = Math.min(1, earned.size / Math.max(1, TEMPLE_KEYS.length));
   drawProgressArc(ctx, cx, cy, ringR, ratio);
 
-  // 6. Sanctuaire central + torii.
+  // 6. Sanctuaire central — disque + halo (sans torii).
   drawSanctum(ctx, cx, cy, 100, templeUnlocked);
-  drawTorii(ctx, cx, cy + 6, 1, templeUnlocked);
 
-  // 7. Étoiles des clés (toujours par-dessus le sanctum).
+  // 7. Médaillon : PP du serveur si dispo, sinon fallback torii.
+  const guildIcon = await loadAvatarSafe(guildIconUrl);
+  if (guildIcon) {
+    drawServerMedallion(ctx, guildIcon, cx, cy, 88, templeUnlocked);
+  } else {
+    drawTorii(ctx, cx, cy + 6, 1, templeUnlocked);
+  }
+
+  // 8. Étoiles des clés (toujours par-dessus le sanctum).
   for (const p of positions) {
     drawKeyStar(ctx, p, p.angle);
   }
 
-  // 8. En-tête + pied.
+  // 9. En-tête + pied.
   drawTempleHeader(ctx, points, templeUnlocked, earned.size, TEMPLE_KEYS.length);
   drawTempleFooter(ctx, templeUnlocked, earned.size, TEMPLE_KEYS.length);
 
-  // Petite signature discrète au coin du sanctuaire.
+  // Signature discrète sous le médaillon.
   ctx.save();
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -1371,7 +1384,7 @@ async function renderTemplePng({ points = 0, keys = [], templeUnlocked = false }
   ctx.shadowColor = templeUnlocked ? 'rgba(255, 90, 70, 0.65)' : 'rgba(0,0,0,0)';
   ctx.shadowBlur = 6;
   ctx.font = `bold 13px "Segoe UI", "Helvetica", sans-serif`;
-  ctx.fillText('SANCTVM', cx, cy + 80);
+  ctx.fillText('SANCTVM', cx, cy + 110);
   ctx.restore();
 
   void TEMPLE_INK;
