@@ -184,6 +184,8 @@ async function handlePanelInteraction(interaction) {
     const uid = interaction.user.id;
     const r = skillTree.buy(uid, br);
     if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
+    // Défère AVANT le rendu canvas + avatar fetch (sinon token expire en 3 s -> 10062).
+    await interaction.deferUpdate();
     const b = await buildArbreContainer(
       uid,
       interaction.member?.displayName || interaction.user.username,
@@ -191,11 +193,10 @@ async function handlePanelInteraction(interaction) {
       lay,
     );
     if (!b) {
-      return interaction.reply({
+      return interaction.followUp({
         content: `✅ **${BR_LABEL[br] || br}** → **${r.newStep}** / 5 (canvas indisponible)`,
       });
     }
-    await interaction.deferUpdate();
     return interaction.editReply({
       files: [b.file],
       components: [b.container],
