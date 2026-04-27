@@ -107,18 +107,7 @@ async function buildArbreContainer(userId, displayName) {
   return { file, container: c, flags: MessageFlags.IsComponentsV2 };
 }
 
-function partsForPassportButton(customId) {
-  if (customId === 'rb:ps:card' || customId === 'rb:ps:txt') {
-    return { targetId: null, kind: customId === 'rb:ps:card' ? 'card' : 'txt' };
-  }
-  if (customId.startsWith('rb:ps:card:')) {
-    return { targetId: customId.slice('rb:ps:card:'.length), kind: 'card' };
-  }
-  if (customId.startsWith('rb:ps:txt:')) {
-    return { targetId: customId.slice('rb:ps:txt:'.length), kind: 'txt' };
-  }
-  return null;
-}
+const { buildPassportTextV2 } = require('../lib/passportV2Ui');
 
 /**
  * @param {import('discord.js').Client} client
