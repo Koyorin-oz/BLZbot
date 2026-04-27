@@ -9,19 +9,34 @@ const H = 980;
 const ASSETS = path.join(__dirname, '..', 'assets');
 
 /**
- * Branches : 5 voies organisées en pétales (72° entre chaque), labels colorés au bout.
- * `angle` est en degrés, 0 = droite, -90 = haut, +90 = bas (repère canvas).
+ * Branches : 5 voies, labels colorés au bout. Les angles sont définis par layout.
  */
 const BRANCH = {
-  quest:  { label: 'QUÊTE',     color: '#7CFF8B', rgb: [124, 255, 139], icon: '⚔', angle: -162 }, // haut-gauche
-  guild:  { label: 'GUILDE',    color: '#C39BFF', rgb: [195, 155, 255], icon: '⚜', angle:  -90 }, // haut
-  shop:   { label: 'BOUTIQUE',  color: '#FFB867', rgb: [255, 184, 103], icon: '◈', angle:  -18 }, // haut-droite
-  ranked: { label: 'RANKED',    color: '#7DC2FF', rgb: [125, 194, 255], icon: '★', angle:   54 }, // bas-droite
-  event:  { label: 'ÉVÉNEMENT', color: '#FF7B7B', rgb: [255, 123, 123], icon: '✦', angle:  126 }, // bas-gauche
+  quest:  { label: 'QUÊTE',     color: '#7CFF8B', rgb: [124, 255, 139], icon: '⚔' },
+  guild:  { label: 'GUILDE',    color: '#C39BFF', rgb: [195, 155, 255], icon: '⚜' },
+  shop:   { label: 'BOUTIQUE',  color: '#FFB867', rgb: [255, 184, 103], icon: '◈' },
+  ranked: { label: 'RANKED',    color: '#7DC2FF', rgb: [125, 194, 255], icon: '★' },
+  event:  { label: 'ÉVÉNEMENT', color: '#FF7B7B', rgb: [255, 123, 123], icon: '✦' },
 };
 const ORDER = ['quest', 'guild', 'shop', 'ranked', 'event'];
 
-const CENTER = { x: W / 2, y: H / 2 + 80 };
+/**
+ * Deux dispositions :
+ * - `star` : 5 pétales sur 360°, racine au centre (look ARC Raiders d'origine).
+ * - `demi` : 5 branches en demi-cercle au-dessus, racine dorée tout en bas.
+ *
+ * `angle` est en degrés, 0 = droite, -90 = haut, +90 = bas (repère canvas).
+ */
+const BRANCH_ANGLES = {
+  star: { quest: -162, guild: -90, shop: -18, ranked: 54, event: 126 },
+  demi: { quest: -162, guild: -126, shop: -90, ranked: -54, event: -18 },
+};
+const CENTERS = {
+  star: { x: W / 2, y: H / 2 + 80 },
+  demi: { x: W / 2, y: H - 100 },
+};
+// Compat: certains helpers internes utilisaient encore `CENTER` directement.
+const CENTER = CENTERS.star;
 const FIRST_NODE_DIST = 112;
 const NODE_GAP = 58;
 const NODES_PER_BRANCH = 5;
