@@ -162,7 +162,12 @@ async function buildInventairePayload(uid, username) {
     const options = rows.slice(0, 25).map((r) => {
       const it = getItem(r.item_id);
       const name = (it?.name || r.item_id).slice(0, 100);
-      return { label: `${name} (×${r.qty})`.slice(0, 100), value: `i:${r.item_id}`, description: (it?.rarity || 'Item').slice(0, 100) };
+      const blurb = summaryForItemId(r.item_id);
+      return {
+        label: `${name} (×${r.qty})`.slice(0, 100),
+        value: `i:${r.item_id}`,
+        description: `×${r.qty} · ${blurb}`.slice(0, 100),
+      };
     });
     const select = new StringSelectMenuBuilder()
       .setCustomId('rb:inv:sel')
