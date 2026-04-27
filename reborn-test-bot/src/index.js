@@ -132,11 +132,66 @@ client.on('interactionCreate', async (interaction) => {
         });
         await interaction.editReply(payload);
       } catch (e) {
-        console.error('[profil → quetes]', e?.message || e);
+        if (e?.code !== 10062 && e?.code !== 40060) {
+          console.error('[profil → quetes]', e?.message || e);
+        }
       }
       return;
     }
     // Pas l'auteur → laisser niveau gérer le message d'erreur d'origine.
+  }
+
+  // ─── Bouton « 🛡️ Guilde » du /profil niveau → canvas /profil-guilde REBORN ──
+  // On vérifie que le clicker EST l'auteur du /profil (sinon on laisse niveau
+  // afficher son message « seul l'auteur peut… »).
+  if (
+    interaction.isButton() &&
+    /^pv2_guild_\d+$/.test(interaction.customId)
+  ) {
+    const m = interaction.customId.match(/^pv2_guild_(\d+)$/);
+    const niveauGuildId = m ? m[1] : null;
+    const originalAuthor = interaction.message?.interaction?.user?.id;
+    const isAuthor = originalAuthor && originalAuthor === interaction.user.id;
+    if (niveauGuildId && isAuthor && interaction.guildId) {
+      try {
+        await interaction.deferUpdate();
+        const profilGuilde = require('./commands/profil-guilde');
+        const gRow = profilGuilde.resolveGuildForProfilButton(
+          interaction.guildId,
+          interaction.user.id,
+          niveauGuildId,
+        );
+        if (!gRow) {
+          await interaction.editReply({
+            content: 'Guilde introuvable côté REBORN. Refais `/profil` pour rafraîchir.',
+            files: [],
+            components: [],
+            embeds: [],
+          });
+          return;
+        }
+        const built = await profilGuilde.buildProfilGuildePayload(interaction, {
+          hub: interaction.guildId,
+          gRow,
+        });
+        if (built.error) {
+          await interaction.editReply({
+            content: built.error,
+            files: [],
+            components: [],
+            embeds: [],
+          });
+          return;
+        }
+        await interaction.editReply(built.payload);
+      } catch (e) {
+        if (e?.code !== 10062 && e?.code !== 40060) {
+          console.error('[profil → profil-guilde]', e?.message || e);
+        }
+      }
+      return;
+    }
+    // Pas l'auteur → laisser niveau répondre.
   }
 
   if (interaction.isStringSelectMenu()) {
