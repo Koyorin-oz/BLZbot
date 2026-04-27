@@ -1131,12 +1131,12 @@ function drawKeyStar(ctx, p, angle) {
   // Label
   ctx.shadowColor = 'rgba(0,0,0,0.85)';
   ctx.shadowBlur = 6;
-  ctx.fillStyle = lit ? '#ffe8a8' : '#7a7591';
+  ctx.fillStyle = lit ? TEMPLE_TEXT_HOT : '#8a6a6a';
   ctx.font = `bold 16px "Segoe UI", "Helvetica", sans-serif`;
   ctx.fillText(label, lx, ly - 9);
 
   ctx.shadowBlur = 4;
-  ctx.fillStyle = lit ? '#cdb6e0' : '#5a566e';
+  ctx.fillStyle = lit ? TEMPLE_TEXT_DIM : '#6a4a4a';
   ctx.font = `12px "Segoe UI", "Helvetica", sans-serif`;
   ctx.fillText(hint, lx, ly + 9);
 
