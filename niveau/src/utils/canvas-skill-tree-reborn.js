@@ -35,8 +35,6 @@ const CENTERS = {
   star: { x: W / 2, y: H / 2 + 80 },
   demi: { x: W / 2, y: H - 100 },
 };
-// Compat: certains helpers internes utilisaient encore `CENTER` directement.
-const CENTER = CENTERS.star;
 const FIRST_NODE_DIST = 112;
 const NODE_GAP = 58;
 const NODES_PER_BRANCH = 5;
