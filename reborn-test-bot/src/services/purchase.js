@@ -185,13 +185,30 @@ async function handlePurchase(interaction, parts) {
       users.addInventory(uid, id, qty);
     }
 
+    // Tracking quêtes : ouverture CATL + gain de starss.
+    const followUps = [];
+    if (sub === 'catl') {
+      try {
+        const r = quests.trackCatlOpen(uid);
+        if (r) followUps.push(`🎯 **Quête validée** — ${r.label} (+${r.reward.toLocaleString('fr-FR')} starss)`);
+      } catch (e) { console.error('[catl quest]', e?.message || e); }
+    }
+    if (totalStars > 0n) {
+      try {
+        const r = quests.trackStarssGain(uid, totalStars);
+        if (r) followUps.push(`🎯 **Quête validée** — ${r.label} (+${r.reward.toLocaleString('fr-FR')} starss)`);
+      } catch (e) { console.error('[starss quest]', e?.message || e); }
+    }
+    try { trophies.evaluate(uid, interaction.guildId || null); } catch { /* ignore */ }
+
     const starLine =
       totalStars > 0n ? `+**${totalStars.toLocaleString('fr-FR')}** starss` : '';
     const xpLine = totalXp > 0 ? `+**${totalXp}** XP` : '';
     const head = [starLine, xpLine].filter(Boolean).join(' · ');
     const body = lines.length ? `\n${lines.map((l) => `• ${l}`).join('\n')}` : '';
+    const tail = followUps.length ? `\n${followUps.join('\n')}` : '';
     await interaction.reply({
-      content: `**${label}** ouvert${head ? ` — ${head}` : ''}.${body}`.slice(0, 1900),
+      content: `**${label}** ouvert${head ? ` — ${head}` : ''}.${body}${tail}`.slice(0, 1900),
     });
   }
 }
