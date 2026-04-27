@@ -6,6 +6,12 @@ cfg.assertClientIdForDeploy();
 
 (async () => {
   try {
+    const g = cfg.guildId;
+    console.log(
+      '[deploy] Cible API — CLIENT_ID=',
+      cfg.clientId,
+      g ? `GUILD_ID=${g} (slash visibles sur CE serveur uniquement)` : 'GUILD_ID vide = déploiement global (délai jusqu’à 1h)',
+    );
     const r = await deploySlashCommands();
     if (!r.ok) {
       console.error('[deploy]', r.reason);
