@@ -84,7 +84,13 @@ function buildCanvasGuildViewModel(g, totalMembers) {
   const jokerUses = nivG ? Number(nivG.joker_guilde_uses || 0) : 0;
   const emoji = nivG?.emoji || '🛡️';
   const createdAt = nivG?.created_at || g.created_ms;
-  const subChiefs = Array.isArray(nivG?.sub_chiefs) ? nivG.sub_chiefs : [];
+  let subChiefs = [];
+  if (nivG?.sub_chiefs) {
+    if (Array.isArray(nivG.sub_chiefs)) subChiefs = nivG.sub_chiefs;
+    else if (typeof nivG.sub_chiefs === 'string') {
+      try { subChiefs = JSON.parse(nivG.sub_chiefs) || []; } catch { subChiefs = []; }
+    }
+  }
   const treasuryMult = nivG ? Number(nivG.treasury_multiplier_purchased || 1) : 1;
 
   // Total value cohérent avec /profil bouton Guilde (basé sur niveau/users.total_value).
