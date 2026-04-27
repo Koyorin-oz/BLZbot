@@ -190,7 +190,7 @@ function addGuildGxp(guildId, delta) {
   if (!g) return;
   const next = B(g.gxp) + delta;
   const gl = guildLevelFromTotalGxp(next);
-  const cap = memberCapForGuildLevel(gl);
+  const cap = effectiveMemberCap({ ...g, guild_level: gl });
   db.prepare('UPDATE player_guilds SET gxp = ?, guild_level = ?, member_cap = ? WHERE id = ?').run(
     next.toString(),
     gl,
