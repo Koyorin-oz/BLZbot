@@ -297,93 +297,85 @@ module.exports = {
       return interaction.editReply({ content: built.error });
     }
     await interaction.editReply(built.payload);
-
-    const message = await interaction.fetchReply();
-    const collector = message.createMessageComponentCollector({
-      componentType: ComponentType.Button,
-      time: 10 * 60 * 1000,
-      filter: (i) => i.user.id === interaction.user.id,
-    });
-
-    collector.on('collect', async (i) => {
-      try {
-        const gid = i.customId.split('_').pop();
-        const gFresh = pg.getGuild(gid);
-        if (!gFresh || gFresh.hub_discord_id !== i.guildId) {
-          return i.reply({ content: 'Guilde invalide.' });
-        }
-        if (i.customId.startsWith('rb_pg_list_')) {
-          await i.deferUpdate();
-          const rows = db
-            .prepare('SELECT user_id, joined_ms FROM player_guild_members WHERE guild_id = ? ORDER BY joined_ms')
-            .all(gFresh.id);
-          const lines = [];
-          for (let idx = 0; idx < rows.length; idx++) {
-            const { user_id } = rows[idx];
-            const mark = user_id === gFresh.leader_id ? '👑' : '👤';
-            const urow = users.getUser(user_id);
-            let un = urow?.username;
-            if (!un || un === 'unknown') {
-              try {
-                un = (await i.client.users.fetch(user_id)).username;
-              } catch {
-                un = '?';
-              }
-            }
-            const st = users.getUser(user_id);
-            const lv = st ? totalToLevelState(st.xp_total ?? 0).level : 1;
-            lines.push(`${idx + 1}. ${mark} **${un}** — nv ${lv}`);
-          }
-          const listText = new TextDisplayBuilder().setContent(
-            `# 📋 Membres — ${gFresh.name}\n${lines.join('\n') || 'Aucun.'}\n\n*Total : **${rows.length}** / **${gFresh.member_cap}***`,
-          );
-          await i.followUp({
-            components: [new ContainerBuilder().addTextDisplayComponents(listText)],
-            flags: MessageFlags.IsComponentsV2,
-          });
-        } else if (i.customId.startsWith('rb_pg_careers_')) {
-          await i.deferUpdate();
-          const nMem = db.prepare('SELECT COUNT(*) AS c FROM player_guild_members WHERE guild_id = ?').get(gFresh.id).c;
-          const { grp } = gm.getMemberRow(hub, gFresh.leader_id);
-          const rk = grpRankFromTotal(grp);
-          const treasuryB = BigInt(gFresh.treasury || '0');
-          const gxpB = BigInt(gFresh.gxp || '0');
-          const statsText = [
-            `# 🎓 Carrières & progression — ${gFresh.name}`,
-            '### REBORN (guilde joueur)',
-            `• **ID** \`${gFresh.id}\` · **Grade** ${label(gFresh.grade || '') || '—'}`,
-            `• **GXP (guilde)** ${gxpB.toLocaleString('fr-FR')} · **Trésorerie** ${treasuryB.toLocaleString('fr-FR')} starss`,
-            `• **Niveau guilde** ${gFresh.guild_level} · **Membres** ${nMem} / **${gFresh.member_cap}**`,
-            `• **Anti-séparation** : ${gFresh.anti_separation ? 'oui' : 'non'} · Dernier focus (ms) : \`${gFresh.last_focus_ms || 0}\``,
-            `• **GRP chef** (indicatif serveur) : ${rk || '—'}`,
-            '',
-            '### Équivalences affichage BLZbot (image)',
-            'Valeur 💎, upgrade, trésor et guerres sur le **canvas** reprennent la mise en forme du bot principal ; les chiffres sont **dérivés** des données REBORN + membres (stars/points) pour l’icône valeur membre.',
-          ].join('\n');
-          const td = new TextDisplayBuilder().setContent(statsText);
-          await i.followUp({
-            components: [new ContainerBuilder().addTextDisplayComponents(td)],
-            flags: MessageFlags.IsComponentsV2,
-          });
-        } else if (i.customId.startsWith('rb_pg_quests_')) {
-          await i.deferUpdate();
-          const questText = new TextDisplayBuilder().setContent(
-            [
-              `# 📜 Quêtes — ${gFresh.name}`,
-              '• **REBORN** : pas de « quêtes de guilde » type BLZ (table dédiée) sur ce build.',
-              '• **Quêtes perso** : \`/quete\` (sandbox).',
-              '• *Les pastilles guerre / salon du canvas sont des rappels visuels (données hub principal non liées ici).*',
-            ].join('\n'),
-          );
-          await i.followUp({
-            components: [new ContainerBuilder().addTextDisplayComponents(questText)],
-            flags: MessageFlags.IsComponentsV2,
-          });
-        }
-      } catch (err) {
-        console.error('[profil-guilde button]', err);
-        await i.reply({ content: '❌ Erreur.' }).catch(() => {});
-      }
-    });
   },
 };
+
+/**
+ * Handler global pour les boutons rb_pg_list_/careers_/quests_ rendus dans le
+ * canvas /profil-guilde (qu'il vienne de la slash command ou du bouton Guilde
+ * du /profil niveau).
+ */
+async function handleRebornGuildButton(i) {
+  const gid = i.customId.split('_').pop();
+  const gFresh = pg.getGuild(gid);
+  if (!gFresh || gFresh.hub_discord_id !== i.guildId) {
+    return i.reply({ content: 'Guilde invalide.' }).catch(() => {});
+  }
+  if (i.customId.startsWith('rb_pg_list_')) {
+    if (!i.deferred && !i.replied) await i.deferUpdate();
+    const rows = db
+      .prepare('SELECT user_id, joined_ms FROM player_guild_members WHERE guild_id = ? ORDER BY joined_ms')
+      .all(gFresh.id);
+    const lines = [];
+    for (let idx = 0; idx < rows.length; idx++) {
+      const { user_id } = rows[idx];
+      const mark = user_id === gFresh.leader_id ? '👑' : '👤';
+      const urow = users.getUser(user_id);
+      let un = urow?.username;
+      if (!un || un === 'unknown') {
+        try {
+          un = (await i.client.users.fetch(user_id)).username;
+        } catch {
+          un = '?';
+        }
+      }
+      const st = users.getUser(user_id);
+      const lv = st ? totalToLevelState(st.xp_total ?? 0).level : 1;
+      lines.push(`${idx + 1}. ${mark} **${un}** — nv ${lv}`);
+    }
+    const listText = new TextDisplayBuilder().setContent(
+      `# 📋 Membres — ${gFresh.name}\n${lines.join('\n') || 'Aucun.'}\n\n*Total : **${rows.length}** / **${gFresh.member_cap}***`,
+    );
+    await i.followUp({
+      components: [new ContainerBuilder().addTextDisplayComponents(listText)],
+      flags: MessageFlags.IsComponentsV2,
+    });
+  } else if (i.customId.startsWith('rb_pg_careers_')) {
+    if (!i.deferred && !i.replied) await i.deferUpdate();
+    const hub = i.guildId;
+    const nMem = db.prepare('SELECT COUNT(*) AS c FROM player_guild_members WHERE guild_id = ?').get(gFresh.id).c;
+    const { grp } = gm.getMemberRow(hub, gFresh.leader_id);
+    const rk = grpRankFromTotal(grp);
+    const treasuryB = BigInt(gFresh.treasury || '0');
+    const gxpB = BigInt(gFresh.gxp || '0');
+    const statsText = [
+      `# 🎓 Carrières & progression — ${gFresh.name}`,
+      '### REBORN (guilde joueur)',
+      `• **ID** \`${gFresh.id}\` · **Grade** ${label(gFresh.grade || '') || '—'}`,
+      `• **GXP (guilde)** ${gxpB.toLocaleString('fr-FR')} · **Trésorerie** ${treasuryB.toLocaleString('fr-FR')} starss`,
+      `• **Niveau guilde** ${gFresh.guild_level} · **Membres** ${nMem} / **${gFresh.member_cap}**`,
+      `• **Anti-séparation** : ${gFresh.anti_separation ? 'oui' : 'non'} · Dernier focus (ms) : \`${gFresh.last_focus_ms || 0}\``,
+      `• **GRP chef** (indicatif serveur) : ${rk || '—'}`,
+    ].join('\n');
+    const td = new TextDisplayBuilder().setContent(statsText);
+    await i.followUp({
+      components: [new ContainerBuilder().addTextDisplayComponents(td)],
+      flags: MessageFlags.IsComponentsV2,
+    });
+  } else if (i.customId.startsWith('rb_pg_quests_')) {
+    if (!i.deferred && !i.replied) await i.deferUpdate();
+    const questText = new TextDisplayBuilder().setContent(
+      [
+        `# 📜 Quêtes — ${gFresh.name}`,
+        '• **REBORN** : pas de « quêtes de guilde » spécifiques sur ce build.',
+        '• **Quêtes perso** : `/quetes` (panneau unifié).',
+      ].join('\n'),
+    );
+    await i.followUp({
+      components: [new ContainerBuilder().addTextDisplayComponents(questText)],
+      flags: MessageFlags.IsComponentsV2,
+    });
+  }
+}
+
+module.exports.handleRebornGuildButton = handleRebornGuildButton;
