@@ -42,7 +42,7 @@ async function buildBoutiquePayload(uid, username) {
   const time = new Date().toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   const text = new TextDisplayBuilder().setContent(
     [
-      '# ⭐ Boutique REBORN',
+      '# ⭐ Boutique',
       'Bienvenue ! Ici tu peux acheter des items du **jour**, des **coffres** et des **boosts 1h** avec tes **Starss**.',
       '➜ **Choisis un article** dans le menu déroulant, puis clique sur **Acheter**.',
       '',
