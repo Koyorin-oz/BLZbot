@@ -41,7 +41,7 @@ const CATS_ROLL_MS = 3 * 60 * 60 * 1000;
 const CATL_SPAWN_CHANCE = 0.5;
 const CATS_SPAWN_CHANCE = 0.01;
 
-/** GXP message / minute voc par tranche de niveau joueur (doc guildes). */
+/** GXP message / minute voc par tranche de niveau joueur (doc guildes — paliers étendus 70+). */
 function gxpRatesForPlayerLevel(level) {
   const lv = Math.max(0, Math.floor(Number(level) || 0));
   if (lv < 10) return { msg: 0n, vocMin: 0n };
@@ -50,7 +50,11 @@ function gxpRatesForPlayerLevel(level) {
   if (lv < 40) return { msg: 3n, vocMin: 6n };
   if (lv < 50) return { msg: 4n, vocMin: 8n };
   if (lv < 60) return { msg: 5n, vocMin: 10n };
-  return { msg: 6n, vocMin: 12n };
+  if (lv < 70) return { msg: 6n, vocMin: 12n };
+  if (lv < 80) return { msg: 8n, vocMin: 16n };
+  if (lv < 90) return { msg: 10n, vocMin: 20n };
+  if (lv < 99) return { msg: 12n, vocMin: 24n };
+  return { msg: 15n, vocMin: 30n };
 }
 
 /** GRP ranked : 1/10 du ranked « normal » (doc) — ici 1/msg et 3/min voc si ranked normal = 10/msg 30/min. */
