@@ -1228,8 +1228,13 @@ function drawKeyStar(ctx, p, angle) {
   ctx.textAlign = dirX < -0.25 ? 'right' : dirX > 0.25 ? 'left' : 'center';
   ctx.textBaseline = 'middle';
 
+  // Couleurs alignées sur le bandeau d'état : vert (TEMPLE OUVERT) / rouge-corail (TEMPLE SCELLÉ).
+  const labelColor = lit ? '#9CFFC8' : '#ff7f6a';
+  const hintColor = lit ? 'rgba(156, 255, 200, 0.78)' : 'rgba(255, 127, 106, 0.82)';
+  const trailColor = lit ? 'rgba(156, 255, 200, 0.55)' : 'rgba(255, 127, 106, 0.45)';
+
   // Petit trait reliant l’étoile à l’étiquette.
-  ctx.strokeStyle = rgba(TEMPLE_GOLD_RGB, lit ? 0.45 : 0.18);
+  ctx.strokeStyle = trailColor;
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(x + dirX * 24, y + dirY * 24);
@@ -1239,12 +1244,12 @@ function drawKeyStar(ctx, p, angle) {
   // Label
   ctx.shadowColor = 'rgba(0,0,0,0.85)';
   ctx.shadowBlur = 6;
-  ctx.fillStyle = lit ? TEMPLE_TEXT_HOT : '#d8a8a4';
+  ctx.fillStyle = labelColor;
   ctx.font = `bold 16px "Segoe UI", "Helvetica", sans-serif`;
   ctx.fillText(label, lx, ly - 9);
 
   ctx.shadowBlur = 4;
-  ctx.fillStyle = lit ? TEMPLE_TEXT_DIM : '#a07878';
+  ctx.fillStyle = hintColor;
   ctx.font = `12px "Segoe UI", "Helvetica", sans-serif`;
   ctx.fillText(hint, lx, ly + 9);
 
