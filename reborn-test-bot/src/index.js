@@ -112,7 +112,38 @@ client.once(Events.ClientReady, async () => {
 });
 
 client.on('interactionCreate', async (interaction) => {
+  if (interaction.isStringSelectMenu()) {
+    const id = interaction.customId;
+    if (id === 'rb:shop:sel' || id === 'rb:inv:sel' || id === 'rb:tree:sel') {
+      try {
+        await handlePanelInteraction(interaction);
+      } catch (e) {
+        console.error('[panel select]', e);
+        if (!interaction.replied && !interaction.deferred) {
+          await interaction.reply({ content: `Erreur: \`${e?.message || e}\``, ephemeral: true }).catch(() => {});
+        }
+      }
+      return;
+    }
+  }
+
   if (interaction.isButton() && interaction.customId.startsWith('rb:')) {
+    if (
+      interaction.customId.startsWith('rb:shop:') ||
+      interaction.customId.startsWith('rb:inv:') ||
+      interaction.customId.startsWith('rb:tree:') ||
+      interaction.customId.startsWith('rb:ps:')
+    ) {
+      try {
+        await handlePanelInteraction(interaction);
+      } catch (e) {
+        console.error('[panel bouton]', e);
+        const msg = { content: `Erreur: \`${e?.message || e}\``, ephemeral: true };
+        if (interaction.replied || interaction.deferred) await interaction.followUp(msg).catch(() => {});
+        else await interaction.reply(msg).catch(() => {});
+      }
+      return;
+    }
     try {
       await handlePurchase(interaction, interaction.customId.split(':'));
     } catch (e) {
