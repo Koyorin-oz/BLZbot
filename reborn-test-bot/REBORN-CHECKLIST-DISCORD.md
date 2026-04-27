@@ -116,7 +116,7 @@ Arbre = skips appliqués = ❌
 **Items (global)**  
 Sous-ensemble d’effets = ⚙️  
 Diamant unique béton = ⚙️  
-Event spawner (CD perso + plancher 1h global) = ⚙️ / ❌  
+Event spawner (CD perso + plancher 1h global) = ⚙️  
 Tous items du Gdoc = ⚙️  
 
 **Staff**  
