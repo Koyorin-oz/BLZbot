@@ -12,7 +12,6 @@ module.exports = {
     const uid = interaction.user.id;
     users.getOrCreate(uid, interaction.user.username);
     const hub = interaction.guildId || null;
-    temple.sync(uid, hub);
     const u = users.getUser(uid);
     const r = temple.sync(uid, hub);
     const unlocked = u.temple_unlocked
