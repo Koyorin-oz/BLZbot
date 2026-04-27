@@ -144,6 +144,10 @@ async function renderDailyCard({
     remainingTime = '',
     doubleDailyCount = 0,
     isSuccess = true,
+    /** Surcharge du libellé pied (défaut : BLZbot). */
+    footerBrand = 'BLZbot',
+    /** Ligne optionnelle sous le titre de succès (ex. rappels MAJ REBORN / sandbox). */
+    rebornMajLine = null,
 }) {
     void username;
     const canvas = createCanvas(W, H);
