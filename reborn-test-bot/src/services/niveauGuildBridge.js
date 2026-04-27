@@ -371,4 +371,5 @@ module.exports = {
   addNiveauMember,
   removeNiveauMember,
   dissolveNiveauGuild,
+  invalidateBridgeCache,
 };
