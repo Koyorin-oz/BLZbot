@@ -41,13 +41,25 @@ module.exports = {
 
     if (buf) {
       const file = new AttachmentBuilder(buf, { name: 'temple_reborn.png' });
+      const TOTAL_KEYS = 6;
+      const have = r.keys.length;
       const t = new TextDisplayBuilder().setContent(
         [
-          '# ⛩️ Temple — **vue carte**',
-          'Lecture rapide : **gros objectifs** & prestige (hors Starss/XP du jour). Synchronisé sur ce **sync**.',
+          '# ⛩️ Temple',
+          'Le **Temple** est le **sanctuaire des élus** — il rassemble les **6 plus grandes réussites** du serveur.',
+          'Quand tu décroches **les 6 clés**, le temple **s’ouvre pour toi** et tu rejoins le cercle très fermé de ceux qui ont **tout maxé**.',
+          '',
+          '**Comment l’ouvrir ?** Réunis ces 6 sceaux :',
+          '• `Maître des Voies` — 5/5 sur **toutes** les branches de `/arbre`',
+          '• `Étoile Pourpre` — atteindre **100 000 RP**',
+          '• `Cœur de Diamant` — détenir le **Diamant** (unique serveur)',
+          '• `Codex Complet` — index de complétion à **100 %**',
+          '• `Bannière Étoilée` — appartenir à une **guilde rang Star**',
+          '• `Astre de Guilde` — accumuler **200 000 GRP**',
+          '',
           u.temple_unlocked
-            ? '**État** : *débloqué* (5×5 sur toutes les branches de l’arbre).'
-            : '**État** : *verrouillé* — remplis les **5** paliers de chaque **branche** (`/arbre`).',
+            ? `**Statut** : 🔥 **Temple ouvert** — toutes les voies maîtrisées (${have}/${TOTAL_KEYS}).`
+            : `**Statut** : 🔒 *Temple scellé* — **${have}/${TOTAL_KEYS}** clés réunies, continue à grimper.`,
         ].join('\n'),
       );
       const c = new ContainerBuilder();
@@ -55,13 +67,6 @@ module.exports = {
         new MediaGalleryBuilder().addItems({ media: { url: 'attachment://temple_reborn.png' } }),
       );
       c.addTextDisplayComponents(t);
-      c.addTextDisplayComponents(
-        new TextDisplayBuilder().setContent(
-          '**Détail des clés** (dernier recalcul) : ' +
-            (r.keys.length ? r.keys.map((k) => `\`${k}\``).join(', ') : '—') +
-            '\n\n*En production, d’autres événements alimentent aussi le temple.*',
-        ),
-      );
       return interaction.editReply({
         files: [file],
         components: [c],
