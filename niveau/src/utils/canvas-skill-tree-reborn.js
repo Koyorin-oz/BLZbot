@@ -495,11 +495,10 @@ function drawHeader(ctx, displayName, points, sOf, avatarImg) {
   ctx.textAlign = 'left';
   ctx.fillStyle = '#dad6ee';
   ctx.font = 'bold 14px "Segoe UI", "Helvetica", sans-serif';
-  ctx.fillText(`Points dispo : ${points}`, 36, 36);
+  ctx.fillText(`Points dispo : ${points}`, 36, 40);
   ctx.fillStyle = '#a4a3b8';
   ctx.font = '13px "Segoe UI", "Helvetica", sans-serif';
-  ctx.fillText(`Paliers : ${totalUnlocked} / 25`, 36, 56);
-  ctx.fillText(`Fond : ${bg === 'noir' ? 'Noir' : 'Profil'}`, 36, 74);
+  ctx.fillText(`Paliers : ${totalUnlocked} / 25`, 36, 62);
 
   // --- Bloc droit : pseudo + avatar ---
   const avatarR = 30;
