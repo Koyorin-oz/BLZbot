@@ -261,27 +261,26 @@ function drawSideNode(ctx, p, rgb, color, lit) {
 
 function drawRoot(ctx) {
   const { x, y } = ROOT;
-  // Halo
-  const g1 = ctx.createRadialGradient(x, y, 4, x, y, 60);
-  g1.addColorStop(0, 'rgba(255,240,200,0.85)');
-  g1.addColorStop(0.4, 'rgba(255,210,140,0.35)');
+  // Halo doux (plus discret).
+  const g1 = ctx.createRadialGradient(x, y, 3, x, y, 38);
+  g1.addColorStop(0, 'rgba(255,235,190,0.45)');
   g1.addColorStop(1, 'rgba(255,210,140,0)');
   ctx.fillStyle = g1;
   ctx.beginPath();
-  ctx.arc(x, y, 60, 0, Math.PI * 2);
+  ctx.arc(x, y, 38, 0, Math.PI * 2);
   ctx.fill();
 
   // Cœur
-  const g2 = ctx.createRadialGradient(x - 4, y - 4, 1, x, y, 14);
-  g2.addColorStop(0, '#ffffff');
-  g2.addColorStop(1, '#ffd58a');
+  const g2 = ctx.createRadialGradient(x - 3, y - 3, 1, x, y, 11);
+  g2.addColorStop(0, '#fff4dc');
+  g2.addColorStop(1, '#e9b765');
   ctx.fillStyle = g2;
   ctx.beginPath();
-  ctx.arc(x, y, 14, 0, Math.PI * 2);
+  ctx.arc(x, y, 11, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+  ctx.lineWidth = 1.4;
+  ctx.strokeStyle = 'rgba(255,255,255,0.55)';
   ctx.stroke();
 }
 
