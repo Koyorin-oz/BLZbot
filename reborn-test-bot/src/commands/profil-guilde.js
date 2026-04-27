@@ -106,7 +106,6 @@ function buildCanvasGuildViewModel(g, totalMembers) {
     } catch { /* ignore */ }
   }
 
-  const gradeLbl = label(g.grade || '') || 'Aucun';
   return {
     id: g.id,
     name: g.name || nivG?.name || 'Guilde',
@@ -129,9 +128,8 @@ function buildCanvasGuildViewModel(g, totalMembers) {
     joker_guilde_uses: jokerUses,
     sub_chiefs: subChiefs,
     created_at: createdAt,
-    reborn_extras: `REBORN · Grade ${gradeLbl} · GXP ${BigInt(g.gxp || '0').toLocaleString('fr-FR')} · Anti-séparation ${g.anti_separation ? 'oui' : 'non'}`,
-    reborn_footer:
-      '💡 REBORN — boutons : liste complète des membres · stats guilde (GXP, trésorerie, GRP chef…)',
+    reborn_extras: '',
+    reborn_footer: '',
   };
 }
 
