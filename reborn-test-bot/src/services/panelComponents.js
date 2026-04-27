@@ -172,6 +172,17 @@ async function handlePanelInteraction(interaction) {
       pick.set(interaction.user.id, interaction.message.id, interaction.values[0]);
       return interaction.deferUpdate();
     }
+    if (interaction.customId === 'rb:tree:bg') {
+      const uid = interaction.user.id;
+      users.getOrCreate(uid, interaction.user.username);
+      setArbreBg(uid, interaction.values[0]);
+      await interaction.deferUpdate();
+      const b = await buildArbreContainer(uid, interaction.user.username);
+      if (!b) {
+        return interaction.followUp({ content: 'Génération image indisponible (canvas).', ephemeral: true });
+      }
+      return interaction.editReply({ files: [b.file], components: [b.container], flags: b.flags });
+    }
     return;
   }
 
