@@ -301,8 +301,10 @@ function drawMainNode(ctx, n, rgb, color, icon, lit, isCurrent, isCapstone) {
     drawLockGlyph(ctx, x + r * 0.55, y + r * 0.55, r * 0.55, rgba(rgb, 0.55));
   }
 
-  // Chip k/5 sous le nœud.
-  drawTierChip(ctx, x, y + r + 9, `${n.k + 1}/5`, rgb, color, lit);
+  // Chip k/5 sous le nœud — pas sur le capstone (le label de bout de branche affiche déjà n/5).
+  if (!isCapstone) {
+    drawTierChip(ctx, x, y + r + 9, `${n.k + 1}/5`, rgb, color, lit);
+  }
 }
 
 /** Nœud latéral décoratif (allumé quand le nœud principal parent l’est). */
