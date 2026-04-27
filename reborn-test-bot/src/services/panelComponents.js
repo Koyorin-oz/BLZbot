@@ -63,7 +63,7 @@ function partsFromShopValue(v) {
   return null;
 }
 
-async function tryRenderTreePng(userId, displayName) {
+async function tryRenderTreePng(userId, displayName, avatarUrl) {
   try {
     const { renderSkillTreePng } = require(CANVAS_SK);
     const steps = {};
@@ -74,6 +74,7 @@ async function tryRenderTreePng(userId, displayName) {
       points: u?.skill_points ?? 0,
       steps,
       bg: getArbreBg(userId),
+      avatarUrl: avatarUrl || null,
     });
   } catch (e) {
     console.error('[arbre canvas]', e?.message || e);
