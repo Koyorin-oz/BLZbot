@@ -225,7 +225,11 @@ async function handlePanelInteraction(interaction) {
     const uid = interaction.user.id;
     const r = skillTree.buy(uid, br);
     if (!r.ok) return interaction.reply({ content: `❌ ${r.error}`, ephemeral: true });
-    const b = await buildArbreContainer(uid, interaction.user.username);
+    const b = await buildArbreContainer(
+      uid,
+      interaction.member?.displayName || interaction.user.username,
+      interaction.user.displayAvatarURL({ extension: 'png', size: 128 }),
+    );
     if (!b) {
       return interaction.reply({
         content: `✅ **${BR_LABEL[br] || br}** → **${r.newStep}** / 5 (canvas indisponible)`,
