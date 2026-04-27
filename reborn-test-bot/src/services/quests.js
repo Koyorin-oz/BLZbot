@@ -54,6 +54,7 @@ function syncDayWeek(row) {
       selection_id: '',
       selection_progress: 0,
       selection_claimed: 0,
+      weekly_skips_used: 0,
     };
   }
   if (Object.keys(patch).length) {
