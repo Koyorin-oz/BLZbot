@@ -241,9 +241,19 @@ client.on('interactionCreate', async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
   const cmd = client.commands.get(interaction.commandName);
   if (!cmd) return;
+  // Garde-fou : si l'interaction est déjà obsolète (token > 3 s), abandon silencieux.
+  // Cela arrive après un redémarrage si l'utilisateur a tapé une commande avant que
+  // le bot ne soit complètement prêt (websocket / chargement modules niveau).
+  const interactionAgeMs = Date.now() - interaction.createdTimestamp;
+  if (interactionAgeMs > 2500) {
+    return;
+  }
   try {
     await cmd.execute(interaction, { client, isOwner: () => isOwner(interaction.user.id) });
   } catch (e) {
+    // 10062 (Unknown interaction) et 40060 (already acknowledged) sont des
+    // courses bénignes : on les ignore silencieusement plutôt que de polluer.
+    if (e?.code === 10062 || e?.code === 40060) return;
     console.error(`[cmd ${interaction.commandName}]`, e);
     const msg = { content: `Erreur: \`${e?.message || e}\`` };
     if (interaction.replied || interaction.deferred) await interaction.followUp(msg).catch(() => {});
