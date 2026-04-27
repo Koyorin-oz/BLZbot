@@ -27,31 +27,25 @@ function buildPassportTextV2({ target, u, hub, wlines, blzFiles }) {
   const t = new TextDisplayBuilder().setContent(
     [
       `# 🪪 Passeport : **${target.username}**`,
-      'Le **passeport** sert de **dossier staff** : on y voit le **niveau de compte « sécurité** » (points, warns), le **score tests mod** et l’**état de candidature** staff, pour décider d’un recrutement ou d’un ajustement d’accès de façon cohérente (sandbox REBORN).',
+      '**À quoi ça sert ?** Fiche **staff / recrutement** : on centralise ici le **niveau « sécu** » (points, warns), le **score des tests mod** et l’**état de candidature** — le même rôle qu’une **fiche RH** légère pour trancher un accès staff, sans remplacer un vrai outil d’audit.',
       '',
       `**Points de sécurité** : \`${u.secu_points ?? 10}\` · **Tests mod** : \`${u.mod_tests_score ?? 0} / 100\` · **Candidature** : \`${u.candidature_status ?? 'aucune'}\``,
       '',
       '**Aperçu warns (ce serveur)**',
       W.slice(0, 3000),
       '',
-      '*+2 points / 30 j* si baisse liée à des warns, calcul au prochain affichage `voir`.',
+      '_Rappel_ : *+2 pts* récup stables / 30 j (affichage `voir`).',
     ].join('\n'),
   );
   container.addTextDisplayComponents(t);
   const cardId = `rb:ps:card:${target.id}`;
-  const txtId = `rb:ps:txt:${target.id}`;
   container.addActionRowComponents(
     new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId(cardId)
-        .setLabel('Carte (canvas)')
+        .setLabel('Passeport — vue carte (canvas)')
         .setStyle(ButtonStyle.Primary)
         .setEmoji('🪪'),
-      new ButtonBuilder()
-        .setCustomId(txtId)
-        .setLabel('Cette fiche (texte)')
-        .setStyle(ButtonStyle.Secondary)
-        .setEmoji('📄'),
     ),
   );
   const files = [];
