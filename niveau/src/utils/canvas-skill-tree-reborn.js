@@ -418,66 +418,138 @@ function buildLayout() {
 
 /* ---------- rendu principal ---------- */
 
+function drawHeader(ctx, displayName, points, sOf, bg) {
+  const headH = 92;
+  const bandG = ctx.createLinearGradient(0, 0, 0, headH);
+  bandG.addColorStop(0, 'rgba(0,0,0,0.82)');
+  bandG.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = bandG;
+  ctx.fillRect(0, 0, W, headH);
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, headH);
+  ctx.lineTo(W, headH);
+  ctx.stroke();
+
+  // Petit chip "SKILL TREE" tout à gauche, façon ARC Raiders.
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#f3f0ff';
+  ctx.font = 'bold 13px "Segoe UI", "Helvetica", sans-serif';
+  ctx.fillText('SKILL TREE', 36, 28);
+
+  ctx.fillStyle = '#f3f0ff';
+  ctx.font = 'bold 28px "Segoe UI", "Helvetica", sans-serif';
+  ctx.fillText('Arbre de compétences REBORN', 36, 58);
+
+  ctx.fillStyle = '#a4a3b8';
+  ctx.font = '16px "Segoe UI", "Helvetica", sans-serif';
+  const totalUnlocked = ORDER.reduce((acc, b) => acc + sOf(b), 0);
+  ctx.fillText(
+    `Coût palier n = n  ·  5 branches × 5 paliers  ·  Paliers : ${totalUnlocked}/25`,
+    36,
+    80,
+  );
+
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#dad6ee';
+  ctx.font = 'bold 22px "Segoe UI", "Helvetica", sans-serif';
+  ctx.fillText(displayName, W - 32, 40);
+
+  ctx.fillStyle = '#7a7993';
+  ctx.font = '14px "Segoe UI", "Helvetica", sans-serif';
+  ctx.fillText(
+    `Points dispo : ${points}   ·   Fond : ${bg === 'noir' ? 'Noir' : 'Profil'}`,
+    W - 32,
+    64,
+  );
+}
+
+function drawBranchTipLabel(ctx, tree, step) {
+  const { tipX, tipY, branch } = tree;
+  const { color, label, rgb } = BRANCH[branch];
+
+  // Halo discret derrière le label (uniquement si au moins 1 palier).
+  if (step > 0) {
+    const haloR = 56;
+    const halo = ctx.createRadialGradient(tipX, tipY, 4, tipX, tipY, haloR);
+    halo.addColorStop(0, rgba(rgb, 0.18));
+    halo.addColorStop(1, rgba(rgb, 0));
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.arc(tipX, tipY, haloR, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = 'rgba(0,0,0,0.85)';
+  ctx.shadowBlur = 8;
+  ctx.fillStyle = color;
+  ctx.font = 'bold 19px "Segoe UI", "Helvetica", sans-serif';
+  ctx.fillText(label, tipX, tipY - 14);
+
+  ctx.shadowBlur = 6;
+  ctx.fillStyle = step > 0 ? '#f3f0ff' : '#7a7894';
+  ctx.font = 'bold 32px "Segoe UI", "Helvetica", sans-serif';
+  ctx.fillText(`${step}/5`, tipX, tipY + 18);
+  ctx.shadowBlur = 0;
+}
+
 /**
  * @param {object} opts
  * @param {string} [opts.displayName]
  * @param {number} [opts.points]
  * @param {Record<string, number>} [opts.steps] branch -> 0-5
+ * @param {'noir' | 'profil'} [opts.bg] fond noir pur ou fond `/profil` (blz_bg + voile sombre)
  */
-async function renderSkillTreePng(opts) {
+async function renderSkillTreePng(opts = {}) {
   const { displayName = 'Joueur', points = 0, steps = {} } = opts;
+  const bg = opts.bg === 'noir' ? 'noir' : 'profil';
+
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
 
-  drawBackground(ctx);
-  await drawBlurredAtmosphere(ctx);
+  if (bg === 'noir') drawBgNoir(ctx);
+  else await drawBgProfil(ctx);
 
   const trees = buildLayout();
   const sOf = (br) => Math.min(5, Math.max(0, Math.floor(steps[br] || 0)));
 
-  // 1) Connexions verrouillées (en arrière-plan)
-  for (const tree of trees) {
-    const { rgb } = (() => {
-      const b = BRANCH[tree.branch];
-      return { rgb: b.rgb };
-    })();
-    const s = sOf(tree.branch);
-    // Trunk principal
-    for (let k = 0; k < 5; k++) {
-      const a = k === 0 ? ROOT : tree.main[k - 1];
-      const b = tree.main[k];
-      const lit = s > k;
-      if (!lit) drawConnection(ctx, a, b, rgb, false);
-    }
-    // Connexions latérales
-    for (const side of tree.sides) {
-      const parent = tree.main[side.parentK];
-      const lit = s > side.parentK;
-      if (!lit) drawConnection(ctx, parent, side, rgb, false, 1, 6);
-    }
-  }
-
-  // 2) Connexions allumées (par-dessus, plus lumineuses)
+  // 1) Liaisons latérales (toujours fines, en arrière-plan).
   for (const tree of trees) {
     const { rgb } = BRANCH[tree.branch];
     const s = sOf(tree.branch);
-    for (let k = 0; k < 5; k++) {
-      const a = k === 0 ? ROOT : tree.main[k - 1];
-      const b = tree.main[k];
-      const lit = s > k;
-      if (lit) drawConnection(ctx, a, b, rgb, true);
-    }
     for (const side of tree.sides) {
       const parent = tree.main[side.parentK];
-      const lit = s > side.parentK;
-      if (lit) drawConnection(ctx, parent, side, rgb, true, 0.85, 6);
+      drawSideConnection(ctx, parent, side, rgb, s > side.parentK);
     }
   }
 
-  // 3) Racine
-  drawRoot(ctx);
+  // 2) Spines verrouillées.
+  for (const tree of trees) {
+    const { rgb } = BRANCH[tree.branch];
+    const s = sOf(tree.branch);
+    for (let k = 0; k < NODES_PER_BRANCH; k++) {
+      const a = k === 0 ? CENTER : tree.main[k - 1];
+      const b = tree.main[k];
+      if (!(s > k)) drawConnection(ctx, a, b, rgb, false);
+    }
+  }
 
-  // 4) Nœuds latéraux puis principaux (les principaux passent au-dessus)
+  // 3) Spines allumées (par-dessus, glow coloré).
+  for (const tree of trees) {
+    const { rgb } = BRANCH[tree.branch];
+    const s = sOf(tree.branch);
+    for (let k = 0; k < NODES_PER_BRANCH; k++) {
+      const a = k === 0 ? CENTER : tree.main[k - 1];
+      const b = tree.main[k];
+      if (s > k) drawConnection(ctx, a, b, rgb, true);
+    }
+  }
+
+  // 4) Nœuds latéraux décoratifs.
   for (const tree of trees) {
     const { color, rgb } = BRANCH[tree.branch];
     const s = sOf(tree.branch);
@@ -485,82 +557,29 @@ async function renderSkillTreePng(opts) {
       drawSideNode(ctx, side, rgb, color, s > side.parentK);
     }
   }
+
+  // 5) Cœur central.
+  drawRoot(ctx);
+
+  // 6) Nœuds principaux (capstone = dernier de la branche, plus gros).
   for (const tree of trees) {
-    const { color, rgb } = BRANCH[tree.branch];
+    const { color, rgb, icon } = BRANCH[tree.branch];
     const s = sOf(tree.branch);
     for (const m of tree.main) {
       const lit = s > m.k;
       const isCurrent = !lit && m.k === s;
-      drawMainNode(ctx, m, rgb, color, lit, isCurrent);
+      const isCapstone = m.k === NODES_PER_BRANCH - 1;
+      drawMainNode(ctx, m, rgb, color, icon, lit, isCurrent, isCapstone);
     }
   }
 
-  // 5) Étiquettes en bout de branche (label + n/5 stylisé)
+  // 7) Labels de bout de branche.
   for (const tree of trees) {
-    const { color, label, rgb } = BRANCH[tree.branch];
-    const s = sOf(tree.branch);
-
-    // Étiquette : label en majuscules + grand chiffre (style sobre)
-    ctx.save();
-    // Halo très léger derrière le texte (ou rien si vide)
-    if (s > 0) {
-      const haloR = 52;
-      const halo = ctx.createRadialGradient(tree.tipX, tree.tipY, 4, tree.tipX, tree.tipY, haloR);
-      halo.addColorStop(0, rgba(rgb, 0.16));
-      halo.addColorStop(1, rgba(rgb, 0));
-      ctx.fillStyle = halo;
-      ctx.beginPath();
-      ctx.arc(tree.tipX, tree.tipY, haloR, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = color;
-    ctx.font = 'bold 17px "Segoe UI", "Helvetica", sans-serif';
-    ctx.fillText(label, tree.tipX, tree.tipY - 16);
-
-    ctx.fillStyle = s > 0 ? '#f0eef7' : '#9b97ad';
-    ctx.font = 'bold 26px "Segoe UI", "Helvetica", sans-serif';
-    ctx.fillText(`${s}/5`, tree.tipX, tree.tipY + 12);
-    ctx.restore();
+    drawBranchTipLabel(ctx, tree, sOf(tree.branch));
   }
 
-  // 6) Bandeau d’en-tête
-  const headH = 88;
-  const bandG = ctx.createLinearGradient(0, 0, 0, headH);
-  bandG.addColorStop(0, 'rgba(0,0,0,0.78)');
-  bandG.addColorStop(1, 'rgba(0,0,0,0.25)');
-  ctx.fillStyle = bandG;
-  ctx.fillRect(0, 0, W, headH);
-  // ligne séparatrice subtile
-  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(0, headH);
-  ctx.lineTo(W, headH);
-  ctx.stroke();
-
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillStyle = '#f3f0ff';
-  ctx.font = 'bold 30px "Segoe UI", "Helvetica", sans-serif';
-  ctx.fillText('Arbre de compétences REBORN', 36, 42);
-
-  ctx.fillStyle = '#a4a3b8';
-  ctx.font = '18px "Segoe UI", "Helvetica", sans-serif';
-  ctx.fillText(`Points : ${points}  ·  Coût palier n = n  ·  5 branches × 5 paliers`, 36, 70);
-
-  // Pseudo et résumé à droite du bandeau
-  ctx.textAlign = 'right';
-  ctx.fillStyle = '#dad6ee';
-  ctx.font = 'bold 18px "Segoe UI", "Helvetica", sans-serif';
-  ctx.fillText(displayName, W - 32, 42);
-
-  const totalUnlocked = ORDER.reduce((acc, b) => acc + sOf(b), 0);
-  ctx.fillStyle = '#7a7993';
-  ctx.font = '14px "Segoe UI", "Helvetica", sans-serif';
-  ctx.fillText(`Paliers débloqués : ${totalUnlocked} / 25`, W - 32, 66);
+  // 8) En-tête.
+  drawHeader(ctx, displayName, points, sOf, bg);
 
   return canvas.toBuffer('image/png');
 }
