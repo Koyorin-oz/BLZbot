@@ -39,6 +39,20 @@ function memberCapForGuildLevel(gl) {
   return 5 + Math.max(0, gl - 1);
 }
 
+/** Cap effectif (niveau de guilde + bonus arbre du chef). */
+function effectiveMemberCap(g) {
+  if (!g) return 0;
+  const base = memberCapForGuildLevel(g.guild_level || 1);
+  let bonus = 0;
+  try {
+    const skillTree = require('./skillTree');
+    bonus = skillTree.guildMemberCapBonus(g.leader_id);
+  } catch {
+    /* ignore */
+  }
+  return base + bonus;
+}
+
 const DEFAULT_PERMS = { depot: 1, retrait: 0, kick: 0, roles: 0, focus: 0 };
 const LEADER_PERMS = { depot: 1, retrait: 1, kick: 1, roles: 1, focus: 1 };
 
