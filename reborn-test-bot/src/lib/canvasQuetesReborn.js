@@ -170,12 +170,12 @@ function drawProgressBar(ctx, x, y, w, h, ratio, accent, accentRgb) {
 function drawCard(ctx, x, y, w, h, theme, data) {
   rr(ctx, x, y, w, h, 22);
   const bg = ctx.createLinearGradient(x, y, x, y + h);
-  bg.addColorStop(0, 'rgba(28,18,40,0.92)');
-  bg.addColorStop(1, 'rgba(14,8,22,0.92)');
+  bg.addColorStop(0, 'rgba(28,18,40,0.94)');
+  bg.addColorStop(1, 'rgba(14,8,22,0.94)');
   ctx.fillStyle = bg;
   ctx.fill();
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = rgba(theme.accentRgb, 0.55);
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = rgba(theme.accentRgb, 0.32);
   ctx.stroke();
 
   ctx.save();
