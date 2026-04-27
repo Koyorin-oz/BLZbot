@@ -86,8 +86,8 @@ async function tryRenderTreePng(userId, displayName, avatarUrl) {
  * @param {string} userId
  * @param {import('discord.js').ContainerBuilder} [base] — si fourni, on y ajoute galerie + texte (déjà partial)
  */
-async function buildArbreContainer(userId, displayName) {
-  const buf = await tryRenderTreePng(userId, displayName);
+async function buildArbreContainer(userId, displayName, avatarUrl) {
+  const buf = await tryRenderTreePng(userId, displayName, avatarUrl);
   if (!buf) return null;
   const file = new AttachmentBuilder(buf, { name: 'arbre_reborn.png' });
   const c = new ContainerBuilder();
