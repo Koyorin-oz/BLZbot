@@ -49,10 +49,10 @@ module.exports = {
         ].join('\n'),
       );
       const c = new ContainerBuilder();
-      c.addTextDisplayComponents(t);
       c.addMediaGalleryComponents(
         new MediaGalleryBuilder().addItems({ media: { url: 'attachment://temple_reborn.png' } }),
       );
+      c.addTextDisplayComponents(t);
       c.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
           '**Détail des clés** (dernier recalcul) : ' +
