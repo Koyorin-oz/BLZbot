@@ -17,7 +17,7 @@ const users = require('./users');
 const skillTree = require('./skillTree');
 const passport = require('./passport');
 
-const RENDER_TREE = path.join(
+const CANVAS_SK = path.join(
   __dirname,
   '..',
   '..',
@@ -28,18 +28,7 @@ const RENDER_TREE = path.join(
   'canvas-skill-tree-reborn',
 );
 
-const RENDER_PASS = path.join(
-  __dirname,
-  '..',
-  '..',
-  '..',
-  'niveau',
-  'src',
-  'utils',
-  'canvas-skill-tree-reborn',
-);
-
-const LABEL = { quest: 'Quête', guild: 'Guilde', shop: 'Boutique', ranked: 'Ranked', event: 'Événement' };
+const BR_LABEL = { quest: 'Quête', guild: 'Guilde', shop: 'Boutique', ranked: 'Ranked', event: 'Événement' };
 
 function partsFromShopValue(v) {
   if (!v) return null;
@@ -50,27 +39,106 @@ function partsFromShopValue(v) {
   return null;
 }
 
+async function tryRenderTreePng(userId, displayName) {
+  try {
+    const { renderSkillTreePng } = require(CANVAS_SK);
+    const steps = {};
+    for (const b of skillTree.BRANCHES) steps[b] = skillTree.step(userId, b);
+    const u = users.getUser(userId);
+    return await renderSkillTreePng({
+      displayName: displayName || 'Joueur',
+      points: u?.skill_points ?? 0,
+      steps,
+    });
+  } catch (e) {
+    console.error('[arbre canvas]', e?.message || e);
+    return null;
+  }
+}
+
 /**
+ * @param {string} userId
+ * @param {import('discord.js').ContainerBuilder} [base] — si fourni, on y ajoute galerie + texte (déjà partial)
+ */
+async function buildArbreContainer(userId, displayName) {
+  const buf = await tryRenderTreePng(userId, displayName);
+  if (!buf) return null;
+  const file = new AttachmentBuilder(buf, { name: 'arbre_reborn.png' });
+  const c = new ContainerBuilder();
+  c.addMediaGalleryComponents(
+    new MediaGalleryBuilder().addItems({ media: { url: 'attachment://arbre_reborn.png' } }),
+  );
+  const u = users.getUser(userId);
+  c.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(
+      [
+        '# Arbre de compétences',
+        `**Points** : **${u?.skill_points ?? 0}** — chaque palier coûte **n** points (n = n° de palier).`,
+        'Choisis une **branche** puis **Débloquer** (ou utilise \`/arbre acheter\`).',
+      ].join('\n'),
+    ),
+  );
+  const options = skillTree.BRANCHES.map((b) => {
+    const s = skillTree.step(userId, b);
+    return {
+      label: (BR_LABEL[b] || b).slice(0, 100),
+      value: b,
+      description: `Paliers ${s} / 5`.slice(0, 100),
+    };
+  });
+  const select = new StringSelectMenuBuilder()
+    .setCustomId('rb:tree:sel')
+    .setPlaceholder('Branche (prochain achat)')
+    .addOptions(options);
+  const row0 = new ActionRowBuilder().addComponents(select);
+  const row1 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('rb:tree:go')
+      .setLabel('Débloquer')
+      .setStyle(ButtonStyle.Success)
+      .setEmoji('✨'),
+    new ButtonBuilder()
+      .setCustomId('rb:tree:re')
+      .setLabel('Rafraîchir')
+      .setStyle(ButtonStyle.Secondary)
+      .setEmoji('🔄'),
+  );
+  c.addActionRowComponents(row0, row1);
+  return { file, container: c, flags: MessageFlags.IsComponentsV2 };
+}
+
+function partsForPassportButton(customId) {
+  if (customId === 'rb:ps:card' || customId === 'rb:ps:txt') {
+    return { targetId: null, kind: customId === 'rb:ps:card' ? 'card' : 'txt' };
+  }
+  if (customId.startsWith('rb:ps:card:')) {
+    return { targetId: customId.slice('rb:ps:card:'.length), kind: 'card' };
+  }
+  if (customId.startsWith('rb:ps:txt:')) {
+    return { targetId: customId.slice('rb:ps:txt:'.length), kind: 'txt' };
+  }
+  return null;
+}
+
+/**
+ * @param {import('discord.js').Client} client
  * @param {import('discord.js').Interaction} interaction
  */
 async function handlePanelInteraction(interaction) {
   if (interaction.isStringSelectMenu()) {
     if (interaction.customId === 'rb:shop:sel') {
-      const v = interaction.values[0];
-      pick.set(interaction.user.id, interaction.message.id, v);
-      await interaction.deferUpdate();
-      return;
+      pick.set(interaction.user.id, interaction.message.id, interaction.values[0]);
+      return interaction.deferUpdate();
     }
     if (interaction.customId === 'rb:inv:sel') {
       pick.set(interaction.user.id, interaction.message.id, interaction.values[0]);
-      await interaction.deferUpdate();
-      return;
+      return interaction.deferUpdate();
     }
     if (interaction.customId === 'rb:tree:sel') {
       pick.set(interaction.user.id, interaction.message.id, interaction.values[0]);
-      await interaction.deferUpdate();
-      return;
+      return interaction.deferUpdate();
     }
+    return;
   }
 
   if (!interaction.isButton()) return;
@@ -80,7 +148,7 @@ async function handlePanelInteraction(interaction) {
     const parts = partsFromShopValue(v);
     if (!parts) {
       return interaction.reply({
-        content: 'Choisis d’abord un article dans le **menu déroulant**.',
+        content: 'Choisis d’abord un article dans le **menu**.',
         ephemeral: true,
       });
     }
@@ -102,161 +170,98 @@ async function handlePanelInteraction(interaction) {
   if (interaction.customId === 'rb:tree:go') {
     const br = pick.get(interaction.user.id, interaction.message.id);
     if (!br || !skillTree.BRANCHES.includes(br)) {
-      return interaction.reply({
-        content: 'Choisis une **branche** dans le menu avant de débloquer.',
-        ephemeral: true,
-      });
+      return interaction.reply({ content: 'Sélectionne une **branche** dans le menu déroulant.', ephemeral: true });
     }
     const uid = interaction.user.id;
     const r = skillTree.buy(uid, br);
-    if (!r.ok) {
-      return interaction.reply({ content: `❌ ${r.error}`, ephemeral: true });
-    }
-    const buf = await tryRenderTree(uid, interaction);
-    if (!buf) {
+    if (!r.ok) return interaction.reply({ content: `❌ ${r.error}`, ephemeral: true });
+    const b = await buildArbreContainer(uid, interaction.user.username);
+    if (!b) {
       return interaction.reply({
-        content: `✅ **${LABEL[br] || br}** → étape **${r.newStep}** / 5 · Points restants : **${(users.getUser(uid).skill_points ?? 0)}**`,
+        content: `✅ **${BR_LABEL[br] || br}** → **${r.newStep}** / 5 (canvas indisponible)`,
         ephemeral: true,
       });
     }
-    const file = new AttachmentBuilder(buf, { name: 'arbre_reborn.png' });
-    const c = makeTreeContainer(
-      `✅ **${LABEL[br] || br}** — palier **${r.newStep}** / 5 — points : **${users.getUser(uid).skill_points ?? 0}**`,
-    );
     await interaction.deferUpdate();
     return interaction.editReply({
-      files: [file],
-      components: [c],
-      flags: MessageFlags.IsComponentsV2,
+      files: [b.file],
+      components: [b.container],
+      flags: b.flags,
     });
   }
 
   if (interaction.customId === 'rb:tree:re') {
-    const buf = await tryRenderTree(interaction.user.id, interaction);
-    if (!buf) {
-      return interaction.reply({ content: 'Génération image indisponible (canvas / niveau).', ephemeral: true });
+    const b = await buildArbreContainer(interaction.user.id, interaction.user.username);
+    if (!b) {
+      return interaction.reply({ content: 'Génération image indisponible (canvas).', ephemeral: true });
     }
-    const file = new AttachmentBuilder(buf, { name: 'arbre_reborn.png' });
-    const c = makeTreeContainer('**Arbre mis à jour.**');
     await interaction.deferUpdate();
-    return interaction.editReply({
-      files: [file],
-      components: [c],
-      flags: MessageFlags.IsComponentsV2,
-    });
+    return interaction.editReply({ files: [b.file], components: [b.container], flags: b.flags });
   }
 
-  if (interaction.customId === 'rb:ps:card') {
+  const pPass = partsForPassportButton(interaction.customId);
+  if (pPass && (pPass.kind === 'card' || pPass.kind === 'txt')) {
     if (!interaction.guild) {
-      return interaction.reply({ content: 'Serveur uniquement.', flags: 64 /* Ephemeral in v2 */ });
+      return interaction.reply({ content: 'Serveur uniquement.', ephemeral: true });
     }
-    const uid = interaction.user.id;
-    if (await ensurePassportTargetMatch(interaction)) {
-      return interaction
-        .reply({ content: 'Cette fiche n’est plus active.', flags: 64 })
-        .catch(() => {});
+    const targetId = pPass.targetId || interaction.user.id;
+    if (targetId !== interaction.user.id) {
+      return interaction.reply({ content: 'Utilise le bouton sur **ta** propre commande, ou relance `/passeport`.', ephemeral: true });
     }
-    const hub = interaction.guildId;
-    users.getOrCreate(uid, interaction.user.username);
-    passport.maybeRecoverSecu(uid);
-    const u = users.getUser(uid);
-    const targetUser = await interaction.client.users.fetch(uid);
-    const warns = passport.listWarns(hub, uid, 8);
-    const wtxt = warns.length
-      ? warns.map((w) => `• −${w.degree} — <@${w.mod_id}> — ${(w.reason || '—').slice(0, 40)}`)
-      : ['Aucun.'];
-    let buf;
-    try {
-      const { renderPassportCardPng } = require(RENDER_PASS);
-      buf = await renderPassportCardPng({
-        displayName: targetUser.username,
-        secu: String(u.secu_points ?? 10),
-        modScore: String(u.mod_tests_score ?? 0),
-        candidature: String(u.candidature_status ?? 'aucune'),
-        warnsBlock: wtxt.join('\n'),
-      });
-    } catch (e) {
-      console.error('[passeport canvas]', e);
-      return interaction.reply({ content: 'Échec canvas passeport (vérifie le module `canvas`).', ephemeral: true });
+    const hub = /** @type {string} */ (interaction.guildId);
+    users.getOrCreate(targetId, 'u');
+    passport.maybeRecoverSecu(targetId);
+    const u = users.getUser(targetId);
+    const targetUser = await interaction.client.users.fetch(targetId);
+    if (pPass.kind === 'card') {
+      let buf;
+      try {
+        const { renderPassportCardPng } = require(CANVAS_SK);
+        const warns = passport.listWarns(hub, targetId, 8);
+        const wtxt = warns.length
+          ? warns.map((w) => `• −${w.degree} — <@${w.mod_id}>`)
+          : ['(aucun)'];
+        buf = await renderPassportCardPng({
+          displayName: targetUser.username,
+          secu: String(u.secu_points ?? 10),
+          modScore: String(u.mod_tests_score ?? 0),
+          candidature: String(u.candidature_status ?? 'aucune'),
+          warnsBlock: wtxt.join('\n'),
+        });
+      } catch (e) {
+        console.error('[passeport card]', e);
+        return interaction.reply({ content: 'Canvas passeport indisponible (module `canvas` / recompil).', ephemeral: true });
+      }
+      const f = new AttachmentBuilder(buf, { name: 'passeport_reborn.png' });
+      const c = new ContainerBuilder();
+      c.addMediaGalleryComponents(
+        new MediaGalleryBuilder().addItems({ media: { url: 'attachment://passeport_reborn.png' } }),
+      );
+      c.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent('### Passeport — **vue carte**\n*Même bannière que le profil BLZ (`blz_bg`).*'),
+      );
+      c.addActionRowComponents(
+        new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId('rb:ps:txt')
+            .setLabel('Fiche texte')
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('📋'),
+        ),
+      );
+      await interaction.deferUpdate();
+      return interaction.editReply({ files: [f], components: [c], flags: MessageFlags.IsComponentsV2 });
     }
-    const file = new AttachmentBuilder(buf, { name: 'passeport_reborn.png' });
-    const c = new ContainerBuilder();
-    c.addMediaGalleryComponents(
-      new MediaGalleryBuilder().addItems({ media: { url: 'attachment://passeport_reborn.png' } }),
-    );
-    const td = new TextDisplayBuilder().setContent(
-      '### Passeport (vue carte)\n*Même bannière que le profil — stats staff / sécu*',
-    );
-    c.addTextDisplayComponents(td);
-    c.addActionRowComponents(
-      new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId('rb:ps:txt')
-          .setLabel('Fiche texte')
-          .setStyle(ButtonStyle.Secondary)
-          .setEmoji('📋'),
-      ),
-    );
-    await interaction.deferUpdate();
-    return interaction.editReply({
-      files: [file],
-      components: [c],
-      flags: MessageFlags.IsComponentsV2,
-    });
-  }
-
-  if (interaction.customId === 'rb:ps:txt') {
-    if (!interaction.guild) {
-      return interaction.reply({ content: 'Serveur uniquement.', flags: 64 });
+    if (pPass.kind === 'txt') {
+      const p = require('../commands/passeport').buildPassportTextV2
+        ? require('../commands/passeport').buildPassportTextV2(targetUser, u, interaction.guildId, passport)
+        : null;
+      if (p) {
+        await interaction.deferUpdate();
+        return interaction.editReply(p);
+      }
     }
-    const uid = interaction.user.id;
-    if (await ensurePassportTargetMatch(interaction)) return;
-    const p = buildPassportTextV2(
-      await interaction.client.users.fetch(uid).catch(() => null),
-      interaction,
-    );
-    if (!p) {
-      return interaction.reply({ content: 'Erreur fiche texte.', ephemeral: true });
-    }
-    await interaction.deferUpdate();
-    return interaction.editReply({
-      files: p.files,
-      components: p.components,
-      flags: p.flags,
-    });
   }
 }
 
-async function ensurePassportTargetMatch() {
-  return false;
-}
-
-function makeTreeContainer(sub) {
-  const t = new TextDisplayBuilder().setContent(`# Arbre de compétences\n${sub}`);
-  const c = new ContainerBuilder().addTextDisplayComponents(t);
-  c.addMediaGalleryComponents(
-    new MediaGalleryBuilder().addItems({ media: { url: 'attachment://arbre_reborn.png' } }),
-  );
-  c.addTextDisplayComponents(
-    new TextDisplayBuilder().setContent('Branche (menu) puis **Débloquer** (coût = numéro de palier).'),
-  );
-  return addArbreSelectRows(c, interaction) ? c : c; // will fix
-}
-
-/** @param {import('discord.js').ContainerBuilder} c */
-let _badRef = null;
-
-function addArbreSelectRows(container) {
-  const { BRANCHES } = skillTree;
-  const sel = new StringSelectMenuBuilder()
-    .setCustomId('rb:tree:sel')
-    .setPlaceholder('Branche à débloquer');
-  const options = [];
-  for (const b of BRANCHES) {
-    const s = skillTree.step(
-      (typeof _uidRef !== 'undefined' ? _uidRef : '0') || '0',
-      b,
-    );
-  }
-  return true;
-}
+module.exports = { handlePanelInteraction, tryRenderTreePng, buildArbreContainer, partsForPassportButton };
