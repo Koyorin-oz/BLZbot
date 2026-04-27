@@ -192,7 +192,7 @@ function drawCard(ctx, x, y, w, h, theme, data) {
   const iconCy = y + h / 2;
   ctx.save();
   const ig = ctx.createRadialGradient(iconCx, iconCy, 4, iconCx, iconCy, iconBoxR);
-  ig.addColorStop(0, rgba(theme.accentRgb, 0.55));
+  ig.addColorStop(0, rgba(theme.accentRgb, 0.28));
   ig.addColorStop(1, rgba(theme.accentRgb, 0));
   ctx.fillStyle = ig;
   ctx.beginPath();
