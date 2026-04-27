@@ -112,9 +112,36 @@ client.once(Events.ClientReady, async () => {
 });
 
 client.on('interactionCreate', async (interaction) => {
+  // ─── Bouton « 🎯 Quêtes » du /profil niveau → on ouvre notre panel REBORN ──
+  // Notre listener est enregistré AVANT le collector niveau (créé à chaque /profil),
+  // donc on acknowledge en premier ; le collector niveau échouera silencieusement
+  // (try/catch interne dans niveau).
+  if (
+    interaction.isButton() &&
+    /^pv2_q_\d+(?:_\d+)?$/.test(interaction.customId)
+  ) {
+    const m = interaction.customId.match(/^pv2_q_(\d+)/);
+    const targetId = m ? m[1] : null;
+    if (targetId === interaction.user.id) {
+      try {
+        await interaction.deferUpdate();
+        const { buildQuetesPayload } = require('./lib/quetesPanelUi');
+        const payload = await buildQuetesPayload(interaction.user.id, 0, {
+          displayName: interaction.member?.displayName || interaction.user.username,
+          avatarUrl: interaction.user.displayAvatarURL({ extension: 'png', size: 256 }),
+        });
+        await interaction.editReply(payload);
+      } catch (e) {
+        console.error('[profil → quetes]', e?.message || e);
+      }
+      return;
+    }
+    // Pas l'auteur → laisser niveau gérer le message d'erreur d'origine.
+  }
+
   if (interaction.isStringSelectMenu()) {
     const id = interaction.customId;
-    if (id === 'rb:shop:sel' || id === 'rb:inv:sel' || id === 'rb:tree:sel') {
+    if (id === 'rb:shop:sel' || id === 'rb:inv:sel' || id === 'rb:tree:sel' || id === 'rb:q:pick') {
       try {
         await handlePanelInteraction(interaction);
       } catch (e) {
