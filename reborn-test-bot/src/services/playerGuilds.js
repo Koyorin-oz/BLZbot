@@ -408,6 +408,7 @@ module.exports = {
   useFocus,
   guildLevelFromTotalGxp,
   memberCapForGuildLevel,
+  effectiveMemberCap,
   B,
   getMemberPerms,
   setMemberPerm,
