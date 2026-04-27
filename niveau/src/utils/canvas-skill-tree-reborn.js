@@ -560,18 +560,15 @@ function drawBranchTipLabel(ctx, tree, step) {
  * @param {string} [opts.displayName]
  * @param {number} [opts.points]
  * @param {Record<string, number>} [opts.steps] branch -> 0-5
- * @param {'noir' | 'profil'} [opts.bg] fond noir pur ou fond `/profil` (blz_bg + voile sombre)
  * @param {string} [opts.avatarUrl] URL Discord de l’avatar (PNG/JPG/WebP). Optionnelle.
  */
 async function renderSkillTreePng(opts = {}) {
   const { displayName = 'Joueur', points = 0, steps = {}, avatarUrl } = opts;
-  const bg = opts.bg === 'noir' ? 'noir' : 'profil';
 
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
 
-  if (bg === 'noir') drawBgNoir(ctx);
-  else await drawBgProfil(ctx);
+  await drawBgProfil(ctx);
 
   const avatarImg = await loadAvatarSafe(avatarUrl);
 
