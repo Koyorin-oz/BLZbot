@@ -311,6 +311,11 @@ function summary(userId) {
     if (row.selection_claimed) selLine = `**${def.label}** — terminée cette semaine.`;
     else if (def.kind === 'msgs') {
       selLine = `**${def.label}** — **${row.selection_progress || 0}** / **${def.target}** *(auto)*`;
+    } else if (def.kind === 'starss_gain') {
+      const cur = BigInt(row.selection_progress || 0);
+      selLine = `**${def.label}** — **${cur.toLocaleString('fr-FR')}** / **${def.target.toLocaleString('fr-FR')}** *(auto)*`;
+    } else if (def.kind === 'catl_open') {
+      selLine = `**${def.label}** — **${row.selection_progress || 0}** / **${def.target}** *(auto en ouvrant un CATL)*`;
     } else {
       selLine = `**${def.label}** — utilise le bouton « Réclamer » dès que tu as l’item.`;
     }
@@ -318,9 +323,18 @@ function summary(userId) {
   const mult = skillTree.questRewardMult(userId);
   const skipsTotal = skillTree.questSkipsPerWeek(userId);
   const skipsUsed = row.weekly_skips_used || 0;
+  const life = row.lifetime_msgs ?? 0;
+  const ladder = LIFETIME_LADDER.map((m) => ({
+    id: m.id,
+    label: m.label,
+    target: m.target,
+    reward: m.reward * mult,
+    claimed: isMilestoneClaimed(userId, m.id),
+    progress: Math.min(life, m.target),
+  }));
   return {
     msgs_today: row.msgs_today || 0,
-    lifetime_msgs: row.lifetime_msgs ?? 0,
+    lifetime_msgs: life,
     daily_target: DAILY_MSG_TARGET,
     daily_claimed: !!row.daily_claimed,
     daily_reward: DAILY_REWARD * mult,
@@ -335,6 +349,7 @@ function summary(userId) {
     skips_used: skipsUsed,
     skips_left: Math.max(0, skipsTotal - skipsUsed),
     selection_slots: skillTree.questSelectionSlots(userId),
+    ladder,
   };
 }
 
