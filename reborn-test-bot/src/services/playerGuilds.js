@@ -321,29 +321,11 @@ function tryBuyNextGrade(hubDiscordId, userId) {
 }
 
 function listGuildsOnHub(hubDiscordId) {
-  // Pont : importer toutes les guildes niveau encore non bridées avant de lister.
+  // Pont : importer toutes les guildes niveau (idempotent) avant de lister.
   try {
     const bridge = require('./niveauGuildBridge');
-    const path = require('path');
-    let nivAll;
-    try {
-      const niv = require(path.join(__dirname, '..', '..', '..', 'niveau', 'src', 'utils', 'db-guilds'));
-      nivAll = typeof niv.getAllGuilds === 'function' ? niv.getAllGuilds() : [];
-    } catch {
-      nivAll = [];
-    }
-    for (const g of nivAll) {
-      let members = [];
-      try {
-        const niv = require(path.join(__dirname, '..', '..', '..', 'niveau', 'src', 'utils', 'db-guilds'));
-        if (typeof niv.getGuildMembersWithDetails === 'function') {
-          members = niv.getGuildMembersWithDetails(g.id).map((m) => m.id || m.user_id).filter(Boolean);
-        }
-      } catch { /* ignore */ }
-      if (!members.length) members = [g.owner_id];
-      bridge.importNiveauGuild(hubDiscordId, g, members);
-    }
-  } catch { /* niveau bridge optional */ }
+    bridge.importAllNiveauGuilds(hubDiscordId);
+  } catch { /* optional */ }
   return db.prepare('SELECT id, name, leader_id, member_cap, guild_level, grade, treasury FROM player_guilds WHERE hub_discord_id = ? ORDER BY created_ms DESC').all(hubDiscordId);
 }
 
