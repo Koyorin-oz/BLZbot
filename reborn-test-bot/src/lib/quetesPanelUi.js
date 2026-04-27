@@ -13,6 +13,7 @@ const {
 const quests = require('../services/quests');
 const skillTree = require('../services/skillTree');
 const users = require('../services/users');
+const { renderQuetesRebornPng } = require('./canvasQuetesReborn');
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const NIVEAU_QUESTS_PER_PAGE = 5;
