@@ -47,7 +47,11 @@ module.exports = {
     const sp = u.skill_points ?? 0;
 
     if (sub === 'voir') {
-      const b = await buildArbreContainer(uid, interaction.user.username);
+      const b = await buildArbreContainer(
+        uid,
+        interaction.member?.displayName || interaction.user.username,
+        interaction.user.displayAvatarURL({ extension: 'png', size: 128 }),
+      );
       if (b) {
         return interaction.reply({
           files: [b.file],
