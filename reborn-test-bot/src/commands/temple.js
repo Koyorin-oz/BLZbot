@@ -19,6 +19,8 @@ module.exports = {
     .addSubcommand((sc) => sc.setName('voir').setDescription('Points + statut (recalcul auto)'))
     .addSubcommand((sc) => sc.setName('sync').setDescription('Forcer le recalcul (serveur actuel)')),
   async execute(interaction) {
+    // Défère immédiatement (canvas + fetch peuvent dépasser 3 s -> 10062).
+    await interaction.deferReply();
     const uid = interaction.user.id;
     users.getOrCreate(uid, interaction.user.username);
     const hub = interaction.guildId || null;
@@ -60,7 +62,7 @@ module.exports = {
             '\n\n*En production, d’autres événements alimentent aussi le temple.*',
         ),
       );
-      return interaction.reply({
+      return interaction.editReply({
         files: [file],
         components: [c],
         flags: MessageFlags.IsComponentsV2,
@@ -85,6 +87,6 @@ module.exports = {
         { name: 'Statut', value: unlocked, inline: false },
         { name: 'Clés (sync)', value: r.keys.length ? r.keys.map((k) => `\`${k}\``).join(', ') : '—', inline: false },
       );
-    return interaction.reply({ embeds: [embed] });
+    return interaction.editReply({ embeds: [embed] });
   },
 };
