@@ -301,8 +301,8 @@ function buildLayout() {
 
     const main = [];
     for (let k = 0; k < 5; k++) {
-      const d = 110 + k * NODE_GAP;
-      const wob = (rnd() - 0.5) * 24 + Math.sin(i * 1.7 + k * 1.3) * 14;
+      const d = FIRST_NODE_DIST + k * NODE_GAP;
+      const wob = (rnd() - 0.5) * 22 + Math.sin(i * 1.7 + k * 1.3) * 12;
       const x = ROOT.x + d * Math.cos(ang) + wob * Math.cos(perp);
       const y = ROOT.y + d * Math.sin(ang) + wob * Math.sin(perp);
       main.push({ x, y, k });
