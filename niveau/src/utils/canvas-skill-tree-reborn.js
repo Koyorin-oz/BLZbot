@@ -496,74 +496,570 @@ async function renderSkillTreePng(opts) {
   return canvas.toBuffer('image/png');
 }
 
-/* ---------- temple (carte secondaire, conservée) ---------- */
+/* ---------- temple (carte céleste sacrée) ---------- */
+
+const TEMPLE_W = 1200;
+const TEMPLE_H = 720;
 
 /**
- * Carte visuelle du temple (même ressource que le profil, flouté).
- * @param {object} p
- * @param {number} p.points
- * @param {string[]} p.keys
- * @param {boolean} p.templeUnlocked
+ * Catalogue des « clés » du temple. Les `id` correspondent à ceux émis par
+ * `services/temple.js#sync`. Les clés inconnues seront affichées comme
+ * « Sceau mystérieux » si jamais le module en émet.
  */
-async function renderTemplePng(p) {
-  const width = 1100;
-  const height = 640;
-  const c = createCanvas(width, height);
-  const ctx = c.getContext('2d');
-  const bgPath = path.join(ASSETS, 'blz_bg.png');
-  if (fs.existsSync(bgPath)) {
-    const bg = await loadImage(fs.readFileSync(bgPath));
-    const div = 10;
-    const sw = Math.max(2, Math.floor(width / div));
-    const sh = Math.max(2, Math.floor(height / div));
-    const t = createCanvas(sw, sh);
-    t.getContext('2d').drawImage(bg, 0, 0, sw, sh);
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(t, 0, 0, width, height);
-  } else {
-    const g = ctx.createLinearGradient(0, 0, width, height);
-    g.addColorStop(0, '#1a1035');
-    g.addColorStop(1, '#312e81');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, width, height);
-  }
-  ctx.fillStyle = 'rgba(4, 6, 20, 0.58)';
-  ctx.fillRect(0, 0, width, height);
+const TEMPLE_KEYS = [
+  { id: 'classes', label: 'Maître des Voies', hint: '5/5 sur toutes les branches', glyph: '✦' },
+  { id: 'max_rp', label: 'Étoile Pourpre', hint: '≥ 100 000 RP', glyph: '★' },
+  { id: 'grp_star', label: 'Astre de Guilde', hint: '≥ 200 000 GRP', glyph: '✸' },
+  { id: 'guild_grade_star', label: 'Bannière Étoilée', hint: 'Guilde rang « Star »', glyph: '◈' },
+  { id: 'diamond', label: 'Cœur de Diamant', hint: 'Diamant détenu', glyph: '◆' },
+  { id: 'index_full', label: 'Codex Complet', hint: 'Index 100 %', glyph: '☷' },
+];
 
-  const pad = 44;
-  ctx.textAlign = 'left';
-  ctx.fillStyle = '#e9d5ff';
-  ctx.font = 'bold 38px "Segoe UI", sans-serif';
-  ctx.fillText('Temple — points de réussite', pad, pad + 6);
-  ctx.fillStyle = '#a78bfa';
-  ctx.font = '24px "Segoe UI", sans-serif';
-  const sub = p.templeUnlocked
-    ? 'Statut : débloqué (5×5 arbre) — bravo.'
-    : 'Statut : verrouillé — finis toutes les branches 5/5 pour le prestige.';
-  ctx.fillText(sub, pad, pad + 52);
-  ctx.fillStyle = '#cbd5e1';
-  ctx.font = '22px "Segoe UI", sans-serif';
-  ctx.fillText(`Points comptés :  ${p.points}`, pad, pad + 100);
-  ctx.fillStyle = '#94a3b8';
-  ctx.font = '18px "Segoe UI", sans-serif';
-  const ktxt = p.keys && p.keys.length ? p.keys.join(' · ') : '— (aucune clé sur ce sync)';
-  const lines = [
-    'Système de gros objectifs, hors monnaie quotidienne. Les « clés » listent ce qui a été coché ici (sandbox).',
-    `Détail : ${ktxt}`.slice(0, 900),
+const TEMPLE_GOLD = '#f5c842';
+const TEMPLE_GOLD_RGB = [245, 200, 66];
+const TEMPLE_VERMIL = '#d4493e';
+const TEMPLE_VERMIL_RGB = [212, 73, 62];
+const TEMPLE_INK = '#0d0820';
+
+function drawCosmicBackground(ctx, w, h) {
+  // Dégradé radial très sombre, un peu mauve.
+  const g = ctx.createRadialGradient(w / 2, h / 2, 40, w / 2, h / 2, w);
+  g.addColorStop(0, '#1a1240');
+  g.addColorStop(0.45, '#0d0a26');
+  g.addColorStop(1, '#04020a');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+
+  // Nébuleuses douces (3 blobs colorés).
+  const blobs = [
+    { x: w * 0.18, y: h * 0.25, r: 280, c: 'rgba(120, 60, 200, 0.18)' },
+    { x: w * 0.85, y: h * 0.78, r: 320, c: 'rgba(212, 73, 62, 0.14)' },
+    { x: w * 0.78, y: h * 0.18, r: 240, c: 'rgba(70, 110, 220, 0.16)' },
   ];
-  let y = pad + 150;
-  for (const line of lines) {
-    for (let i = 0; i < line.length; i += 80) {
-      ctx.fillText(line.slice(i, i + 80), pad, y);
-      y += 28;
+  for (const b of blobs) {
+    const ng = ctx.createRadialGradient(b.x, b.y, 5, b.x, b.y, b.r);
+    ng.addColorStop(0, b.c);
+    ng.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = ng;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Champ d’étoiles déterministe.
+  const rnd = mulberry32(0x7e91);
+  for (let i = 0; i < 220; i++) {
+    const x = rnd() * w;
+    const y = rnd() * h;
+    const r = 0.3 + rnd() * 1.4;
+    const a = 0.05 + rnd() * 0.55;
+    ctx.fillStyle = `rgba(${230 + Math.floor(rnd() * 25)}, ${220 + Math.floor(rnd() * 25)}, 255, ${a})`;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Quelques éclats avec « rayons » fins.
+  for (let i = 0; i < 6; i++) {
+    const x = rnd() * w;
+    const y = rnd() * h;
+    ctx.strokeStyle = `rgba(255,255,255,${0.05 + rnd() * 0.06})`;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    const len = 8 + rnd() * 14;
+    ctx.moveTo(x - len, y);
+    ctx.lineTo(x + len, y);
+    ctx.moveTo(x, y - len);
+    ctx.lineTo(x, y + len);
+    ctx.stroke();
+  }
+
+  // Vignette globale.
+  const vg = ctx.createRadialGradient(w / 2, h / 2, h * 0.4, w / 2, h / 2, w * 0.85);
+  vg.addColorStop(0, 'rgba(0,0,0,0)');
+  vg.addColorStop(1, 'rgba(0,0,0,0.7)');
+  ctx.fillStyle = vg;
+  ctx.fillRect(0, 0, w, h);
+}
+
+function drawSacredRing(ctx, cx, cy, r) {
+  // Anneau extérieur fin doré.
+  ctx.save();
+  ctx.strokeStyle = rgba(TEMPLE_GOLD_RGB, 0.35);
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.strokeStyle = rgba(TEMPLE_GOLD_RGB, 0.12);
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + 12, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r - 12, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Tick marks tous les 15°.
+  for (let i = 0; i < 24; i++) {
+    const a = (i / 24) * Math.PI * 2;
+    const long = i % 4 === 0;
+    const r1 = r - (long ? 18 : 8);
+    const r2 = r - 2;
+    ctx.strokeStyle = rgba(TEMPLE_GOLD_RGB, long ? 0.55 : 0.22);
+    ctx.lineWidth = long ? 1.6 : 0.8;
+    ctx.beginPath();
+    ctx.moveTo(cx + r1 * Math.cos(a), cy + r1 * Math.sin(a));
+    ctx.lineTo(cx + r2 * Math.cos(a), cy + r2 * Math.sin(a));
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawProgressArc(ctx, cx, cy, r, ratio) {
+  if (ratio <= 0) return;
+  ctx.save();
+  // Halo de l’arc.
+  ctx.strokeStyle = rgba(TEMPLE_GOLD_RGB, 0.18);
+  ctx.lineWidth = 14;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + ratio * Math.PI * 2);
+  ctx.stroke();
+  // Arc principal.
+  ctx.strokeStyle = TEMPLE_GOLD;
+  ctx.lineWidth = 4;
+  ctx.shadowColor = rgba(TEMPLE_GOLD_RGB, 0.7);
+  ctx.shadowBlur = 14;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + ratio * Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawSanctum(ctx, cx, cy, r, unlocked) {
+  // Halo doré central.
+  ctx.save();
+  if (unlocked) {
+    const halo = ctx.createRadialGradient(cx, cy, 4, cx, cy, r * 1.8);
+    halo.addColorStop(0, 'rgba(255, 220, 140, 0.65)');
+    halo.addColorStop(0.5, 'rgba(255, 150, 90, 0.25)');
+    halo.addColorStop(1, 'rgba(255, 100, 60, 0)');
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 1.8, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    const dim = ctx.createRadialGradient(cx, cy, 2, cx, cy, r * 1.4);
+    dim.addColorStop(0, 'rgba(80, 60, 110, 0.45)');
+    dim.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = dim;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 1.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Disque sombre du sanctuaire.
+  const inner = ctx.createRadialGradient(cx - r * 0.25, cy - r * 0.3, r * 0.1, cx, cy, r);
+  inner.addColorStop(0, '#1a1530');
+  inner.addColorStop(1, '#080514');
+  ctx.fillStyle = inner;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Anneaux concentriques.
+  ctx.strokeStyle = rgba(TEMPLE_GOLD_RGB, unlocked ? 0.55 : 0.28);
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.strokeStyle = rgba(TEMPLE_GOLD_RGB, 0.18);
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r - 10, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // 4 marqueurs cardinaux.
+  for (let i = 0; i < 4; i++) {
+    const a = i * (Math.PI / 2) - Math.PI / 2;
+    const x = cx + (r - 5) * Math.cos(a);
+    const y = cy + (r - 5) * Math.sin(a);
+    ctx.fillStyle = rgba(TEMPLE_GOLD_RGB, 0.6);
+    ctx.beginPath();
+    ctx.arc(x, y, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawTorii(ctx, cx, cy, scale, unlocked) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const main = unlocked ? TEMPLE_VERMIL : '#2b1f2a';
+  const main2 = unlocked ? '#a83228' : '#1a1218';
+  const high = unlocked ? '#ffd9b3' : '#2e2230';
+
+  // Rayons lumineux verticaux derrière le torii (uniquement débloqué).
+  if (unlocked) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const rays = ctx.createLinearGradient(0, -120, 0, 120);
+    rays.addColorStop(0, 'rgba(255,210,140,0)');
+    rays.addColorStop(0.5, 'rgba(255,180,90,0.18)');
+    rays.addColorStop(1, 'rgba(255,210,140,0)');
+    ctx.fillStyle = rays;
+    ctx.fillRect(-12, -120, 24, 240);
+    ctx.fillRect(-46, -120, 8, 240);
+    ctx.fillRect(38, -120, 8, 240);
+    ctx.restore();
+  }
+
+  // Plinthes sous les piliers.
+  ctx.fillStyle = main2;
+  ctx.fillRect(-50, 58, 26, 6);
+  ctx.fillRect(24, 58, 26, 6);
+
+  // Piliers (légèrement biseautés vers le haut).
+  const drawPillar = (x) => {
+    const grad = ctx.createLinearGradient(x, 0, x + 18, 0);
+    grad.addColorStop(0, main2);
+    grad.addColorStop(0.5, main);
+    grad.addColorStop(1, main2);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(x + 1, -36);
+    ctx.lineTo(x + 17, -36);
+    ctx.lineTo(x + 18, 58);
+    ctx.lineTo(x, 58);
+    ctx.closePath();
+    ctx.fill();
+    if (unlocked) {
+      ctx.fillStyle = 'rgba(255, 210, 170, 0.35)';
+      ctx.fillRect(x + 2, -36, 1.2, 94);
+    }
+  };
+  drawPillar(-46);
+  drawPillar(28);
+
+  // Nuki (poutre intermédiaire).
+  ctx.fillStyle = main2;
+  ctx.fillRect(-58, -22, 116, 9);
+
+  // Shimaki (poutre sous le toit).
+  const shGrad = ctx.createLinearGradient(0, -52, 0, -38);
+  shGrad.addColorStop(0, main);
+  shGrad.addColorStop(1, main2);
+  ctx.fillStyle = shGrad;
+  ctx.fillRect(-66, -52, 132, 14);
+
+  // Kasagi (toit principal, légèrement relevé aux extrémités).
+  ctx.fillStyle = main;
+  ctx.beginPath();
+  ctx.moveTo(-78, -64);
+  ctx.quadraticCurveTo(-82, -72, -74, -76);
+  ctx.lineTo(74, -76);
+  ctx.quadraticCurveTo(82, -72, 78, -64);
+  ctx.lineTo(66, -54);
+  ctx.lineTo(-66, -54);
+  ctx.closePath();
+  ctx.fill();
+
+  // Liseré clair sur le toit.
+  ctx.strokeStyle = high;
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(-78, -64);
+  ctx.quadraticCurveTo(-82, -72, -74, -76);
+  ctx.lineTo(74, -76);
+  ctx.quadraticCurveTo(82, -72, 78, -64);
+  ctx.stroke();
+
+  // Sceau central sur le nuki.
+  if (unlocked) {
+    ctx.fillStyle = '#fff1c2';
+    ctx.shadowColor = 'rgba(255, 220, 140, 0.9)';
+    ctx.shadowBlur = 8;
+  } else {
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+  }
+  ctx.beginPath();
+  ctx.arc(0, -17, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawConstellationLine(ctx, a, b) {
+  ctx.save();
+  ctx.strokeStyle = rgba(TEMPLE_GOLD_RGB, 0.18);
+  ctx.lineWidth = 6;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(a.x, a.y);
+  ctx.lineTo(b.x, b.y);
+  ctx.stroke();
+  ctx.strokeStyle = rgba(TEMPLE_GOLD_RGB, 0.85);
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(a.x, a.y);
+  ctx.lineTo(b.x, b.y);
+  ctx.stroke();
+  ctx.restore();
+}
+
+/**
+ * Étoile à 5 branches centrée en (cx, cy).
+ */
+function drawStarShape(ctx, cx, cy, outerR, innerR, points = 5) {
+  ctx.beginPath();
+  for (let i = 0; i < points * 2; i++) {
+    const r = i % 2 === 0 ? outerR : innerR;
+    const a = -Math.PI / 2 + (i / (points * 2)) * Math.PI * 2;
+    const x = cx + r * Math.cos(a);
+    const y = cy + r * Math.sin(a);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+}
+
+function drawKeyStar(ctx, p, angle) {
+  const { x, y, lit, label, hint } = p;
+  ctx.save();
+
+  // Halo de fond pour les clés acquises.
+  if (lit) {
+    const halo = ctx.createRadialGradient(x, y, 2, x, y, 60);
+    halo.addColorStop(0, rgba(TEMPLE_GOLD_RGB, 0.55));
+    halo.addColorStop(0.55, rgba(TEMPLE_GOLD_RGB, 0.18));
+    halo.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.arc(x, y, 60, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Cercle support.
+  ctx.beginPath();
+  ctx.arc(x, y, 22, 0, Math.PI * 2);
+  if (lit) {
+    const g = ctx.createRadialGradient(x - 6, y - 8, 2, x, y, 22);
+    g.addColorStop(0, '#fff5d6');
+    g.addColorStop(1, '#c79830');
+    ctx.fillStyle = g;
+  } else {
+    ctx.fillStyle = '#15101e';
+  }
+  ctx.fill();
+
+  ctx.lineWidth = lit ? 1.8 : 1.2;
+  ctx.strokeStyle = lit ? 'rgba(255,255,255,0.85)' : rgba(TEMPLE_GOLD_RGB, 0.35);
+  ctx.stroke();
+
+  // Étoile au centre (acquise) ou cadenas (verrouillée).
+  if (lit) {
+    drawStarShape(ctx, x, y, 11, 4.5, 5);
+    ctx.fillStyle = '#0e0a16';
+    ctx.fill();
+    ctx.lineWidth = 0.8;
+    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+    ctx.stroke();
+  } else {
+    drawLockGlyph(ctx, x, y, 18, rgba(TEMPLE_GOLD_RGB, 0.45));
+  }
+
+  // Étiquettes (label + hint), positionnées vers l’extérieur de l’anneau.
+  const dirX = Math.cos(angle);
+  const dirY = Math.sin(angle);
+  const lx = x + dirX * 50;
+  const ly = y + dirY * 50;
+
+  // Aligner le texte côté extérieur.
+  ctx.textAlign = dirX < -0.25 ? 'right' : dirX > 0.25 ? 'left' : 'center';
+  ctx.textBaseline = 'middle';
+
+  // Petit trait reliant l’étoile à l’étiquette.
+  ctx.strokeStyle = rgba(TEMPLE_GOLD_RGB, lit ? 0.45 : 0.18);
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x + dirX * 24, y + dirY * 24);
+  ctx.lineTo(x + dirX * 44, y + dirY * 44);
+  ctx.stroke();
+
+  // Label
+  ctx.shadowColor = 'rgba(0,0,0,0.85)';
+  ctx.shadowBlur = 6;
+  ctx.fillStyle = lit ? '#ffe8a8' : '#7a7591';
+  ctx.font = `bold 16px "Segoe UI", "Helvetica", sans-serif`;
+  ctx.fillText(label, lx, ly - 9);
+
+  ctx.shadowBlur = 4;
+  ctx.fillStyle = lit ? '#cdb6e0' : '#5a566e';
+  ctx.font = `12px "Segoe UI", "Helvetica", sans-serif`;
+  ctx.fillText(hint, lx, ly + 9);
+
+  ctx.restore();
+}
+
+function drawTempleHeader(ctx, points, unlocked, keysCount, keysTotal) {
+  ctx.save();
+
+  // Bandeau en haut, un peu transparent.
+  const headH = 84;
+  const grad = ctx.createLinearGradient(0, 0, 0, headH);
+  grad.addColorStop(0, 'rgba(0,0,0,0.78)');
+  grad.addColorStop(1, 'rgba(0,0,0,0.0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, TEMPLE_W, headH);
+
+  ctx.strokeStyle = rgba(TEMPLE_GOLD_RGB, 0.35);
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(36, 60);
+  ctx.lineTo(TEMPLE_W - 36, 60);
+  ctx.stroke();
+
+  // Titre principal.
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#ffe8a8';
+  ctx.shadowColor = 'rgba(255, 200, 100, 0.45)';
+  ctx.shadowBlur = 10;
+  ctx.font = 'bold 32px "Segoe UI", "Helvetica", sans-serif';
+  ctx.fillText('Temple de l’Ascension', 36, 42);
+
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#a89cc8';
+  ctx.font = '16px "Segoe UI", "Helvetica", sans-serif';
+  ctx.fillText('Carte céleste des grandes réussites — sanctuaire du prestige.', 36, 64);
+
+  // Bandeau d’infos à droite.
+  ctx.textAlign = 'right';
+  ctx.fillStyle = unlocked ? '#7CFFB8' : '#FFB47A';
+  ctx.shadowColor = unlocked ? 'rgba(124,255,184,0.45)' : 'rgba(255,180,122,0.4)';
+  ctx.shadowBlur = 10;
+  ctx.font = 'bold 22px "Segoe UI", "Helvetica", sans-serif';
+  ctx.fillText(unlocked ? 'TEMPLE OUVERT' : 'TEMPLE SCELLÉ', TEMPLE_W - 36, 42);
+
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#cdb6e0';
+  ctx.font = '14px "Segoe UI", "Helvetica", sans-serif';
+  ctx.fillText(
+    `Points : ${points}  ·  Clés ${keysCount} / ${keysTotal}`,
+    TEMPLE_W - 36,
+    64,
+  );
+
+  ctx.restore();
+}
+
+function drawTempleFooter(ctx, unlocked, keysCount, keysTotal) {
+  ctx.save();
+  const y = TEMPLE_H - 46;
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(0, y, TEMPLE_W, 46);
+  ctx.strokeStyle = rgba(TEMPLE_GOLD_RGB, 0.28);
+  ctx.beginPath();
+  ctx.moveTo(36, y);
+  ctx.lineTo(TEMPLE_W - 36, y);
+  ctx.stroke();
+
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#a89cc8';
+  ctx.font = '14px "Segoe UI", "Helvetica", sans-serif';
+  ctx.fillText(
+    unlocked
+      ? 'Toutes les voies maîtrisées — le sanctuaire vibre de ta présence.'
+      : 'Réunis les clés pour briser les sceaux. Chaque réussite illumine un astre.',
+    36,
+    y + 23,
+  );
+
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#5a566e';
+  ctx.fillText(`REBORN sandbox  ·  ${keysCount}/${keysTotal} sceaux`, TEMPLE_W - 36, y + 23);
+  ctx.restore();
+}
+
+/**
+ * Carte « temple céleste » : torii central, 6 clés disposées en constellation,
+ * arc de progression doré, fond cosmique.
+ *
+ * @param {object} p
+ * @param {number} [p.points]
+ * @param {string[]} [p.keys] ids de clés acquises (cf. `services/temple.js`)
+ * @param {boolean} [p.templeUnlocked]
+ */
+async function renderTemplePng({ points = 0, keys = [], templeUnlocked = false } = {}) {
+  const canvas = createCanvas(TEMPLE_W, TEMPLE_H);
+  const ctx = canvas.getContext('2d');
+
+  // 1. Fond cosmique.
+  drawCosmicBackground(ctx, TEMPLE_W, TEMPLE_H);
+
+  // 2. Anneaux sacrés.
+  const cx = TEMPLE_W / 2;
+  const cy = TEMPLE_H / 2 + 14;
+  const ringR = 250;
+  drawSacredRing(ctx, cx, cy, ringR);
+
+  // 3. Calcul des positions des clés (catalogue + clés inconnues éventuelles).
+  const earned = new Set(Array.isArray(keys) ? keys : []);
+  const slots = TEMPLE_KEYS.map((k) => ({ ...k, lit: earned.has(k.id) }));
+  for (const id of earned) {
+    if (!TEMPLE_KEYS.some((k) => k.id === id)) {
+      slots.push({ id, label: 'Sceau mystérieux', hint: id, glyph: '✧', lit: true });
     }
   }
-  ctx.textAlign = 'right';
-  ctx.fillStyle = '#6b7280';
-  ctx.font = '15px "Segoe UI", sans-serif';
-  ctx.fillText('REBORN sandbox', width - pad, height - 28);
-  return c.toBuffer('image/png');
+  const N = slots.length;
+  const keyR = ringR - 30;
+  const positions = slots.map((s, i) => {
+    const angle = -Math.PI / 2 + (i / N) * Math.PI * 2;
+    return { ...s, angle, x: cx + keyR * Math.cos(angle), y: cy + keyR * Math.sin(angle) };
+  });
+
+  // 4. Lignes de constellation entre clés acquises adjacentes.
+  for (let i = 0; i < positions.length; i++) {
+    const a = positions[i];
+    const b = positions[(i + 1) % positions.length];
+    if (a.lit && b.lit) drawConstellationLine(ctx, a, b);
+  }
+
+  // 5. Arc de progression doré.
+  const ratio = Math.min(1, earned.size / Math.max(1, TEMPLE_KEYS.length));
+  drawProgressArc(ctx, cx, cy, ringR, ratio);
+
+  // 6. Sanctuaire central + torii.
+  drawSanctum(ctx, cx, cy, 100, templeUnlocked);
+  drawTorii(ctx, cx, cy + 6, 1, templeUnlocked);
+
+  // 7. Étoiles des clés (toujours par-dessus le sanctum).
+  for (const p of positions) {
+    drawKeyStar(ctx, p, p.angle);
+  }
+
+  // 8. En-tête + pied.
+  drawTempleHeader(ctx, points, templeUnlocked, earned.size, TEMPLE_KEYS.length);
+  drawTempleFooter(ctx, templeUnlocked, earned.size, TEMPLE_KEYS.length);
+
+  // Petite signature discrète au coin du sanctuaire.
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = templeUnlocked ? '#ffe8a8' : '#5a566e';
+  ctx.shadowColor = templeUnlocked ? 'rgba(255, 200, 100, 0.55)' : 'rgba(0,0,0,0)';
+  ctx.shadowBlur = 6;
+  ctx.font = `bold 13px "Segoe UI", "Helvetica", sans-serif`;
+  ctx.fillText('SANCTVM', cx, cy + 80);
+  ctx.restore();
+
+  void TEMPLE_INK;
+  return canvas.toBuffer('image/png');
 }
 
 module.exports = { renderSkillTreePng, renderTemplePng, W, H };
