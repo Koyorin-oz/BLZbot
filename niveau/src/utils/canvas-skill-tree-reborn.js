@@ -299,9 +299,9 @@ function drawMainNode(ctx, n, rgb, color, icon, lit, isCurrent, isCapstone, size
 }
 
 /** Nœud latéral décoratif (allumé quand le nœud principal parent l’est). */
-function drawSideNode(ctx, p, rgb, color, lit) {
+function drawSideNode(ctx, p, rgb, color, lit, sizes = {}) {
   const { x, y } = p;
-  const r = SIDE_R;
+  const r = sizes.sideR ?? SIDE_R;
 
   if (lit) {
     const halo = ctx.createRadialGradient(x, y, r * 0.5, x, y, r * 2);
