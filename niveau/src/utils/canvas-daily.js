@@ -327,6 +327,16 @@ async function renderDailyCard({
         ctx.fillStyle = THEME.success;
         ctx.textBaseline = 'top';
         ctx.fillText('Récompense journalière réclamée', boxMidX, rewardY + usedSize * 0.52 + 12);
+        if (rebornMajLine) {
+            ctx.textAlign = 'center';
+            ctx.fillStyle = THEME.sub;
+            ctx.font = `500 10px ${textFace}, Arial`;
+            ctx.fillText(
+                truncateText(ctx, String(rebornMajLine), innerW - 24),
+                boxMidX,
+                rewardY + usedSize * 0.52 + 30
+            );
+        }
         ctx.textAlign = 'left';
     } else {
         const subFull = 'Temps restant avant la prochaine récompense (minuit)';
