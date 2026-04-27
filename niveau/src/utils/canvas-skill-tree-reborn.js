@@ -578,9 +578,11 @@ function drawBranchTipLabel(ctx, tree, step) {
  * @param {number} [opts.points]
  * @param {Record<string, number>} [opts.steps] branch -> 0-5
  * @param {string} [opts.avatarUrl] URL Discord de l’avatar (PNG/JPG/WebP). Optionnelle.
+ * @param {'star' | 'demi'} [opts.layout] disposition (étoile par défaut, demi-cercle bas pour `voir2`)
  */
 async function renderSkillTreePng(opts = {}) {
   const { displayName = 'Joueur', points = 0, steps = {}, avatarUrl } = opts;
+  const layout = opts.layout === 'demi' ? 'demi' : 'star';
 
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
@@ -589,7 +591,7 @@ async function renderSkillTreePng(opts = {}) {
 
   const avatarImg = await loadAvatarSafe(avatarUrl);
 
-  const trees = buildLayout();
+  const { center, trees } = buildLayout(layout);
   const sOf = (br) => Math.min(5, Math.max(0, Math.floor(steps[br] || 0)));
 
   // 1) Liaisons latérales (toujours fines, en arrière-plan).
@@ -607,7 +609,7 @@ async function renderSkillTreePng(opts = {}) {
     const { rgb } = BRANCH[tree.branch];
     const s = sOf(tree.branch);
     for (let k = 0; k < NODES_PER_BRANCH; k++) {
-      const a = k === 0 ? CENTER : tree.main[k - 1];
+      const a = k === 0 ? center : tree.main[k - 1];
       const b = tree.main[k];
       if (!(s > k)) drawConnection(ctx, a, b, rgb, false);
     }
@@ -618,7 +620,7 @@ async function renderSkillTreePng(opts = {}) {
     const { rgb } = BRANCH[tree.branch];
     const s = sOf(tree.branch);
     for (let k = 0; k < NODES_PER_BRANCH; k++) {
-      const a = k === 0 ? CENTER : tree.main[k - 1];
+      const a = k === 0 ? center : tree.main[k - 1];
       const b = tree.main[k];
       if (s > k) drawConnection(ctx, a, b, rgb, true);
     }
@@ -633,8 +635,8 @@ async function renderSkillTreePng(opts = {}) {
     }
   }
 
-  // 5) Cœur central.
-  drawRoot(ctx);
+  // 5) Cœur central (en bas pour le layout demi).
+  drawRoot(ctx, center);
 
   // 6) Nœuds principaux (capstone = dernier de la branche, plus gros).
   for (const tree of trees) {
