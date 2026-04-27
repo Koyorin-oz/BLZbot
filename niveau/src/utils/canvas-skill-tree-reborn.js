@@ -457,7 +457,7 @@ function truncateText(ctx, text, maxWidth) {
   return text.slice(0, lo) + ell;
 }
 
-function drawHeader(ctx, displayName, points, sOf, bg, avatarImg) {
+function drawHeader(ctx, displayName, points, sOf, avatarImg) {
   const headH = 96;
   const bandG = ctx.createLinearGradient(0, 0, 0, headH);
   bandG.addColorStop(0, 'rgba(0,0,0,0.85)');
