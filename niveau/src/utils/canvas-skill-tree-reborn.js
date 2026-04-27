@@ -672,7 +672,7 @@ async function renderSkillTreePng(opts = {}) {
   }
 
   // 8) En-tête.
-  drawHeader(ctx, displayName, points, sOf, bg);
+  drawHeader(ctx, displayName, points, sOf, bg, avatarImg);
 
   return canvas.toBuffer('image/png');
 }
