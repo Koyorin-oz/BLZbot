@@ -326,7 +326,7 @@ function buildLayout() {
       }
     }
 
-    const tipD = 110 + 4 * NODE_GAP + 92;
+    const tipD = FIRST_NODE_DIST + 4 * NODE_GAP + 88;
     const tipX = ROOT.x + tipD * Math.cos(ang);
     const tipY = ROOT.y + tipD * Math.sin(ang);
 
