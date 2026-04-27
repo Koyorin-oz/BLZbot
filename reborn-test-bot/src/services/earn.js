@@ -1,3 +1,4 @@
+const db = require('../db');
 const users = require('./users');
 const gm = require('./guildMember');
 const C = require('../reborn/constants');
