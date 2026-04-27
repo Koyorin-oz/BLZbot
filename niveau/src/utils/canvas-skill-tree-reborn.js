@@ -976,7 +976,7 @@ function drawTorii(ctx, cx, cy, scale, unlocked) {
     ctx.closePath();
     ctx.fill();
     if (unlocked) {
-      ctx.fillStyle = 'rgba(255, 210, 170, 0.35)';
+      ctx.fillStyle = 'rgba(255, 180, 150, 0.4)';
       ctx.fillRect(x + 2, -36, 1.2, 94);
     }
   };
