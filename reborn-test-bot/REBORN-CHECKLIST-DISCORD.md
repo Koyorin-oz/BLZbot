@@ -140,4 +140,4 @@ Tout aligné REBORN = ❌
 
 **Qualité & lancement**  
 Preprod, migrations, checklist = ⚙️  
-Lancement com + reset (côté orga) = ⚙️ (process, pas seulement code) = ⚙️
+Lancement com + reset (côté orga, process) = ⚙️
