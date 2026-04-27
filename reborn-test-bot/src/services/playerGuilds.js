@@ -176,16 +176,22 @@ function joinGuild(hubDiscordId, userId, username, guildId) {
   const g = getGuild(guildId);
   if (!g || g.hub_discord_id !== hubDiscordId) return { ok: false, error: 'Guilde introuvable sur ce serveur.' };
   if (getMembershipInHub(userId, hubDiscordId)) return { ok: false, error: 'Tu es déjà dans une guilde.' };
-  const n = memberCount(guildId);
+  const n = memberCount(g.id);
   const cap = effectiveMemberCap(g);
   if (n >= cap) return { ok: false, error: 'Guilde pleine.' };
   users.getOrCreate(userId, username);
   db.prepare('INSERT INTO player_guild_members (guild_id, user_id, joined_ms, perms_json) VALUES (?, ?, ?, ?)').run(
-    guildId,
+    g.id,
     userId,
     Date.now(),
     permsJsonString(DEFAULT_PERMS),
   );
+  // Propage côté niveau si guilde pontée.
+  try {
+    const bridge = require('./niveauGuildBridge');
+    const nivId = bridge.niveauIdFromReborn(g.id);
+    if (nivId) bridge.addNiveauMember(nivId, userId);
+  } catch { /* optional */ }
   return { ok: true };
 }
 
@@ -196,6 +202,11 @@ function leaveGuild(hubDiscordId, userId) {
     return { ok: false, error: 'Chef : utilise `/guilde transferer_chef` puis `/guilde quitter`, ou `/guilde dissoudre`.' };
   }
   db.prepare('DELETE FROM player_guild_members WHERE guild_id = ? AND user_id = ?').run(row.guild_id, userId);
+  // Propage côté niveau si guilde pontée.
+  try {
+    const bridge = require('./niveauGuildBridge');
+    if (bridge.isBridged(row.guild_id)) bridge.removeNiveauMember(userId);
+  } catch { /* optional */ }
   return { ok: true };
 }
 
