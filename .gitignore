@@ -41,3 +41,7 @@ Thumbs.db
 
 # Optionnel : caches
 .cache/
+
+# Perso / brouillons (bot de test, notes — pas besoin de versionner)
+reborn-test-bot/REBORN-CHECKLIST-DISCORD.md
+reborn-discord-messages.md
