@@ -48,8 +48,6 @@ async function buildBoutiquePayload(uid, username) {
       `Tu possèdes actuellement **${fmt(bal)}** Starss — clé du jour : \`${dayKey}\` · *${time}*`,
       '',
       `**Coffres** — limite **CATM** aujourd’hui : **${catmCount}/${CATM_DAILY_LIMIT}**.`,
-      `Prix : classique **${fmt(CHEST_CLASSIC)}** · CATM **${fmt(CHEST_CATM)}** · CATL **${fmt(CHEST_CATL)}** · CATS **${fmt(CHEST_CATS)}**`,
-      `**Boosts 1h** : **${fmt(BOOST_ROW_PRICE)}** chacun (×2 XP, ×2 GXP, ×2 Starss).`,
     ].join('\n'),
   );
   container.addTextDisplayComponents(text);
