@@ -49,29 +49,29 @@ function rr(ctx, x, y, w, h, r) {
 }
 
 function drawBackground(ctx) {
-  // Fond profond : dégradé radial centré bas (focal point sur la racine).
-  const g = ctx.createRadialGradient(W / 2, H * 0.92, 30, W / 2, H * 0.92, W);
-  g.addColorStop(0, '#1a1322');
-  g.addColorStop(0.4, '#0d0a14');
-  g.addColorStop(1, '#040308');
+  // Fond plus clair, façon parchemin sombre / nuit douce.
+  const g = ctx.createRadialGradient(W / 2, H * 0.95, 60, W / 2, H * 0.5, W * 0.85);
+  g.addColorStop(0, '#332b3e');
+  g.addColorStop(0.45, '#241f30');
+  g.addColorStop(1, '#16121e');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
 
-  // Vignette pour cadrer le sujet.
-  const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.4, W / 2, H / 2, W * 0.75);
+  // Vignette douce (pour ne pas noyer les bords).
+  const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.45, W / 2, H / 2, W * 0.75);
   vg.addColorStop(0, 'rgba(0,0,0,0)');
-  vg.addColorStop(1, 'rgba(0,0,0,0.7)');
+  vg.addColorStop(1, 'rgba(0,0,0,0.32)');
   ctx.fillStyle = vg;
   ctx.fillRect(0, 0, W, H);
 
-  // Pluie d’étoiles fixes (déterministe, discrète).
+  // Quelques particules très discrètes (juste pour la matière, pas un champ d’étoiles).
   const rnd = mulberry32(0xb7e1);
-  for (let i = 0; i < 140; i++) {
+  for (let i = 0; i < 70; i++) {
     const x = rnd() * W;
     const y = rnd() * H;
-    const r = 0.3 + rnd() * 1.2;
-    const a = 0.05 + rnd() * 0.18;
-    ctx.fillStyle = `rgba(230, 220, 255, ${a})`;
+    const r = 0.4 + rnd() * 0.9;
+    const a = 0.04 + rnd() * 0.08;
+    ctx.fillStyle = `rgba(220, 215, 240, ${a})`;
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fill();
