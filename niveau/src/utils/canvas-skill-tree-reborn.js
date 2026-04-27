@@ -122,28 +122,19 @@ function quadStroke(ctx, x0, y0, x1, y1, bulge) {
 }
 
 function drawConnection(ctx, a, b, rgb, lit, intensity = 1, bulge = 22) {
+  ctx.lineCap = 'round';
   if (lit) {
-    // Halo très large
-    ctx.strokeStyle = rgba(rgb, 0.18 * intensity);
-    ctx.lineWidth = 22;
-    ctx.lineCap = 'round';
+    // Voile très léger pour donner un peu de matière sans néon.
+    ctx.strokeStyle = rgba(rgb, 0.12 * intensity);
+    ctx.lineWidth = 8;
     quadStroke(ctx, a.x, a.y, b.x, b.y, bulge);
-    // Halo moyen
-    ctx.strokeStyle = rgba(rgb, 0.35 * intensity);
-    ctx.lineWidth = 12;
-    quadStroke(ctx, a.x, a.y, b.x, b.y, bulge);
-    // Trait coloré
-    ctx.strokeStyle = rgba(rgb, 0.95);
-    ctx.lineWidth = 5;
-    quadStroke(ctx, a.x, a.y, b.x, b.y, bulge);
-    // Liseré clair
-    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
-    ctx.lineWidth = 1.4;
+    // Trait coloré principal, sobre.
+    ctx.strokeStyle = rgba(rgb, 0.85);
+    ctx.lineWidth = 3.4;
     quadStroke(ctx, a.x, a.y, b.x, b.y, bulge);
   } else {
-    ctx.strokeStyle = 'rgba(180, 180, 200, 0.18)';
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(190, 190, 215, 0.14)';
+    ctx.lineWidth = 1.6;
     quadStroke(ctx, a.x, a.y, b.x, b.y, bulge);
   }
 }
