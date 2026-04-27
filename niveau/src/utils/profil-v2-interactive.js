@@ -594,6 +594,13 @@ async function sendProfilV2WithButtons(interaction, session) {
                 await i.editReply({ content: null, files: [mainFile], components: [cont], flags: MessageFlags.IsComponentsV2 });
             }
         } catch (err) {
+            // 10062 (Unknown interaction) et 40060 (already acknowledged) sont
+            // des courses bénignes : par exemple quand reborn-test-bot prend la
+            // main sur un bouton (Quêtes, Guilde) avant que le collector niveau
+            // ne tente son `i.update(loading)`. On les ignore silencieusement.
+            if (err && (err.code === 10062 || err.code === 40060)) {
+                return;
+            }
             logger.error('profil-v2 boutons:', err);
             await handleCommandError(i, err, interaction.client);
         }
