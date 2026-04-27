@@ -94,14 +94,12 @@ function invQty(userId, itemId) {
   return row ? row.qty : 0;
 }
 
-/**
- * Objet `user` attendu par `renderDailyCard` (stars, level, xp, xp_needed).
- * @param {import('better-sqlite3').RunResult} u
- */
+/** Objet `user` attendu par `renderDailyCard` (stars, level, xp, xp_needed). */
 function buildCanvasUser(u) {
   if (!u) return null;
   const sb = users.B(u.stars);
-  const stars = sb <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(sb) : Number(sb / 10n ** 6n) / 1e6;
+  let stars = Number(sb);
+  if (!Number.isFinite(stars)) stars = 0;
   const t = u.xp_total ?? 0;
   const st = totalToLevelState(t);
   const lv = st.level;
@@ -110,7 +108,7 @@ function buildCanvasUser(u) {
     xpNeeded = T_START[lv + 1] - T_START[lv];
   }
   return {
-    stars: Number.isFinite(stars) ? stars : 0,
+    stars,
     level: lv,
     xp: st.xpInto,
     xp_needed: Math.max(1, xpNeeded),
