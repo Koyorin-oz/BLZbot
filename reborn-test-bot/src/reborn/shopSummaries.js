@@ -40,7 +40,6 @@ const ITEM_BLURBS = {
   xp_boost: '×2 gain XP perso 1h — stack / cumul (doc).',
   gxp_boost: '×2 GXP guilde 1h — focus war / ladder guilde.',
   starss_boost: '×2 Starss 1h — farm monnaie.',
-  gxp_boost: '×2 GXP 1h (guilde).',
 };
 
 const CHEST = {
