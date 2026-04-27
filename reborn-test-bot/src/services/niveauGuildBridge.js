@@ -298,9 +298,13 @@ function createNiveauGuild(name, ownerId, emoji = '🛡️') {
   if (!niv?.createGuild || !niv?.addMemberToGuild) return null;
   try {
     const existing = typeof niv.getGuildByName === 'function' ? niv.getGuildByName(name) : null;
-    if (existing) return existing.id;
+    if (existing) {
+      invalidateBridgeCache();
+      return existing.id;
+    }
     const id = niv.createGuild(name, ownerId, emoji);
     try { niv.addMemberToGuild(ownerId, id); } catch { /* maybe already inside */ }
+    invalidateBridgeCache();
     return id || null;
   } catch (e) {
     console.warn('[niveauGuildBridge] createNiveauGuild:', e?.message || e);
@@ -314,6 +318,7 @@ function addNiveauMember(niveauId, userId) {
   if (!niv?.addMemberToGuild) return false;
   try {
     niv.addMemberToGuild(userId, niveauId);
+    invalidateBridgeCache();
     return true;
   } catch (e) {
     return false; // déjà membre ou autre contrainte
@@ -326,6 +331,7 @@ function removeNiveauMember(userId) {
   if (!niv?.removeMemberFromGuild) return false;
   try {
     niv.removeMemberFromGuild(userId);
+    invalidateBridgeCache();
     return true;
   } catch {
     return false;
@@ -339,10 +345,12 @@ function dissolveNiveauGuild(niveauId) {
   try {
     if (typeof niv.dissolveGuild === 'function') {
       niv.dissolveGuild(niveauId);
+      invalidateBridgeCache();
       return true;
     }
     if (typeof niv.deleteGuild === 'function') {
       niv.deleteGuild(niveauId);
+      invalidateBridgeCache();
       return true;
     }
   } catch (e) {
