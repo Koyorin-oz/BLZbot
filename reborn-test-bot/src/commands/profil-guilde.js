@@ -173,18 +173,25 @@ module.exports = {
     if (!hub) {
       return interaction.reply({ content: 'Serveur uniquement.' });
     }
+    // Defer FIRST pour éviter le timeout 3s (les lookups guild peuvent être lents
+    // à cause du pont niveau au premier appel).
+    try {
+      if (!interaction.deferred && !interaction.replied) await interaction.deferReply();
+    } catch {
+      return; // interaction expirée — abandon silencieux
+    }
     const uid = interaction.user.id;
     const raw = interaction.options.getString('nom');
     let gRow = null;
     if (raw && raw.trim()) {
       gRow = findGuildOnHub(hub, raw);
       if (!gRow) {
-        return interaction.reply({ content: 'Guilde introuvable sur ce serveur (nom ou ID).' });
+        return interaction.editReply({ content: 'Guilde introuvable sur ce serveur (nom ou ID).' });
       }
     } else {
       const m = pg.getMembershipInHub(uid, hub);
       if (!m) {
-        return interaction.reply({
+        return interaction.editReply({
           content: 'Tu n’es dans aucune guilde **joueur** sur ce serveur. Indique un **nom** ou **ID** (`/guilde liste`).',
         });
       }
@@ -192,10 +199,8 @@ module.exports = {
     }
     const g = pg.getGuild(gRow.id);
     if (!g || g.hub_discord_id !== hub) {
-      return interaction.reply({ content: 'Guilde invalide.' });
+      return interaction.editReply({ content: 'Guilde invalide.' });
     }
-
-    await interaction.deferReply();
 
     const memRows = db
       .prepare('SELECT user_id, joined_ms FROM player_guild_members WHERE guild_id = ? ORDER BY joined_ms')
