@@ -178,7 +178,11 @@ async function handlePanelInteraction(interaction) {
       users.getOrCreate(uid, interaction.user.username);
       setArbreBg(uid, interaction.values[0]);
       await interaction.deferUpdate();
-      const b = await buildArbreContainer(uid, interaction.user.username);
+      const b = await buildArbreContainer(
+        uid,
+        interaction.member?.displayName || interaction.user.username,
+        interaction.user.displayAvatarURL({ extension: 'png', size: 128 }),
+      );
       if (!b) {
         return interaction.followUp({ content: 'Génération image indisponible (canvas).', ephemeral: true });
       }
