@@ -143,12 +143,29 @@ async function buildBoutiquePayload(uid, username) {
       .setStyle(ButtonStyle.Success)
       .setEmoji('💸'),
     new ButtonBuilder()
+      .setCustomId('rb:shop:reset')
+      .setLabel('Reset slots')
+      .setStyle(ButtonStyle.Primary)
+      .setEmoji('♻️'),
+    new ButtonBuilder()
       .setCustomId('rb:shop:re')
       .setLabel('Rafraîchir')
       .setStyle(ButtonStyle.Secondary)
       .setEmoji('🔄'),
   );
   container.addActionRowComponents(row0, row1);
+  if (shopTier >= 5) {
+    const ready = Date.now() >= shopExtras.nextCatlReadyMs(uid);
+    const row2 = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('rb:shop:claim_catl')
+        .setLabel(ready ? 'Réclamer CATL gratuit' : 'CATL — en cooldown')
+        .setStyle(ready ? ButtonStyle.Success : ButtonStyle.Secondary)
+        .setEmoji('🎁')
+        .setDisabled(!ready),
+    );
+    container.addActionRowComponents(row2);
+  }
   return {
     files: blz ? [blz.file] : [],
     components: [container],
