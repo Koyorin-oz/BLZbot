@@ -1208,18 +1208,18 @@ function drawTempleFooter(ctx, unlocked, keysCount, keysTotal) {
 
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#a89cc8';
+  ctx.fillStyle = TEMPLE_TEXT_DIM;
   ctx.font = '14px "Segoe UI", "Helvetica", sans-serif';
   ctx.fillText(
     unlocked
       ? 'Toutes les voies maîtrisées — le sanctuaire vibre de ta présence.'
-      : 'Réunis les clés pour briser les sceaux. Chaque réussite illumine un astre.',
+      : 'Réunis les clés pour briser les sceaux. Chaque réussite embrase un astre.',
     36,
     y + 23,
   );
 
   ctx.textAlign = 'right';
-  ctx.fillStyle = '#5a566e';
+  ctx.fillStyle = '#7a4a4a';
   ctx.fillText(`REBORN sandbox  ·  ${keysCount}/${keysTotal} sceaux`, TEMPLE_W - 36, y + 23);
   ctx.restore();
 }
