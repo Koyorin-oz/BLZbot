@@ -821,16 +821,16 @@ function drawCosmicBackground(ctx, w, h) {
 }
 
 function drawSacredRing(ctx, cx, cy, r) {
-  // Anneau extérieur fin doré.
+  // Anneau extérieur — plus marqué.
   ctx.save();
-  ctx.strokeStyle = rgba(TEMPLE_GOLD_RGB, 0.35);
-  ctx.lineWidth = 2.2;
+  ctx.strokeStyle = rgba(TEMPLE_GOLD_RGB, 0.55);
+  ctx.lineWidth = 2.4;
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.stroke();
 
-  ctx.strokeStyle = rgba(TEMPLE_GOLD_RGB, 0.12);
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = rgba(TEMPLE_GOLD_RGB, 0.22);
+  ctx.lineWidth = 1.1;
   ctx.beginPath();
   ctx.arc(cx, cy, r + 12, 0, Math.PI * 2);
   ctx.stroke();
@@ -838,14 +838,14 @@ function drawSacredRing(ctx, cx, cy, r) {
   ctx.arc(cx, cy, r - 12, 0, Math.PI * 2);
   ctx.stroke();
 
-  // Tick marks tous les 15°.
+  // Tick marks tous les 15° — plus visibles.
   for (let i = 0; i < 24; i++) {
     const a = (i / 24) * Math.PI * 2;
     const long = i % 4 === 0;
     const r1 = r - (long ? 18 : 8);
     const r2 = r - 2;
-    ctx.strokeStyle = rgba(TEMPLE_GOLD_RGB, long ? 0.55 : 0.22);
-    ctx.lineWidth = long ? 1.6 : 0.8;
+    ctx.strokeStyle = rgba(TEMPLE_GOLD_RGB, long ? 0.75 : 0.4);
+    ctx.lineWidth = long ? 1.8 : 0.9;
     ctx.beginPath();
     ctx.moveTo(cx + r1 * Math.cos(a), cy + r1 * Math.sin(a));
     ctx.lineTo(cx + r2 * Math.cos(a), cy + r2 * Math.sin(a));
