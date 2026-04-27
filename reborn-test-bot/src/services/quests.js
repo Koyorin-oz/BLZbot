@@ -186,12 +186,24 @@ function onMessage(userId) {
     unlocked.selection = { reward, label: def.label };
   }
 
+  // Ladder lifetime 10 → 1000 messages : claim auto les paliers franchis.
+  const ladderHits = [];
+  for (const m of LIFETIME_LADDER) {
+    if (life >= m.target && !isMilestoneClaimed(userId, m.id)) {
+      claimMilestone(userId, m.id);
+      const reward = m.reward * mult;
+      users.addStars(userId, reward);
+      ladderHits.push({ reward, label: m.label });
+    }
+  }
+
   return {
     msgs_today: msgs,
     week_points: wp,
     day_key: row.day_key,
     lifetime_msgs: life,
     unlocked,
+    ladder: ladderHits,
   };
 }
 
