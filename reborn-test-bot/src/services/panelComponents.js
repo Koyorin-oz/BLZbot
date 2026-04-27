@@ -246,7 +246,11 @@ async function handlePanelInteraction(interaction) {
 
   if (interaction.customId === 'rb:tree:re') {
     await interaction.deferUpdate();
-    const b = await buildArbreContainer(interaction.user.id, interaction.user.username);
+    const b = await buildArbreContainer(
+      interaction.user.id,
+      interaction.member?.displayName || interaction.user.username,
+      interaction.user.displayAvatarURL({ extension: 'png', size: 128 }),
+    );
     if (!b) {
       return interaction.followUp({ content: 'Génération image indisponible (canvas).', ephemeral: true });
     }
