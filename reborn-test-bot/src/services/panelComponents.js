@@ -149,6 +149,13 @@ async function handlePanelInteraction(interaction) {
       pick.set(interaction.user.id, interaction.message.id, interaction.values[0]);
       return interaction.deferUpdate();
     }
+    if (interaction.customId === 'rb:q:pick') {
+      const r = quests.pickSelection(interaction.user.id, interaction.values[0]);
+      if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
+      await interaction.deferUpdate();
+      const p = buildQuetesPayload(interaction.user.id);
+      return interaction.editReply(p);
+    }
     return;
   }
 
