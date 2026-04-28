@@ -96,4 +96,13 @@ function removeSlot(userId, slot) {
   db.prepare('DELETE FROM user_shop WHERE user_id = ? AND shop_date = ? AND slot = ?').run(userId, day, slot);
 }
 
-module.exports = { utcDateKey, effectiveShopDateKey, ensureShopSlots, getTodaySlots, getSlot, removeSlot, rollRarity };
+module.exports = {
+  utcDateKey,
+  parisDateKey,
+  effectiveShopDateKey,
+  ensureShopSlots,
+  getTodaySlots,
+  getSlot,
+  removeSlot,
+  rollRarity,
+};
