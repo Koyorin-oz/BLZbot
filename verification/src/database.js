@@ -123,11 +123,31 @@ const delGuildUser = db.prepare(
   'DELETE FROM guild_verifications WHERE guild_id = ? AND discord_user_id = ?',
 );
 const insertGuildVerification = db.prepare(
-  'INSERT INTO guild_verifications (guild_id, discord_user_id, email_hash, verified_at) VALUES (?, ?, ?, ?)',
+  'INSERT INTO guild_verifications (guild_id, discord_user_id, email_hash, ip_hash, verified_at) VALUES (?, ?, ?, ?, ?)',
+);
+const findAltsByIpStmt = db.prepare(
+  'SELECT discord_user_id, verified_at FROM guild_verifications WHERE guild_id = ? AND ip_hash = ? AND discord_user_id != ? ORDER BY verified_at DESC',
 );
 
 function findVerifiedInGuild(guildId, discordUserId) {
   return getVerificationRow.get(guildId, discordUserId) || null;
+}
+
+/**
+ * Trouve tous les autres comptes Discord ayant la même empreinte IP que le membre courant
+ * sur la même guilde. Utilisé pour la détection d'alts. Renvoie un tableau (peut être vide).
+ *
+ * Le hash IP doit être calculé via `cryptoUtil.hashIp(ipString)` côté appelant —
+ * jamais l'IP en clair pour préserver la vie privée.
+ *
+ * @param {string} guildId
+ * @param {string} ipHash
+ * @param {string} excludeDiscordUserId  ID du membre courant (à exclure du résultat)
+ * @returns {Array<{ discord_user_id: string, verified_at: number }>}
+ */
+function findAltsByIp(guildId, ipHash, excludeDiscordUserId) {
+  if (!ipHash) return [];
+  return findAltsByIpStmt.all(guildId, ipHash, excludeDiscordUserId) || [];
 }
 
 class DuplicateEmailError extends Error {
