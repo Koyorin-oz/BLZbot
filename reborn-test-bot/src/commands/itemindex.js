@@ -20,7 +20,10 @@ module.exports = {
           o.setName('pourcent').setDescription('0–100').setRequired(true).setMinValue(0).setMaxValue(100),
         ),
     )
-    .addSubcommand((sc) => sc.setName('reclamer').setDescription('Réclamer la prochaine étape disponible')),
+    .addSubcommand((sc) => sc.setName('reclamer').setDescription('Réclamer la prochaine étape disponible'))
+    .addSubcommand((sc) =>
+      sc.setName('matrice').setDescription('Vue combinée Index × Ranked × Guilde (bonus actifs).'),
+    ),
   async execute(interaction, ctx) {
     const uid = interaction.options.getUser('membre')?.id || interaction.user.id;
     if (
