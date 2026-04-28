@@ -157,13 +157,6 @@ async function buildAltEmbed(client, p) {
                 value: `≈ ${conf.risk}%\n${progressBar(conf.bar)}\n${fpHint}`,
                 inline: false,
             },
-            {
-                name: 'Action recommandée',
-                value:
-                    'Vérifie les comptes liés ci-dessous. Si tu confirmes que c’est un **alt**, sanctionne sans attribuer le rôle. ' +
-                    'Sinon, clique sur **Vérifier manuellement** pour donner le rôle.',
-                inline: false,
-            },
             { name: '👤 Utilisateur', value: userField(user, p.userId), inline: true },
             { name: '🌐 Connexion', value: formatConnexion(p.geo), inline: true },
             { name: '🔗 Comptes liés', value: altMentions, inline: false },
