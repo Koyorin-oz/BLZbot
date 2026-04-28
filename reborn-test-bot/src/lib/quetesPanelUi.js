@@ -259,7 +259,7 @@ async function buildNiveauPage(userId, niveauPageIdx) {
 
   const navRow = new ActionRowBuilder();
   navRow.addComponents(
-    new ButtonBuilder().setCustomId('rb:q:page:0').setLabel('REBORN').setStyle(ButtonStyle.Secondary).setEmoji('🎯'),
+    new ButtonBuilder().setCustomId('rb:q:page:0').setLabel('Quêtes').setStyle(ButtonStyle.Secondary).setEmoji('🎯'),
   );
   if (niveauPageIdx > 1) {
     navRow.addComponents(
