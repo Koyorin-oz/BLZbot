@@ -832,6 +832,7 @@ async function start() {
             stateSecret: String(process.env.OAUTH_STATE_SECRET || process.env.VERIF_STATE_SECRET || '').trim(),
             httpPort: parseInt(process.env.HTTP_PORT || '3782', 10),
             ownerDmIds,
+            vpnNoticeChannelId: String(process.env.VPN_NOTICE_CHANNEL_ID || '').trim() || null,
         });
     } catch (e) {
         console.error('❌ Verification system install failed:', e?.message || e);
