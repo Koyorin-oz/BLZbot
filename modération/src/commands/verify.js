@@ -70,11 +70,13 @@ module.exports = {
         const row = findVerifiedInGuild(interaction.guild.id, interaction.user.id);
         if (row) {
             try {
-                await addGuildMemberRole(
+                const unverifiedRoleId = String(process.env.UNVERIFIED_ROLE_ID || '').trim() || null;
+                await grantVerifiedRole(
                     interaction.client.token,
                     interaction.guild.id,
                     interaction.user.id,
                     cfg.verified_role_id,
+                    unverifiedRoleId,
                 );
                 await interaction.reply({
                     content: 'Tu étais déjà vérifié pour ce serveur : le rôle a été réattribué.',
