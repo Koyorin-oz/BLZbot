@@ -176,6 +176,86 @@ function weeklyEventSpawnerEntitled(userId) {
   return step(userId, 'event') >= 5;
 }
 
+// ─── Classes joueur ──────────────────────────────────────────────────────────
+/**
+ * Classe principale du joueur, déduite de l'arbre :
+ *  - 5 branches à 5/5 → `Maître` (toutes les voies),
+ *  - 1 branche à 5/5 → la classe correspondante,
+ *  - sinon → `Initié`.
+ *
+ * Chaque branche correspond à une « classe » thématique :
+ *   quest → Aventurier · guild → Suzerain · shop → Marchand
+ *   ranked → Duelliste · event → Conquérant
+ */
+const CLASS_BY_BRANCH = {
+  quest: { id: 'aventurier', name: 'Aventurier', icon: '🗺️' },
+  guild: { id: 'suzerain', name: 'Suzerain', icon: '🛡️' },
+  shop: { id: 'marchand', name: 'Marchand', icon: '💰' },
+  ranked: { id: 'duelliste', name: 'Duelliste', icon: '⚔️' },
+  event: { id: 'conquerant', name: 'Conquérant', icon: '🌌' },
+};
+function playerClasses(userId) {
+  const t = getTree(userId);
+  const maxed = [];
+  for (const b of BRANCHES) {
+    if ((t[b] || 0) >= 5) maxed.push(b);
+  }
+  if (maxed.length >= 5) return [{ id: 'maitre', name: 'Maître des voies', icon: '⛩️', maxed }];
+  if (maxed.length === 0) return [{ id: 'initie', name: 'Initié', icon: '✨', maxed: [] }];
+  return maxed.map((b) => ({ ...CLASS_BY_BRANCH[b], maxed: [b] }));
+}
+
+// ─── Branche séparatiste (5 paliers) ─────────────────────────────────────────
+/**
+ * Branche de compétence côté séparatiste.
+ * Chaque palier coûte 1 point séparatiste (gagné via vagues / événements de
+ * séparation). Effets cumulés :
+ *   1) +5 % GRP perso pendant les phases 2 (séparation),
+ *   2) -10 % perte de starss si le camp séparatiste perd,
+ *   3) +10 % récompense si le camp séparatiste gagne (cumulé au +25 %),
+ *   4) -10 % cooldown sur `/separation lancer` perso (info indicative),
+ *   5) Compétence ultime : double le gain Starss-victoire (et +1 point Temple
+ *      additionnel à la première activation côté séparatiste).
+ */
+function separatistStep(userId) {
+  users.getOrCreate(userId, '');
+  const u = users.getUser(userId);
+  return Math.max(0, Math.min(5, u?.separatist_skill_step || 0));
+}
+function separatistPoints(userId) {
+  users.getOrCreate(userId, '');
+  const u = users.getUser(userId);
+  return Math.max(0, u?.separatist_pts || 0);
+}
+function addSeparatistPoints(userId, n = 1) {
+  users.getOrCreate(userId, '');
+  const inc = Math.max(0, Math.floor(Number(n) || 0));
+  if (inc <= 0) return separatistPoints(userId);
+  db.prepare('UPDATE users SET separatist_pts = separatist_pts + ? WHERE id = ?').run(inc, userId);
+  return separatistPoints(userId);
+}
+function buySeparatistStep(userId) {
+  users.getOrCreate(userId, '');
+  const cur = separatistStep(userId);
+  if (cur >= 5) return { ok: false, error: 'Branche séparatiste complète (5/5).' };
+  const pts = separatistPoints(userId);
+  if (pts < 1) return { ok: false, error: 'Pas de point séparatiste — gagne-en via les **séparations**.' };
+  db.prepare('UPDATE users SET separatist_pts = separatist_pts - 1, separatist_skill_step = ? WHERE id = ?').run(cur + 1, userId);
+  return { ok: true, newStep: cur + 1 };
+}
+function separatistGrpMultBp(userId) {
+  return separatistStep(userId) >= 1 ? 10500 : 10000;
+}
+function separatistLossReductionFrac(userId) {
+  return separatistStep(userId) >= 2 ? 0.1 : 0;
+}
+function separatistVictoryBonusBp(userId) {
+  return separatistStep(userId) >= 3 ? 11000 : 10000;
+}
+function separatistVictoryDoubled(userId) {
+  return separatistStep(userId) >= 5;
+}
+
 module.exports = {
   BRANCHES,
   getTree,
