@@ -199,16 +199,53 @@ async function notifyMemberInChannel(client, channelId, userId, content) {
 }
 
 /**
+ * Anti-spam : si une personne re-clique sur 🔐 Vérifier ou re-soumet la page
+ * plusieurs fois d'affilée (réseau capricieux, double-clic, retry…), on ne
+ * réémet pas les mêmes notifs (salon log + DM owners + ping VPN) tant que la
+ * fenêtre de cooldown n'est pas écoulée. Clé = `<guild>:<user>:<kind>` pour ne
+ * pas confondre un échec puis un succès.
+ *
+ * Mémoire process : cohabite avec le restart du bot (le cooldown est perdu au
+ * redémarrage, ce qui est OK — c'est le scénario où l'opérateur veut voir les
+ * logs frais).
+ */
+const LOG_COOLDOWN_MS = 10_000;
+const recentLogEmissions = new Map();
+
+function isOnLogCooldown(key) {
+    const now = Date.now();
+    const last = recentLogEmissions.get(key) || 0;
+    if (now - last < LOG_COOLDOWN_MS) return true;
+    recentLogEmissions.set(key, now);
+    if (recentLogEmissions.size > 1000) {
+        // GC opportuniste : on vire les entrées 6× plus vieilles que la fenêtre.
+        const cutoff = now - LOG_COOLDOWN_MS * 6;
+        for (const [k, ts] of recentLogEmissions) {
+            if (ts < cutoff) recentLogEmissions.delete(k);
+        }
+    }
+    return false;
+}
+
+/**
  * Construit l'embed approprié selon le payload puis l'envoie :
  *  - dans le salon de logs sans IP (config par guilde) — avec bouton si pending_alt
  *  - en DM aux ownerDmIds (avec IP greffée)
  *  - dans le salon VPN (ping membre) si kind === 'vpn_blocked'
+ *
+ * Anti-spam : 10 s entre deux notifs identiques (même user + même kind).
  */
 async function dispatchVerificationLog(client, options, p) {
     const { ownerDmIds, vpnNoticeChannelId } = options;
     const { guildId, userId } = p;
     const cfg = getGuildConfig(guildId);
     const kind = resolveLogKind(p);
+
+    const dedupKey = `${guildId}:${userId}:${kind}`;
+    if (isOnLogCooldown(dedupKey)) {
+        console.log(`[verif/cooldown] notif dédupliquée (${kind}) pour ${userId} sur ${guildId}`);
+        return;
+    }
 
     const publicEmbed = await buildEmbedForKind(client, kind, p);
     const components = kind === 'pending_alt' ? [buildAltActionRow(p)] : [];
