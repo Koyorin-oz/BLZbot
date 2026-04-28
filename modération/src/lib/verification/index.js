@@ -42,19 +42,22 @@ const {
     MessageFlags,
 } = require('discord.js');
 
-const { signState } = require('./cryptoUtil');
+const { signState, hashEmail, hashIp } = require('./cryptoUtil');
 const {
     getGuildConfig,
     upsertGuildConfig,
     getEffectiveEmbed,
     resetEmbedToDefault,
     findVerifiedInGuild,
+    saveVerifiedForGuild,
 } = require('./database');
 const { addGuildMemberRole } = require('./discordApi');
 const { createVerifyServer } = require('./verifyServer');
 const {
     buildSuccessEmbed,
     buildAltEmbed,
+    buildAltActionRow,
+    buildVpnEmbed,
     buildFailEmbed,
     withSensitiveFields,
 } = require('./embeds');
