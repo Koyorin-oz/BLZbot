@@ -200,6 +200,38 @@ function migrate(db) {
       claimed_ms INTEGER NOT NULL,
       PRIMARY KEY (user_id, milestone_key)
     );
+
+    CREATE TABLE IF NOT EXISTS guild_internal_roles (
+      guild_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      role_label TEXT NOT NULL DEFAULT '',
+      PRIMARY KEY (guild_id, user_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS staff_audit (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      hub_discord_id TEXT NOT NULL,
+      mod_id TEXT NOT NULL,
+      target_id TEXT NOT NULL,
+      action TEXT NOT NULL,
+      details TEXT NOT NULL DEFAULT '',
+      created_ms INTEGER NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_audit_hub ON staff_audit(hub_discord_id);
+    CREATE INDEX IF NOT EXISTS idx_audit_target ON staff_audit(target_id);
+
+    CREATE TABLE IF NOT EXISTS staff_timeouts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      hub_discord_id TEXT NOT NULL,
+      target_id TEXT NOT NULL,
+      mod_id TEXT NOT NULL,
+      duration_min INTEGER NOT NULL,
+      reason TEXT NOT NULL DEFAULT '',
+      created_ms INTEGER NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_to_target ON staff_timeouts(hub_discord_id, target_id);
   `);
 
   addColumnIfMissing(db, 'users', 'secu_points', 'INTEGER NOT NULL DEFAULT 10');
