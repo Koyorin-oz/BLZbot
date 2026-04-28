@@ -9,6 +9,7 @@
  */
 require('dotenv').config();
 
+const { EmbedBuilder } = require('discord.js');
 const { createOAuthServer } = require('./oauthServer');
 const { createBot } = require('./bot');
 const { getGuildConfig } = require('./database');
