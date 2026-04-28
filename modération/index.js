@@ -37,6 +37,7 @@ const AntiRaidManager = require('./src/modules/antiraid');
 const { deployModerationSlashCommands } = require('./src/utils/deploy-slash-commands');
 const { handleTicketBridgeMessage } = require('./src/events/ticketBridge');
 const { ensureTicketPanelIfMissing } = require('./src/utils/ticket-panel-payload');
+const { installVerificationSystem } = require('./src/lib/verification');
 
 // Création du client Discord
 const client = new Client({
