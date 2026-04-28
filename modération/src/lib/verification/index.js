@@ -342,10 +342,18 @@ async function handleVerifyButton(interaction, opts, client) {
         return;
     }
     const url = buildVerifyUrl(opts, interaction.user.id, interaction.guild.id);
+    const linkRow = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setStyle(ButtonStyle.Link)
+            .setURL(url)
+            .setLabel('🔓 Ouvrir la page de vérification'),
+    );
     await interaction.reply({
         content:
-            `🔗 Ouvre ce lien dans ton navigateur (**même compte Discord**) :\n${url}\n\n` +
-            `Une fois validé, tu recevras automatiquement le rôle.`,
+            'Clique sur le bouton ci-dessous pour ouvrir la page de vérification dans ton navigateur ' +
+            '(reste connecté(e) au **même compte Discord**).\n' +
+            'Une fois validé, tu recevras automatiquement le rôle.',
+        components: [linkRow],
         flags: MessageFlags.Ephemeral,
     });
 }
