@@ -293,6 +293,7 @@ function installVerificationSystem(client, opts) {
     const httpPort = Number.isFinite(opts.httpPort) && opts.httpPort > 0 ? opts.httpPort : 3782;
     const ownerDmIds = Array.isArray(opts.ownerDmIds) ? opts.ownerDmIds : [];
     const vpnNoticeChannelId = String(opts.vpnNoticeChannelId || '').trim() || null;
+    const unverifiedRoleId = String(opts.unverifiedRoleId || '').trim() || null;
 
     if (ownerDmIds.length === 0) {
         console.warn(
