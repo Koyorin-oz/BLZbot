@@ -213,6 +213,21 @@ async function handlePanelInteraction(interaction) {
     return interaction.editReply({ files: p.files, components: p.components, flags: p.flags });
   }
 
+  if (interaction.customId === 'rb:inv:use') {
+    const v = pick.get(interaction.user.id, interaction.message.id);
+    if (!v || !v.startsWith('i:')) {
+      return interaction.reply({ content: 'Sélectionne d’abord un item dans le menu.' });
+    }
+    const itemId = v.slice(2);
+    const itemEffects = require('./itemEffects');
+    const r = await itemEffects.useItem(interaction.user.id, itemId);
+    if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
+    await interaction.deferUpdate();
+    const p = await buildInventairePayload(interaction.user.id, interaction.user.username);
+    await interaction.editReply({ files: p.files, components: p.components, flags: p.flags });
+    return interaction.followUp({ content: r.message || '✅ Item utilisé.' });
+  }
+
   // ─── Panel Quêtes ──────────────────────────────────────────────────────────
   if (interaction.customId === 'rb:q:re') {
     await interaction.deferUpdate();
