@@ -28,12 +28,25 @@ CREATE TABLE IF NOT EXISTS guild_verifications (
   guild_id TEXT NOT NULL,
   discord_user_id TEXT NOT NULL,
   email_hash TEXT NOT NULL,
+  ip_hash TEXT,
   verified_at INTEGER NOT NULL,
   PRIMARY KEY (guild_id, discord_user_id)
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_guild_verifications_email
   ON guild_verifications(guild_id, email_hash);
+CREATE INDEX IF NOT EXISTS idx_guild_verifications_ip
+  ON guild_verifications(guild_id, ip_hash);
 `);
+
+/** Migration safe : ajoute `ip_hash` aux DB existantes (pré-1.1). */
+function safeAddVerificationColumn(name, sqlType) {
+  try {
+    db.exec(`ALTER TABLE guild_verifications ADD COLUMN ${name} ${sqlType}`);
+  } catch (e) {
+    if (!/duplicate column/i.test(String(e.message))) throw e;
+  }
+}
+safeAddVerificationColumn('ip_hash', 'TEXT');
 
 const DEFAULT_EMBED = {
   embed_title: '🔐 Vérification',
