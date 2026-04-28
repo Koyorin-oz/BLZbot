@@ -816,6 +816,28 @@ async function start() {
         console.log(`[READY] Connecté en tant que ${client.user.tag}`);
     }
 
+    // Système de vérification OAuth (panneau public + serveur Express + DM owners pour logs IP).
+    // Désactivé proprement si une variable .env manque : warn + skip, le reste du bot continue normalement.
+    try {
+        const ownerDmIds = String(process.env.OWNER_DM_IDS || '')
+            .split(/[,\s]+/)
+            .map((s) => s.trim())
+            .filter((s) => /^\d{17,22}$/.test(s));
+
+        installVerificationSystem(client, {
+            botToken: config.BOT_TOKEN,
+            clientId: String(process.env.DISCORD_CLIENT_ID || '').trim(),
+            clientSecret: String(process.env.DISCORD_CLIENT_SECRET || '').trim(),
+            redirectUri: String(process.env.OAUTH_REDIRECT_URI || '').trim(),
+            publicBaseUrl: String(process.env.PUBLIC_BASE_URL || '').trim(),
+            stateSecret: String(process.env.OAUTH_STATE_SECRET || '').trim(),
+            httpPort: parseInt(process.env.HTTP_PORT || '3782', 10),
+            ownerDmIds,
+        });
+    } catch (e) {
+        console.error('❌ Verification system install failed:', e?.message || e);
+    }
+
     const rawDefer = process.env.BLZ_DEFER_SLASH_DEPLOY_MS;
     let deferMs =
         rawDefer !== undefined && rawDefer !== '' ? parseInt(rawDefer, 10) : 0;
