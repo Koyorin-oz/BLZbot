@@ -189,13 +189,6 @@ async function buildVpnEmbed(client, p) {
         )
         .addFields(
             {
-                name: 'Ce que ça signifie',
-                value:
-                    "Les VPNs permettent de masquer sa vraie identité et d’accéder depuis n’importe quel pays. " +
-                    "Ils sont fréquemment utilisés pour contourner des bannissements ou créer des comptes alternatifs indétectables.",
-                inline: false,
-            },
-            {
                 name: 'Risque de faux positif : Faible (~10%)',
                 value:
                     `${progressBar(1)}\n` +
