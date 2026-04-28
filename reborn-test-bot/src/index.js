@@ -141,6 +141,46 @@ client.on('interactionCreate', async (interaction) => {
     // Pas l'auteur → laisser niveau gérer le message d'erreur d'origine.
   }
 
+  // ─── Bouton « 🌳 Arbre » du /profil niveau → canvas /arbre REBORN ──
+  if (
+    interaction.isButton() &&
+    /^pv2_arbre_\d+$/.test(interaction.customId)
+  ) {
+    const m = interaction.customId.match(/^pv2_arbre_(\d+)$/);
+    const targetId = m ? m[1] : null;
+    if (targetId === interaction.user.id) {
+      try {
+        await interaction.deferUpdate();
+        const { buildArbreContainer } = require('./services/panelComponents');
+        const b = await buildArbreContainer(
+          interaction.user.id,
+          interaction.member?.displayName || interaction.user.username,
+          interaction.user.displayAvatarURL({ extension: 'png', size: 128 }),
+          'demi',
+        );
+        if (b) {
+          await interaction.editReply({
+            files: [b.file],
+            components: [b.container],
+            flags: b.flags,
+          });
+        } else {
+          await interaction.editReply({
+            content: 'Arbre indisponible (canvas KO). Réessaie ou utilise `/arbre voir`.',
+            files: [],
+            components: [],
+            embeds: [],
+          });
+        }
+      } catch (e) {
+        if (e?.code !== 10062 && e?.code !== 40060) {
+          console.error('[profil → arbre]', e?.message || e);
+        }
+      }
+      return;
+    }
+  }
+
   // ─── Bouton « 🛡️ Guilde » du /profil niveau → canvas /profil-guilde REBORN ──
   // On vérifie que le clicker EST l'auteur du /profil (sinon on laisse niveau
   // afficher son message « seul l'auteur peut… »).
