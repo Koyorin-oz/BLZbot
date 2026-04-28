@@ -262,6 +262,9 @@ function migrate(db) {
   addColumnIfMissing(db, 'users', 'temple_sources_json', "TEXT NOT NULL DEFAULT '[]'");
   addColumnIfMissing(db, 'users', 'temple_unlocked', 'INTEGER NOT NULL DEFAULT 0');
   addColumnIfMissing(db, 'users', 'arbre_bg', "TEXT NOT NULL DEFAULT 'profil'");
+  addColumnIfMissing(db, 'users', 'separatist_pts', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'users', 'separatist_skill_step', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'users', 'item_cd_json', "TEXT NOT NULL DEFAULT '{}'");
   addColumnIfMissing(db, 'trades', 'from_event', "TEXT NOT NULL DEFAULT '0'");
   addColumnIfMissing(db, 'trades', 'to_event', "TEXT NOT NULL DEFAULT '0'");
 
