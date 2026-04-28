@@ -256,7 +256,13 @@ function createVerifyServer(opts) {
         const already = findVerifiedInGuild(guildId, discordUserId);
         if (already) {
             try {
-                await addGuildMemberRole(opts.botToken, guildId, discordUserId, cfg.verified_role_id);
+                await grantVerifiedRole(
+                    opts.botToken,
+                    guildId,
+                    discordUserId,
+                    cfg.verified_role_id,
+                    opts.unverifiedRoleId,
+                );
             } catch { /* le rôle est peut-être déjà appliqué */ }
             await emitLog(ip, userAgent, {
                 guildId,
