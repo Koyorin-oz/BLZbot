@@ -51,7 +51,7 @@ const {
     findVerifiedInGuild,
     saveVerifiedForGuild,
 } = require('./database');
-const { addGuildMemberRole } = require('./discordApi');
+const { addGuildMemberRole, grantVerifiedRole } = require('./discordApi');
 const { createVerifyServer } = require('./verifyServer');
 const {
     buildSuccessEmbed,
