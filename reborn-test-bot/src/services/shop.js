@@ -7,6 +7,15 @@ function utcDateKey() {
   return new Date().toISOString().slice(0, 10);
 }
 
+/**
+ * Clé de jour Europe/Paris (`YYYY-MM-DD`) — c'est ce qui sert de **reset minuit
+ * fuseau Paris** : tous les slots de la veille sont ignorés dès que la date
+ * change côté Paris.
+ */
+function parisDateKey() {
+  return parisClock().ymd;
+}
+
 /** Jour + vague minuit / midi (Europe/Paris) si branche boutique étape ≥ 3 (doc REBORN). */
 function parisClock() {
   const parts = new Intl.DateTimeFormat('fr-FR', {
