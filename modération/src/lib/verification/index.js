@@ -42,7 +42,7 @@ const {
     MessageFlags,
 } = require('discord.js');
 
-const { signState, hashEmail, hashIp } = require('./cryptoUtil');
+const { signState, hashEmail } = require('./cryptoUtil');
 const {
     getGuildConfig,
     upsertGuildConfig,
