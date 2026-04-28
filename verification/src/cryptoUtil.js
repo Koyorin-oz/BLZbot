@@ -18,6 +18,14 @@ function hashEmail(email) {
 }
 
 /**
+ * Hash SHA-256 d'une IP normalisée (lowercase, trim).
+ * Stocké en DB pour la détection d'alts sans persister l'IP en clair.
+ */
+function hashIp(ip) {
+  return sha256Hex(String(ip || '').trim().toLowerCase());
+}
+
+/**
  * @param {{ discordUserId: string, guildId: string }} params
  * @param {string} secret
  */
