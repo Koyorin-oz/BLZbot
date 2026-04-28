@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const pg = require('../services/playerGuilds');
-const { label } = require('../reborn/grades');
+const { label, NEXT_REQUIREMENTS, ORDER, nextGrade } = require('../reborn/grades');
+const ladder = require('../services/guildLadder');
 
 function parseBig(s) {
   return BigInt(String(s || '').replace(/\s/g, ''));
