@@ -54,7 +54,10 @@ module.exports = {
     .setName('temple')
     .setDescription('Points « temple » (carte canvas + rappel texte).')
     .addSubcommand((sc) => sc.setName('voir').setDescription('Points + statut (recalcul auto)'))
-    .addSubcommand((sc) => sc.setName('sync').setDescription('Forcer le recalcul (serveur actuel)')),
+    .addSubcommand((sc) => sc.setName('sync').setDescription('Forcer le recalcul (serveur actuel)'))
+    .addSubcommand((sc) =>
+      sc.setName('classement').setDescription('Classement Roi & Légende du Temple.'),
+    ),
   async execute(interaction) {
     // Défère immédiatement (canvas + fetch peuvent dépasser 3 s -> 10062).
     await interaction.deferReply();
