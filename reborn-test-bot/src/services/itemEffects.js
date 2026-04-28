@@ -185,17 +185,17 @@ async function useItem(userId, itemId) {
   if (id === 'crystal') {
     if (!users.takeInventory(userId, id, 1)) return { ok: false, error: 'Indisponible.' };
     users.addStars(userId, 500_000n);
-    return { ok: true, message: '💠 **Crystal** consommé : +500 000 starss (et tu peux toujours t'en servir comme palier de grade).' };
+    return { ok: true, message: '💠 **Crystal** consommé : +500 000 starss (et tu peux toujours en garder pour un palier de grade).' };
   }
 
   // Hacker token : non consommé ici (utilisé via /hacker dédié).
   if (id === 'hacker_token') {
-    return { ok: false, error: 'Le **jeton hacker** s\'utilise via la commande dédiée `/hacker`.' };
+    return { ok: false, error: 'Le **jeton hacker** s’utilise via la commande dédiée `/hacker`.' };
   }
 
   // Items « décoratifs » (planète, étoile, baleine…) : pas d'effet direct,
   // ils servent à l'index (ranger / collectionner).
-  return { ok: false, error: 'Cet item n\'a pas d\'effet utilisable ici (collection / index).' };
+  return { ok: false, error: 'Cet item n’a pas d’effet utilisable ici (collection / index).' };
 }
 
 module.exports = { useItem };
