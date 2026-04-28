@@ -418,6 +418,36 @@ function getMemberPerms(guildId, userId) {
   return parsePermsJson(m.perms_json);
 }
 
+// ─── Rôles internes custom (étiquette libre par membre) ─────────────────────
+function getInternalRole(guildId, userId) {
+  const r = db
+    .prepare('SELECT role_label FROM guild_internal_roles WHERE guild_id = ? AND user_id = ?')
+    .get(guildId, userId);
+  return r?.role_label || '';
+}
+
+function setInternalRole(guildId, leaderId, targetUserId, label) {
+  const g = getGuild(guildId);
+  if (!g || g.leader_id !== leaderId) return { ok: false, error: 'Chef uniquement.' };
+  if (!memberRow(guildId, targetUserId)) return { ok: false, error: 'Cible pas membre de la guilde.' };
+  const lbl = String(label || '').slice(0, 32).trim();
+  if (lbl.length === 0) {
+    db.prepare('DELETE FROM guild_internal_roles WHERE guild_id = ? AND user_id = ?').run(guildId, targetUserId);
+    return { ok: true, label: '' };
+  }
+  db.prepare(
+    `INSERT INTO guild_internal_roles (guild_id, user_id, role_label) VALUES (?, ?, ?)
+     ON CONFLICT(guild_id, user_id) DO UPDATE SET role_label = excluded.role_label`,
+  ).run(guildId, targetUserId, lbl);
+  return { ok: true, label: lbl };
+}
+
+function listInternalRoles(guildId) {
+  return db
+    .prepare('SELECT user_id, role_label FROM guild_internal_roles WHERE guild_id = ?')
+    .all(guildId);
+}
+
 function setMemberPerm(guildId, leaderId, targetUserId, key, value) {
   const g = getGuild(guildId);
   if (!g || g.leader_id !== leaderId) return { ok: false, error: 'Chef uniquement.' };
