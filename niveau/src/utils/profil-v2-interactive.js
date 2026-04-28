@@ -232,6 +232,9 @@ async function sendProfilV2WithButtons(interaction, session) {
             buttons.push(
                 new ButtonBuilder().setCustomId(`${INV}_${targetUser.id}`).setLabel('📦 Inventaire').setStyle(ButtonStyle.Primary)
             );
+            buttons.push(
+                new ButtonBuilder().setCustomId(`${ARBRE}_${targetUser.id}`).setLabel('🌳 Arbre').setStyle(ButtonStyle.Success)
+            );
         }
         if (guild) {
             buttons.push(
