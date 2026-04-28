@@ -45,7 +45,7 @@ const {
     findVerifiedInGuild,
 } = require('./database');
 const { addGuildMemberRole } = require('./discordApi');
-const { lookupIp } = require('./geolocation');
+const { lookupIp, isVpnOrProxy } = require('./geolocation');
 
 function escapeHtml(s) {
     return String(s)
