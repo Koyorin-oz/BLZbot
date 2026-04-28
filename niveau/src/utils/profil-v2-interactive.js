@@ -315,6 +315,13 @@ async function sendProfilV2WithButtons(interaction, session) {
             ) {
                 return;
             }
+            // Bypass: laisse reborn-test-bot prendre la main sur le bouton Arbre.
+            if (
+                process.env.REBORN_PROFIL_ARBRE_BYPASS === '1' &&
+                i.customId.startsWith(`${ARBRE}_`)
+            ) {
+                return;
+            }
 
             if (i.customId.startsWith(`${INV}_`)) {
                 await i.deferUpdate();
