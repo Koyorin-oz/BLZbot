@@ -551,7 +551,13 @@ async function handleVerifyButton(interaction, opts, client) {
     const existing = findVerifiedInGuild(interaction.guild.id, interaction.user.id);
     if (existing) {
         try {
-            await addGuildMemberRole(client.token, interaction.guild.id, interaction.user.id, cfg.verified_role_id);
+            await grantVerifiedRole(
+                client.token,
+                interaction.guild.id,
+                interaction.user.id,
+                cfg.verified_role_id,
+                opts.unverifiedRoleId,
+            );
             await interaction.reply({
                 content: 'Tu étais déjà enregistré comme vérifié : le rôle a été réappliqué.',
                 flags: MessageFlags.Ephemeral,
