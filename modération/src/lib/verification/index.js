@@ -385,6 +385,134 @@ function installVerificationSystem(client, opts) {
  *  Handlers (composants)
  * -------------------------------------------------------------------------- */
 
+/**
+ * Permission requise pour valider/refuser manuellement une vérification après
+ * détection d'alt. On accepte tout staff disposant **d'au moins une** des
+ * permissions de modération courantes : Administrator, ManageGuild, BanMembers,
+ * KickMembers, ModerateMembers. Couvre Superviseur / Admin / Modérateur sans
+ * exiger d'IDs de rôles dans la config (qui sont propres à chaque serveur).
+ */
+function isStaffReviewer(interaction) {
+    if (!interaction.guild || !interaction.memberPermissions) return false;
+    const p = interaction.memberPermissions;
+    return (
+        p.has(PermissionFlagsBits.Administrator) ||
+        p.has(PermissionFlagsBits.ManageGuild) ||
+        p.has(PermissionFlagsBits.BanMembers) ||
+        p.has(PermissionFlagsBits.KickMembers) ||
+        p.has(PermissionFlagsBits.ModerateMembers)
+    );
+}
+
+/**
+ * Bouton "Vérifier manuellement (staff)" / "Refuser (alt confirmé)" sous l'embed
+ * d'alerte alt. CustomId : `verify:manual_grant:<guildId>:<userId>` ou
+ * `verify:manual_reject:<guildId>:<userId>`.
+ */
+async function handleManualReview(interaction, _opts, client) {
+    if (!interaction.guild) {
+        await interaction.reply({ content: 'Utilisable seulement sur un serveur.', flags: MessageFlags.Ephemeral });
+        return;
+    }
+    if (!isStaffReviewer(interaction)) {
+        await interaction.reply({
+            content:
+                "🔒 Réservé aux **modérateurs / superviseurs / admins**. Tu n'as pas la permission de valider manuellement une vérification.",
+            flags: MessageFlags.Ephemeral,
+        });
+        return;
+    }
+
+    const parts = interaction.customId.split(':');
+    const action = parts[1];
+    const guildId = parts[2];
+    const userId = parts[3];
+    if (!guildId || !userId) {
+        await interaction.reply({ content: 'Bouton corrompu.', flags: MessageFlags.Ephemeral });
+        return;
+    }
+    if (interaction.guild.id !== guildId) {
+        await interaction.reply({
+            content: 'Ce bouton appartient à un autre serveur.',
+            flags: MessageFlags.Ephemeral,
+        });
+        return;
+    }
+
+    const cfg = getGuildConfig(guildId);
+    if (!cfg?.verified_role_id) {
+        await interaction.reply({
+            content: "Le rôle vérifié n'est plus configuré sur ce serveur. Refais `/setup-verification`.",
+            flags: MessageFlags.Ephemeral,
+        });
+        return;
+    }
+
+    const targetMessage = interaction.message;
+
+    if (action === 'manual_reject') {
+        const baseEmbed = targetMessage?.embeds?.[0];
+        const updated = baseEmbed
+            ? EmbedBuilder.from(baseEmbed)
+                  .setColor(0xc0392b)
+                  .setTitle('🚫 Compte alternatif — refusé manuellement')
+                  .setFooter({
+                      text: `Refusé par ${interaction.user.username} • ${new Date().toLocaleString('fr-FR')}`,
+                  })
+            : new EmbedBuilder()
+                  .setColor(0xc0392b)
+                  .setTitle('🚫 Compte alternatif — refusé')
+                  .setDescription(`Refusé par <@${interaction.user.id}>.`);
+        await interaction.update({ embeds: [updated], components: [] }).catch(async () => {
+            await interaction.reply({ content: 'Refus enregistré.', flags: MessageFlags.Ephemeral });
+        });
+        return;
+    }
+
+    // manual_grant : on attribue le rôle + on enregistre en DB pour qu'au prochain
+    // /verify de cette personne, ça soit considéré "déjà vérifié" (idempotent).
+    try {
+        await addGuildMemberRole(client.token, guildId, userId, cfg.verified_role_id);
+    } catch (e) {
+        await interaction.reply({
+            content: `❌ Impossible d'attribuer le rôle : ${e.message || e}. Vérifie que le rôle du bot est **au-dessus** du rôle vérifié.`,
+            flags: MessageFlags.Ephemeral,
+        });
+        return;
+    }
+
+    try {
+        const emailHashPlaceholder = hashEmail(`noverif:${userId}`);
+        // Pas d'IP côté staff (on ne la connaît plus à ce stade), on persiste sans.
+        saveVerifiedForGuild(guildId, userId, emailHashPlaceholder, null);
+    } catch (e) {
+        // Le rôle est déjà attribué : on ne re-rollback pas. On informe juste.
+        console.error('[verif/manual_grant] saveVerifiedForGuild', e);
+    }
+
+    const baseEmbed = targetMessage?.embeds?.[0];
+    const updated = baseEmbed
+        ? EmbedBuilder.from(baseEmbed)
+              .setColor(0x2ecc71)
+              .setTitle('✅ Compte alternatif — vérifié manuellement')
+              .setFooter({
+                  text: `Validé par ${interaction.user.username} • ${new Date().toLocaleString('fr-FR')}`,
+              })
+        : new EmbedBuilder()
+              .setColor(0x2ecc71)
+              .setTitle('✅ Vérification manuelle')
+              .setDescription(`<@${userId}> validé par <@${interaction.user.id}>.`);
+
+    try {
+        await interaction.update({ embeds: [updated], components: [] });
+    } catch {
+        await interaction.reply({
+            content: `✅ Rôle attribué à <@${userId}>.`,
+            flags: MessageFlags.Ephemeral,
+        });
+    }
+}
+
 async function handleVerifyButton(interaction, opts, client) {
     if (!interaction.guild) {
         await interaction.reply({ content: 'Utilisable seulement sur un serveur.', flags: MessageFlags.Ephemeral });
