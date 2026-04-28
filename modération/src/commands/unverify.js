@@ -91,7 +91,6 @@ module.exports = {
 
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-        const unverifiedRoleId = String(process.env.UNVERIFIED_ROLE_ID || '').trim() || null;
         const member = await interaction.guild.members.fetch(target.id).catch(() => null);
         const wasInDb = Boolean(findVerifiedInGuild(interaction.guild.id, target.id));
 
@@ -112,35 +111,16 @@ module.exports = {
             }
         }
 
-        // 2. Remise du rôle "non vérifié" si configuré et si membre encore présent.
-        let unverifiedReapplied = false;
-        if (unverifiedRoleId && member && !member.roles.cache.has(unverifiedRoleId)) {
-            try {
-                await addGuildMemberRole(
-                    interaction.client.token,
-                    interaction.guild.id,
-                    target.id,
-                    unverifiedRoleId,
-                );
-                unverifiedReapplied = true;
-            } catch (e) {
-                console.warn(`[unverify] ajout rôle non-vérifié ${target.id} : ${e.message || e}`);
-            }
-        }
-
-        // 3. Purge DB (libère l'IP du registre d'alts).
+        // 2. Purge DB (libère l'IP du registre d'alts pour cette guilde).
         const dbDeleted = deleteVerifiedForGuild(interaction.guild.id, target.id);
 
-        // 4. Réponse staff + log éventuel.
+        // 3. Réponse staff + log éventuel.
         const lines = [
             `🧹 **Vérification réinitialisée pour <@${target.id}>**`,
             `• Rôle vérifié retiré : ${roleRemoved ? '✅' : '❌ (absent ou échec)'}`,
+            `• Entrée DB supprimée : ${dbDeleted ? '✅' : '— (déjà absente)'}`,
         ];
-        if (unverifiedRoleId) {
-            lines.push(`• Rôle non-vérifié remis : ${unverifiedReapplied ? '✅' : '❌ (déjà présent ou échec)'}`);
-        }
-        lines.push(`• Entrée DB supprimée : ${dbDeleted ? '✅' : '— (déjà absente)'}`);
-        if (!member) lines.push("• Membre absent du serveur (action effectuée tant bien que mal).");
+        if (!member) lines.push('• Membre absent du serveur (rôle non retiré, DB purgée).');
         if (!wasInDb && !roleRemoved) {
             lines.push(
                 "\n⚠️ Ce membre n'avait jamais été vérifié sur ce serveur (rien à faire en pratique).",
@@ -166,9 +146,6 @@ module.exports = {
                                 name: 'Actions effectuées',
                                 value:
                                     `• Rôle vérifié retiré : ${roleRemoved ? 'oui' : 'non'}\n` +
-                                    (unverifiedRoleId
-                                        ? `• Rôle non-vérifié remis : ${unverifiedReapplied ? 'oui' : 'non'}\n`
-                                        : '') +
                                     `• Entrée DB supprimée : ${dbDeleted ? 'oui' : 'non (déjà absente)'}`,
                                 inline: false,
                             },
