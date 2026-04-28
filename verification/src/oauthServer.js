@@ -68,7 +68,9 @@ function clientIp(req) {
  *   ip: string,
  *   userAgent?: string,
  *   email?: string,
- *   existingUserId?: string
+ *   existingUserId?: string,
+ *   geo?: { country: string, countryCode: string, isp: string, flag: string } | null,
+ *   alts?: Array<{ discord_user_id: string, verified_at: number }>
  * }) => Promise<void>} [opts.onVerificationLog]
  */
 function createOAuthServer(opts) {
