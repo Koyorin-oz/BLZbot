@@ -104,8 +104,17 @@ module.exports = {
             interaction.user.id,
             interaction.guild.id,
         );
+        const linkRow = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setStyle(ButtonStyle.Link)
+                .setURL(url)
+                .setLabel('🔓 Ouvrir la page de vérification'),
+        );
         await interaction.reply({
-            content: `🔗 Lien de vérification :\n${url}`,
+            content:
+                'Clique sur le bouton ci-dessous pour ouvrir la page de vérification dans ton navigateur ' +
+                '(reste connecté(e) au **même compte Discord**).',
+            components: [linkRow],
             flags: MessageFlags.Ephemeral,
         });
     },
