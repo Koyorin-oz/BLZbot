@@ -833,6 +833,7 @@ async function start() {
             httpPort: parseInt(process.env.HTTP_PORT || '3782', 10),
             ownerDmIds,
             vpnNoticeChannelId: String(process.env.VPN_NOTICE_CHANNEL_ID || '').trim() || null,
+            unverifiedRoleId: String(process.env.UNVERIFIED_ROLE_ID || '').trim() || null,
         });
     } catch (e) {
         console.error('❌ Verification system install failed:', e?.message || e);
