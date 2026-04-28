@@ -197,6 +197,7 @@ const A_PREFIX = 'pv2_a';
 const BACK = 'pv2_back';
 const INV = 'pv2_inv';
 const GUILD = 'pv2_guild';
+const ARBRE = 'pv2_arbre';
 
 /**
  * @param {import('discord.js').ChatInputCommandInteraction} interaction
