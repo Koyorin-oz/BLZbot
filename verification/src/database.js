@@ -34,8 +34,6 @@ CREATE TABLE IF NOT EXISTS guild_verifications (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_guild_verifications_email
   ON guild_verifications(guild_id, email_hash);
-CREATE INDEX IF NOT EXISTS idx_guild_verifications_ip
-  ON guild_verifications(guild_id, ip_hash);
 `);
 
 /** Migration safe : ajoute `ip_hash` aux DB existantes (pré-1.1). */
@@ -47,6 +45,9 @@ function safeAddVerificationColumn(name, sqlType) {
   }
 }
 safeAddVerificationColumn('ip_hash', 'TEXT');
+
+db.exec(`CREATE INDEX IF NOT EXISTS idx_guild_verifications_ip
+  ON guild_verifications(guild_id, ip_hash);`);
 
 const DEFAULT_EMBED = {
   embed_title: '🔐 Vérification',
