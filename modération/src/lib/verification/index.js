@@ -279,6 +279,7 @@ function buildVerifyUrl(cfg, discordUserId, guildId) {
  *   httpPort: number,
  *   ownerDmIds: string[],
  *   vpnNoticeChannelId?: string,
+ *   unverifiedRoleId?: string,
  * }} opts
  */
 function installVerificationSystem(client, opts) {
