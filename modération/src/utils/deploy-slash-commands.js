@@ -54,6 +54,7 @@ const VERIF_GUILD_TARGETS = buildVerifGuildTargets();
 const GUILD_ONLY_BY_COMMAND = new Map([
     ['setup-verification', VERIF_GUILD_TARGETS],
     ['verify', VERIF_GUILD_TARGETS],
+    ['unverify', VERIF_GUILD_TARGETS],
 ]);
 
 /**
