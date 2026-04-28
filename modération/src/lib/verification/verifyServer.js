@@ -44,7 +44,7 @@ const {
     findAltsByIp,
     findVerifiedInGuild,
 } = require('./database');
-const { addGuildMemberRole } = require('./discordApi');
+const { grantVerifiedRole } = require('./discordApi');
 const { lookupIp, isVpnOrProxy } = require('./geolocation');
 
 function escapeHtml(s) {
