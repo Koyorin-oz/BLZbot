@@ -25,6 +25,11 @@ const {
 const { describeConfig, buildSetupRows } = require('../lib/verification');
 
 module.exports = {
+    // Déploiement guild-only (jamais en global) : l'app Discord est proche des 100
+    // commandes globales et ce flag évite de consommer un slot global.
+    // Voir `src/utils/deploy-slash-commands.js` → GUILD_ONLY_BY_COMMAND pour la liste
+    // des guildes cibles.
+    guildOnly: true,
     data: new SlashCommandBuilder()
         .setName('setup-verification')
         .setDescription('Panneau admin : salon du bouton, rôle, salon logs, contenu de l’embed.')
