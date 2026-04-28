@@ -312,6 +312,10 @@ function installVerificationSystem(client, opts) {
         );
     }
 
+    if (unverifiedRoleId) {
+        console.log(`[verif] Rôle non-vérifié à retirer : @&${unverifiedRoleId}`);
+    }
+
     const dispatchOptions = { ownerDmIds, vpnNoticeChannelId };
 
     const { server } = createVerifyServer({
@@ -319,6 +323,7 @@ function installVerificationSystem(client, opts) {
         publicBaseUrl: opts.publicBaseUrl,
         stateSecret: opts.stateSecret,
         httpPort,
+        unverifiedRoleId,
         onVerificationLog: (payload) => dispatchVerificationLog(client, dispatchOptions, payload),
     });
 
