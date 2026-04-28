@@ -50,6 +50,22 @@ module.exports = {
               { name: 'Événement', value: 'event' },
             ),
         ),
+    )
+    .addSubcommand((sc) => sc.setName('classe').setDescription('Voir ta/tes classe(s) joueur (issue de l’arbre).'))
+    .addSubcommand((sc) =>
+      sc
+        .setName('separatiste')
+        .setDescription('Branche séparatiste (5 paliers, 1 point gagné par séparation gagnée).')
+        .addStringOption((o) =>
+          o
+            .setName('action')
+            .setDescription('Action')
+            .setRequired(true)
+            .addChoices(
+              { name: 'Voir', value: 'voir' },
+              { name: 'Acheter le prochain palier', value: 'acheter' },
+            ),
+        ),
     ),
   async execute(interaction) {
     const uid = interaction.user.id;
