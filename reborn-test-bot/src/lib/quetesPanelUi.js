@@ -145,7 +145,7 @@ async function buildRebornPage(userId, niveauPages, ctx = {}) {
     const selLine = `🎲 **Quête à choix** — ${s.selection_line}`;
     c.addTextDisplayComponents(
       new TextDisplayBuilder().setContent(
-        ['# 🎯 Quêtes — REBORN', '', dailyLine, weeklyLine, selLine].join('\n'),
+        ['# 🎯 Quêtes', '', dailyLine, weeklyLine, selLine].join('\n'),
       ),
     );
   }
