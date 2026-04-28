@@ -218,6 +218,11 @@ async function buildInventairePayload(uid, username) {
     const row0 = new ActionRowBuilder().addComponents(select);
     const row1 = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
+        .setCustomId('rb:inv:use')
+        .setLabel('Utiliser')
+        .setStyle(ButtonStyle.Success)
+        .setEmoji('✨'),
+      new ButtonBuilder()
         .setCustomId('rb:inv:re')
         .setLabel('Rafraîchir')
         .setStyle(ButtonStyle.Secondary)
