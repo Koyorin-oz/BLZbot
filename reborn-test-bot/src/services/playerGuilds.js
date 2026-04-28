@@ -496,4 +496,7 @@ module.exports = {
   transferLeadership,
   dissolveGuild,
   memberRow,
+  getInternalRole,
+  setInternalRole,
+  listInternalRoles,
 };
