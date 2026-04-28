@@ -119,6 +119,24 @@ module.exports = {
         .addStringOption((o) =>
           o.setName('texte').setDescription('Description (≤ 200 caractères)').setRequired(true),
         ),
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('role_set')
+        .setDescription('Donner un rôle interne à un membre (chef, ex. « Officier »).')
+        .addUserOption((o) => o.setName('membre').setDescription('Membre').setRequired(true))
+        .addStringOption((o) =>
+          o
+            .setName('label')
+            .setDescription('Étiquette (≤ 32 caractères, vide = retirer)')
+            .setRequired(true),
+        ),
+    )
+    .addSubcommand((sc) =>
+      sc.setName('grade_info').setDescription('Voir les exigences de chaque grade (Bronze → Star).'),
+    )
+    .addSubcommand((sc) =>
+      sc.setName('classement').setDescription('Top guildes du serveur (par GRP total).'),
     ),
   async execute(interaction) {
     const hub = interaction.guildId;
