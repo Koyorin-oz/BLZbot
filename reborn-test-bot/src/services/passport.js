@@ -50,4 +50,4 @@ function listWarns(hubDiscordId, targetId, limit = 15) {
     .all(hubDiscordId, targetId, limit);
 }
 
-module.exports = { maybeRecoverSecu, addWarn, listWarns, MAX_SECU, RECOVER_MS };
+module.exports = { maybeRecoverSecu, addWarn, listWarns, MAX_SECU, RECOVER_MS, WARN_LOSS };
