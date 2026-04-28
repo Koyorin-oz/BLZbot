@@ -61,6 +61,38 @@ module.exports = {
   async execute(interaction) {
     // Défère immédiatement (canvas + fetch peuvent dépasser 3 s -> 10062).
     await interaction.deferReply();
+    const sub = interaction.options.getSubcommand();
+    if (sub === 'classement') {
+      const TOTAL = temple.SOURCE_DEFS.length;
+      const c = temple.classement(20);
+      const fmtRow = (row, rank) => {
+        const star = rank <= 3 ? '👑' : rank <= 10 ? '🌟' : '✦';
+        return `${star} **${rank}.** <@${row.id}> — **${row.temple_points}**/${TOTAL}${row.temple_unlocked ? ' · 🔥 ouvert' : ''}`;
+      };
+      const lines = [];
+      lines.push('# ⛩️ Classement Temple');
+      lines.push(
+        '👑 **Rois du Temple** (≥ 6 clés) — l’élite qui a maxé presque toutes les voies.',
+      );
+      if (c.kings.length) {
+        c.kings.slice(0, 10).forEach((r, i) => lines.push(fmtRow(r, i + 1)));
+      } else {
+        lines.push('*Aucun Roi sacré pour l’instant.*');
+      }
+      lines.push('');
+      lines.push('🌟 **Légendes** (3-5 clés) — les vétérans qui s’en approchent.');
+      if (c.legends.length) {
+        c.legends.slice(0, 10).forEach((r, i) => lines.push(fmtRow(r, i + 1)));
+      } else {
+        lines.push('*Aucune légende pour l’instant — tient bon, ils arrivent.*');
+      }
+      const { EmbedBuilder } = require('discord.js');
+      const e = new EmbedBuilder()
+        .setTitle('⛩️ Classement Temple')
+        .setColor(0xc0392b)
+        .setDescription(lines.join('\n').slice(0, 4000));
+      return interaction.editReply({ embeds: [e] });
+    }
     const uid = interaction.user.id;
     users.getOrCreate(uid, interaction.user.username);
     const hub = interaction.guildId || null;
