@@ -232,6 +232,15 @@ function migrate(db) {
     );
 
     CREATE INDEX IF NOT EXISTS idx_to_target ON staff_timeouts(hub_discord_id, target_id);
+
+    CREATE TABLE IF NOT EXISTS guild_grp_rank_rewards (
+      hub_discord_id TEXT NOT NULL,
+      guild_id TEXT NOT NULL,
+      season_key TEXT NOT NULL,
+      rank_key TEXT NOT NULL,
+      claimed_ms INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (hub_discord_id, guild_id, season_key, rank_key)
+    );
   `);
 
   addColumnIfMissing(db, 'users', 'secu_points', 'INTEGER NOT NULL DEFAULT 10');
