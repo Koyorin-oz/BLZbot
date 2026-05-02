@@ -70,6 +70,28 @@ function pickShopItemExcludingDiamondConflict() {
   return randomItemOfRarity('Commun');
 }
 
+/**
+ * Tirage spécial coffres dans les slots :
+ *  - **CATS** : `CATS_SPAWN_CHANCE` (1 %) par slot tiré (rareté staresque).
+ *  - **CATL** : `CATL_SPAWN_CHANCE` (50 %) si pas de CATL apparu depuis
+ *    `CATL_ROLL_MS` (3 h) sur ce slot pour ce joueur.
+ *  Renvoie un item-coffre prêt à être stocké, ou `null` si le tirage normal continue.
+ */
+function tryRollChestSlot(userId, slotIndex) {
+  // 1 % CATS — extrêmement rare, bonus surprise.
+  if (Math.random() < CATS_SPAWN_CHANCE) {
+    return getItem('coffre_cats');
+  }
+  // 50 % CATL si plus de 3 h depuis le dernier CATL pour ce joueur.
+  const lastKey = `shop_catl_spawn_ms:${userId}`;
+  const last = parseInt(meta.get(lastKey) || '0', 10) || 0;
+  if (Date.now() - last >= CATL_ROLL_MS && Math.random() < CATL_SPAWN_CHANCE) {
+    meta.set(lastKey, String(Date.now()));
+    return getItem('coffre_catl');
+  }
+  return null;
+}
+
 function ensureShopSlots(userId) {
   const day = effectiveShopDateKey(userId);
   const rows = db.prepare('SELECT slot FROM user_shop WHERE user_id = ? AND shop_date = ?').all(userId, day);
@@ -79,7 +101,10 @@ function ensureShopSlots(userId) {
   );
   for (let slot = 0; slot < 5; slot++) {
     if (taken.has(slot)) continue;
-    const item = pickShopItemExcludingDiamondConflict();
+    // Le dernier slot peut héberger un coffre spécial (CATL/CATS) selon la règle.
+    let item = null;
+    if (slot === 4) item = tryRollChestSlot(userId, slot);
+    if (!item) item = pickShopItemExcludingDiamondConflict();
     const price = priceFor(item);
     ins.run(userId, day, slot, item.id, price.toString());
   }
