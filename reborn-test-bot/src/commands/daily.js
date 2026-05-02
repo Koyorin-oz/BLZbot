@@ -69,10 +69,15 @@ function pushDoubleRoll(userId) {
   meta.set(`ddailyroll:${userId}`, JSON.stringify(arr));
 }
 
+/**
+ * Tirages daily — règle REBORN : **aucun gain de RP** ailleurs que dans
+ * `rankedRp.grantFromActivity` (msg / voc). On a remplacé la ligne « 500 RP »
+ * par un boost +1h pour conserver la valeur de palier sans toucher au ladder.
+ */
 const rewards = [
   { name: '10 000 Starss', chance: 0.3, type: 'stars', amount: 10000 },
   { name: '500 EXP', chance: 0.3, type: 'xp', amount: 500 },
-  { name: '500 RP', chance: 0.2, type: 'points', amount: 500 },
+  { name: 'Boost ×2 Starss 1h', chance: 0.2, type: 'item', itemId: 'starss_boost' },
   { name: '25 000 Starss', chance: 0.1, type: 'stars', amount: 25000 },
   { name: 'Coffre au trésor', chance: 0.09, type: 'item', itemId: 'coffre_classique' },
   { name: 'Méga coffre au trésor', chance: 0.01, type: 'item', itemId: 'coffre_catl' },
