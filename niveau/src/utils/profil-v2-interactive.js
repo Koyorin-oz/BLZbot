@@ -245,6 +245,25 @@ async function sendProfilV2WithButtons(interaction, session) {
         return new ActionRowBuilder().addComponents(buttons);
     };
 
+    /** Boutons supplémentaires (2e rangée) — features REBORN qui peuvent excéder
+     * la limite de 5 boutons par rangée. Pour l'instant : Classes (issue de l'arbre). */
+    const buildExtraButtons = (isSubView = false) => {
+        if (!isOwnProfile) return null;
+        const buttons = [
+            new ButtonBuilder().setCustomId(`${CLASSES}_${targetUser.id}`).setLabel('🎓 Classes').setStyle(ButtonStyle.Secondary),
+        ];
+        if (buttons.length === 0) return null;
+        return new ActionRowBuilder().addComponents(buttons);
+    };
+
+    /** Helper : ajoute la rangée principale + extras (best-effort). */
+    const addAllButtonRows = (container, isSubView = false) => {
+        container.addActionRowComponents(buildButtons(isSubView));
+        const extra = buildExtraButtons(isSubView);
+        if (extra) container.addActionRowComponents(extra);
+        return container;
+    };
+
     const buildPaginationButtons = (page, totalPages, kind) => {
         const base = kind === 'q' ? Q_PREFIX : A_PREFIX;
         const buttons = [
