@@ -98,6 +98,7 @@ module.exports = {
                 sanctionsCountRow,
                 staffWarnsCountRow,
                 chances,
+                timeoutsRow,
             ] = await Promise.all([
                 queryAll(staffProfileDb, 'SELECT * FROM candidatures WHERE userId = ? ORDER BY date DESC', [
                     targetUser.id,
@@ -117,6 +118,11 @@ module.exports = {
                 queryGet(sanctionsDb, 'SELECT COUNT(*) as count FROM sanctions WHERE moderatorId = ?', [targetUser.id]),
                 queryGet(staffWarnsDb, 'SELECT COUNT(*) as count FROM staff_warns WHERE userId = ?', [targetUser.id]),
                 queryGet(staffProfileDb, 'SELECT * FROM staff_chances WHERE userId = ?', [targetUser.id]),
+                queryGet(
+                    sanctionsDb,
+                    "SELECT COUNT(*) as count FROM sanctions WHERE moderatorId = ? AND type = 'Time Out'",
+                    [targetUser.id]
+                ),
             ]);
 
             const profileData = {
@@ -133,6 +139,7 @@ module.exports = {
                 sensitivityEnd: sensitivity ? sensitivity.end_date : null,
                 candidatureChances: chances ? chances.candidature_chances : 2,
                 modoTestChances: chances ? chances.modo_test_chances : 1,
+                timeoutsCount: timeoutsRow ? timeoutsRow.count : 0,
             };
 
             const imageBuffer = await renderStaffProfileCardV2(profileData);
