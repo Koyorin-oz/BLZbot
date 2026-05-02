@@ -252,6 +252,7 @@ function migrate(db) {
   addColumnIfMissing(db, 'player_guilds', 'salon_channel_id', "TEXT NOT NULL DEFAULT ''");
   addColumnIfMissing(db, 'player_guilds', 'description', "TEXT NOT NULL DEFAULT ''");
   addColumnIfMissing(db, 'player_guilds', 'icon_url', "TEXT NOT NULL DEFAULT ''");
+  addColumnIfMissing(db, 'player_guilds', 'focus_disabled', 'INTEGER NOT NULL DEFAULT 0');
 
   addColumnIfMissing(db, 'users', 'xp_total', 'INTEGER NOT NULL DEFAULT 0');
   addColumnIfMissing(db, 'users', 'rp_last_activity_ms', 'INTEGER NOT NULL DEFAULT 0');
