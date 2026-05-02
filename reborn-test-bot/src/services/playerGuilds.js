@@ -341,8 +341,28 @@ function useFocus(hubDiscordId, attackerGuildId, targetGuildId, mode, actorUserI
   if (!att || !tgt || att.hub_discord_id !== hubDiscordId || tgt.hub_discord_id !== hubDiscordId) {
     return { ok: false, error: 'Guildes invalides.' };
   }
+  if (att.focus_disabled) {
+    return { ok: false, error: 'Focus **désactivé** pour cette guilde par un administrateur.' };
+  }
+  if (tgt.focus_disabled) {
+    return { ok: false, error: 'La cible est **protégée** : focus désactivé.' };
+  }
   if (now - (att.last_focus_ms || 0) < CD) return { ok: false, error: 'Focus en cooldown (7 j).' };
   if (B(att.treasury) < COST) return { ok: false, error: '500 000 starss requis en trésorerie de guilde.' };
+  // Trace dans staff_audit (best-effort).
+  try {
+    db.prepare(
+      `INSERT INTO staff_audit (hub_discord_id, mod_id, target_id, action, details, created_ms)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+    ).run(
+      hubDiscordId,
+      attackerGuildId,
+      targetGuildId,
+      'focus.use',
+      `mode=${mode} actor=${actorUserId}`,
+      now,
+    );
+  } catch { /* table absente : on ignore */ }
   db.prepare('UPDATE player_guilds SET treasury = ?, last_focus_ms = ? WHERE id = ?').run(
     (B(att.treasury) - COST).toString(),
     now,
