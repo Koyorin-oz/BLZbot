@@ -59,6 +59,11 @@ module.exports = {
       }
       const p = interaction.options.getInteger('pourcent', true);
       idx.setCompletion(uid, p);
+      if (interaction.guildId) {
+        indexRoles
+          .syncIndexFullRole(interaction.client, interaction.guildId, uid)
+          .catch(() => { /* best-effort */ });
+      }
       return interaction.reply({ content: `Index **${uid}** → **${p} %**` });
     }
 
