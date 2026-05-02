@@ -148,13 +148,6 @@ function applyRandomReward(userId) {
       rewardAmount = reward.amount;
       rewardEmoji = '🚀';
       break;
-    case 'points':
-      users.addPoints(userId, BigInt(reward.amount));
-      rewardName = reward.name;
-      rewardType = 'points';
-      rewardAmount = reward.amount;
-      rewardEmoji = '🏆';
-      break;
     case 'item': {
       users.addInventory(userId, reward.itemId, 1);
       const def = getItem(reward.itemId);
