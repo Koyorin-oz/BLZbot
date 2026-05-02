@@ -185,6 +185,8 @@ module.exports = {
   async execute(interaction) {
     const hub = interaction.guildId;
     if (!hub) return interaction.reply({ content: 'Sur un serveur uniquement.' });
+    // S'assure que l'auteur a une entrée DB pour que « ton rang » ne dise pas « #1 — 0 ».
+    users.getOrCreate(interaction.user.id, interaction.user.username);
     let currentType = interaction.options.getString('type') || 'starss';
     const embed = buildEmbed(currentType, hub, interaction.user.id);
     await interaction.reply({ embeds: [embed], components: [buildSelect(currentType)] });
