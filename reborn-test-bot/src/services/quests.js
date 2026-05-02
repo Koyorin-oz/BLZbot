@@ -365,6 +365,10 @@ function summary(userId) {
       selLine = `**${def.label}** — **${cur.toLocaleString('fr-FR')}** / **${def.target.toLocaleString('fr-FR')}** *(auto)*`;
     } else if (def.kind === 'catl_open') {
       selLine = `**${def.label}** — **${row.selection_progress || 0}** / **${def.target}** *(auto en ouvrant un CATL)*`;
+    } else if (def.kind === 'minijeu_wins') {
+      selLine = `**${def.label}** — **${row.selection_progress || 0}** / **${def.target}** *(auto à chaque victoire)*`;
+    } else if (def.kind === 'rank_reached') {
+      selLine = `**${def.label}** *(auto en atteignant le tier)*`;
     } else {
       selLine = `**${def.label}** — utilise le bouton « Réclamer » dès que tu as l’item.`;
     }
