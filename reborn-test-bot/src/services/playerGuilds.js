@@ -538,8 +538,10 @@ function setMemberPerm(guildId, leaderId, targetUserId, key, value) {
   if (targetUserId === leaderId) return { ok: false, error: 'Le chef a déjà toutes les permissions.' };
   const m = memberRow(guildId, targetUserId);
   if (!m) return { ok: false, error: 'Membre introuvable.' };
-  const allowed = new Set(['depot', 'retrait', 'kick', 'roles', 'focus']);
-  if (!allowed.has(key)) return { ok: false, error: 'Clé inconnue.' };
+  // La perm `focus` a été retirée — c'est désormais le statut « sous-chef »
+  // qui donne le droit de lancer un focus (cf. `/guilde sous-chef ajouter`).
+  const allowed = new Set(['depot', 'retrait', 'kick', 'roles']);
+  if (!allowed.has(key)) return { ok: false, error: 'Clé inconnue (utilisez `/guilde sous-chef ajouter` pour le focus).' };
   const v = value ? 1 : 0;
   const cur = parsePermsJson(m.perms_json);
   cur[key] = v;
