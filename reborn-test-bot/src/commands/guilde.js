@@ -499,4 +499,32 @@ module.exports = {
       return interaction.reply({ embeds: [e] });
     }
   },
+
+  /**
+   * Autocomplete pour `/guilde focus cible:` — propose les guildes du serveur
+   * en filtrant par nom (max 25 résultats, on exclut la guilde de l'auteur).
+   */
+  async autocomplete(interaction) {
+    try {
+      const focused = interaction.options.getFocused(true);
+      if (focused.name !== 'cible') return interaction.respond([]);
+      const hub = interaction.guildId;
+      if (!hub) return interaction.respond([]);
+      const myMembership = pg.getMembershipInHub(interaction.user.id, hub);
+      const myGuildId = myMembership?.guild_id || null;
+      const all = pg.listGuildsOnHub(hub);
+      const q = String(focused.value || '').toLowerCase().trim();
+      const filtered = all
+        .filter((g) => g.id !== myGuildId)
+        .filter((g) => !q || g.name.toLowerCase().includes(q))
+        .slice(0, 25)
+        .map((g) => ({
+          name: `${g.name} · grade ${label(g.grade || '')} · nv ${g.guild_level}`.slice(0, 100),
+          value: g.id.slice(0, 100),
+        }));
+      return interaction.respond(filtered);
+    } catch {
+      return interaction.respond([]);
+    }
+  },
 };
