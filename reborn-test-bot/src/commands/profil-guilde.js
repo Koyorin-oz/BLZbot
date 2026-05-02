@@ -203,6 +203,28 @@ async function buildProfilGuildePayload(interaction, { hub, gRow }) {
   });
   const container = new ContainerBuilder().addMediaGalleryComponents(mediaGallery);
 
+  // Bandeau REBORN : grade, anti-séparation, focus.
+  let antiSep = { protected: false, reason: '' };
+  try {
+    const ladder = require('../services/guildLadder');
+    antiSep = ladder.antiSepStatus(g.id, hub);
+  } catch { /* ignore */ }
+  const focusDis = !!g.focus_disabled;
+  const sepLine = antiSep.protected
+    ? `🛡️ **Anti-séparation : oui** *(${antiSep.reason})*`
+    : '⚔️ Anti-séparation : non';
+  const focusLine = focusDis
+    ? '🚫 Focus **désactivé** (admin)'
+    : '🎯 Focus disponible (CD 7 j)';
+  const reborn = new TextDisplayBuilder().setContent(
+    [
+      `**Grade REBORN** : ${label(g.grade || '')}`,
+      sepLine,
+      focusLine,
+    ].join(' · '),
+  );
+  container.addTextDisplayComponents(reborn);
+
   const row1 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(`rb_pg_list_${g.id}`)
