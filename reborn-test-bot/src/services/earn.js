@@ -16,6 +16,9 @@ const { notifyQuestUnlocks } = require('../lib/questNotify');
 /** @type {Map<string, { guildId: string, since: number }>} */
 const voiceSince = new Map();
 
+/** Référence au client (renseignée par `registerEarn`). Utilisée pour sync roles. */
+let _earnClient = null;
+
 function gxpMultForUser(userId) {
   const u = users.getUser(userId);
   if (!u) return 1n;
