@@ -413,6 +413,8 @@ module.exports = {
   summary,
   trackCatlOpen,
   trackStarssGain,
+  trackMinijeuWin,
+  trackRankReached,
   SELECTIONS,
   LIFETIME_LADDER,
   DAILY_MSG_TARGET,
