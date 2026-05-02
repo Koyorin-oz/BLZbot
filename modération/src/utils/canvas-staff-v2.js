@@ -262,6 +262,8 @@ async function renderStaffProfileCardV2(data) {
     ctx.fillText(`Sanctions émises : ${data.sanctions ?? 0}`, col2, line1);
     ctx.fillStyle = (data.staffWarns || 0) > 0 ? THEME.warn : THEME.text;
     ctx.fillText(`Warns staff : ${data.staffWarns ?? 0}`, col2, statsY + 92);
+    ctx.fillStyle = THEME.text;
+    ctx.fillText(`Time Outs distribués : ${data.timeoutsCount ?? 0}`, col2, statsY + 116);
 
     const currentModoTest = (data.modoTestPeriods || []).find(
         (p) => p.status === 'en_cours' || p.status === 'vote_en_cours'
