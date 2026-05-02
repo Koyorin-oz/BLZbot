@@ -1,6 +1,11 @@
 const db = require('../db');
-const { SHOP_ROW1_RARITY_WEIGHTS } = require('../reborn/constants');
-const { randomItemOfRarity, priceFor } = require('../reborn/catalog');
+const {
+  SHOP_ROW1_RARITY_WEIGHTS,
+  CATL_ROLL_MS,
+  CATS_SPAWN_CHANCE,
+  CATL_SPAWN_CHANCE,
+} = require('../reborn/constants');
+const { randomItemOfRarity, getItem, priceFor } = require('../reborn/catalog');
 const meta = require('./meta');
 
 function utcDateKey() {
