@@ -165,7 +165,39 @@ module.exports = {
       return;
     }
     const uid = interaction.user.id;
+    const subGroup = interaction.options.getSubcommandGroup(false);
     const sub = interaction.options.getSubcommand();
+
+    // ─── Groupe « sous-chef » : ajouter / retirer / lister ─────────────
+    if (subGroup === 'sous-chef') {
+      const m = pg.getMembershipInHub(uid, hub);
+      if (!m) return interaction.reply({ content: 'Pas de guilde.' });
+      if (sub === 'lister') {
+        const ids = pg.listSubLeaders(m.guild_id);
+        const txt = ids.length
+          ? ids.map((id) => `• <@${id}>`).join('\n')
+          : '*Aucun sous-chef pour l\'instant — `/guilde sous-chef ajouter` pour en désigner.*';
+        return interaction.reply({
+          content: `🥈 **Sous-chefs (${ids.length}/${pg.SUB_LEADER_CAP})** :\n${txt}`,
+        });
+      }
+      if (m.leader_id !== uid) return interaction.reply({ content: 'Chef uniquement.' });
+      const target = interaction.options.getUser('membre', true);
+      if (sub === 'ajouter') {
+        const r = pg.setSubLeader(m.guild_id, uid, target.id, true);
+        if (!r.ok) return interaction.reply({ content: r.error });
+        if (r.already) return interaction.reply({ content: `${target} est **déjà** sous-chef.` });
+        return interaction.reply({
+          content: `🥈 ${target} promu **sous-chef** — il peut maintenant lancer un focus pour la guilde.`,
+        });
+      }
+      if (sub === 'retirer') {
+        const r = pg.setSubLeader(m.guild_id, uid, target.id, false);
+        if (!r.ok) return interaction.reply({ content: r.error });
+        return interaction.reply({ content: `${target} n'est plus sous-chef.` });
+      }
+      return;
+    }
 
     if (sub === 'creer') {
       const nom = interaction.options.getString('nom', true);
