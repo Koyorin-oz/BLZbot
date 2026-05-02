@@ -99,6 +99,7 @@ function grantVoiceMinutes(guildId, userId, minutes) {
  * @param {import('discord.js').Client} client
  */
 function registerEarn(client) {
+  _earnClient = client;
   client.on('messageCreate', async (msg) => {
     try {
       if (!msg.guild || msg.author.bot) return;
