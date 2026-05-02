@@ -111,12 +111,13 @@ module.exports = {
     .addSubcommand((sc) =>
       sc
         .setName('focus')
-        .setDescription('Focus guilde (500k trésorerie, CD 7j) — chef ou permission « focus »')
+        .setDescription('Focus guilde (500k trésorerie, CD 7j) — chef ou sous-chef.')
         .addStringOption((o) =>
           o
-            .setName('cible_guild_id')
-            .setDescription('ID de la guilde cible (même serveur Discord)')
-            .setRequired(true),
+            .setName('cible')
+            .setDescription('Tape le début du nom de la guilde cible')
+            .setRequired(true)
+            .setAutocomplete(true),
         )
         .addStringOption((o) =>
           o
