@@ -98,8 +98,19 @@ function grantFromActivity(userId, kind, units = 1n) {
   if (newSum > POOL_CAP) {
     stealRpFromBracket(userId, newSum - POOL_CAP);
   }
+  const tierBefore = rankedRoles.tierForRp(p);
   users.addPoints(userId, capped);
   db.prepare('UPDATE users SET rp_last_activity_ms = ? WHERE id = ?').run(Date.now(), userId);
+  // Quête « atteindre Master+ » : on signale le franchissement.
+  const tierAfter = rankedRoles.tierForRp(p + capped);
+  if (tierAfter !== tierBefore) {
+    try {
+      const quests = require('./quests');
+      const rankedMilestones = require('./rankedMilestones');
+      quests.trackRankReached(userId, tierAfter);
+      rankedMilestones.checkAndClaim(userId);
+    } catch { /* deps optionnelles */ }
+  }
 }
 
 function decayForUserIfIdle(userId) {
