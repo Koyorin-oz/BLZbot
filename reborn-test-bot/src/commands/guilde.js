@@ -331,6 +331,18 @@ module.exports = {
         '2': '-3 000 GRP répartis',
         '3': '÷2 GRP cible pendant 2 h',
       };
+      // Log staff (best-effort).
+      try {
+        const focusAudit = require('../services/focusAudit');
+        focusAudit
+          .sendFocusLog(interaction.client, {
+            attackerGuildId: m.guild_id,
+            targetGuildId: target,
+            actorUserId: uid,
+            mode,
+          })
+          .catch(() => {});
+      } catch { /* ignore */ }
       return interaction.reply({ content: `🎯 Focus **${modeLabels[mode] || mode}** appliqué — 500 000 starss prélevés.` });
     }
 
