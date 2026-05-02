@@ -345,6 +345,25 @@ async function sendProfilV2WithButtons(interaction, session) {
             ) {
                 return;
             }
+            // Bypass: laisse reborn-test-bot prendre la main sur le bouton Classes.
+            // Si le bypass n'est pas activé, on affiche un message d'aide simple.
+            if (
+                process.env.REBORN_PROFIL_CLASSES_BYPASS === '1' &&
+                i.customId.startsWith(`${CLASSES}_`)
+            ) {
+                return;
+            }
+            if (i.customId.startsWith(`${CLASSES}_`)) {
+                const helpText = new TextDisplayBuilder().setContent(
+                    '🎓 **Classes** — utilise `/arbre classe` pour voir tes classes joueur (issues de l\'arbre de compétences).',
+                );
+                await i.reply({
+                    components: [new ContainerBuilder().addTextDisplayComponents(helpText)],
+                    flags: MessageFlags.IsComponentsV2,
+                    ephemeral: true,
+                });
+                return;
+            }
 
             if (i.customId.startsWith(`${INV}_`)) {
                 await i.deferUpdate();
