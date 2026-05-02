@@ -141,6 +141,48 @@ client.on('interactionCreate', async (interaction) => {
     // Pas l'auteur → laisser niveau gérer le message d'erreur d'origine.
   }
 
+  // ─── Bouton « 🎓 Classes » du /profil niveau → embed REBORN ──
+  if (
+    interaction.isButton() &&
+    /^pv2_classes_\d+$/.test(interaction.customId)
+  ) {
+    const m = interaction.customId.match(/^pv2_classes_(\d+)$/);
+    const targetId = m ? m[1] : null;
+    if (targetId === interaction.user.id) {
+      try {
+        await interaction.deferReply({ ephemeral: true });
+        const skillTree = require('./services/skillTree');
+        const classes = skillTree.playerClasses(interaction.user.id);
+        const PERKS = {
+          aventurier: 'Plus de quêtes (+slot), skips, double claim — *pour explorer le serveur*.',
+          suzerain: '+1/+2 membres guilde, +10 % GXP, +10 % GRP, +20 % GRP loyaliste — *pour bâtir une dynastie*.',
+          marchand: 'Reset boutique, ×2 contenu coffres, rotation midi, CATL gratuit, -30 % prix — *pour briser la banque*.',
+          duelliste: '+RP %, +RP/msg, +RP/min voc — *pour grimper le ladder ranked*.',
+          conquerant: "+10 % monnaie d'event, +30 % défense, -20 % coffres event, spawner gratuit — *pour dominer les événements*.",
+          maitre: 'Toutes les voies maîtrisées — accès au **Temple** + statut **Maître**.',
+          initie: "Pas encore de classe — débloque un palier 5/5 dans une branche pour t'éveiller.",
+        };
+        const lines = ['# 🎓 Tes classes', ''];
+        for (const c of classes) {
+          lines.push(`${c.icon} **${c.name}** — ${PERKS[c.id] || ''}`);
+        }
+        lines.push('');
+        lines.push("*Une classe se débloque dès qu'une **branche atteint 5/5**. Maîtrise les **5** branches et tu deviens **Maître des voies**.*");
+        const { TextDisplayBuilder, ContainerBuilder, MessageFlags } = require('discord.js');
+        const td = new TextDisplayBuilder().setContent(lines.join('\n'));
+        await interaction.editReply({
+          components: [new ContainerBuilder().addTextDisplayComponents(td)],
+          flags: MessageFlags.IsComponentsV2,
+        });
+      } catch (e) {
+        if (e?.code !== 10062 && e?.code !== 40060) {
+          console.error('[profil → classes]', e?.message || e);
+        }
+      }
+      return;
+    }
+  }
+
   // ─── Bouton « 🌳 Arbre » du /profil niveau → canvas /arbre REBORN ──
   if (
     interaction.isButton() &&
