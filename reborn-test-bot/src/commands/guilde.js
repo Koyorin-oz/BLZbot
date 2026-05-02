@@ -343,7 +343,7 @@ module.exports = {
     if (sub === 'focus') {
       const m = pg.getMembershipInHub(uid, hub);
       if (!m) return interaction.reply({ content: 'Pas de guilde.' });
-      const target = interaction.options.getString('cible_guild_id', true).trim();
+      const target = interaction.options.getString('cible', true).trim();
       const mode = interaction.options.getString('mode', true);
       const r = pg.useFocus(hub, m.guild_id, target, mode, uid);
       if (!r.ok) return interaction.reply({ content: r.error });
