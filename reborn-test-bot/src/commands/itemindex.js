@@ -70,6 +70,11 @@ module.exports = {
     if (sub === 'reclamer') {
       const r = idx.claimNext(uid, users);
       if (!r.ok) return interaction.reply({ content: r.error });
+      if (interaction.guildId) {
+        indexRoles
+          .syncIndexFullRole(interaction.client, interaction.guildId, uid)
+          .catch(() => { /* best-effort */ });
+      }
       const chest = (r.step.chests || [])
         .map((c) => `+**${c.qty || 1}** \`${c.id}\``)
         .join(' ');
