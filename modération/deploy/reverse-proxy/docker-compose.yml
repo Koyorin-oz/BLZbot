@@ -1,0 +1,47 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# docker-compose.yml — Caddy en reverse proxy, déploiement 1 commande
+# ─────────────────────────────────────────────────────────────────────────────
+# À placer sur ton VPS dans /opt/verif-proxy/docker-compose.yml
+# Lance avec :
+#   cd /opt/verif-proxy
+#   docker compose up -d
+#
+# Caddy gère HTTPS automatiquement (Let's Encrypt) — aucun certbot à installer.
+# Les certifs sont persistés dans le volume `caddy_data`.
+#
+# Avant le premier `docker compose up` :
+#  1. Adapte le Caddyfile (à côté de ce fichier) avec ton domaine + IP Pebble + secret
+#  2. Pointe ton DNS : verif.tondomaine.com → IP de ce VPS
+#  3. Ouvre les ports 80 et 443 sur ton firewall VPS
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: verif-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - /var/log/caddy:/var/log/caddy
+    networks:
+      - verif-net
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  verif-net:
+    driver: bridge
+
+volumes:
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
