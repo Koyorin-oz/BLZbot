@@ -37,6 +37,7 @@ const {
 } = require('./database');
 const { addGuildMemberRole, removeGuildMemberRole } = require('./discordApi');
 const { lookupIp, isVpnOrProxy } = require('./geolocation');
+const { VERIF_BUILD_ID } = require('./buildId');
 
 function page(title, bodyHtml) {
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>${title}</title>

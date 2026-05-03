@@ -59,6 +59,7 @@ const { EmbedBuilder } = require('discord.js');
 const { createOAuthServer } = require('./oauthServer');
 const { createBot } = require('./bot');
 const { getGuildConfig } = require('./database');
+const { VERIF_BUILD_ID } = require('./buildId');
 
 function requireEnv(name) {
   const v = process.env[name];
