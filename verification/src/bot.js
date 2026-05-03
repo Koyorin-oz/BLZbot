@@ -3,10 +3,9 @@
  *  - /setup-verification : panneau admin avec menus (salon panneau, rôle vérifié, salon
  *    logs SANS IP, personnalisation embed, publication).
  *  - /verify : commande de secours pour obtenir le lien OAuth (équivalent du bouton).
- *  - Le bouton "Vérifier" du panneau public ouvre un message éphémère avec un **bouton
- *    lien** vers `/oauth/start?state=…` sur ton `PUBLIC_BASE_URL` (URL courte : les boutons
- *    Discord n’acceptent que **512 caractères** max — une URL OAuth `discord.com/…` complète
- *    est trop longue et fait échouer le message).
+ *  - Le bouton "Vérifier" du panneau : message éphémère avec bouton lien vers
+ *    **discord.com/api/oauth2/authorize** quand ça tient en 512 car. (pas de modal « tu quittes
+ *    Discord »). Sinon fallback `/oauth/start` sur ton domaine.
  *
  * Note : les logs AVEC IP partent en DM aux owners (voir `index.js`), pas dans un salon.
  * Pour cette raison, /setup-verification ne propose PAS de "salon logs avec IP".
