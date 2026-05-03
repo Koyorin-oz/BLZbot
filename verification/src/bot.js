@@ -200,7 +200,7 @@ function createBot(opts) {
   client.once(Events.ClientReady, async (c) => {
     console.log(`[bot] Connecté : ${c.user.tag}`);
     console.log(
-      `[bot] Vérif utilisateur : bouton lien → /oauth/start (limite URL bouton Discord ${DISCORD_LINK_BUTTON_URL_MAX} car.).`,
+      `[bot] Build ${VERIF_BUILD_ID} — bouton OAuth URL courte /oauth/start (max ${DISCORD_LINK_BUTTON_URL_MAX} car.). Test: GET /health`,
     );
     try {
       await c.application.commands.set(buildSlashCommands());
