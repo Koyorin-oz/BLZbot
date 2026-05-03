@@ -157,6 +157,9 @@ function sendText(res, status, text) {
  * @param {string} opts.publicBaseUrl
  * @param {string} opts.stateSecret
  * @param {number} opts.httpPort
+ * @param {string} [opts.httpHost] Interface d'écoute (`0.0.0.0` par défaut, `127.0.0.1` pour bind local seulement).
+ * @param {string} [opts.trustedProxySecret] Secret partagé attendu dans `X-Verif-Proxy-Secret`. Si défini, toute requête sans ce header est refusée (403).
+ * @param {string[]} [opts.trustedProxyIps] Whitelist d'IPs sources autorisées à hit le bot. Alternative au secret.
  * @param {(info: {
  *   guildId: string,
  *   userId: string,
