@@ -156,7 +156,7 @@ function createOAuthServer(opts) {
   });
 
   app.get('/health', (_req, res) => {
-    res.type('text').send('ok');
+    res.type('text').send(`ok ${VERIF_BUILD_ID}`);
   });
 
   app.get('/oauth/start', (req, res) => {

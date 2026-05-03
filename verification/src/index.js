@@ -264,6 +264,7 @@ async function onVerificationLog(client, ownerDmIds, p) {
 }
 
 async function main() {
+  console.log(`[verif] Démarrage build=${VERIF_BUILD_ID} cwd=${process.cwd()}`);
   // ─── Variables potentiellement en conflit avec d'autres bots du même .env ──
   // On lit `VERIFICATION_*` en priorité, fallback sur les noms historiques.
   const botToken = envWithPrefix('VERIFICATION_BOT_TOKEN', 'BOT_TOKEN');
