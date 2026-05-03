@@ -37,7 +37,9 @@ const AntiRaidManager = require('./src/modules/antiraid');
 const { deployModerationSlashCommands } = require('./src/utils/deploy-slash-commands');
 const { handleTicketBridgeMessage } = require('./src/events/ticketBridge');
 const { ensureTicketPanelIfMissing } = require('./src/utils/ticket-panel-payload');
-const { installVerificationSystem } = require('./src/lib/verification');
+// Système de vérification : extrait dans le bot dédié `verification/` (voir verification/README.md).
+// Le bot modération ne gère plus rien lié à la vérif (commandes /verify, /setup-verification,
+// /unverify, panneau, OAuth) — tout est porté par l'app Discord séparée du bot vérif.
 
 // Création du client Discord
 const client = new Client({
