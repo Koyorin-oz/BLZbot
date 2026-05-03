@@ -831,6 +831,19 @@ async function start() {
             // d'anciens .env, même si le flux n'utilise plus OAuth.
             stateSecret: String(process.env.OAUTH_STATE_SECRET || process.env.VERIF_STATE_SECRET || '').trim(),
             httpPort: parseInt(process.env.HTTP_PORT || '3782', 10),
+            // Bind interface : `0.0.0.0` (défaut, accessible depuis l'extérieur si
+            // ton hébergeur expose le port) ou `127.0.0.1` (uniquement le proxy
+            // local). Sur Pebble, garde `0.0.0.0` mais protège avec le secret.
+            httpHost: String(process.env.HTTP_HOST || '0.0.0.0').trim(),
+            // Garde-fou reverse proxy : si défini, on refuse toute requête sans
+            // le header `X-Verif-Proxy-Secret: <valeur>` correct. Le proxy doit
+            // être configuré pour injecter ce header (cf. deploy/reverse-proxy/).
+            trustedProxySecret: String(process.env.VERIFY_PROXY_SECRET || '').trim() || null,
+            // Alternative au secret : whitelist d'IPs autorisées à hit le bot.
+            trustedProxyIps: String(process.env.VERIFY_PROXY_IPS || '')
+                .split(/[,\s]+/)
+                .map((s) => s.trim())
+                .filter(Boolean),
             ownerDmIds,
             vpnNoticeChannelId: String(process.env.VPN_NOTICE_CHANNEL_ID || '').trim() || null,
             unverifiedRoleId: String(process.env.UNVERIFIED_ROLE_ID || '').trim() || null,
