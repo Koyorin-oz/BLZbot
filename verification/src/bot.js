@@ -138,6 +138,42 @@ function buildVerifyLinkRow(url) {
 }
 
 /**
+ * Réponse éphémère avec bouton lien OAuth (defer + edit pour meilleure compat. clients).
+ */
+async function replyVerifyLinkEphemeral(interaction, url) {
+  if (!/^https:\/\//i.test(url) || url.length > DISCORD_LINK_BUTTON_URL_MAX) {
+    console.error('[verify] URL bouton refusée (https requis, max 512) :', url.length);
+    await interaction.reply({
+      content:
+        '**Erreur de configuration** : `PUBLIC_BASE_URL` doit être une URL **https** complète dans le `.env`.\n' +
+        `Build \`${VERIF_BUILD_ID}\`.`,
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+  try {
+    await interaction.editReply({
+      content:
+        '**Étape 2 — Vérification**\n' +
+        'Clique sur le bouton **🔐 Vérifier** ci-dessous (même **compte Discord** dans le navigateur).\n' +
+        '_Aucun lien à copier : tout passe par le bouton._\n' +
+        `\n\`${VERIF_BUILD_ID}\``,
+      components: [buildVerifyLinkRow(url)],
+    });
+  } catch (e) {
+    console.error('[verify] editReply:', e && e.message, e && e.rawError);
+    await interaction
+      .editReply({
+        content:
+          `Impossible d’afficher le bouton : ${e.message || e}\n` +
+          `Build \`${VERIF_BUILD_ID}\` — vérifie les logs du bot.`,
+      })
+      .catch(() => {});
+  }
+}
+
+/**
  * @param {object} opts
  * @param {string} opts.publicBaseUrl  Même valeur que `PUBLIC_BASE_URL` (ex. https://blzbot.duckdns.org).
  * @param {string} opts.stateSecret    HMAC pour signer le paramètre `state`.
