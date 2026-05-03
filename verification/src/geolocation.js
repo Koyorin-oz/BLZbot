@@ -1,13 +1,12 @@
 /**
  * Géolocalisation IP — ip-api.com (gratuit, sans clé, 45 req/min).
  *
- * Renvoie `{ country, countryCode, isp, org }` ou `null` si l'IP est privée /
- * la résolution échoue. Cache mémoire (TTL 24h) pour limiter la pression sur
- * l'API et masquer la latence côté UX.
+ * Renvoie `{ country, countryCode, isp, org, flag, proxy, hosting, mobile }`
+ * ou `null` si l'IP est privée / la résolution échoue. Cache mémoire (TTL 24h)
+ * pour limiter la pression sur l'API et masquer la latence côté UX.
  *
- * Sécurité : on ne fait JAMAIS suivre l'IP en clair vers un autre service que
- * ip-api.com, et seul le résumé géo est inclus dans les logs publics (le log
- * IP brut reste exclusivement dans le DM owner).
+ * Sécurité : seule ip-api.com reçoit l'IP. Le résumé géo est inclus dans les
+ * logs publics ; l'IP brute reste exclusivement dans les DM owners.
  */
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -43,8 +42,31 @@ function flagFromCountryCode(cc) {
 }
 
 /**
+ * Lookup IP : géo + détection proxy/VPN/hosting/mobile via ip-api.com.
+ *
+ * Champs `proxy`, `hosting`, `mobile` (gratuits, requièrent juste leur ajout
+ * dans `fields`). Sémantique :
+ *   - `proxy: true`   → connexion identifiée comme VPN/proxy/Tor (signal fort).
+ *   - `hosting: true` → datacenter / serveur (cloud, hébergeur). Souvent un VPN
+ *                       dont la sortie est dans un AWS/OVH/etc.
+ *   - `mobile: true`  → réseau mobile (4G/5G). Pas un VPN, mais le NAT mobile
+ *                       fait que plusieurs comptes peuvent partager la même
+ *                       sortie : à pondérer dans la confiance d'alt.
+ *
+ * Politique appliquée par `oauthServer.js` : `proxy || hosting === true`
+ * déclenche un refus automatique de vérification.
+ *
  * @param {string} ip
- * @returns {Promise<{ country: string, countryCode: string, isp: string, org: string, flag: string } | null>}
+ * @returns {Promise<{
+ *   country: string,
+ *   countryCode: string,
+ *   isp: string,
+ *   org: string,
+ *   flag: string,
+ *   proxy: boolean,
+ *   hosting: boolean,
+ *   mobile: boolean,
+ * } | null>}
  */
 async function lookupIp(ip) {
   if (isPrivateIp(ip)) return null;
@@ -52,7 +74,9 @@ async function lookupIp(ip) {
   if (cached && cached.expiresAt > Date.now()) return cached.value;
 
   try {
-    const url = `http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,country,countryCode,isp,org`;
+    const url = `http://ip-api.com/json/${encodeURIComponent(
+      ip,
+    )}?fields=status,country,countryCode,isp,org,proxy,hosting,mobile`;
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 4000);
     const res = await fetch(url, { signal: ctrl.signal });
@@ -69,6 +93,9 @@ async function lookupIp(ip) {
       isp: String(j.isp || j.org || 'Inconnu'),
       org: String(j.org || ''),
       flag: flagFromCountryCode(j.countryCode),
+      proxy: Boolean(j.proxy),
+      hosting: Boolean(j.hosting),
+      mobile: Boolean(j.mobile),
     };
     cache.set(ip, { value, expiresAt: Date.now() + CACHE_TTL_MS });
     return value;
@@ -77,4 +104,13 @@ async function lookupIp(ip) {
   }
 }
 
-module.exports = { lookupIp, flagFromCountryCode, isPrivateIp };
+/**
+ * Indique si une géo représente un VPN / proxy / datacenter à refuser.
+ * `mobile` n'est PAS bloquant (faux positifs trop fréquents sur 4G).
+ */
+function isVpnOrProxy(geo) {
+  if (!geo) return false;
+  return Boolean(geo.proxy) || Boolean(geo.hosting);
+}
+
+module.exports = { lookupIp, flagFromCountryCode, isPrivateIp, isVpnOrProxy };
