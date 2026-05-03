@@ -20,6 +20,9 @@
     "reborn-test-bot:install": "npm install --prefix reborn-test-bot",
     "reborn-test-bot:start": "npm start --prefix reborn-test-bot",
     "reborn-test-bot:deploy": "npm run deploy --prefix reborn-test-bot",
+    "verification:install": "npm install --prefix verification",
+    "verification:start": "npm start --prefix verification",
+    "verification:deploy": "npm run deploy-commands --prefix verification",
     "git:hooks": "git config core.hooksPath .githooks",
     "git:push": "git push origin HEAD"
   },
