@@ -140,7 +140,7 @@ function createBot(opts) {
     console.log(`[bot] Connecté : ${c.user.tag}`);
     try {
       await c.application.commands.set(buildSlashCommands());
-      console.log('[bot] Commandes slash globales enregistrées (/verify, /setup-verification).');
+      console.log('[bot] Commandes slash globales enregistrées (/verify, /setup-verification, /unverify).');
     } catch (e) {
       console.error('[bot] Échec enregistrement des commandes globales :', e);
     }
