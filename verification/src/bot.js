@@ -34,12 +34,29 @@ const {
   getEffectiveEmbed,
   resetEmbedToDefault,
   findVerifiedInGuild,
+  deleteVerifiedForGuild,
 } = require('./database');
-const { addGuildMemberRole } = require('./discordApi');
+const { addGuildMemberRole, removeGuildMemberRole } = require('./discordApi');
 
 function isGuildAdmin(interaction) {
   return Boolean(
     interaction.guild && interaction.memberPermissions?.has(PermissionFlagsBits.Administrator),
+  );
+}
+
+/**
+ * Permissions staff acceptées pour /unverify : on autorise les modérateurs classiques
+ * en plus des admins, pour que la commande soit utilisable au quotidien sans donner
+ * Administrator à tout le monde.
+ */
+function isStaffForUnverify(interaction) {
+  if (!interaction.guild || !interaction.memberPermissions) return false;
+  return (
+    interaction.memberPermissions.has(PermissionFlagsBits.Administrator) ||
+    interaction.memberPermissions.has(PermissionFlagsBits.ManageGuild) ||
+    interaction.memberPermissions.has(PermissionFlagsBits.BanMembers) ||
+    interaction.memberPermissions.has(PermissionFlagsBits.KickMembers) ||
+    interaction.memberPermissions.has(PermissionFlagsBits.ModerateMembers)
   );
 }
 
