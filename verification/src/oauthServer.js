@@ -463,6 +463,8 @@ function createOAuthServer(opts) {
         geo: geoEarly,
       });
 
+      if (isTicketState) deleteOAuthTicket(state);
+
       res.send(
         page(
           '✅ Vérification réussie',
