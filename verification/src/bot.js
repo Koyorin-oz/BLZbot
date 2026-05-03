@@ -118,11 +118,19 @@ function describeConfig(cfg) {
   );
 }
 
+/** Limite API Discord pour l’URL d’un bouton style Link (sinon la réponse interaction est rejetée). */
+const DISCORD_LINK_BUTTON_URL_MAX = 512;
+
 /** Bouton ouvrant l'OAuth dans le navigateur (pas de lien brut dans le message → pas d'embed preview). */
 function buildVerifyLinkRow(url) {
+  if (url.length > DISCORD_LINK_BUTTON_URL_MAX) {
+    console.error(
+      `[bot] URL bouton vérif trop longue (${url.length} > ${DISCORD_LINK_BUTTON_URL_MAX}) — vérifie PUBLIC_BASE_URL.`,
+    );
+  }
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
-      .setLabel('Ouvrir la vérification')
+      .setLabel('🔐 Vérifier')
       .setStyle(ButtonStyle.Link)
       .setURL(url),
   );
@@ -130,8 +138,7 @@ function buildVerifyLinkRow(url) {
 
 /**
  * @param {object} opts
- * @param {string} opts.clientId       Application Discord (vérif) — même valeur que OAUTH client_id.
- * @param {string} opts.redirectUri    Doit matcher `OAUTH_REDIRECT_URI` (ex. https://…/oauth/callback).
+ * @param {string} opts.publicBaseUrl  Même valeur que `PUBLIC_BASE_URL` (ex. https://blzbot.duckdns.org).
  * @param {string} opts.stateSecret    HMAC pour signer le paramètre `state`.
  */
 function createBot(opts) {
@@ -145,25 +152,19 @@ function createBot(opts) {
   });
 
   /**
-   * URL vers l’écran d’autorisation Discord (domaine discord.com).
-   * Évite que le 1er clic ouvre ton site (duckdns, etc.) et déclenche l’avertissement « quitter Discord ».
-   * La route `/oauth/start` reste dispo pour compat (anciens liens bookmarkés).
+   * URL **courte** pour bouton Link (max 512 car.) : redirige côté serveur vers Discord OAuth.
    */
   function buildVerifyUrl(discordUserId, guildId) {
     const state = signState({ discordUserId, guildId }, opts.stateSecret);
-    const params = new URLSearchParams({
-      client_id: opts.clientId,
-      redirect_uri: opts.redirectUri,
-      response_type: 'code',
-      scope: 'identify email',
-      state,
-      prompt: 'consent',
-    });
-    return `https://discord.com/api/oauth2/authorize?${params.toString()}`;
+    const base = String(opts.publicBaseUrl || '').replace(/\/$/, '');
+    return `${base}/oauth/start?state=${encodeURIComponent(state)}`;
   }
 
   client.once(Events.ClientReady, async (c) => {
     console.log(`[bot] Connecté : ${c.user.tag}`);
+    console.log(
+      `[bot] Vérif utilisateur : bouton lien → /oauth/start (limite URL bouton Discord ${DISCORD_LINK_BUTTON_URL_MAX} car.).`,
+    );
     try {
       await c.application.commands.set(buildSlashCommands());
       console.log('[bot] Commandes slash globales enregistrées (/verify, /setup-verification, /unverify).');
