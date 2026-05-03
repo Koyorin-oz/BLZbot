@@ -173,10 +173,8 @@ async function replyVerifyLinkEphemeral(interaction, url) {
 
 /**
  * @param {object} opts
- * @param {string} opts.publicBaseUrl  Même valeur que `PUBLIC_BASE_URL` (fallback si l’URL Discord dépasse 512 car.).
- * @param {string} opts.clientId      App Discord vérif — identique à `VERIFICATION_CLIENT_ID`.
- * @param {string} opts.redirectUri    Identique à `OAUTH_REDIRECT_URI`.
- * @param {string} opts.stateSecret    HMAC pour signer le paramètre `state`.
+ * @param {string} opts.clientId      App Discord vérif — `VERIFICATION_CLIENT_ID`.
+ * @param {string} opts.redirectUri    `OAUTH_REDIRECT_URI`.
  */
 function createBot(opts) {
   const client = new Client({
@@ -189,34 +187,25 @@ function createBot(opts) {
   });
 
   /**
-   * URL pour le bouton Link (max 512 car. côté Discord) :
-   *  - en priorité `https://discord.com/api/oauth2/authorize?...` → pas d’avertissement « tu quittes Discord » ;
-   *  - sinon `${publicBaseUrl}/oauth/start?state=...` si l’URL OAuth est trop longue.
+   * URL du screen d’autorisation Discord : le `state` est un ticket 32 hex (court) → toujours sur discord.com.
    */
   function buildVerifyUrl(discordUserId, guildId) {
-    const state = signState({ discordUserId, guildId }, opts.stateSecret);
+    const ticket = createOAuthTicket(guildId, discordUserId);
     const params = new URLSearchParams({
       client_id: String(opts.clientId || '').trim(),
       redirect_uri: String(opts.redirectUri || '').trim(),
       response_type: 'code',
       scope: 'identify email',
-      state,
+      state: ticket,
       prompt: 'consent',
     });
-    const discordUrl = `https://discord.com/api/oauth2/authorize?${params.toString()}`;
-    if (discordUrl.length <= DISCORD_LINK_BUTTON_URL_MAX) return discordUrl;
-
-    console.warn(
-      `[bot] URL bouton OAuth discord.com trop longue (${discordUrl.length} > ${DISCORD_LINK_BUTTON_URL_MAX}) — fallback /oauth/start`,
-    );
-    const base = String(opts.publicBaseUrl || '').replace(/\/$/, '');
-    return `${base}/oauth/start?state=${encodeURIComponent(state)}`;
+    return `https://discord.com/api/oauth2/authorize?${params.toString()}`;
   }
 
   client.once(Events.ClientReady, async (c) => {
     console.log(`[bot] Connecté : ${c.user.tag}`);
     console.log(
-      `[bot] Build ${VERIF_BUILD_ID} — bouton OAuth en priorité sur discord.com (≤${DISCORD_LINK_BUTTON_URL_MAX} car.; sinon /oauth/start). GET /health`,
+      `[bot] Build ${VERIF_BUILD_ID} — OAuth bouton = discord.com + ticket SQLite (state court). GET /health`,
     );
     try {
       await c.application.commands.set(buildSlashCommands());
