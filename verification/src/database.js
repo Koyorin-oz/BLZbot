@@ -35,6 +35,14 @@ CREATE TABLE IF NOT EXISTS guild_verifications (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_guild_verifications_email
   ON guild_verifications(guild_id, email_hash);
+
+CREATE TABLE IF NOT EXISTS oauth_ticket (
+  id TEXT PRIMARY KEY,
+  guild_id TEXT NOT NULL,
+  discord_user_id TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_oauth_ticket_created ON oauth_ticket(created_at);
 `);
 
 /** Migration safe : ajoute `ip_hash` aux DB existantes (pré-1.1). */
