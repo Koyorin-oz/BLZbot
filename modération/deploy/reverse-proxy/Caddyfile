@@ -1,0 +1,86 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Caddyfile — reverse proxy pour le serveur de vérification BLZ
+# ─────────────────────────────────────────────────────────────────────────────
+# À placer sur ton VPS (Oracle Cloud Free, Hetzner, etc.) qui sera le SEUL
+# point d'entrée public du site de vérif.
+#
+# Caddy gère :
+#  - HTTPS automatique (Let's Encrypt) → aucun certbot à installer
+#  - Reverse proxy vers ton bot Pebble
+#  - Injection du header X-Verif-Proxy-Secret (sécurise la chaîne)
+#  - Rate limiting de base
+#
+# Remplace AVANT déploiement :
+#   verif.tondomaine.com   → ton sous-domaine pointé sur l'IP du VPS
+#   PEBBLE_IP              → l'IP publique de ton serveur Pebble
+#   3782                   → port HTTP du bot (var HTTP_PORT côté Pebble)
+#   <SECRET_LONG>          → la même valeur que VERIFY_PROXY_SECRET côté Pebble
+#                            (génère avec `openssl rand -hex 32`)
+# ─────────────────────────────────────────────────────────────────────────────
+
+verif.tondomaine.com {
+    # HTTPS auto (Caddy gère ACME tout seul)
+    encode zstd gzip
+
+    # Headers de sécurité (HSTS, anti-clickjacking, etc.)
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Frame-Options "DENY"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "no-referrer"
+        # Empêche l'indexation moteur de recherche du site de vérif
+        X-Robots-Tag "noindex, nofollow, noarchive"
+        # On retire le header Server par défaut
+        -Server
+    }
+
+    # Rate limit basique (10 req/s par IP) — ajuste si trop strict.
+    # Nécessite l'extension caddy-ratelimit (https://github.com/mholt/caddy-ratelimit)
+    # Si tu n'installes pas l'extension, commente ce bloc.
+    # rate_limit {
+    #     zone verif {
+    #         key {client_ip}
+    #         events 10
+    #         window 1s
+    #     }
+    # }
+
+    reverse_proxy http://PEBBLE_IP:3782 {
+        # Header secret partagé : le bot Pebble vérifie cette valeur et refuse
+        # toute requête qui ne l'a pas. Empêche l'accès direct si quelqu'un
+        # devine l'IP de Pebble.
+        header_up X-Verif-Proxy-Secret "<SECRET_LONG>"
+
+        # XFF/Real-IP : Caddy les injecte automatiquement, mais on s'assure
+        # qu'ils prennent bien la vraie IP visiteur.
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+        header_up Host {host}
+
+        # Timeout généreux (vérification = canvas + DB + log)
+        transport http {
+            dial_timeout 10s
+            response_header_timeout 30s
+            read_timeout 30s
+        }
+
+        # Ne pas suivre les redirections internes (le bot ne devrait pas en émettre)
+        # mais si jamais : on relaie tel quel.
+    }
+
+    # Logs JSON dans /var/log/caddy/verif.log (rotate auto)
+    log {
+        output file /var/log/caddy/verif.log {
+            roll_size 10mb
+            roll_keep 5
+        }
+        format json
+        level INFO
+    }
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Bonus : si tu veux que les visiteurs qui tapent http:// soient auto-redirigés
+# vers https://, Caddy le fait par défaut. Aucun bloc séparé nécessaire.
+# ─────────────────────────────────────────────────────────────────────────────
