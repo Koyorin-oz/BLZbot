@@ -227,6 +227,50 @@ function deleteVerifiedForGuild(guildId, discordUserId) {
   return info.changes > 0;
 }
 
+/** Durée de vie d’un ticket OAuth (bouton → authorize), évite l’accumulation en base. */
+const OAUTH_TICKET_TTL_MS = 15 * 60 * 1000;
+
+const OAUTH_TICKET_ID_RE = /^[a-f0-9]{32}$/;
+
+const insertOauthTicketStmt = db.prepare(
+  'INSERT INTO oauth_ticket (id, guild_id, discord_user_id, created_at) VALUES (?, ?, ?, ?)',
+);
+const selectOauthTicketStmt = db.prepare('SELECT * FROM oauth_ticket WHERE id = ?');
+const deleteOauthTicketStmt = db.prepare('DELETE FROM oauth_ticket WHERE id = ?');
+const purgeStaleOauthTicketsStmt = db.prepare('DELETE FROM oauth_ticket WHERE created_at < ?');
+
+/**
+ * Crée un ticket court (32 hex) pour l’URL Discord OAuth ; le `state` du bouton reste petit
+ * → autorisation 100 % sur discord.com (pas de modal « tu quittes Discord »).
+ */
+function createOAuthTicket(guildId, discordUserId) {
+  const id = crypto.randomBytes(16).toString('hex');
+  const now = Date.now();
+  db.transaction(() => {
+    purgeStaleOauthTicketsStmt.run(now - OAUTH_TICKET_TTL_MS);
+    insertOauthTicketStmt.run(id, guildId, discordUserId, now);
+  })();
+  return id;
+}
+
+/** Lecture seule + vérif TTL ; ne supprime pas (permets les réessais OAuth avec le même state). */
+function peekOAuthTicket(id) {
+  if (!id || typeof id !== 'string' || !OAUTH_TICKET_ID_RE.test(id)) return null;
+  const row = selectOauthTicketStmt.get(id);
+  if (!row) return null;
+  const age = Date.now() - Number(row.created_at);
+  if (age > OAUTH_TICKET_TTL_MS || age < 0) {
+    deleteOauthTicketStmt.run(id);
+    return null;
+  }
+  return { guildId: row.guild_id, discordUserId: row.discord_user_id };
+}
+
+function deleteOAuthTicket(id) {
+  if (!id || typeof id !== 'string') return;
+  deleteOauthTicketStmt.run(id);
+}
+
 module.exports = {
   db,
   getGuildConfig,
