@@ -51,7 +51,7 @@ async function main() {
 
   const rest = new REST({ version: '10' }).setToken(token);
   await rest.put(Routes.applicationCommands(clientId), { body: buildSlashCommands() });
-  console.log('✅ Commandes globales enregistrées : /verify, /setup-verification');
+  console.log('✅ Commandes globales enregistrées : /verify, /setup-verification, /unverify');
 }
 
 main().catch((e) => {
