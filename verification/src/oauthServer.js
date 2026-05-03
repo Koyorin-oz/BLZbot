@@ -34,6 +34,9 @@ const {
   getGuildConfig,
   assertUniqueVerificationEmail,
   findAltsByIp,
+  peekOAuthTicket,
+  deleteOAuthTicket,
+  OAUTH_TICKET_ID_RE,
 } = require('./database');
 const { addGuildMemberRole, removeGuildMemberRole } = require('./discordApi');
 const { lookupIp, isVpnOrProxy } = require('./geolocation');
