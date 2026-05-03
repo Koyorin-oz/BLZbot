@@ -257,7 +257,13 @@ function createOAuthServer(opts) {
       return;
     }
 
-    const decoded = verifyState(state, opts.stateSecret);
+    const isTicketState = state && OAUTH_TICKET_ID_RE.test(state);
+    let decoded = null;
+    if (isTicketState) {
+      decoded = peekOAuthTicket(state);
+    } else {
+      decoded = verifyState(state, opts.stateSecret);
+    }
     if (!decoded) {
       res.status(400).send(page('Lien expiré', '<p>State invalide ou expiré.</p>'));
       return;
