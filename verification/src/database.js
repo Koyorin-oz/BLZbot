@@ -4,6 +4,7 @@
  */
 const fs = require('node:fs');
 const path = require('node:path');
+const crypto = require('node:crypto');
 const Database = require('better-sqlite3');
 
 const dbPath = path.join(__dirname, '..', 'data', 'verification.sqlite');
