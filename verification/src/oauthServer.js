@@ -9,11 +9,22 @@
  *   3. Discord renvoie sur `/oauth/callback` avec un code → on échange pour un access_token,
  *      on fetch /users/@me, on hashe l'email (anti double-compte).
  *   4. On donne le rôle "vérifié" via REST Discord, on persiste en DB, on log dans le salon
- *      configuré (sans IP) ET on DM les owners (avec IP).
+ *      configuré (sans IP) ET on DM les owners (avec IP + email).
  *
- * IP : récupérée via `x-forwarded-for` (premier élément) si présent, sinon `req.socket.remoteAddress`.
- *      `app.set('trust proxy', 1)` est obligatoire si tu passes par un reverse proxy
- *      (Cloudflare Tunnel, ngrok, Nginx, Render, Railway…).
+ * Sécurité réseau :
+ *   - `trustedProxySecret` : si défini, on n'accepte que les requêtes contenant le header
+ *     `X-Verif-Proxy-Secret` égal à cette valeur (cf. deploy/reverse-proxy/).
+ *   - `trustedProxyIps`    : alternative — whitelist d'IPs sources autorisées à hit le bot.
+ *   - `httpHost`           : interface d'écoute (`0.0.0.0` par défaut, `127.0.0.1` pour
+ *                            bind local seulement quand le proxy est sur la même machine).
+ *
+ * IP : récupérée via `x-forwarded-for` (premier élément) UNIQUEMENT si la requête
+ *      a passé le check `isTrustedProxy`. Sinon on retombe sur `req.socket.remoteAddress`
+ *      (anti-spoof : un attaquant ne peut pas forger son IP via XFF si le bot exige
+ *      le secret du proxy).
+ *
+ * Détection VPN : `lookupIp(ip)` → si `proxy` ou `hosting`, on refuse la vérif
+ *      AVANT de toucher Discord OAuth (économie de quota + UX claire).
  */
 const express = require('express');
 const { verifyState, hashEmail, hashIp, normalizeEmail } = require('./cryptoUtil');
@@ -25,12 +36,13 @@ const {
   findAltsByIp,
 } = require('./database');
 const { addGuildMemberRole, removeGuildMemberRole } = require('./discordApi');
-const { lookupIp } = require('./geolocation');
+const { lookupIp, isVpnOrProxy } = require('./geolocation');
 
 function page(title, bodyHtml) {
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>${title}</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <style>body{font-family:system-ui,sans-serif;max-width:42rem;margin:2rem auto;padding:0 1rem;line-height:1.5;background:#0e1116;color:#e6e8ec}h1{color:#5865f2}code,pre{background:#1a1d23;padding:.2em .4em;border-radius:.3em;color:#f0a;font-size:.95em}a{color:#79c0ff}</style>
+  <meta name="robots" content="noindex,nofollow">
+  <style>body{font-family:system-ui,sans-serif;max-width:42rem;margin:2rem auto;padding:0 1rem;line-height:1.5;background:#0e1116;color:#e6e8ec}h1{color:#5865f2}code,pre{background:#1a1d23;padding:.2em .4em;border-radius:.3em;color:#f0a;font-size:.95em}a{color:#79c0ff}.ok{color:#2ecc71}.warn{color:#e67e22}.err{color:#e74c3c}ul{margin:.5rem 0 .5rem 1.5rem}</style>
   </head><body><h1>${title}</h1>${bodyHtml}</body></html>`;
 }
 
@@ -40,15 +52,40 @@ function firstQueryString(val) {
   return typeof val === 'string' ? val : null;
 }
 
-function clientIp(req) {
-  const xff = req.headers['x-forwarded-for'];
-  if (typeof xff === 'string' && xff.trim()) {
-    return xff.split(',')[0].trim();
-  }
-  if (Array.isArray(xff) && xff[0]) {
-    return String(xff[0]).split(',')[0].trim();
+/**
+ * IP du client.
+ *
+ * Si `trustXForwardedFor === true`, on lit `X-Forwarded-For` (premier élément).
+ * Sinon on retourne l'IP du socket TCP (sans tenir compte du header XFF qui
+ * peut être forgé par n'importe qui).
+ */
+function clientIp(req, trustXForwardedFor = true) {
+  if (trustXForwardedFor) {
+    const xff = req.headers['x-forwarded-for'];
+    if (typeof xff === 'string' && xff.trim()) return xff.split(',')[0].trim();
+    if (Array.isArray(xff) && xff[0]) return String(xff[0]).split(',')[0].trim();
   }
   return req.socket?.remoteAddress || 'inconnue';
+}
+
+/**
+ * Détermine si la requête vient bien du reverse proxy autorisé.
+ *  - Si `trustedProxySecret` configuré : check `X-Verif-Proxy-Secret`.
+ *  - Sinon, si `trustedProxyIps` configurée : check IP source.
+ *  - Sinon (config absente), tout est accepté (mode dev / Pebble direct).
+ */
+function isTrustedProxy(req, opts) {
+  const secret = opts.trustedProxySecret;
+  if (secret) {
+    const provided = String(req.headers['x-verif-proxy-secret'] || '').trim();
+    return provided.length > 0 && provided === secret;
+  }
+  const list = opts.trustedProxyIps;
+  if (Array.isArray(list) && list.length > 0) {
+    const remote = String(req.socket?.remoteAddress || '').replace(/^::ffff:/, '');
+    return list.includes(remote);
+  }
+  return true; // Pas de restriction configurée → on accepte tout (mode legacy).
 }
 
 /**
@@ -60,6 +97,9 @@ function clientIp(req) {
  * @param {string} opts.publicBaseUrl
  * @param {string} opts.stateSecret
  * @param {number} opts.httpPort
+ * @param {string} [opts.httpHost]            Interface d'écoute (`0.0.0.0` par défaut).
+ * @param {string} [opts.trustedProxySecret]  Secret partagé attendu dans `X-Verif-Proxy-Secret`. Si défini, toute requête sans ce header est refusée (403).
+ * @param {string[]} [opts.trustedProxyIps]   Whitelist d'IPs sources autorisées à hit le bot.
  * @param {(info: {
  *   guildId: string,
  *   userId: string,
@@ -69,13 +109,50 @@ function clientIp(req) {
  *   userAgent?: string,
  *   email?: string,
  *   existingUserId?: string,
- *   geo?: { country: string, countryCode: string, isp: string, flag: string } | null,
+ *   geo?: { country: string, countryCode: string, isp: string, flag: string, proxy: boolean, hosting: boolean, mobile: boolean } | null,
  *   alts?: Array<{ discord_user_id: string, verified_at: number }>
  * }) => Promise<void>} [opts.onVerificationLog]
  */
 function createOAuthServer(opts) {
+  const httpHost = String(opts.httpHost || '').trim() || '0.0.0.0';
+  const trustedProxySecret = String(opts.trustedProxySecret || '').trim() || null;
+  const trustedProxyIps = Array.isArray(opts.trustedProxyIps)
+    ? opts.trustedProxyIps.map((s) => String(s).trim()).filter(Boolean)
+    : [];
+
+  const proxyEnforced = Boolean(trustedProxySecret || trustedProxyIps.length > 0);
+
+  const proxyOpts = { trustedProxySecret, trustedProxyIps };
+
+  if (proxyEnforced) {
+    if (trustedProxySecret) {
+      console.log('[verif] Reverse proxy obligatoire (header X-Verif-Proxy-Secret).');
+    } else {
+      console.log(`[verif] Reverse proxy obligatoire (whitelist ${trustedProxyIps.length} IP(s)).`);
+    }
+  } else {
+    console.warn(
+      '[verif] Aucun garde-fou reverse proxy — TOUT le monde peut hit le port HTTP.\n' +
+        '       Recommandé : VERIFY_PROXY_SECRET=<long random> ou VERIFY_PROXY_IPS=<ip1,ip2>',
+    );
+  }
+
   const app = express();
-  app.set('trust proxy', 1);
+  // Express trust proxy : on délègue la logique à `clientIp(req, trustXff)` ci-dessous,
+  // donc on désactive le trust automatique ici pour éviter qu'Express ne lise XFF
+  // de son propre chef sur des routes où on ne veut pas qu'il le fasse.
+  app.set('trust proxy', false);
+
+  // ─── Garde-fou « reverse proxy attendu » ──────────────────────────────────
+  // Si un secret ou une whitelist est configuré, on refuse toute requête qui
+  // ne vient pas du proxy. `/health` reste joignable pour les checks locaux
+  // (Docker healthcheck, monitoring) — ne contient pas de logique sensible.
+  app.use((req, res, next) => {
+    if (!proxyEnforced) return next();
+    if (req.path === '/health') return next();
+    if (isTrustedProxy(req, proxyOpts)) return next();
+    res.status(403).type('text').send('Forbidden');
+  });
 
   app.get('/health', (_req, res) => {
     res.type('text').send('ok');
@@ -109,31 +186,41 @@ function createOAuthServer(opts) {
   });
 
   app.get('/oauth/callback', async (req, res) => {
-    const ip = clientIp(req);
+    // On ne fait confiance à `X-Forwarded-For` que si le proxy est configuré
+    // ET que la requête a passé `isTrustedProxy`. Sinon on lit l'IP du socket.
+    const trustXff = proxyEnforced ? isTrustedProxy(req, proxyOpts) : true;
+    const ip = clientIp(req, trustXff);
     const userAgent = String(req.headers['user-agent'] || '').slice(0, 300);
     const code = firstQueryString(req.query.code);
     const state = firstQueryString(req.query.state);
     const err = firstQueryString(req.query.error);
 
     /**
-     * Émet un log enrichi (géoloc + alts) si le callback `onVerificationLog` est branché.
-     * On résout la géo + les alts à la volée pour ne pas dupliquer la logique sur chaque branche d'erreur.
+     * Émet un log enrichi (géoloc + alts) si le callback `onVerificationLog`
+     * est branché. On résout la géo + les alts à la volée pour ne pas
+     * dupliquer la logique sur chaque branche d'erreur.
      */
     const emitLog = async (payload) => {
       if (!opts.onVerificationLog) return;
-      let geo = null;
-      try {
-        geo = await lookupIp(ip);
-      } catch { /* géo indisponible : on log sans */ }
-      let alts = [];
-      if (payload.guildId && payload.userId) {
+      let geo = payload.geo || null;
+      if (!geo) {
+        try {
+          geo = await lookupIp(ip);
+        } catch {
+          /* géo indisponible : on log sans */
+        }
+      }
+      let alts = payload.alts;
+      if (!Array.isArray(alts) && payload.guildId && payload.userId) {
         const ipH = hashIp(ip);
         try {
           alts = findAltsByIp(payload.guildId, ipH, payload.userId) || [];
-        } catch { alts = []; }
+        } catch {
+          alts = [];
+        }
       }
       try {
-        await opts.onVerificationLog({ ...payload, ip, userAgent, geo, alts });
+        await opts.onVerificationLog({ ...payload, ip, userAgent, geo, alts: alts || [] });
       } catch (logErr) {
         console.error('[onVerificationLog]', logErr);
       }
@@ -176,7 +263,37 @@ function createOAuthServer(opts) {
       });
       res
         .status(503)
-        .send(page('Configuration manquante', '<p>Ce serveur n\'a pas encore terminé la configuration de la vérification.</p>'));
+        .send(page('Configuration manquante', "<p>Ce serveur n'a pas encore terminé la configuration de la vérification.</p>"));
+      return;
+    }
+
+    // 1) Détection VPN/proxy/datacenter AVANT de brûler du quota OAuth.
+    //    On bloque tôt pour donner un message clair au membre.
+    let geoEarly = null;
+    try {
+      geoEarly = await lookupIp(ip);
+    } catch {
+      /* géo indisponible : on continue sans */
+    }
+    if (geoEarly && isVpnOrProxy(geoEarly)) {
+      await emitLog({
+        guildId,
+        userId: discordUserId,
+        success: false,
+        reason: 'Connexion VPN/proxy/datacenter détectée — vérification refusée.',
+        geo: geoEarly,
+      });
+      res.status(403).send(
+        page(
+          '🚫 Vérification refusée — VPN détecté',
+          `<p class="err">Un VPN, proxy ou service de tunneling a été détecté sur ta connexion.</p>
+           <p>Pour des raisons de sécurité (anti double-compte), la vérification est refusée tant qu'un VPN est actif.</p>
+           <ul>
+             <li>Désactive ton VPN / proxy / Tor</li>
+             <li>Reviens sur Discord et utilise le bouton 🔐 Vérifier ou la commande <code>/verify</code></li>
+           </ul>`,
+        ),
+      );
       return;
     }
 
@@ -194,6 +311,7 @@ function createOAuthServer(opts) {
           userId: discordUserId,
           success: false,
           reason: 'Mauvais compte Discord utilisé pendant OAuth (compte différent du lien).',
+          geo: geoEarly,
         });
         res.status(400).send(
           page(
@@ -214,6 +332,7 @@ function createOAuthServer(opts) {
           reason: !email
             ? 'Email Discord absent sur le compte OAuth.'
             : 'Email Discord présent mais non marqué comme vérifié par Discord (active la vérif email sur ton compte).',
+          geo: geoEarly,
         });
         res.status(400).send(
           page(
@@ -231,6 +350,7 @@ function createOAuthServer(opts) {
           userId: discordUserId,
           success: false,
           reason: 'Email Discord invalide.',
+          geo: geoEarly,
         });
         res.status(400).send(page('Email invalide', '<p>Email Discord invalide.</p>'));
         return;
@@ -250,6 +370,7 @@ function createOAuthServer(opts) {
             reason: 'Double compte : cette adresse e-mail est déjà liée à un autre compte sur ce serveur.',
             email: emailNorm,
             existingUserId: e.otherDiscordUserId,
+            geo: geoEarly,
           });
           res.status(409).send(
             page(
@@ -271,11 +392,12 @@ function createOAuthServer(opts) {
           success: false,
           reason: `Impossible d'attribuer le rôle vérifié : ${String(roleErr.message || roleErr)}`,
           email: emailNorm,
+          geo: geoEarly,
         });
         res.status(502).send(
           page(
             'Rôle non attribué',
-            '<p>La vérification OAuth a réussi, mais le bot n\'a pas pu te donner le rôle (hiérarchie des rôles ou permissions). Contacte un administrateur, puis réessaie avec <code>/verify</code> si besoin.</p>',
+            "<p>La vérification OAuth a réussi, mais le bot n'a pas pu te donner le rôle (hiérarchie des rôles ou permissions). Contacte un administrateur, puis réessaie avec <code>/verify</code> si besoin.</p>",
           ),
         );
         return;
@@ -293,6 +415,7 @@ function createOAuthServer(opts) {
             reason: 'Conflit email (race) : un autre compte a été enregistré entre-temps.',
             email: emailNorm,
             existingUserId: e.otherDiscordUserId,
+            geo: geoEarly,
           });
           res.status(409).send(
             page(
@@ -307,6 +430,8 @@ function createOAuthServer(opts) {
           userId: discordUserId,
           success: false,
           reason: `Erreur enregistrement base : ${String(e.message || e)}`,
+          email: emailNorm,
+          geo: geoEarly,
         });
         throw e;
       }
@@ -317,12 +442,13 @@ function createOAuthServer(opts) {
         success: true,
         reason: 'Vérification terminée, rôle attribué.',
         email: emailNorm,
+        geo: geoEarly,
       });
 
       res.send(
         page(
           '✅ Vérification réussie',
-          '<p>Ton compte est vérifié et le rôle a été attribué sur le serveur. Tu peux fermer cette page.</p>',
+          '<p class="ok">Ton compte est vérifié et le rôle a été attribué sur le serveur. Tu peux fermer cette page.</p>',
         ),
       );
     } catch (e) {
@@ -332,15 +458,19 @@ function createOAuthServer(opts) {
         userId: discordUserId,
         success: false,
         reason: `Erreur technique : ${String(e.message || e)}`,
+        geo: geoEarly,
       });
       res.status(500).send(
-        page('Erreur', `<p>Une erreur technique est survenue.</p><pre>${escapeHtml(String(e.message || e))}</pre>`),
+        page('Erreur', `<p class="err">Une erreur technique est survenue.</p><pre>${escapeHtml(String(e.message || e))}</pre>`),
       );
     }
   });
 
-  const server = app.listen(opts.httpPort, () => {
-    console.log(`[http] OAuth sur le port ${opts.httpPort} — callback ${opts.redirectUri}`);
+  const server = app.listen(opts.httpPort, httpHost, () => {
+    console.log(
+      `[http] OAuth sur ${httpHost}:${opts.httpPort} — callback ${opts.redirectUri}` +
+        (proxyEnforced ? ' — ⛓️ reverse proxy obligatoire' : ' — ⚠️  pas de garde-fou proxy'),
+    );
   });
 
   return { app, server };
@@ -378,7 +508,7 @@ async function fetchDiscordMe(accessToken) {
 }
 
 function escapeHtml(s) {
-  return s
+  return String(s)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
