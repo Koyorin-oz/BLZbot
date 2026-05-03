@@ -199,6 +199,25 @@ function saveVerifiedForGuild(guildId, discordUserId, emailHash, ipHash = null, 
   }
 }
 
+/**
+ * Supprime l'entrée de vérification d'un membre sur une guilde.
+ *
+ * Effets en cascade :
+ *  - Le membre n'est plus considéré comme vérifié (re-soumettre /verify le re-passera dans le pipeline)
+ *  - L'IP associée est libérée du registre d'alts pour cette guilde
+ *  - L'email est libéré (un autre compte peut désormais utiliser le même email)
+ *
+ * Idempotente : renvoie `true` si une ligne a été supprimée, `false` sinon.
+ *
+ * @param {string} guildId
+ * @param {string} discordUserId
+ * @returns {boolean}
+ */
+function deleteVerifiedForGuild(guildId, discordUserId) {
+  const info = delGuildUser.run(guildId, discordUserId);
+  return info.changes > 0;
+}
+
 module.exports = {
   db,
   getGuildConfig,
@@ -208,6 +227,7 @@ module.exports = {
   findVerifiedInGuild,
   findAltsByIp,
   saveVerifiedForGuild,
+  deleteVerifiedForGuild,
   assertUniqueVerificationEmail,
   DuplicateEmailError,
   DEFAULT_EMBED,
