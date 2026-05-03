@@ -328,6 +328,11 @@ function installVerificationSystem(client, opts) {
         }
     }
     const httpPort = Number.isFinite(opts.httpPort) && opts.httpPort > 0 ? opts.httpPort : 3782;
+    const httpHost = String(opts.httpHost || '').trim() || '0.0.0.0';
+    const trustedProxySecret = String(opts.trustedProxySecret || '').trim() || null;
+    const trustedProxyIps = Array.isArray(opts.trustedProxyIps)
+        ? opts.trustedProxyIps.map((s) => String(s).trim()).filter(Boolean)
+        : [];
     const ownerDmIds = Array.isArray(opts.ownerDmIds) ? opts.ownerDmIds : [];
     const vpnNoticeChannelId = String(opts.vpnNoticeChannelId || '').trim() || null;
     const unverifiedRoleId = String(opts.unverifiedRoleId || '').trim() || null;
