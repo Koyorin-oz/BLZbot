@@ -446,6 +446,10 @@ function createVerifyServer(opts) {
         );
     }
 
+    const proxyEnforced = Boolean(
+        opts.trustedProxySecret || (Array.isArray(opts.trustedProxyIps) && opts.trustedProxyIps.length > 0),
+    );
+
     const server = http.createServer(async (req, res) => {
         // L'URL absolue n'est utilisée que pour parser le path/searchParams ;
         // l'host est ignoré côté logique.
@@ -455,6 +459,20 @@ function createVerifyServer(opts) {
         } catch {
             sendText(res, 400, 'Bad URL');
             return;
+        }
+
+        // ─── Garde-fou « reverse proxy attendu » ──────────────────────────────
+        // Si un secret ou une whitelist est configuré, on refuse les requêtes
+        // qui ne viennent pas du proxy. `/health` reste joignable pour les
+        // checks locaux (Docker healthcheck, monitoring) — ne contient pas de
+        // logique sensible.
+        if (proxyEnforced && parsedUrl.pathname !== '/health') {
+            const trusted = isTrustedProxy(req, opts);
+            if (!trusted) {
+                // Réponse minimale : on ne révèle rien sur la nature du service.
+                sendText(res, 403, 'Forbidden');
+                return;
+            }
         }
 
         try {
@@ -481,8 +499,12 @@ function createVerifyServer(opts) {
         }
     });
 
-    server.listen(opts.httpPort, () => {
-        console.log(`[http] Verif sur le port ${opts.httpPort} — base ${opts.publicBaseUrl}`);
+    const host = String(opts.httpHost || '0.0.0.0');
+    server.listen(opts.httpPort, host, () => {
+        console.log(
+            `[http] Verif sur ${host}:${opts.httpPort} — base ${opts.publicBaseUrl}` +
+                (proxyEnforced ? ' — ⛓️ reverse proxy obligatoire' : ' — ⚠️  pas de garde-fou proxy'),
+        );
     });
 
     return { server };
