@@ -129,8 +129,9 @@ function buildVerifyLinkRow(url) {
 
 /**
  * @param {object} opts
- * @param {string} opts.publicBaseUrl
- * @param {string} opts.stateSecret
+ * @param {string} opts.clientId       Application Discord (vérif) — même valeur que OAUTH client_id.
+ * @param {string} opts.redirectUri    Doit matcher `OAUTH_REDIRECT_URI` (ex. https://…/oauth/callback).
+ * @param {string} opts.stateSecret    HMAC pour signer le paramètre `state`.
  */
 function createBot(opts) {
   const client = new Client({
@@ -142,10 +143,22 @@ function createBot(opts) {
     partials: [Partials.Channel, Partials.User],
   });
 
+  /**
+   * URL vers l’écran d’autorisation Discord (domaine discord.com).
+   * Évite que le 1er clic ouvre ton site (duckdns, etc.) et déclenche l’avertissement « quitter Discord ».
+   * La route `/oauth/start` reste dispo pour compat (anciens liens bookmarkés).
+   */
   function buildVerifyUrl(discordUserId, guildId) {
     const state = signState({ discordUserId, guildId }, opts.stateSecret);
-    const base = opts.publicBaseUrl.replace(/\/$/, '');
-    return `${base}/oauth/start?state=${encodeURIComponent(state)}`;
+    const params = new URLSearchParams({
+      client_id: opts.clientId,
+      redirect_uri: opts.redirectUri,
+      response_type: 'code',
+      scope: 'identify email',
+      state,
+      prompt: 'consent',
+    });
+    return `https://discord.com/api/oauth2/authorize?${params.toString()}`;
   }
 
   client.once(Events.ClientReady, async (c) => {
