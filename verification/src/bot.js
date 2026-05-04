@@ -316,6 +316,11 @@ function createBot(opts) {
         await handleUnverifyCommand(interaction, client);
         return;
       }
+
+      if (interaction.commandName === 'antiraid') {
+        await antiraidSlash.execute(interaction, { antiRaidManager });
+        return;
+      }
     } catch (e) {
       console.error('[InteractionCreate]', e);
       const payload = { content: `Erreur : ${e.message || e}`, flags: MessageFlags.Ephemeral };
