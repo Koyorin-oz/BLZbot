@@ -151,15 +151,6 @@ module.exports = {
     },
 
     async handleGuildMemberAdd(member) {
-        // Anti-raid : Analyser le nouveau membre AVANT le logging
-        if (this.antiRaidManager) {
-            try {
-                await this.antiRaidManager.trackJoin(member);
-            } catch (error) {
-                console.error('[ANTI-RAID] Erreur lors du tracking du membre:', error);
-            }
-        }
-
         await this.logger.log(
             member.guild,
             '📥 Membre : Arrivée',
