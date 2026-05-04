@@ -181,14 +181,19 @@ async function replyVerifyLinkEphemeral(interaction, url) {
  * @param {string} opts.redirectUri    `OAUTH_REDIRECT_URI`.
  */
 function createBot(opts) {
+  const raidDb = openRaidDb();
   const client = new Client({
     intents: [
       GatewayIntentBits.Guilds,
       GatewayIntentBits.GuildMembers,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.MessageContent,
       GatewayIntentBits.DirectMessages,
     ],
-    partials: [Partials.Channel, Partials.User],
+    partials: [Partials.Channel, Partials.User, Partials.Message],
   });
+
+  const antiRaidManager = new AntiRaidManager(client, raidDb);
 
   /**
    * URL du screen d’autorisation Discord : le `state` est un ticket 32 hex (court) → toujours sur discord.com.
