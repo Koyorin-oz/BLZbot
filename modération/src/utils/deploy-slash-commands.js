@@ -81,6 +81,7 @@ const LEGACY_COMMAND_NAMES_TO_REMOVE = new Set([
     'verify',
     'setup-verification',
     'unverify',
+    'antiraid',
 ]);
 // Slash obsolètes à purger (ancienne convention, remplacée par autre chose).
 const OBSOLETE_COMMAND_NAMES = new Set([

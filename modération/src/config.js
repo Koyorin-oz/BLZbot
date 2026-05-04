@@ -272,44 +272,5 @@ module.exports = {
         PING_ROLE_ID: null,                             // ID du rôle à ping (modérateurs)
         PING_COOLDOWN_MS: 30 * 60 * 1000,              // Cooldown entre les pings (30 minutes)
         EMBED_COLOR: BLZ_EMBED_STRIP_HEX                  // Bande latérale des signalements (identité BLZbot)
-    },
-
-    // ==================== ANTI-RAID ====================
-    RAID_ROLE_ID: '1400457540386422916', // Rôle attribué aux membres suspects de raid
-    RAID_LOG_CHANNEL_ID: '1454490890297933944', // Salon pour les alertes raid (null = utilise ALL_LOG_CHANNEL_ID)
-
-    RAID_DETECTION: {
-        // Seuils d'action
-        ACTION_THRESHOLD: 50,           // Score pour appliquer RAID_ROLE
-        CRITICAL_THRESHOLD: 100,        // Score pour lockdown + DM admins
-
-        // Décroissance du score
-        DECAY_RATE: 1,                  // Points perdus par minute
-        DECAY_INTERVAL: 60000,          // Intervalle de vérification (1 minute)
-
-        // Détection rafale de joins
-        JOIN_WINDOW: 10000,             // Fenêtre de temps en ms (10 secondes)
-        JOIN_THRESHOLD: 10,             // Nombre de joins pour déclencher
-        JOIN_SCORE_MULTIPLIER: 25,      // Score = (joins/threshold) × multiplier
-
-        // Détection comptes récents
-        NEW_ACCOUNT_DAYS: 7,            // Jours - comptes créés récemment = suspect
-        NEW_ACCOUNT_SCORE: 10,          // Points par compte récent
-
-        // Détection noms similaires
-        SIMILAR_NAME_THRESHOLD: 3,      // Nombre minimum de noms similaires
-        SIMILAR_NAME_SCORE: 20,         // Score par nom similaire au-delà du seuil
-
-        // Détection spam messages
-        SPAM_CHANNEL_THRESHOLD: 3,      // Même message dans X salons
-        SPAM_CHANNEL_WINDOW: 10000,     // Fenêtre de temps (10 secondes)
-        SPAM_CHANNEL_SCORE: 50,         // Score pour spam multi-salon
-
-        // Détection messages répétés
-        REPEAT_MESSAGE_THRESHOLD: 10,    // X messages identiques consécutifs
-        REPEAT_MESSAGE_SCORE: 30,       // Score pour messages répétés
-
-        // Rôles protégés (ne jamais appliquer RAID_ROLE)
-        PROTECTED_ROLES: ['1172237685763608579']             // IDs des rôles staff à ne pas affecter
     }
 };

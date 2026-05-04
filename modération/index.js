@@ -61,8 +61,6 @@ const voteManager = new VoteManager();
 const snipeManager = new SnipeManager();
 const recruitmentManager = new RecruitmentManager();
 let scheduler; // Sera initialisé quand le bot sera prêt
-let antiRaidManager; // Sera initialisé quand le bot sera prêt
-
 // Collections pour les commandes et événements
 client.commands = new Collection();
 
