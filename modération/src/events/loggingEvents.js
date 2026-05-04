@@ -176,23 +176,6 @@ module.exports = {
     },
 
     // ==================== MESSAGES ====================
-    
-    /**
-     * Handler pour les nouveaux messages - Détection anti-raid spam
-     */
-    async handleMessageCreate(message) {
-        // Ignorer les bots et messages sans guild
-        if (message.author.bot || !message.guild) return;
-
-        // Anti-raid : Analyser le message pour détecter le spam
-        if (this.antiRaidManager) {
-            try {
-                await this.antiRaidManager.trackMessage(message);
-            } catch (error) {
-                console.error('[ANTI-RAID] Erreur lors du tracking du message:', error);
-            }
-        }
-    },
 
     async handleMessageDelete(client, message) {
         if (message.partial) return;
