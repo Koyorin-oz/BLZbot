@@ -40,6 +40,9 @@ const {
   createOAuthTicket,
 } = require('./database');
 const { addGuildMemberRole, removeGuildMemberRole } = require('./discordApi');
+const { openRaidDb } = require('./antiraid/raidDb');
+const AntiRaidManager = require('./antiraid/manager');
+const antiraidSlash = require('./antiraid/slashCommand');
 
 function isGuildAdmin(interaction) {
   return Boolean(
