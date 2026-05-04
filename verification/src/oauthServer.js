@@ -402,30 +402,6 @@ function createOAuthServer(opts) {
       const ipH = hashIp(ip);
 
       try {
-        assertUniqueVerificationEmail(guildId, discordUserId, emailHash);
-      } catch (e) {
-        if (e instanceof DuplicateEmailError) {
-          await emitLog({
-            guildId,
-            userId: discordUserId,
-            success: false,
-            reason: 'Double compte : cette adresse e-mail est déjà liée à un autre compte sur ce serveur.',
-            email: emailNorm,
-            existingUserId: e.otherDiscordUserId,
-            geo: geoEarly,
-          });
-          res.status(409).send(
-            page(
-              'Double compte détecté',
-              `<p>Cette adresse e-mail est déjà utilisée par un autre compte Discord sur ce serveur.</p><p>Ton ID : <code>${discordUserId}</code></p>`,
-            ),
-          );
-          return;
-        }
-        throw e;
-      }
-
-      try {
         await addGuildMemberRole(opts.botToken, guildId, discordUserId, cfg.verified_role_id);
       } catch (roleErr) {
         await emitLog({
