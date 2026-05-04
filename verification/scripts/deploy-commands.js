@@ -1,5 +1,5 @@
 /**
- * Déploiement manuel des commandes slash globales (/verify, /setup-verification, /unverify).
+ * Déploiement manuel des commandes slash globales (/verify, /setup-verification, /unverify, /antiraid).
  * Utile si tu veux pousser les commandes sans démarrer le bot complet.
  *
  * Usage : `npm run deploy-commands` (depuis verification/)

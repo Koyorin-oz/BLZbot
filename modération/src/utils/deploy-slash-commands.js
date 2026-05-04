@@ -73,9 +73,9 @@ function buildGuildSlashPayloadForMirror(localCommands, guildOnlyCommandNames, g
     return out;
 }
 // Anciens noms à supprimer proprement (renommages / commandes retirées).
-// Important : on garde `verify`, `setup-verification`, `unverify` ici pour que
+// Important : on garde `verify`, `setup-verification`, `unverify` et `antiraid` ici pour que
 // Discord les supprime automatiquement de l'app modération lors du prochain
-// déploiement (elles tournent désormais sur l'app séparée du bot vérif).
+// déploiement (elles tournent désormais sur l'app séparée du bot vérif / protect).
 const LEGACY_COMMAND_NAMES_TO_REMOVE = new Set([
     'panel',
     'verify',
