@@ -571,7 +571,7 @@ module.exports = {
             console.error('[ANTI-RAID] Erreur réactivation invitations:', error);
             await interaction.editReply({
                 content: '❌ Une erreur est survenue lors de la réactivation des invitations.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral,
             });
         }
     }
