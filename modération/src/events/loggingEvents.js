@@ -38,10 +38,6 @@ module.exports = {
         // Bans
         client.on(Events.GuildBanAdd, (ban) => this.handleGuildBanAdd(ban));
         client.on(Events.GuildBanRemove, (ban) => this.handleGuildBanRemove(ban));
-
-        if (antiRaidManager && process.env.BLZ_COMPACT_LOG !== '1') {
-            console.log('✓ AntiRaidManager connecté à loggingEvents');
-        }
     },
 
     // ==================== HELPERS ====================
