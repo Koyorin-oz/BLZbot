@@ -1,4 +1,3 @@
-const path = require('path');
 const { PermissionFlagsBits, EmbedBuilder, ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize } = require('discord.js');
 const CONFIG = require('./config');
 const { resolveRaidLogChannelId } = require('./logResolve');
