@@ -24,7 +24,7 @@
  *      le secret du proxy).
  *
  * Détection VPN : `lookupIp(ip)` → si `proxy` ou `hosting`, on refuse la vérif
- *      AVANT de toucher Discord OAuth (économie de quota + UX claire).
+ *      après récupération de l’email OAuth (pour que les logs owner DM incluent l’email).
  */
 const express = require('express');
 const { verifyState, hashEmail, hashIp, normalizeEmail } = require('./cryptoUtil');
