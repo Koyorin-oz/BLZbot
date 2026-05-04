@@ -218,7 +218,9 @@ function createBot(opts) {
     );
     try {
       await c.application.commands.set(buildSlashCommands());
-      console.log('[bot] Commandes slash globales enregistrées (/verify, /setup-verification, /unverify).');
+      console.log(
+        '[bot] Commandes slash globales enregistrées (/verify, /setup-verification, /unverify, /antiraid).',
+      );
     } catch (e) {
       console.error('[bot] Échec enregistrement des commandes globales :', e);
     }
