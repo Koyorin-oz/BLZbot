@@ -25,7 +25,6 @@ module.exports = {
         // Messages
         client.on(Events.MessageDelete, (message) => this.handleMessageDelete(client, message));
         client.on(Events.MessageUpdate, (oldMessage, newMessage) => this.handleMessageUpdate(oldMessage, newMessage));
-        client.on(Events.MessageCreate, (message) => this.handleMessageCreate(message));
 
         // Salons
         client.on(Events.ChannelCreate, (channel) => this.handleChannelCreate(channel));
