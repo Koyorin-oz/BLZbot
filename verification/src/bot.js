@@ -3,6 +3,7 @@
  *  - /setup-verification : panneau admin avec menus (salon panneau, rôle vérifié, salon
  *    logs SANS IP, personnalisation embed, publication).
  *  - /verify : commande de secours pour obtenir le lien OAuth (équivalent du bouton).
+ *  - /antiraid : détection + gestion anti-raid (sur l’app BLZbot-protect — activer **Message Content Intent**).
  *  - Le bouton « Vérifier » : lien **100 % discord.com** grâce à un `state` court (ticket SQLite) :
  *    pas de limite 512 tatillonne, pas de shortener, pas de modal « tu quittes Discord » sur le clic.
  *
