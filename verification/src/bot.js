@@ -231,6 +231,11 @@ function createBot(opts) {
    */
   client.on(Events.GuildMemberAdd, async (member) => {
     if (member.user.bot) return;
+    try {
+      await antiRaidManager.trackJoin(member);
+    } catch (e) {
+      console.error('[GuildMemberAdd] Anti-raid trackJoin :', e.message || e);
+    }
     const cfg = getGuildConfig(member.guild.id);
     if (!cfg?.verified_role_id) return;
     if (member.roles.cache.has(cfg.verified_role_id)) return;
