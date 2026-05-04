@@ -9,9 +9,9 @@ const { resolveRaidLogChannelId } = require('./logResolve');
  * Système de détection basé sur un score cumulatif avec décroissance automatique
  */
 class AntiRaidManager {
-    constructor(client, dbManager) {
+    constructor(client, raidDb) {
         this.client = client;
-        this.dbManager = dbManager;
+        this.raidDb = raidDb;
 
         // Score par serveur : { guildId: { score, lastUpdate, raidActive, currentIncidentId } }
         this.guildScores = new Map();
