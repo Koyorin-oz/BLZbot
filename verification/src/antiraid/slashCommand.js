@@ -380,7 +380,7 @@ module.exports = {
         if (incidents.length === 0) {
             return interaction.editReply({
                 content: '📜 Aucun incident de raid enregistré pour ce serveur.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral,
             });
         }
 
