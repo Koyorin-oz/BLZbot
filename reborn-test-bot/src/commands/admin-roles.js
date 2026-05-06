@@ -80,17 +80,64 @@ module.exports = {
     if (sub === 'creer-ranked') {
       await interaction.deferReply();
       const created = [];
+      const updated = [];
       const skipped = [];
       const failed = [];
       for (const t of rankedRoles.TIER_DEFS) {
+        const expectedName = `Ranked · ${t.label}`;
         const existing = rankedRoles.getRoleIdForTier(hub, t.key);
-        if (existing && guild.roles.cache.get(existing)) {
-          skipped.push(`${t.label} → <@&${existing}>`);
+        const configuredRole = existing ? guild.roles.cache.get(existing) : null;
+
+        // 1) Déjà configuré et présent : on met à jour nom/couleur si nécessaire.
+        if (configuredRole) {
+          try {
+            const patch = {};
+            if (configuredRole.name !== expectedName) patch.name = expectedName;
+            if (configuredRole.color !== t.color) patch.color = t.color;
+            if (Object.keys(patch).length > 0) {
+              await configuredRole.edit({
+                ...patch,
+                mentionable: false,
+                reason: 'Mise à jour automatique des rôles Ranked RP',
+              });
+              updated.push(`${t.label} → <@&${configuredRole.id}>`);
+            } else {
+              skipped.push(`${t.label} → <@&${configuredRole.id}>`);
+            }
+          } catch (e) {
+            failed.push(`${t.label} : \`${e?.message || e}\``);
+          }
           continue;
         }
+
+        // 2) Non configuré, mais rôle déjà présent sur le serveur par nom.
+        const byName = guild.roles.cache.find(
+          (r) => r.name.toLowerCase() === expectedName.toLowerCase(),
+        );
+        if (byName) {
+          try {
+            const patch = {};
+            if (byName.name !== expectedName) patch.name = expectedName;
+            if (byName.color !== t.color) patch.color = t.color;
+            if (Object.keys(patch).length > 0) {
+              await byName.edit({
+                ...patch,
+                mentionable: false,
+                reason: 'Mise à jour / rattachement automatique des rôles Ranked RP',
+              });
+            }
+            rankedRoles.setRoleIdForTier(hub, t.key, byName.id);
+            updated.push(`${t.label} → <@&${byName.id}>`);
+          } catch (e) {
+            failed.push(`${t.label} : \`${e?.message || e}\``);
+          }
+          continue;
+        }
+
+        // 3) Sinon on crée le rôle.
         try {
           const role = await guild.roles.create({
-            name: `Ranked · ${t.label}`,
+            name: expectedName,
             color: t.color,
             mentionable: false,
             reason: 'Création automatique des rôles Ranked RP',
@@ -103,6 +150,7 @@ module.exports = {
       }
       const lines = [];
       if (created.length) lines.push(`✅ **Créés** : ${created.join(' · ')}`);
+      if (updated.length) lines.push(`♻️ **Mis à jour / rattachés** : ${updated.join(' · ')}`);
       if (skipped.length) lines.push(`⏭️ **Déjà existants** : ${skipped.join(' · ')}`);
       if (failed.length) lines.push(`❌ **Échecs** : ${failed.join('\n')}`);
       lines.push('');
