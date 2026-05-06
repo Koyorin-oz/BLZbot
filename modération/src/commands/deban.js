@@ -21,6 +21,14 @@ module.exports = {
         }
 
         const utilisateur = interaction.options.getUser('utilisateur');
+        const BLOCKED_DEBAN_USER_ID = '296653370788151296';
+
+        if (utilisateur.id === BLOCKED_DEBAN_USER_ID) {
+            return interaction.reply({
+                content: "Erreur Impossible de deban l'utilisateur",
+                ephemeral: true
+            });
+        }
 
         try {
             await interaction.guild.bans.remove(utilisateur.id, `Débanni par ${interaction.user.tag}`);
