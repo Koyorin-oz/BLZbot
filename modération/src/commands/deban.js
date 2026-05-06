@@ -44,7 +44,7 @@ module.exports = {
         } catch (error) {
             console.error('Erreur lors du deban:', error);
             interaction.reply({
-                content: '❌ Une erreur est survenue lors du deban. Il se peut que l\'utilisateur ne soit pas banni.',
+                content: "Erreur Impossible de deban l'utilisateur",
                 ephemeral: true
             });
         }
