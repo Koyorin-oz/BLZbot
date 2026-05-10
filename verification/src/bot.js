@@ -527,9 +527,7 @@ async function handleUnverifyCommand(interaction, client) {
 
   if (cfg?.log_channel_no_ip_id) {
     try {
-      const logCh = await interaction.guild.channels
-        .fetch(cfg.log_channel_no_ip_id)
-        .catch(() => null);
+      const logCh = await interaction.guild.channels.fetch(cfg.log_channel_no_ip_id).catch(() => null);
       if (logCh && logCh.isTextBased()) {
         const embed = new EmbedBuilder()
           .setTitle('Membre dévérifié')
