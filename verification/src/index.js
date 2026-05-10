@@ -245,7 +245,7 @@ function withSensitiveFields(embed, p) {
  * @param {string[]} ownerDmIds
  * @param {object} p  payload émis par oauthServer (avec geo + alts)
  */
-async function onVerificationLog(client, ownerDmIds, p) {
+async function onVerificationLog(client, ownerDmIds, p, vpnNoticeChannelId) {
   const { guildId, success, alts } = p;
   const cfg = getGuildConfig(guildId);
 
@@ -260,6 +260,24 @@ async function onVerificationLog(client, ownerDmIds, p) {
 
   if (cfg?.log_channel_no_ip_id) {
     await sendChannelEmbed(client, cfg.log_channel_no_ip_id, publicEmbed);
+  }
+
+  if (!success && vpnNoticeChannelId && isVpnOrProxy(p.geo)) {
+    const user = await client.users.fetch(p.userId).catch(() => null);
+    const mention = `<@${p.userId}>`;
+    const vpnEmbed = new EmbedBuilder()
+      .setColor(0xe67e22)
+      .setTitle('🛡️ VPN / proxy détecté')
+      .setDescription(
+        'Ta tentative de **vérification** a été refusée parce qu’un **VPN, proxy ou sortie datacenter** a été détecté sur ta connexion.\n\n' +
+          '**Merci de désactiver ton VPN** (ou proxy / Tor), puis de recommencer avec le bouton **🔐 Vérifier** sur le serveur ou la commande `/verify`.',
+      )
+      .addFields(
+        { name: '👤 Compte', value: userField(user) || mention, inline: true },
+        { name: '🌐 Connexion', value: formatConnexion(p.geo), inline: true },
+      )
+      .setTimestamp(new Date());
+    await sendChannelEmbed(client, vpnNoticeChannelId, vpnEmbed, { content: mention });
   }
 
   if (ownerDmIds.length > 0) {
