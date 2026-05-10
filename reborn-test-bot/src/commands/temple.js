@@ -63,7 +63,10 @@ module.exports = {
     await interaction.deferReply();
     const sub = interaction.options.getSubcommand();
     if (sub === 'classement') {
-      const TOTAL = temple.SOURCE_DEFS.length;
+      const TOTAL = temple.TEMPLE_KEY_TOTAL;
+      const roiMin = temple.CLASSEMENT_ROI_MIN_KEYS;
+      const legMin = temple.CLASSEMENT_LEGENDE_MIN_KEYS;
+      const legMax = temple.CLASSEMENT_LEGENDE_MAX_KEYS;
       const c = temple.classement(20);
       const fmtRow = (row, rank) => {
         const star = rank <= 3 ? '👑' : rank <= 10 ? '🌟' : '✦';
@@ -72,7 +75,7 @@ module.exports = {
       const lines = [];
       lines.push('# ⛩️ Classement Temple');
       lines.push(
-        '👑 **Rois du Temple** (≥ 6 clés) — l’élite qui a maxé presque toutes les voies.',
+        `👑 **Rois du Temple** (≥ **${roiMin}** clés sur **${TOTAL}** max) — l’élite avec la majorité des voies.`,
       );
       if (c.kings.length) {
         c.kings.slice(0, 10).forEach((r, i) => lines.push(fmtRow(r, i + 1)));
@@ -80,11 +83,13 @@ module.exports = {
         lines.push('*Aucun Roi sacré pour l’instant.*');
       }
       lines.push('');
-      lines.push('🌟 **Légendes** (3-5 clés) — les vétérans qui s’en approchent.');
+      lines.push(
+        `�stars **Légendes** (**${legMin}**–**${legMax}** clés) — progression forte, pas encore au palier Roi.`,
+      );
       if (c.legends.length) {
         c.legends.slice(0, 10).forEach((r, i) => lines.push(fmtRow(r, i + 1)));
       } else {
-        lines.push('*Aucune légende pour l’instant — tient bon, ils arrivent.*');
+        lines.push('*Aucune entrée dans cette tranche pour l’instant.*');
       }
       const { EmbedBuilder } = require('discord.js');
       const e = new EmbedBuilder()
