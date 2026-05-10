@@ -368,7 +368,8 @@ async function main() {
     httpHost,
     trustedProxySecret,
     trustedProxyIps,
-    onVerificationLog: (payload) => onVerificationLog(client, ownerDmIds, payload),
+    onVerificationLog: (payload) =>
+      onVerificationLog(client, ownerDmIds, payload, vpnNoticeChannelId),
   });
 
   const shutdown = () => {
