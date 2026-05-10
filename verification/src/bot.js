@@ -320,6 +320,11 @@ function createBot(opts) {
         return;
       }
 
+      if (interaction.commandName === 'man-verify') {
+        await handleManVerifyCommand(interaction, client);
+        return;
+      }
+
       if (interaction.commandName === 'antiraid') {
         await antiraidSlash.execute(interaction, { antiRaidManager });
         return;
