@@ -4,7 +4,7 @@ Bot **sandbox** : économie / arbre / guildes joueur / ranked / temple / events,
 
 ---
 
-## 1. Commandes ** natives ** (code dans `src/commands/`)
+## 1. Commandes natives (code dans `src/commands/`)
 
 Chaque ligne = une commande racine ; les sous-commandes principales sont indiquées.
 
