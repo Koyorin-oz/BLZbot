@@ -9,18 +9,6 @@ const meta = require('./meta');
 const STAR_RP = 100_000n;
 const STAR_GRP = 200_000n;
 
-/** Nombre de « clés » Temple (aligné sur `SOURCE_DEFS`). */
-const TEMPLE_KEY_TOTAL = SOURCE_DEFS.length;
-
-/**
- * Classement affiché par `/temple classement` :
- *   - **Roi** : au moins autant de clés (souvent 6+/11 dans la doc équipe).
- *   - **Légende** : progression intermédiaire (bande 3–5 clés dans ce build ; pas les Rois ≥6).
- */
-const CLASSEMENT_ROI_MIN_KEYS = 6;
-const CLASSEMENT_LEGENDE_MIN_KEYS = 3;
-const CLASSEMENT_LEGENDE_MAX_KEYS = CLASSEMENT_ROI_MIN_KEYS - 1;
-
 /**
  * 11 sources « clés » qui composent le Temple (doc REBORN).
  * Le set persistant (`temple_sources_json`) garde la trace de toutes
