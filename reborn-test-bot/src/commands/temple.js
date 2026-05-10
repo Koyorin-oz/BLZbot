@@ -84,7 +84,7 @@ module.exports = {
       }
       lines.push('');
       lines.push(
-        `�stars **Légendes** (**${legMin}**–**${legMax}** clés) — progression forte, pas encore au palier Roi.`,
+        `🌟 **Légendes** (**${legMin}**–**${legMax}** clés) — progression forte, pas encore au palier Roi.`,
       );
       if (c.legends.length) {
         c.legends.slice(0, 10).forEach((r, i) => lines.push(fmtRow(r, i + 1)));
