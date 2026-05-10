@@ -38,8 +38,10 @@ const {
   resetEmbedToDefault,
   findVerifiedInGuild,
   deleteVerifiedForGuild,
+  saveVerifiedForGuild,
   createOAuthTicket,
 } = require('./database');
+const { hashManualVerificationPlaceholder } = require('./cryptoUtil');
 const { addGuildMemberRole, removeGuildMemberRole } = require('./discordApi');
 const { openRaidDb } = require('./antiraid/raidDb');
 const AntiRaidManager = require('./antiraid/manager');
