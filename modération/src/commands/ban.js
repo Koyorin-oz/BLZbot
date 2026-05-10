@@ -101,6 +101,9 @@ module.exports = {
             dureeTexte = msToReadableTime(dureeMs);
         }
 
+        // DM + ban API peuvent dépasser 3 s — Discord invalide l'interaction sans ack immédiat (10062).
+        await interaction.deferReply({ ephemeral: true });
+
         // Construire la raison finale
         let finalReason = '';
         if (regle && raison) {
