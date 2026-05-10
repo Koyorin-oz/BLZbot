@@ -205,16 +205,21 @@ module.exports = {
                 }
             );
 
-            await interaction.reply({
+            await interaction.editReply({
                 content: `✅ ${utilisateur.tag} a été banni ${dureeTexte ? 'temporairement (' + dureeTexte + ')' : 'définitivement'}.`,
-                ephemeral: true
             });
         } catch (erreur) {
             console.error('Erreur lors du bannissement :', erreur);
-            await interaction.reply({
-                content: '❌ Une erreur est survenue lors du bannissement.',
-                ephemeral: true
-            });
+            if (interaction.deferred) {
+                await interaction.editReply({
+                    content: '❌ Une erreur est survenue lors du bannissement.',
+                }).catch(() => {});
+            } else {
+                await interaction.reply({
+                    content: '❌ Une erreur est survenue lors du bannissement.',
+                    ephemeral: true,
+                }).catch(() => {});
+            }
         }
     }
 };
