@@ -59,7 +59,25 @@ const { EmbedBuilder } = require('discord.js');
 const { createOAuthServer } = require('./oauthServer');
 const { createBot } = require('./bot');
 const { getGuildConfig } = require('./database');
+const { isVpnOrProxy } = require('./geolocation');
 const { VERIF_BUILD_ID } = require('./buildId');
+
+/** Salon staff : notifier la personne lorsqu’un VPN bloque la vérification OAuth. */
+const DEFAULT_VPN_NOTICE_CHANNEL_ID = '1454477176597385326';
+
+/**
+ * Lit `VERIFY_VPN_NOTICE_CHANNEL_ID`. Si défini vide → désactivé. Si absent → défaut BLZ ci-dessus.
+ * @returns {string | null}
+ */
+function parseVpnNoticeChannelId() {
+  const raw = process.env.VERIFY_VPN_NOTICE_CHANNEL_ID;
+  if (raw === undefined || raw === null) return DEFAULT_VPN_NOTICE_CHANNEL_ID;
+  const t = String(raw).trim();
+  if (!t) return null;
+  if (/^\d{17,22}$/.test(t)) return t;
+  console.warn('[verif] VERIFY_VPN_NOTICE_CHANNEL_ID invalide — alerte VPN salon désactivée.');
+  return null;
+}
 
 function requireEnv(name) {
   const v = process.env[name];
