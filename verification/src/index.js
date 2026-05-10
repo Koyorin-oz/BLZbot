@@ -334,6 +334,12 @@ async function main() {
     .map((s) => s.trim())
     .filter(Boolean);
   const ownerDmIds = parseOwnerDmIds(process.env.OWNER_DM_IDS);
+  const vpnNoticeChannelId = parseVpnNoticeChannelId();
+  if (vpnNoticeChannelId) {
+    console.log(`[verif] Alerte VPN (ping membre) → salon <#${vpnNoticeChannelId}>`);
+  } else {
+    console.log('[verif] Alerte VPN salon désactivée (VERIFY_VPN_NOTICE_CHANNEL_ID vide).');
+  }
 
   if (ownerDmIds.length === 0) {
     console.warn(
