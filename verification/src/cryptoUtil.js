@@ -18,6 +18,17 @@ function hashEmail(email) {
 }
 
 /**
+ * Empreinte unique par (guilde, utilisateur) pour les vérifications manuelles (/man-verify).
+ * Ne peut pas correspondre à un hash d’email OAuth (préfixe interne dédié).
+ *
+ * @param {string} guildId
+ * @param {string} discordUserId
+ */
+function hashManualVerificationPlaceholder(guildId, discordUserId) {
+  return sha256Hex(`MANUAL_VERIFY|${guildId}|${discordUserId}`);
+}
+
+/**
  * Hash SHA-256 d'une IP normalisée (lowercase, trim).
  * Stocké en DB pour la détection d'alts sans persister l'IP en clair.
  */
