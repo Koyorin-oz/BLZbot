@@ -29,6 +29,13 @@ const SOURCE_DEFS = [
   { id: 'event_champion', name: 'Champion d’event', desc: 'Finir 1ᵉʳ d’un **événement** du serveur.', kind: 'persisted' },
 ];
 
+const TEMPLE_KEY_TOTAL = SOURCE_DEFS.length;
+
+/** Seuils `/temple classement` : Rois ≥ N clés, Légendes entre M et N−1 clés. */
+const CLASSEMENT_ROI_MIN_KEYS = 6;
+const CLASSEMENT_LEGENDE_MIN_KEYS = 3;
+const CLASSEMENT_LEGENDE_MAX_KEYS = CLASSEMENT_ROI_MIN_KEYS - 1;
+
 function parseSources(json) {
   try {
     const a = JSON.parse(json || '[]');
