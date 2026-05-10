@@ -550,6 +550,125 @@ async function handleUnverifyCommand(interaction, client) {
   }
 }
 
+async function handleManVerifyCommand(interaction, client) {
+  if (!interaction.guild) {
+    await interaction.reply({
+      content: 'Commande utilisable uniquement sur un serveur.',
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+  if (!isStaffForUnverify(interaction)) {
+    await interaction.reply({
+      content:
+        'Réservé au staff (Administrateur, Gérer le serveur, Bannir, Expulser ou Modérer les membres).',
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  const cfg = getGuildConfig(interaction.guild.id);
+  if (!cfg?.verified_role_id) {
+    await interaction.reply({
+      content:
+        "Ce serveur n'a pas configuré la vérification. Un administrateur doit d'abord utiliser `/setup-verification`.",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  const target = interaction.options.getUser('membre', true);
+  const raison = (interaction.options.getString('note') || '').trim();
+
+  if (target.bot) {
+    await interaction.reply({
+      content: 'Impossible de vérifier un bot.',
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+  const member = await interaction.guild.members.fetch(target.id).catch(() => null);
+  if (!member) {
+    await interaction.editReply({ content: '❌ Ce membre n’est pas sur le serveur ou est introuvable.' });
+    return;
+  }
+
+  const me = interaction.guild.members.me;
+  const verifiedRole = interaction.guild.roles.cache.get(cfg.verified_role_id);
+  if (!verifiedRole) {
+    await interaction.editReply({
+      content:
+        '❌ Le rôle vérifié configuré est introuvable. Reconfigure-le avec `/setup-verification`.',
+    });
+    return;
+  }
+  if (verifiedRole.position >= me.roles.highest.position) {
+    await interaction.editReply({
+      content:
+        '❌ Mon rôle est trop bas dans la hiérarchie : je ne peux pas attribuer le rôle vérifié.',
+    });
+    return;
+  }
+
+  const existing = findVerifiedInGuild(interaction.guild.id, target.id);
+  if (existing && member.roles.cache.has(cfg.verified_role_id)) {
+    await interaction.editReply({
+      content: `✅ ${target} est déjà vérifié sur ce serveur (rôle + base de données).`,
+    });
+    return;
+  }
+
+  const emailHash = hashManualVerificationPlaceholder(interaction.guild.id, target.id);
+
+  try {
+    await addGuildMemberRole(client.token, interaction.guild.id, target.id, cfg.verified_role_id);
+    saveVerifiedForGuild(interaction.guild.id, target.id, emailHash, null);
+  } catch (e) {
+    console.error('[man-verify]', e);
+    await removeGuildMemberRole(
+      client.token,
+      interaction.guild.id,
+      target.id,
+      cfg.verified_role_id,
+    ).catch(() => {});
+    await interaction.editReply({
+      content: `❌ Impossible de finaliser la vérification manuelle : ${e.message || e}`,
+    });
+    return;
+  }
+
+  await interaction.editReply({
+    content: `✅ ${target} a été **vérifié manuellement** (rôle attribué + enregistrement en base).`,
+  });
+
+  if (cfg.log_channel_no_ip_id) {
+    try {
+      const logCh = await interaction.guild.channels.fetch(cfg.log_channel_no_ip_id).catch(() => null);
+      if (logCh && logCh.isTextBased()) {
+        const embed = new EmbedBuilder()
+          .setTitle('Vérification manuelle')
+          .setColor(0x3498db)
+          .setDescription(
+            `${target} (\`${target.id}\`) a reçu le rôle vérifié **sans OAuth** (staff).`,
+          )
+          .addFields({
+            name: 'Attribué par',
+            value: `${interaction.user} (\`${interaction.user.id}\`)`,
+            inline: true,
+          })
+          .setTimestamp(new Date());
+        if (raison) embed.addFields({ name: 'Note staff', value: raison.slice(0, 1024), inline: false });
+        await logCh.send({ embeds: [embed] }).catch(() => {});
+      }
+    } catch (e) {
+      console.error('[man-verify] log channel :', e?.message || e);
+    }
+  }
+}
+
 async function handleEmbedModalSubmit(interaction, client) {
   if (!interaction.guild || !isGuildAdmin(interaction)) {
     await interaction.reply({
