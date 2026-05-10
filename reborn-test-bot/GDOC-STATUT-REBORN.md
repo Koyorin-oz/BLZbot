@@ -66,7 +66,7 @@ Légende :
 | Séparation 12 h / 48 h / 25 % | **OK** | `separation.js` + `/separation` |
 | Branche **séparatiste** (points, paliers) | **OK** | `skillTree` separatist* + hooks séparation |
 | Salon perso guilde | **Partiel** | `/guilde salon` — besoin perms bot **Manage Channels** ; pas tout le « pack social » gdoc |
-| 3 rôles perso nommables | **Absent** | Non implémenté comme sur le slide guilde |
+| Rôles internes / perso guilde | **OK** (modèle étiquette) | `/guilde role_set` + table `guild_internal_roles` (label par membre, ≤ 32 car.). Si le slide visait **3 types** de rôles globaux figés, recouper le wording — fonctionnellement c’est couvert par des labels par joueur. |
 
 ---
 
