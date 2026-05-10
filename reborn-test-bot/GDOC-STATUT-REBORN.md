@@ -22,8 +22,8 @@ Légende :
 | RP paliers msg/voc | **OK** | `rankedRp.js` |
 | Décroissance RP 24 h | **OK** | `decayForUserIfIdle` sur activité |
 | Pool zéro-sum 50k–100k (300k) | **OK** | `rankedRp.js` |
-| Tiers RP + rôles Discord par tier | **Partiel** | Tiers + sync auto si rôles enregistrés (`rankedRoles.js`, `/admin-roles`) ; noms/seuils peuvent différer du wording gdoc |
-| « Roi du serveur » / « Légende » sur **11 points temple** (gdoc classique) | **Partiel** | Le Temple a **11 sources** + `/temple classement` (Roi / Légende **temple** sur clés, pas la même sémantique exacte que « 11 pts + top1 global » du slide) |
+| Tiers RP + rôles Discord par tier | **Partiel → OK** si config | Tiers + sync auto **une fois** les rôles créés / liés (`rankedRoles.js`, `/admin-roles`) |
+| « Roi du serveur » / « Légende » sur **11 clés** temple | **OK** (seuils fixes) | **11** sources (`SOURCE_DEFS`). Classement : **Roi** = **≥ 6** clés, **Légende** = **3 à 5** clés (pas les joueurs déjà Rois). Constantes `CLASSEMENT_*` dans `temple.js`. |
 | Classement starss / niveau / RP / GRP guildes | **OK** | `/classement` |
 
 ---
