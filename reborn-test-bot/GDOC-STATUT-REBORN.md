@@ -141,3 +141,5 @@ Légende :
 3. **Polish** : tout ce qui est **OK** peut quand même avoir des tickets « UX / équilibre / textes ».
 
 Pour le détail joueur, voir aussi **`TUTORIEL-REBORN.md`**.
+
+Synthèse maintenance : **`REBORN-ETAT-MAJ.md`** · commandes : **`REBORN-COMMANDES.md`**.
