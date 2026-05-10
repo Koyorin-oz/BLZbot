@@ -88,6 +88,7 @@ function verifyState(stateB64, secret, maxAgeMs = 30 * 60 * 1000) {
 
 module.exports = {
   hashEmail,
+  hashManualVerificationPlaceholder,
   hashIp,
   normalizeEmail,
   signState,
