@@ -96,12 +96,12 @@ function parseOwnerDmIds(raw) {
     .filter((s) => /^\d{17,22}$/.test(s));
 }
 
-async function sendChannelEmbed(client, channelId, embed) {
+async function sendChannelEmbed(client, channelId, embed, extra = {}) {
   if (!channelId) return;
   try {
     const ch = await client.channels.fetch(channelId);
     if (ch && ch.isTextBased()) {
-      await ch.send({ embeds: [embed] });
+      await ch.send({ embeds: [embed], ...extra });
     }
   } catch (e) {
     console.error("[log] impossible d'envoyer dans le salon", channelId, e.message || e);
