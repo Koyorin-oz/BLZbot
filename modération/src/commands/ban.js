@@ -129,16 +129,14 @@ module.exports = {
 
         if (membreCible) {
             if (membreCible.roles.highest.position >= interaction.guild.members.me.roles.highest.position) {
-                return interaction.reply({
+                return interaction.editReply({
                     content: '❌ Je ne peux pas bannir ce membre car il est au-dessus de moi.',
-                    ephemeral: true
                 });
             }
 
             if (membreCible.roles.highest.position >= modérateur.roles.highest.position) {
-                return interaction.reply({
+                return interaction.editReply({
                     content: '❌ Vous ne pouvez pas bannir ce membre car il est au même niveau ou au-dessus de vous.',
-                    ephemeral: true
                 });
             }
 
