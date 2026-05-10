@@ -917,6 +917,22 @@ function buildSlashCommands() {
           .setMaxLength(400),
       )
       .toJSON(),
+    new SlashCommandBuilder()
+      .setName('man-verify')
+      .setDescription('Vérifier manuellement un membre (rôle + base, sans lien OAuth)')
+      .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+      .setDMPermission(false)
+      .addUserOption((opt) =>
+        opt.setName('membre').setDescription('Membre à marquer comme vérifié').setRequired(true),
+      )
+      .addStringOption((opt) =>
+        opt
+          .setName('note')
+          .setDescription('Note staff (optionnelle, salon logs)')
+          .setRequired(false)
+          .setMaxLength(500),
+      )
+      .toJSON(),
     antiraidSlash.data.toJSON(),
   ];
 }
