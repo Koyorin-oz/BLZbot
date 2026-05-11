@@ -54,9 +54,9 @@ Légende : **OK** = présent et jouable sur le bot de test · **Partiel** = là 
 | Rôle Discord « index 100 % » | **Manuel** | `/admin-roles definir-index-full` pour lier un rôle ; pas d’auto si non configuré |
 | Temple 11 clés | **OK** | `SOURCE_DEFS` ×11 |
 | `/temple classement` Rois & Légendes | **OK** | Seuils **≥6** clés (Roi) et **3–5** clés (Légende) sur **11** max — constantes exportées (`TEMPLE_KEY_TOTAL`, `CLASSEMENT_*`) |
-| Rôles Discord auto « Roi / Légende » temple | **Absent** | Classement affiché ; pas d’équivalent rôles auto dédiés |
+| Rôles Discord auto « Roi / Légende » temple | **OK** (si config) | `/admin-roles creer-temple` ou `definir-temple-*` + sync sur activité (`earn`), `/temple`, fin event, séparation ; file d’attente 30 s |
 | Events + monnaie event + trade ×5 | **OK** | `/event`, `trade.js` |
-| Types d’events | **Partiel** | Quelques types en code — étendre si le doc en ajoute |
+| Types d’events | **OK** (base étendue) | `chasse`, `raid`, `marathon`, `siege`, `arene`, `conquete` dans `events.TYPES` + `/event lancer` |
 
 ---
 
