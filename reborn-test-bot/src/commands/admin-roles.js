@@ -293,10 +293,17 @@ module.exports = {
     if (sub === 'resync') {
       const target = interaction.options.getUser('membre', true);
       rankedRoles.resetCacheFor(target.id);
+      templeDiscordRoles.resetCacheForUser(target.id);
       const r1 = await rankedRoles.syncRankRoleForUser(interaction.client, hub, target.id);
       const r2 = await indexRoles.syncIndexFullRole(interaction.client, hub, target.id);
+      const r3 = await templeDiscordRoles.syncTempleRolesForUser(interaction.client, hub, target.id);
+      const templeLine = r3.skipped
+        ? 'temple *(rôles non configurés)*'
+        : `temple **${r3.band || '?'}**${r3.changed ? ' *(Discord mis à jour)*' : ''}${r3.error ? ` · \`${r3.error}\`` : ''}`;
       return interaction.reply({
-        content: `Resync ${target} : ranked **${r1.tier || '?'}** ${r1.changed ? '(modifié)' : ''} · index ${r2.changed ? '(modifié)' : '(rien)'}${r1.error ? ` · err: \`${r1.error}\`` : ''}`,
+        content: `Resync ${target} : ranked **${r1.tier || '?'}** ${r1.changed ? '(modifié)' : ''} · index ${r2.changed ? '(modifié)' : '(rien)'} · ${templeLine}${
+          r1.error ? ` · ranked err: \`${r1.error}\`` : ''
+        }`,
       });
     }
   },
