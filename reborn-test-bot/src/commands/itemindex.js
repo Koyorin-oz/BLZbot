@@ -51,13 +51,20 @@ module.exports = {
         const chest = (s.chests || []).map((c) => `${c.qty > 1 ? `${c.qty}× ` : ''}\`${c.id}\``).join(', ');
         const chestPart = chest ? ` + ${chest}` : '';
         const rolePart = s.roleNote ? ` + ${s.roleNote}` : '';
-        return `• **${s.pct} %** → +${s.stars.toLocaleString('fr-FR')} starss${chestPart}${rolePart} ${claimed.includes(s.pct) ? '✅' : ''}`;
+        const done = claimed.includes(s.pct) ? '✅' : '○';
+        return `${done} **${s.pct} %** — +${s.stars.toLocaleString('fr-FR')} starss${chestPart}${rolePart}`;
       });
-      const e = new EmbedBuilder()
-        .setTitle('Index items')
-        .setDescription(`Complétion : **${r.completion_pct} %**\n\n${lines.join('\n')}`)
-        .setColor(0x3498db);
-      return interaction.reply({ embeds: [e] });
+      const intro = new TextDisplayBuilder().setContent(
+        [
+          '# Index items',
+          '**C’est quoi ?** L’**index** mesure à quel point tu as « complété » le **catalogue d’objets** du bot : plus tu montes en **%**, plus tu débloques des **paliers** (starss, coffres, parfois un rôle Discord à 100 %).',
+          '',
+          `**Ton avancement** : **${r.completion_pct} %**`,
+        ].join('\n'),
+      );
+      const steps = new TextDisplayBuilder().setContent(['## Paliers', lines.join('\n')].join('\n'));
+      const c = new ContainerBuilder().addTextDisplayComponents(intro, steps);
+      return interaction.reply({ components: [c], flags: MessageFlags.IsComponentsV2 });
     }
 
     if (sub === 'definir') {
