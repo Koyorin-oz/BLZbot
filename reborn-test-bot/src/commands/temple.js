@@ -102,6 +102,10 @@ module.exports = {
     users.getOrCreate(uid, interaction.user.username);
     const hub = interaction.guildId || null;
     const r = temple.sync(uid, hub);
+    if (hub) {
+      const tdr = require('../services/templeDiscordRoles');
+      tdr.syncTempleRolesForUser(interaction.client, hub, uid).catch(() => {});
+    }
     const u = users.getUser(uid);
 
     let buf;
