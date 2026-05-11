@@ -218,7 +218,6 @@ async function renderGrpLeaderboardCard(p) {
   const ctx = canvas.getContext('2d');
   await drawBackground(ctx, W, H);
 
-  rr(ctx, 0, 0, 6, H, 0);
   ctx.fillStyle = GOLD;
   ctx.fillRect(0, 0, 6, H);
 
