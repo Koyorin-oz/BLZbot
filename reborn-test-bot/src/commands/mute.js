@@ -157,6 +157,7 @@ module.exports = {
     const guildName = interaction.guild.name;
 
     if (r.applied) {
+      let dmOk = false;
       try {
         const dmEmbed = buildSanctionDmEmbed({
           guildName,
@@ -165,6 +166,7 @@ module.exports = {
           reason,
         });
         await target.send({ embeds: [dmEmbed] });
+        dmOk = true;
       } catch {
         /* MP fermés : le mute reste appliqué côté serveur */
       }
@@ -172,7 +174,9 @@ module.exports = {
         .setColor(0xe67e22)
         .setTitle('Mute appliqué')
         .setDescription(
-          `${target} a été **mute** **${minsTxt}** (saisi : \`${durRaw.trim()}\`)${reason ? `\n**Motif :** ${reason}` : ''}\n\n*Logé sur le passeport REBORN.*`,
+          `${target} a été **mute** **${minsTxt}** (saisi : \`${durRaw.trim()}\`)${reason ? `\n**Motif :** ${reason}` : ''}\n\n*Logé sur le passeport REBORN.*${
+            dmOk ? '' : '\n\n⚠️ *MP de notification non envoyé (DM fermés ou bloqués).*'
+          }`,
         );
       return interaction.editReply({ embeds: [e] });
     }
