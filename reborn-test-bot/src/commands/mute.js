@@ -43,6 +43,27 @@ function humanizeMinutes(mins) {
   return `${mins} min`;
 }
 
+/** MP à la cible : pas d’identité du modérateur, uniquement la sanction. */
+function buildSanctionDmEmbed({ guildName, minsTxt, durSaisie, reason }) {
+  const e = new EmbedBuilder()
+    .setColor(0xe67e22)
+    .setTitle('Sanction — mute (time-out)')
+    .setDescription(
+      `Tu as reçu un **mute** sur le serveur **${guildName}**.`,
+    )
+    .addFields(
+      { name: 'Durée', value: minsTxt, inline: true },
+      { name: 'Saisie', value: `\`${durSaisie}\``, inline: true },
+      {
+        name: 'Motif',
+        value: reason && reason.trim() ? reason.slice(0, 1024) : '*Aucun motif renseigné.*',
+        inline: false,
+      },
+    )
+    .setFooter({ text: 'REBORN — sanction enregistrée sur ton passeport (compteur time-out).' });
+  return e;
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('mute')
@@ -86,11 +107,14 @@ module.exports = {
     const mins = parsed.minutes;
     const reason = (interaction.options.getString('raison') || '').slice(0, 500);
 
+    // Ack rapide : member.timeout() + SQLite peuvent dépasser 3 s sans defer.
+    await interaction.deferReply();
+
     const member = await interaction.guild.members
       .fetch(target.id)
       .catch(() => null);
     if (!member) {
-      return interaction.reply({
+      return interaction.editReply({
         content: '❌ Membre introuvable sur ce serveur.',
       });
     }
@@ -100,7 +124,7 @@ module.exports = {
       interaction.member.roles?.highest?.position
     ) {
       if (!isOwner(interaction.user.id)) {
-        return interaction.reply({
+        return interaction.editReply({
           content:
             '❌ Tu ne peux pas mute un membre dont le rôle est supérieur ou égal au tien.',
         });
@@ -112,7 +136,7 @@ module.exports = {
       member.roles?.highest?.position >=
         interaction.guild.members.me.roles?.highest?.position
     ) {
-      return interaction.reply({
+      return interaction.editReply({
         content: '❌ Je ne peux pas mute ce membre (rôle au-dessus du mien).',
       });
     }
@@ -130,26 +154,31 @@ module.exports = {
     });
 
     const minsTxt = humanizeMinutes(mins);
+    const guildName = interaction.guild.name;
 
     if (r.applied) {
       try {
-        await target.send(
-          `🔇 Tu as été **mute** sur **${interaction.guild.name}** pendant **${minsTxt}**${reason ? ` — *${reason}*` : ''}.`,
-        );
+        const dmEmbed = buildSanctionDmEmbed({
+          guildName,
+          minsTxt,
+          durSaisie: durRaw.trim(),
+          reason,
+        });
+        await target.send({ embeds: [dmEmbed] });
       } catch {
-        /* DM fermé : ignore */
+        /* MP fermés : le mute reste appliqué côté serveur */
       }
       const e = new EmbedBuilder()
         .setColor(0xe67e22)
-        .setTitle('🔇 Mute appliqué')
+        .setTitle('Mute appliqué')
         .setDescription(
-          `${target} a été **mute** pendant **${minsTxt}** (saisi : \`${durRaw.trim()}\`)${reason ? `\n*Raison :* ${reason}` : ''}\n\n*Logé sur le passeport REBORN (compteur TO).*`,
+          `${target} a été **mute** **${minsTxt}** (saisi : \`${durRaw.trim()}\`)${reason ? `\n**Motif :** ${reason}` : ''}\n\n*Logé sur le passeport REBORN.*`,
         );
-      return interaction.reply({ embeds: [e] });
+      return interaction.editReply({ embeds: [e] });
     }
 
-    return interaction.reply({
-      content: `⚠️ Mute **logé** sur le passeport mais **non appliqué** (le bot n'a pas la permission de timeout ?).\nErreur : \`${r.error || '—'}\``,
+    return interaction.editReply({
+      content: `⚠️ Mute **logé** sur le passeport mais **non appliqué** (permissions Discord ?).\nErreur : \`${r.error || '—'}\``,
     });
   },
 };
