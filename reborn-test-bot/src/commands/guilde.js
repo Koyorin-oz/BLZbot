@@ -1,4 +1,10 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  ContainerBuilder,
+  TextDisplayBuilder,
+  MessageFlags,
+} = require('discord.js');
 const pg = require('../services/playerGuilds');
 const { label, NEXT_REQUIREMENTS, ORDER, nextGrade } = require('../reborn/grades');
 const ladder = require('../services/guildLadder');
