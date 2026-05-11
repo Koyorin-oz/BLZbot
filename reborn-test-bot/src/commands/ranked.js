@@ -1,4 +1,9 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const {
+  SlashCommandBuilder,
+  ContainerBuilder,
+  TextDisplayBuilder,
+  MessageFlags,
+} = require('discord.js');
 const users = require('../services/users');
 const rankedRoles = require('../services/rankedRoles');
 const rankedMilestones = require('../services/rankedMilestones');
@@ -32,19 +37,19 @@ module.exports = {
       const rp = users.getPoints(uid);
       const tier = rankedRoles.tierForRp(rp);
       const def = rankedRoles.TIER_DEFS.find((t) => t.key === tier);
-      const e = new EmbedBuilder()
-        .setTitle(`⚔️ Ranked — ${target.username}`)
-        .setColor(def?.color || 0x3498db)
-        .setDescription(
-          [
-            `Tier actuel : **${def?.label || tier}**`,
-            `RP : **${rp.toLocaleString('fr-FR')}**`,
-            '',
-            'Tu gagnes du RP en envoyant des messages et en parlant en vocal.',
-            '_Décrépitude : -RP/jour si pas d\'activité depuis 24 h._',
-          ].join('\n'),
-        );
-      return interaction.reply({ embeds: [e] });
+      const body = new TextDisplayBuilder().setContent(
+        [
+          `# Ranked RP — ${target.username}`,
+          '',
+          `**Tier** : **${def?.label || tier}**`,
+          `**RP** : **${rp.toLocaleString('fr-FR')}**`,
+          '',
+          '**Comment progresser ?** Messages texte et **vocal** font monter le RP.',
+          '**Inactivité** : après **24 h** sans activité, une **décrépitude** retire du RP chaque jour.',
+        ].join('\n'),
+      );
+      const c = new ContainerBuilder().addTextDisplayComponents(body);
+      return interaction.reply({ components: [c], flags: MessageFlags.IsComponentsV2 });
     }
 
     if (sub === 'paliers') {
@@ -53,14 +58,14 @@ module.exports = {
         const items = (m.items || [])
           .map((it) => `${it.qty > 1 ? `${it.qty}× ` : ''}\`${it.id}\``)
           .join(', ');
-        const status = m.claimed ? '✅' : m.reached ? '🟡 (réclamable)' : '🔒';
+        const status = m.claimed ? '✅' : m.reached ? '◆' : '○';
         return `${status} **${m.rp.toLocaleString('fr-FR')} RP** — ${m.label} : +${m.stars.toLocaleString('fr-FR')} starss${items ? ` · ${items}` : ''}`;
       });
-      const e = new EmbedBuilder()
-        .setTitle('🏆 Ranked — paliers de récompense')
-        .setColor(0xf39c12)
-        .setDescription(lines.join('\n'));
-      return interaction.reply({ embeds: [e] });
+      const body = new TextDisplayBuilder().setContent(
+        ['# Paliers ranked', '', lines.join('\n')].join('\n'),
+      );
+      const c = new ContainerBuilder().addTextDisplayComponents(body);
+      return interaction.reply({ components: [c], flags: MessageFlags.IsComponentsV2 });
     }
 
     if (sub === 'reclamer') {
@@ -68,7 +73,10 @@ module.exports = {
       if (got.length === 0) {
         return interaction.reply({ content: 'Aucun palier nouveau à réclamer.' });
       }
-      const lines = got.map((g) => `• **${g.label}** : +${g.stars.toLocaleString('fr-FR')} starss${g.items.length ? ` · ${g.items.map((i) => `${i.qty}× ${i.id}`).join(', ')}` : ''}`);
+      const lines = got.map(
+        (g) =>
+          `• **${g.label}** : +${g.stars.toLocaleString('fr-FR')} starss${g.items.length ? ` · ${g.items.map((i) => `${i.qty}× ${i.id}`).join(', ')}` : ''}`,
+      );
       return interaction.reply({
         content: `🏆 **${got.length}** palier(s) réclamé(s) :\n${lines.join('\n')}`,
       });
