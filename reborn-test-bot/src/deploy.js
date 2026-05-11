@@ -18,9 +18,12 @@ cfg.assertClientIdForDeploy();
       process.exit(1);
     }
     if (r.scope === 'guild') {
-      console.log(`[deploy] ${r.count} commande(s) guild → ${r.guildId}`);
+      console.log(`[deploy] ${r.count} commande(s) guild → ${r.guildId} — /profil : ${r.includesProfil ? 'oui' : 'NON'}`);
     } else {
-      console.log(`[deploy] ${r.count} commande(s) globales`);
+      console.log(`[deploy] ${r.count} commande(s) globales — /profil : ${r.includesProfil ? 'oui' : 'NON'}`);
+    }
+    if (!r.includesProfil) {
+      console.warn('[deploy] `/profil` manquant : REBORN_MIRROR_NIVEAU_SLASH doit être 1 et le dossier `niveau` doit être présent à la racine du repo.');
     }
   } catch (e) {
     console.error('[deploy]', e);
