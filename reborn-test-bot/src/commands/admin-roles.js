@@ -5,20 +5,23 @@ const {
 } = require('discord.js');
 const rankedRoles = require('../services/rankedRoles');
 const indexRoles = require('../services/indexRoles');
+const templeDiscordRoles = require('../services/templeDiscordRoles');
 
 /**
  * Commande staff `/admin-roles` :
  *  - `creer-ranked`         : crée les rôles Bronze → Apex (skip ceux déjà créés)
  *  - `creer-index-full`     : crée le rôle « Pipelette ultime »
+ *  - `creer-temple`         : crée les rôles Temple Roi / Légende (seuils doc)
  *  - `definir-ranked`       : associe manuellement un rôle existant à un tier
  *  - `definir-index-full`   : associe manuellement un rôle existant à l'index 100 %
+ *  - `definir-temple-roi` / `definir-temple-legende` : lier rôles Discord classement Temple
  *  - `voir`                 : liste la configuration actuelle
  *  - `resync`               : force la resynchronisation pour un membre
  */
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('admin-roles')
-    .setDescription("Gestion des rôles Discord (Ranked RP, Index 100 %).")
+    .setDescription('Gestion des rôles Discord (Ranked RP, Index 100 %, Temple Roi/Légende).')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand((sc) =>
       sc.setName('creer-ranked').setDescription('Crée les rôles Bronze → Apex sur ce serveur.'),
