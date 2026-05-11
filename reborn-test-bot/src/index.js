@@ -109,6 +109,15 @@ client.once(Events.ClientReady, async () => {
       console.error('[grp calendar]', e);
     }
   }, 60_000);
+
+  setInterval(() => {
+    try {
+      const { flushTempleRoleSyncQueue } = require('./services/templeDiscordRoles');
+      flushTempleRoleSyncQueue(client).catch(() => {});
+    } catch (e) {
+      console.error('[temple roles flush]', e);
+    }
+  }, 30_000);
 });
 
 client.on('interactionCreate', async (interaction) => {
