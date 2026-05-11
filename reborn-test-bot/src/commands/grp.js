@@ -2,17 +2,87 @@ const {
   SlashCommandBuilder,
   ContainerBuilder,
   TextDisplayBuilder,
+  SeparatorBuilder,
+  SeparatorSpacingSize,
   MessageFlags,
 } = require('discord.js');
 const gm = require('../services/guildMember');
 const grpSeason = require('../services/grpSeason');
-const { grpRankFromTotal } = require('../reborn/grades');
+const { grpRankFromTotal, label, GRP_RANK_KEYS, GRP_THRESHOLDS } = require('../reborn/grades');
 const db = require('../db');
 const users = require('../services/users');
 
-/** GRP = points d’activité guilde sur le hub (saison avec reset calendaire). */
-const GRP_NOTE =
-  '**GRP** = points d’activité liés à ta **guilde** sur ce serveur (classement / compétitions). Saison **reset** le **1er du mois** (UTC).';
+function nextGrpStep(grpTotal) {
+  const curKey = grpRankFromTotal(grpTotal);
+  const idx = curKey ? GRP_RANK_KEYS.indexOf(curKey) : -1;
+  if (idx < 0) {
+    const need = GRP_THRESHOLDS[0];
+    const left = need > grpTotal ? need - grpTotal : 0n;
+    return {
+      line: `Prochain palier **${label(GRP_RANK_KEYS[0])}** — il manque **${left.toLocaleString('fr-FR')}** GRP (seuil **${need.toLocaleString('fr-FR')}**).`,
+    };
+  }
+  if (idx >= GRP_RANK_KEYS.length - 1) {
+    return { line: 'Tu es au **dernier** palier GRP (**Star**).' };
+  }
+  const nextIdx = idx + 1;
+  const need = GRP_THRESHOLDS[nextIdx];
+  const left = need > grpTotal ? need - grpTotal : 0n;
+  return {
+    line: `Prochain palier **${label(GRP_RANK_KEYS[nextIdx])}** — il manque **${left.toLocaleString('fr-FR')}** GRP (seuil **${need.toLocaleString('fr-FR')}**).`,
+  };
+}
+
+function buildVoirContainer({ guildName, target, season, grp, rank, peakTxt }) {
+  const rankLabel = rank ? label(rank) : '—';
+  const { line: nextLine } = nextGrpStep(grp);
+  const intro = new TextDisplayBuilder().setContent(
+    [
+      `# GRP — ${target.username}`,
+      `*${guildName}*`,
+      '',
+      'Le **GRP** (Guild Ranked Points) mesure ton activité **guilde** sur ce hub. Il alimente les **classements** et certains **pics** de saison. La saison est **réinitialisée le 1er de chaque mois** (UTC).',
+    ].join('\n'),
+  );
+  const stats = new TextDisplayBuilder().setContent(
+    [
+      '## Synthèse',
+      '',
+      `| | |`,
+      `|:---|:---|`,
+      `| **Saison** | \`${season}\` |`,
+      `| **Total GRP** | **${grp.toLocaleString('fr-FR')}** |`,
+      `| **Palier actuel** | **${rankLabel}** |`,
+      `| **Pics enregistrés** | ${peakTxt} |`,
+      '',
+      nextLine,
+    ].join('\n'),
+  );
+  return new ContainerBuilder()
+    .addTextDisplayComponents(intro)
+    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small))
+    .addTextDisplayComponents(stats);
+}
+
+function buildClassementContainer({ guildName, season, lines }) {
+  const intro = new TextDisplayBuilder().setContent(
+    [
+      '# Classement GRP',
+      `*${guildName}* · saison \`${season}\``,
+      '',
+      'Classement **approximatif** des **15** meilleurs totaux GRP sur ce serveur pour la saison en cours.',
+    ].join('\n'),
+  );
+  const table = new TextDisplayBuilder().setContent(
+    lines.length
+      ? ['## Top 15', '', '```', ...lines, '```'].join('\n')
+      : '## Top 15\n\n*Aucune donnée pour l’instant.*',
+  );
+  return new ContainerBuilder()
+    .addTextDisplayComponents(intro)
+    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small))
+    .addTextDisplayComponents(table);
+}
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -30,6 +100,7 @@ module.exports = {
     if (!hub) return interaction.reply({ content: 'Serveur uniquement.' });
     const sub = interaction.options.getSubcommand();
     const season = grpSeason.currentSeasonKey();
+    const guildName = interaction.guild.name;
 
     if (sub === 'voir') {
       const target = interaction.options.getUser('membre') || interaction.user;
@@ -40,19 +111,17 @@ module.exports = {
           'SELECT rank_key FROM user_grp_peaks WHERE hub_discord_id = ? AND user_id = ? AND season_key = ? ORDER BY rank_key',
         )
         .all(hub, target.id, season);
-      const peakTxt = peaks.length ? peaks.map((p) => p.rank_key).join(', ') : 'aucun pic cette saison';
-      const body = new TextDisplayBuilder().setContent(
-        [
-          `# Classe GRP — ${target.username}`,
-          GRP_NOTE,
-          '',
-          `**Saison** : \`${season}\``,
-          `**Total GRP** : **${grp.toLocaleString('fr-FR')}**`,
-          `**Rang** : **${rank || '—'}**`,
-          `**Pics** (saison) : ${peakTxt}`,
-        ].join('\n'),
-      );
-      const c = new ContainerBuilder().addTextDisplayComponents(body);
+      const peakTxt = peaks.length
+        ? peaks.map((p) => label(p.rank_key)).join(' · ')
+        : 'aucun pic cette saison';
+      const c = buildVoirContainer({
+        guildName,
+        target,
+        season,
+        grp,
+        rank,
+        peakTxt,
+      });
       return interaction.reply({ components: [c], flags: MessageFlags.IsComponentsV2 });
     }
 
@@ -64,19 +133,12 @@ module.exports = {
         .slice(0, 15);
       const lines = sorted.map((r, i) => {
         const rk = grpRankFromTotal(r.grp);
-        return `**${i + 1}.** <@${r.user_id}> — **${r.grp.toLocaleString('fr-FR')}** (${rk || '—'})`;
+        const rkL = rk ? label(rk) : '—';
+        const pad = String(i + 1).padStart(2, ' ');
+        const pts = r.grp.toLocaleString('fr-FR').padStart(12, ' ');
+        return `${pad}. ${pts}  ${rkL.padEnd(10, ' ')}  <@${r.user_id}>`;
       });
-      const body = new TextDisplayBuilder().setContent(
-        [
-          `# Classement GRP`,
-          GRP_NOTE,
-          '',
-          `**Saison** : \`${season}\``,
-          '',
-          lines.length ? lines.join('\n') : '*Aucune donnée.*',
-        ].join('\n'),
-      );
-      const c = new ContainerBuilder().addTextDisplayComponents(body);
+      const c = buildClassementContainer({ guildName, season, lines });
       return interaction.reply({ components: [c], flags: MessageFlags.IsComponentsV2 });
     }
   },
