@@ -6,7 +6,7 @@ const TYPES = {
   chasse: { name: 'Chasse aux étoiles', durationMs: 24 * 60 * 60 * 1000, baseScore: 10n },
   raid: { name: 'Raid Cosmique', durationMs: 12 * 60 * 60 * 1000, baseScore: 25n },
   marathon: { name: 'Marathon Stellaire', durationMs: 48 * 60 * 60 * 1000, baseScore: 5n },
-  /** Extensions doc REBORN (même mécanique contribute / leaderboard / cloturer). */
+  // Extensions (même mécanique contribute / leaderboard / cloturer) — checklist REBORN.
   siege: { name: 'Siège stellaire', durationMs: 18 * 60 * 60 * 1000, baseScore: 15n },
   arene: { name: 'Arène flash', durationMs: 6 * 60 * 60 * 1000, baseScore: 30n },
   conquete: { name: 'Conquête galactique', durationMs: 36 * 60 * 60 * 1000, baseScore: 12n },
