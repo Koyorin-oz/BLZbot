@@ -127,7 +127,7 @@ function makeNiveauMirrorStub(commandName) {
  * @param {import('discord.js').Client} client
  */
 function registerNiveauMirrorStubs(client) {
-  if (String(process.env.REBORN_MIRROR_NIVEAU_SLASH || '1').trim() === '0') return;
+  if (!cfg.mirrorNiveauSlash) return;
   const useExecute = cfg.mirrorNiveauExecute;
   for (const { name, mod: preloaded } of iterNiveauMirrorCommandFiles()) {
     if (client.commands.has(name)) continue;
