@@ -135,6 +135,7 @@ function registerEarn(client) {
       rankedRp.grantFromActivity(uid, 'msg');
       rankedRoles.syncRankRoleForUser(client, hub, uid).catch(() => { /* best-effort */ });
       indexRoles.syncIndexFullRole(client, hub, uid).catch(() => { /* best-effort */ });
+      maybeSyncTempleFromEarn(client, hub, uid);
       const u = users.getUser(uid);
       const gr = C.gxpRatesForPlayerLevel(u?.level || 1);
       const mult = gxpMultForUser(uid);
