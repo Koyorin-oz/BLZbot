@@ -1,6 +1,7 @@
 const { createCanvas, loadImage } = require('canvas');
 const path = require('node:path');
 const fs = require('node:fs');
+const { grpRankFromTotal } = require('../reborn/grades');
 
 const ASSETS = path.join(__dirname, '..', '..', '..', 'niveau', 'src', 'assets');
 const BLZ_BG = path.join(ASSETS, 'blz_bg.png');
