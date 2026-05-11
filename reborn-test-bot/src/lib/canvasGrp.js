@@ -279,6 +279,7 @@ async function renderGrpLeaderboardCard(p) {
     y += rowH;
   }
 
+  ctx.textAlign = 'left';
   ctx.fillStyle = MUTED;
   ctx.font = 'italic 12px "Segoe UI", sans-serif';
   ctx.fillText('Top 15 approximatif sur ce serveur.', 40, H - 36);
