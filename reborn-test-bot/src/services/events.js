@@ -25,7 +25,7 @@ function activeEvents(hubDiscordId) {
 
 function startEvent(hubDiscordId, typeKey) {
   const t = TYPES[typeKey];
-  if (!t) return { ok: false, error: 'Type inconnu (chasse, raid, marathon).' };
+  if (!t) return { ok: false, error: `Type inconnu (${Object.keys(TYPES).join(', ')}).` };
   const key = genKey(typeKey);
   const now = Date.now();
   db.prepare(
