@@ -73,7 +73,7 @@ function buildClassementContainer({ guildName, season, lines }) {
   );
   const table = new TextDisplayBuilder().setContent(
     lines.length
-      ? ['## Top 15', '', '```', ...lines, '```'].join('\n')
+      ? ['## Top 15', '', lines.map((line, i) => `${line}`).join('\n')].join('\n')
       : '## Top 15\n\n*Aucune donnée pour l’instant.*',
   );
   return new ContainerBuilder()
