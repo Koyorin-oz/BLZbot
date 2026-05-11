@@ -45,6 +45,13 @@ const HACKER_SALON_COOLDOWN_MS = 12 * 60 * 60 * 1000;
 const mirrorNiveauExecute =
   String(process.env.REBORN_MIRROR_NIVEAU_EXECUTE || '1').trim() !== '0';
 
+/**
+ * 1 (défaut) = enregistrer aussi les slash du module **niveau** (`/profil`, `/daily`, …) sur cette application.
+ * 0 = uniquement `reborn-test-bot/src/commands/` → **pas de `/profil`** tant que tu n’ajoutes pas une commande locale du même nom.
+ */
+const mirrorNiveauSlash =
+  String(process.env.REBORN_MIRROR_NIVEAU_SLASH || '1').trim() !== '0';
+
 /** 1 = ne pas demander d'intents privilégiés (contenu des messages, membres). Contourne "Used disallowed intents" si le portail n'a pas les cases cochées — certaines features seront incomplètes. */
 const minimalDiscordIntents =
   String(process.env.REBORN_MINIMAL_DISCORD_INTENTS || '').trim() === '1';
