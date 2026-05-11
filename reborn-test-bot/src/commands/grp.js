@@ -136,7 +136,7 @@ module.exports = {
       const name = 'grp_top.png';
       const file = new AttachmentBuilder(buf, { name });
       const gallery = new MediaGalleryBuilder().addItems({ media: { url: `attachment://${name}` } });
-      const caption = buildCaption(interaction.user.displayName || interaction.user.username, 'classement');
+      const caption = buildCaption(interaction.user.displayName || interaction.user.username, 'classement', season);
       const container = new ContainerBuilder()
         .addMediaGalleryComponents(gallery)
         .addTextDisplayComponents(caption);
