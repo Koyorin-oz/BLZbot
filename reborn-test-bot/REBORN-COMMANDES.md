@@ -13,7 +13,7 @@ Chaque ligne = une commande racine ; les sous-commandes principales sont indiqu�
 | `/admin-creer-guilde` | Staff : créer une guilde joueur de test. |
 | `/admin-economie` | Owner : audit + simulation inflation (`audit`, `simu`). |
 | `/admin-focus` | Staff : désactiver / réactiver focus guilde, reset CD, historique. |
-| `/admin-roles` | Admin : créer rôles ranked, rôle index 100 %, lier IDs, resync membre (`creer-ranked`, `definir-ranked`, `creer-index-full`, `definir-index-full`, `voir`, `resync`). |
+| `/admin-roles` | Admin : ranked, index 100 %, **Temple Roi/Légende** (`creer-ranked`, `definir-ranked`, `creer-index-full`, `creer-temple`, `definir-temple-roi`, `definir-temple-legende`, `definir-index-full`, `voir`, `resync`). |
 | `/arbre` | Arbre de compétences : canvas, acheter palier, classe, branche séparatiste (`voir`, `acheter`, `classe`, `separatiste`). |
 | `/boutique` | Boutique du jour, coffres, boosts (composants). |
 | `/classement` | Classements Starss, niveau XP, RP ranked, GRP guildes (option `type`). |
