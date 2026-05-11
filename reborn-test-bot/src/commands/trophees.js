@@ -49,16 +49,6 @@ module.exports = {
     const done = trophies.DEFS.filter((t) => unlocked.has(t.id));
     const pending = trophies.DEFS.filter((t) => !unlocked.has(t.id));
 
-    const fmtList = (arr, title) => {
-      if (!arr.length) return `*${title} : aucun.*`;
-      const lines = arr.map((t) => {
-        const emoji = TIER_EMOJI[t.tier || 'commun'] || '⚪';
-        const mark = unlocked.has(t.id) ? '✅' : '○';
-        return `${mark} ${emoji} **${t.name}** — ${t.desc}`;
-      });
-      return `**${title}**\n${lines.join('\n')}`;
-    };
-
     const intro = new TextDisplayBuilder().setContent(
       [
         '# Trophées',
