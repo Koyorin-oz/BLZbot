@@ -38,12 +38,20 @@ module.exports = {
     meta.set(key, String(now));
     const body = new TextDisplayBuilder().setContent(
       [
-        '# 🕶️ Salon **Hacker**',
-        '**Qu’est-ce que c’est ?** Un **tirage d’item** (pondéré) lié à l’**univers hack / exploit** côté RP : utile pour les tests d’inventaire et le flux loot **sans** casser l’économie classique.',
+        '# Salon Hacker',
+        '**À quoi ça sert ?**',
+        'Une fois toutes les **12 h** (cooldown), tu tires **un objet** au hasard (probabilités pondérées). C’est pensé pour le **RP hack / exploit** et pour tester l’**inventaire** sans passer par la boutique.',
         '',
-        `**Tu reçois** : **${loot.name}** · \`${loot.itemId}\``,
-        '» Vérifie \`/inventaire\` pour l’**empilement** · Cooldown **12 h** (sauf owner / sandbox).',
-        cfg.hackerRoleId ? `» Rôle requis : <@&${cfg.hackerRoleId}>.` : '» Aucun rôle requis (sandbox).',
+        '**Comment l’utiliser ?**',
+        '1. Vérifie que tu as le **rôle Hacker** si le staff l’a activé sur ce serveur.',
+        '2. Lance `/hacker` et attends la fin du cooldown si besoin.',
+        '3. Regarde ton loot dans `/inventaire`.',
+        '',
+        `**Récompense du tirage** : **${loot.name}** · \`${loot.itemId}\``,
+        '',
+        cfg.hackerRoleId
+          ? `**Rôle requis** : <@&${cfg.hackerRoleId}> *(les owners contournent les limites de test).*`
+          : '*Aucun rôle requis sur cette instance (config).*',
       ].join('\n'),
     );
     const c = new ContainerBuilder().addTextDisplayComponents(body);
