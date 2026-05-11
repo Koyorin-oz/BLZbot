@@ -208,6 +208,42 @@ module.exports = {
       }
     }
 
+    if (sub === 'creer-temple') {
+      await interaction.deferReply();
+      const templeSvc = require('../services/temple');
+      try {
+        let roiId = templeDiscordRoles.getRoiRoleId(hub);
+        let legId = templeDiscordRoles.getLegendeRoleId(hub);
+        if (!roiId || !guild.roles.cache.get(roiId)) {
+          const r = await guild.roles.create({
+            name: 'Temple — Roi',
+            color: 0xc0392b,
+            mentionable: false,
+            reason: 'Auto — classement Temple (Roi)',
+          });
+          roiId = r.id;
+          templeDiscordRoles.setRoiRoleId(hub, r.id);
+        }
+        if (!legId || !guild.roles.cache.get(legId)) {
+          const r2 = await guild.roles.create({
+            name: 'Temple — Légende',
+            color: 0x9b59b6,
+            mentionable: false,
+            reason: 'Auto — classement Temple (Légende)',
+          });
+          legId = r2.id;
+          templeDiscordRoles.setLegendeRoleId(hub, r2.id);
+        }
+        return interaction.editReply({
+          content:
+            `✅ Rôles Temple : Roi <@&${roiId}> · Légende <@&${legId}>\n` +
+            `Seuils : **Roi** ≥ **${templeSvc.CLASSEMENT_ROI_MIN_KEYS}** / **${templeSvc.TEMPLE_KEY_TOTAL}** clés · **Légende** **${templeSvc.CLASSEMENT_LEGENDE_MIN_KEYS}**–**${templeSvc.CLASSEMENT_LEGENDE_MAX_KEYS}** clés.`,
+        });
+      } catch (e) {
+        return interaction.editReply({ content: `❌ \`${e?.message || e}\`` });
+      }
+    }
+
     if (sub === 'definir-ranked') {
       const tier = interaction.options.getString('tier', true);
       const role = interaction.options.getRole('role', true);
