@@ -92,8 +92,17 @@ function mergeSlashBodies() {
   }
   if (merged.length > DISCORD_APPLICATION_COMMAND_MAX) {
     const prim = merged.filter((j) => localNames.has(j.name));
-    const sec = merged.filter((j) => !localNames.has(j.name));
+    let sec = merged.filter((j) => !localNames.has(j.name));
+    const priority = [];
+    for (const name of MIRROR_SLASH_PRIORITY_NAMES) {
+      const i = sec.findIndex((j) => j.name === name);
+      if (i >= 0) priority.push(sec.splice(i, 1)[0]);
+    }
+    sec = [...priority, ...sec];
     merged = [...prim, ...sec].slice(0, DISCORD_APPLICATION_COMMAND_MAX);
+    console.warn(
+      `[reborn-test-bot] Slash : ${merged.length} commandes (tronqué à ${DISCORD_APPLICATION_COMMAND_MAX}). Vérifie que /profil est toujours listé.`,
+    );
   }
   return merged;
 }
