@@ -1,8 +1,7 @@
 /**
  * Pont optionnel vers les quêtes REBORN (`reborn-test-bot`) quand le monorepo
- * contient les deux bots. Ne fait rien si le module est absent (prod BLZbot seul).
- *
- * Appelé depuis `minigame-handler.js` après une victoire minijeu.
+ * contient les deux bots. **Désactivé par défaut** : activer explicitement avec
+ * `REBORN_QUEST_HOOK=1` dans l’environnement du process **niveau** (sandbox / test).
  */
 const fs = require('fs');
 const path = require('path');
@@ -12,6 +11,7 @@ function rebornQuestsPath() {
 }
 
 function trackMinijeuWinForReborn(winnerUserId) {
+  if (String(process.env.REBORN_QUEST_HOOK || '').trim() !== '1') return;
   if (!winnerUserId) return;
   const p = rebornQuestsPath();
   try {
