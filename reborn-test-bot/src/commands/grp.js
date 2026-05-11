@@ -34,11 +34,11 @@ function nextGrpStep(grpTotal) {
   };
 }
 
-function buildCaption(displayName, sub) {
+function buildCaption(displayName, sub, season) {
   const t =
     sub === 'voir'
-      ? `**GRP** — fiche **${displayName}** · saison **${grpSeason.currentSeasonKey()}**`
-      : `**GRP** — top serveur · saison **${grpSeason.currentSeasonKey()}**`;
+      ? `**GRP** — fiche **${displayName}** · saison \`${season}\``
+      : `**GRP** — top serveur · saison \`${season}\``;
   return new TextDisplayBuilder().setContent(t);
 }
 
