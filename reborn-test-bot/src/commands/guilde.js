@@ -243,31 +243,53 @@ module.exports = {
       const cap = pg.effectiveMemberCap(g);
       const treasuryB = BigInt(g.treasury || '0');
       const gxpB = BigInt(g.gxp || '0');
-      // Statut anti-séparation (grade Star OU top 3 GRP du hub).
       const sep = ladder.antiSepStatus(g.id, hub);
       const sepLine = sep.protected
-        ? `🛡️ **Anti-séparation** : oui — *${sep.reason}*`
-        : 'Anti-séparation : non';
-      // Rôles internes custom
+        ? `**Anti-séparation** : oui — ${sep.reason}`
+        : '**Anti-séparation** : non';
       const roles = pg.listInternalRoles(g.id);
       const rolesLine = roles.length
-        ? `Rôles internes : ${roles.map((r) => `<@${r.user_id}> *${r.role_label}*`).join(' · ')}`
-        : '';
-      const desc = [
-        `ID \`${g.id}\``,
-        `Chef <@${g.leader_id}>`,
-        `Membres **${n}** / **${cap}** ${cap !== g.member_cap ? `*(stocké ${g.member_cap})*` : ''}`,
-        `Niveau guilde **${g.guild_level}**`,
-        `Grade **${label(g.grade || '')}**`,
-        `GXP **${gxpB.toLocaleString('fr-FR')}**`,
-        `Trésorerie **${treasuryB.toLocaleString('fr-FR')}** starss`,
-        sepLine,
-        g.salon_channel_id ? `Salon : <#${g.salon_channel_id}>` : 'Salon : *aucun* (utilise \`/guilde salon\`).',
-        g.description ? `Description : ${g.description}` : '',
-        rolesLine,
-      ].filter(Boolean).join('\n');
-      const e = new EmbedBuilder().setTitle(g.name).setDescription(desc).setColor(0xe67e22);
-      return interaction.reply({ embeds: [e] });
+        ? roles.map((r) => `• <@${r.user_id}> — *${r.role_label}*`).join('\n')
+        : null;
+      const salonLine = g.salon_channel_id
+        ? `<#${g.salon_channel_id}>`
+        : '*Aucun* — `/guilde salon` pour en créer un.';
+      const descBlock = g.description ? String(g.description).slice(0, 900) : null;
+      const capNote =
+        cap !== g.member_cap ? ` *(places stockées : ${g.member_cap})*` : '';
+
+      const intro = new TextDisplayBuilder().setContent(
+        [
+          `# ${g.name}`,
+          `Identifiant \`${g.id}\``,
+          '',
+          `**Chef** : <@${g.leader_id}>`,
+          `**Membres** : **${n}** / **${cap}**${capNote}`,
+          `**Niveau guilde** : **${g.guild_level}**`,
+          `**Grade** : **${label(g.grade || '')}**`,
+        ].join('\n'),
+      );
+      const eco = new TextDisplayBuilder().setContent(
+        [
+          '## Économie & progression',
+          `**GXP** (guilde) : **${gxpB.toLocaleString('fr-FR')}**`,
+          `**Trésorerie** : **${treasuryB.toLocaleString('fr-FR')}** starss`,
+          '',
+          sepLine,
+          '',
+          `**Salon privé** : ${salonLine}`,
+        ].join('\n'),
+      );
+      const parts = [intro, eco];
+      if (descBlock) {
+        parts.push(new TextDisplayBuilder().setContent(`## Description\n${descBlock}`));
+      }
+      if (rolesLine) {
+        parts.push(new TextDisplayBuilder().setContent(`## Rôles internes\n${rolesLine}`));
+      }
+      const container = new ContainerBuilder();
+      for (const p of parts) container.addTextDisplayComponents(p);
+      return interaction.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
     }
 
     if (sub === 'inviter') {
