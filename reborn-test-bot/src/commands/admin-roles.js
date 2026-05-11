@@ -62,6 +62,22 @@ module.exports = {
         ),
     )
     .addSubcommand((sc) =>
+      sc
+        .setName('definir-temple-roi')
+        .setDescription('Associe un rôle Discord aux joueurs ≥ seuil Roi du Temple.')
+        .addRoleOption((o) =>
+          o.setName('role').setDescription('Rôle Discord à utiliser').setRequired(true),
+        ),
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('definir-temple-legende')
+        .setDescription('Associe un rôle Discord aux joueurs en plage Légende (Temple).')
+        .addRoleOption((o) =>
+          o.setName('role').setDescription('Rôle Discord à utiliser').setRequired(true),
+        ),
+    )
+    .addSubcommand((sc) =>
       sc.setName('voir').setDescription('Voir la configuration actuelle des rôles.'),
     )
     .addSubcommand((sc) =>
