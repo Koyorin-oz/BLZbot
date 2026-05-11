@@ -53,6 +53,10 @@ function endEvent(hubDiscordId, eventKey) {
     const temple = require('./temple');
     temple.markKey(winnerId, 'event_champion');
     users.addStars(winnerId, 1_000_000n);
+    try {
+      const tdr = require('./templeDiscordRoles');
+      tdr.queueTempleRoleSync(hubDiscordId, winnerId);
+    } catch { /* ignore */ }
   } catch { /* ignore */ }
   // Récompenses top 5 : 1M / 500k / 250k / 100k / 50k.
   const REW = [1_000_000n, 500_000n, 250_000n, 100_000n, 50_000n];
