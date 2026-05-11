@@ -92,7 +92,7 @@ module.exports = {
         const name = 'grp_voir.png';
         const file = new AttachmentBuilder(buf, { name });
         const gallery = new MediaGalleryBuilder().addItems({ media: { url: `attachment://${name}` } });
-        const caption = buildCaption(target.displayName || target.username, 'voir');
+        const caption = buildCaption(target.displayName || target.username, 'voir', season);
         const container = new ContainerBuilder()
           .addMediaGalleryComponents(gallery)
           .addTextDisplayComponents(caption);
