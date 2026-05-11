@@ -16,6 +16,7 @@ const {
 } = require('discord.js');
 const { isOwner } = require('../lib/owners');
 const users = require('../services/users');
+const { parseMuteDuration } = require('../lib/parseMuteDuration');
 
 function canModerate(interaction) {
   const has = interaction.memberPermissions?.has(PermissionFlagsBits.ModerateMembers);
@@ -23,21 +24,39 @@ function canModerate(interaction) {
   return Boolean(has || admin) || isOwner(interaction.user.id);
 }
 
+function humanizeMinutes(mins) {
+  if (mins >= 1440) {
+    const j = Math.floor(mins / 1440);
+    const rest = mins % 1440;
+    const h = Math.floor(rest / 60);
+    const m = rest % 60;
+    let s = `${j} j`;
+    if (h) s += ` ${h} h`;
+    if (m) s += ` ${m} min`;
+    return s;
+  }
+  if (mins >= 60) {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m ? `${h} h ${m} min` : `${h} h`;
+  }
+  return `${mins} min`;
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('mute')
     .setDescription('Time out temporaire d’un membre (REBORN — logé sur son passeport).')
     .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+    .setDMPermission(false)
     .addUserOption((o) =>
       o.setName('membre').setDescription('Cible').setRequired(true),
     )
-    .addIntegerOption((o) =>
+    .addStringOption((o) =>
       o
-        .setName('minutes')
-        .setDescription('Durée du mute en minutes (1 → 10080 = 7 jours)')
-        .setRequired(true)
-        .setMinValue(1)
-        .setMaxValue(10080),
+        .setName('duree')
+        .setDescription('Ex. 30min, 2h, 7j, 2sem (combinable : 1j12h)')
+        .setRequired(true),
     )
     .addStringOption((o) =>
       o.setName('raison').setDescription('Raison (≤ 500 car.)').setRequired(false),
@@ -53,13 +72,18 @@ module.exports = {
 
     const target = interaction.options.getUser('membre', true);
     if (target.bot) {
-      return interaction.reply({ content: '❌ Impossible sur un bot.' });
+      return interaction.reply({ content: '❌ Impossible sur un bot ou une application.' });
     }
     if (target.id === interaction.user.id) {
       return interaction.reply({ content: '❌ Tu ne peux pas te mute toi-même.' });
     }
 
-    const mins = interaction.options.getInteger('minutes', true);
+    const durRaw = interaction.options.getString('duree', true);
+    const parsed = parseMuteDuration(durRaw);
+    if (!parsed.ok) {
+      return interaction.reply({ content: `❌ ${parsed.error}` });
+    }
+    const mins = parsed.minutes;
     const reason = (interaction.options.getString('raison') || '').slice(0, 500);
 
     const member = await interaction.guild.members
@@ -105,10 +129,7 @@ module.exports = {
       member,
     });
 
-    const minsTxt =
-      mins >= 60
-        ? `${Math.floor(mins / 60)}h${mins % 60 ? ` ${mins % 60}min` : ''}`
-        : `${mins} min`;
+    const minsTxt = humanizeMinutes(mins);
 
     if (r.applied) {
       try {
@@ -122,7 +143,7 @@ module.exports = {
         .setColor(0xe67e22)
         .setTitle('🔇 Mute appliqué')
         .setDescription(
-          `${target} a été **mute** pendant **${minsTxt}**${reason ? `\n*Raison :* ${reason}` : ''}\n\n*Logé sur le passeport REBORN (compteur TO).*`,
+          `${target} a été **mute** pendant **${minsTxt}** (saisi : \`${durRaw.trim()}\`)${reason ? `\n*Raison :* ${reason}` : ''}\n\n*Logé sur le passeport REBORN (compteur TO).*`,
         );
       return interaction.reply({ embeds: [e] });
     }
