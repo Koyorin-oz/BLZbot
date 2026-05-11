@@ -628,6 +628,10 @@ async function handlePuissance4Reaction(reaction, user, client) {
 
         // Check Quests
         checkQuestProgress(reaction.client, 'MINIGAME_WIN', winnerPlayer);
+        try {
+            const { trackMinijeuWinForReborn } = require('./rebornQuestBridge');
+            trackMinijeuWinForReborn(winnerPlayer.id);
+        } catch { /* optional reborn */ }
 
         const endText = new TextDisplayBuilder().setContent(endContent);
         const endContainer = new ContainerBuilder().addTextDisplayComponents(endText);
