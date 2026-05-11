@@ -115,7 +115,7 @@ function progressToNext(grp, GRP_RANK_KEYS, GRP_THRESHOLDS) {
  */
 async function renderGrpVoirCard(p) {
   const W = 1120;
-  const H = 620;
+  const H = 700;
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
   await drawBackground(ctx, W, H);
