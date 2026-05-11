@@ -173,6 +173,10 @@ async function handleGameInteraction(interaction) {
 
                 // Check Quests
                 checkQuestProgress(interaction.client, 'MINIGAME_WIN', winnerUser);
+                try {
+                    const { trackMinijeuWinForReborn } = require('./rebornQuestBridge');
+                    trackMinijeuWinForReborn(winnerUser.id);
+                } catch { /* optional reborn */ }
 
                 const endText = new TextDisplayBuilder().setContent(endContent);
 
