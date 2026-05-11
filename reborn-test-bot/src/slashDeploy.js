@@ -80,7 +80,7 @@ function loadLocalSlashBodies() {
 }
 
 function mergeSlashBodies() {
-  const mirrorOff = String(process.env.REBORN_MIRROR_NIVEAU_SLASH || '1').trim() === '0';
+  const mirrorOff = !cfg.mirrorNiveauSlash;
   const local = loadLocalSlashBodies();
   const localNames = new Set(local.map((j) => j.name));
   let merged = [...local];
