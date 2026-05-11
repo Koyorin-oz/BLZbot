@@ -177,10 +177,6 @@ module.exports = {
       if (updated.length) lines.push(`♻️ **Mis à jour / rattachés** : ${updated.join(' · ')}`);
       if (skipped.length) lines.push(`⏭️ **Déjà existants** : ${skipped.join(' · ')}`);
       if (failed.length) lines.push(`❌ **Échecs** : ${failed.join('\n')}`);
-      lines.push('');
-      lines.push(
-        "*Astuce : place les rôles ci-dessus **en dessous** du rôle du bot pour que l'auto-assignation marche.*",
-      );
       return interaction.editReply({ content: lines.join('\n') });
     }
 
