@@ -214,8 +214,8 @@ async function buildProfilGuildePayload(interaction, { hub, gRow }) {
     ? `**Anti-séparation** : oui — ${antiSep.reason}`
     : '**Anti-séparation** : non';
   const focusLine = focusDis
-    ? '🚫 Focus **désactivé** (admin)'
-    : '🎯 Focus disponible (CD 7 j)';
+    ? '**Focus** : désactivé par un admin'
+    : '**Focus** : disponible (cooldown 7 j)';
   const reborn = new TextDisplayBuilder().setContent(
     [
       '## REBORN — guilde',
