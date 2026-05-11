@@ -62,7 +62,9 @@ module.exports = {
           `**Ton avancement** : **${r.completion_pct} %**`,
         ].join('\n'),
       );
-      const steps = new TextDisplayBuilder().setContent(['## Paliers', lines.join('\n')].join('\n'));
+      const steps = new TextDisplayBuilder().setContent(
+        ['## Paliers', lines.join('\n')].join('\n').slice(0, 3800),
+      );
       const c = new ContainerBuilder().addTextDisplayComponents(intro, steps);
       return interaction.reply({ components: [c], flags: MessageFlags.IsComponentsV2 });
     }
