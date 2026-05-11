@@ -1,4 +1,9 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const {
+  SlashCommandBuilder,
+  ContainerBuilder,
+  TextDisplayBuilder,
+  MessageFlags,
+} = require('discord.js');
 const trophies = require('../services/trophies');
 
 const TIER_EMOJI = {
@@ -16,7 +21,9 @@ module.exports = {
     .setDescription('Trophées REBORN (déblocage auto + liste + tirage 24 h).')
     .addSubcommand((sc) => sc.setName('voir').setDescription('Tes trophées et critères'))
     .addSubcommand((sc) => sc.setName('verifier').setDescription('Revérifier les critères maintenant'))
-    .addSubcommand((sc) => sc.setName('tirage').setDescription('Tirage 1×/24h : tente de débloquer un trophée pondéré (biais sur les critères déjà remplis).')),
+    .addSubcommand((sc) =>
+      sc.setName('tirage').setDescription('Tirage 1×/24h : tente de débloquer un trophée pondéré (biais sur les critères déjà remplis).'),
+    ),
   async execute(interaction) {
     const uid = interaction.user.id;
     const hub = interaction.guildId;
@@ -38,17 +45,32 @@ module.exports = {
     }
     trophies.evaluate(uid, hub);
     const unlocked = new Set(trophies.listUnlocked(uid).map((r) => r.trophy_id));
-    const lines = trophies.DEFS.map((t) => {
-      const ok = unlocked.has(t.id) ? '✅' : '⬜';
-      const emoji = TIER_EMOJI[t.tier || 'commun'] || '⚪';
-      return `${ok} ${emoji} **${t.name}** — ${t.desc}`;
-    });
     const total = trophies.DEFS.length;
-    const e = new EmbedBuilder()
-      .setTitle(`Trophées — ${unlocked.size} / ${total}`)
-      .setDescription(lines.join('\n').slice(0, 3900))
-      .setColor(0xf1c40f)
-      .setFooter({ text: '🎰 /trophees tirage — 1×/24h pour tenter d’en débloquer un.' });
-    return interaction.reply({ embeds: [e] });
+    const done = trophies.DEFS.filter((t) => unlocked.has(t.id));
+    const pending = trophies.DEFS.filter((t) => !unlocked.has(t.id));
+
+    const fmtList = (arr, title) => {
+      if (!arr.length) return `*${title} : aucun.*`;
+      const lines = arr.map((t) => {
+        const emoji = TIER_EMOJI[t.tier || 'commun'] || '⚪';
+        const mark = unlocked.has(t.id) ? '✅' : '○';
+        return `${mark} ${emoji} **${t.name}** — ${t.desc}`;
+      });
+      return `**${title}**\n${lines.join('\n')}`;
+    };
+
+    const intro = new TextDisplayBuilder().setContent(
+      [
+        '# Trophées',
+        `**${unlocked.size}** / **${total}** débloqués`,
+        '',
+        '*Les critères se vérifient tout seuls ; `/trophees verifier` force une passe.*',
+        '*`/trophees tirage`* : 1× / 24 h pour tenter d’en débloquer un au hasard.',
+      ].join('\n'),
+    );
+    const blocDone = new TextDisplayBuilder().setContent(fmtList(done, 'Obtenus').slice(0, 3800));
+    const blocTodo = new TextDisplayBuilder().setContent(fmtList(pending, 'À débloquer').slice(0, 3800));
+    const c = new ContainerBuilder().addTextDisplayComponents(intro, blocDone, blocTodo);
+    return interaction.reply({ components: [c], flags: MessageFlags.IsComponentsV2 });
   },
 };
