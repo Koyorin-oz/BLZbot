@@ -96,4 +96,4 @@ Légende : **OK** = présent et jouable sur le bot de test · **Partiel** = là 
 |---------|---------|
 | `REBORN-COMMANDES.md` | Liste des slash natives + note miroir |
 | `GDOC-STATUT-REBORN.md` | Ancienne grille gdoc ↔ code (détail par ligne métier) |
-| `TUTORIEL-REBORN.md` | Aide joueur |
+| `PROVENANCE-GDOC.md` | Origine des specs / listes (repo vs gdoc) |
