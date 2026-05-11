@@ -33,6 +33,11 @@ module.exports = {
     )
     .addSubcommand((sc) =>
       sc
+        .setName('creer-temple')
+        .setDescription('Crée les rôles « Temple — Roi » et « Temple — Légende » (classement /temple).'),
+    )
+    .addSubcommand((sc) =>
+      sc
         .setName('definir-ranked')
         .setDescription('Associe un rôle existant à un tier ranked.')
         .addStringOption((o) =>
