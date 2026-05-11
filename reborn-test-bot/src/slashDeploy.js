@@ -8,6 +8,8 @@ const NIVEAU_SLASH_OBSOLETE = new Set(['profil-v2', 'profile', 'testprofil', 'te
 /** Ne jamais prendre la définition `niveau` pour ces noms (versions REBORN du dossier `commands/` + canvas). */
 const MIRROR_EXCLUDE_COMMAND_NAMES = new Set(['profil-guilde']);
 const DISCORD_APPLICATION_COMMAND_MAX = 100;
+/** Si on dépasse 100 commandes, ces noms miroir restent en tête de file (ordre conservé). */
+const MIRROR_SLASH_PRIORITY_NAMES = ['profil', 'daily', 'xp', 'boutique'];
 const REPO_ROOT = path.join(__dirname, '..', '..');
 
 /**
