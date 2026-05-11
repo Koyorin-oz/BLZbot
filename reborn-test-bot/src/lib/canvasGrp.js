@@ -123,9 +123,8 @@ async function renderGrpVoirCard(p) {
   const accent = RANK_ACCENT[p.rankKey] || RANK_ACCENT[''];
   const avatar = p.avatarUrl ? await loadSafe(p.avatarUrl).catch(() => null) : null;
 
-  rr(ctx, 0, 0, 8, H, 0);
   ctx.fillStyle = accent;
-  ctx.fillRect(0, 0, 8, H);
+  ctx.fillRect(0, 0, 6, H);
 
   const pad = 48;
   const avR = 52;
