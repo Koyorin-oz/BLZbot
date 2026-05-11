@@ -343,6 +343,13 @@ function claimSelection(userId) {
     if (!users.takeInventory(userId, def.itemId, def.qty)) {
       return { ok: false, error: `Il te faut **${def.qty}×** item \`${def.itemId}\` en inventaire.` };
     }
+  } else if (def.kind === 'minijeu_wins') {
+    if ((row.selection_progress || 0) < def.target) {
+      return {
+        ok: false,
+        error: `Victoires minijeu **${row.selection_progress || 0}** / **${def.target}** — gagne encore des parties sur \`/minijeu\`.`,
+      };
+    }
   }
   db.prepare('UPDATE user_quest_state SET selection_claimed = 1 WHERE user_id = ?').run(userId);
   const reward = def.reward * skillTree.questRewardMult(userId);
