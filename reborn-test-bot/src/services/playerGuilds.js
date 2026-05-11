@@ -395,6 +395,23 @@ function useFocus(hubDiscordId, attackerGuildId, targetGuildId, mode, actorUserI
   if (tgt.focus_disabled) {
     return { ok: false, error: 'La cible est **protégée** : focus désactivé.' };
   }
+  // Anti-abus doc / checklist : plafond de lancements / 24 h par guilde attaquante (hors CD 7 j).
+  const dailyCap = parseInt(String(process.env.FOCUS_MAX_PER_ATTACKER_GUILD_PER_DAY || '3').trim(), 10);
+  if (dailyCap > 0) {
+    const since = now - 24 * 60 * 60 * 1000;
+    const row = db
+      .prepare(
+        "SELECT COUNT(*) AS c FROM staff_audit WHERE hub_discord_id = ? AND action = 'focus.use' AND mod_id = ? AND created_ms > ?",
+      )
+      .get(hubDiscordId, attackerGuildId, since);
+    const cnt = row?.c || 0;
+    if (cnt >= dailyCap) {
+      return {
+        ok: false,
+        error: `Limite anti-abus : **${dailyCap}** focus / 24 h max pour ta guilde (en plus du cooldown **7 j**).`,
+      };
+    }
+  }
   if (now - (att.last_focus_ms || 0) < CD) return { ok: false, error: 'Focus en cooldown (7 j).' };
   if (B(att.treasury) < COST) return { ok: false, error: '500 000 starss requis en trésorerie de guilde.' };
   // Trace dans staff_audit (best-effort).
