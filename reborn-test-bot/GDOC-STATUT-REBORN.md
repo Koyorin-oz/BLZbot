@@ -108,7 +108,7 @@ Légende :
 | 11 sources listées + sync | **OK** | `temple.js` (`SOURCE_DEFS`) : classes, RP, diamant, index, grade Star, GRP star, nv 99, vocal, séparation gagnée, hacker, champion event |
 | Dévoilement tant que temple non débloqué | **Partiel** | `publicLines` masque partiellement les noms |
 | Classement Roi / Légende **temple** | **OK** | `/temple classement` — Roi **≥ 6 / 11** clés, Légende **3–5 / 11** clés |
-| Attribution auto rôles Discord « Roi » / « Légende » gdoc | **Absent** | Affichage / classement interne seulement |
+| Attribution auto rôles Discord « Roi » / « Légende » gdoc | **OK** (si config) | `/admin-roles creer-temple` ou `definir-temple-*` ; sync via `templeDiscordRoles` (earn, `/temple`, event, séparation) |
 
 ---
 
