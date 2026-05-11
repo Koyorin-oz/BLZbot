@@ -68,8 +68,20 @@ module.exports = {
         '*`/trophees tirage`* : 1× / 24 h pour tenter d’en débloquer un au hasard.',
       ].join('\n'),
     );
-    const blocDone = new TextDisplayBuilder().setContent(fmtList(done, 'Obtenus').slice(0, 3800));
-    const blocTodo = new TextDisplayBuilder().setContent(fmtList(pending, 'À débloquer').slice(0, 3800));
+    const linesDone = done.map((t) => {
+      const emoji = TIER_EMOJI[t.tier || 'commun'] || '⚪';
+      return `✅ ${emoji} **${t.name}** — ${t.desc}`;
+    });
+    const linesTodo = pending.map((t) => {
+      const emoji = TIER_EMOJI[t.tier || 'commun'] || '⚪';
+      return `○ ${emoji} **${t.name}** — ${t.desc}`;
+    });
+    const blocDone = new TextDisplayBuilder().setContent(
+      linesDone.length ? `**Obtenus**\n${linesDone.join('\n')}`.slice(0, 3800) : '**Obtenus** — *aucun pour l’instant.*',
+    );
+    const blocTodo = new TextDisplayBuilder().setContent(
+      linesTodo.length ? `**À débloquer**\n${linesTodo.join('\n')}`.slice(0, 3800) : '**À débloquer** — *tout est complété.*',
+    );
     const c = new ContainerBuilder().addTextDisplayComponents(intro, blocDone, blocTodo);
     return interaction.reply({ components: [c], flags: MessageFlags.IsComponentsV2 });
   },
