@@ -89,8 +89,27 @@ client.once(Events.ClientReady, async () => {
         const r = await deploySlashCommands();
         if (r.ok) {
           console.log(
-            `[reborn-test-bot] Slash déployés (${r.scope}, ${r.count} cmd${r.guildId ? `, guild ${r.guildId}` : ''})`,
+            `[reborn-test-bot] Slash déployés (${r.scope}, ${r.count} cmd${r.guildId ? `, guild ${r.guildId}` : ''}) — /profil : ${r.includesProfil ? 'oui' : 'NON'}`,
           );
+          if (!cfg.mirrorNiveauSlash) {
+            console.warn(
+              '[reborn-test-bot] REBORN_MIRROR_NIVEAU_SLASH=0 → aucune commande « niveau » (/profil, /daily, …). Remets **1** (ou supprime la ligne), puis `npm run deploy`.',
+            );
+          } else if (!r.includesProfil) {
+            console.warn(
+              '[reborn-test-bot] `/profil` absent du paquet (échec chargement `niveau` ou liste tronquée >100). Vérifie les logs au-dessus.',
+            );
+          }
+          if (r.scope === 'guild' && r.guildId) {
+            console.warn(
+              `[reborn-test-bot] Slash **guild** : ils n’apparaissent que sur le serveur d’ID \`${r.guildId}\`. Pour un autre serveur : mets à jour REBORN_TEST_GUILD_ID ou vide-le pour un déploiement global.`,
+            );
+          }
+          if (r.scope === 'global') {
+            console.warn(
+              '[reborn-test-bot] Slash **globaux** : Discord peut mettre jusqu’à ~1 h avant d’afficher toutes les commandes.',
+            );
+          }
         } else {
           console.warn('[reborn-test-bot] Slash deploy :', r.reason);
         }
