@@ -1,4 +1,9 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const {
+  SlashCommandBuilder,
+  ContainerBuilder,
+  TextDisplayBuilder,
+  MessageFlags,
+} = require('discord.js');
 const users = require('../services/users');
 const gm = require('../services/guildMember');
 const pg = require('../services/playerGuilds');
@@ -43,7 +48,7 @@ module.exports = {
     const gId = interaction.guildId;
     let gxp = 0n;
     let grp = 0n;
-    let pgLine = '—';
+    let pgLines = ['*Pas de guilde REBORN sur ce serveur.*'];
     if (gId) {
       const row = gm.getMemberRow(gId, uid);
       gxp = row.gxp;
@@ -51,40 +56,57 @@ module.exports = {
       const m = pg.getMembershipInHub(uid, gId);
       if (m) {
         const g = pg.getGuild(m.guild_id);
-        pgLine = `**${g.name}** · grade **${label(g.grade || '')}** · GXP guilde **${BigInt(g.gxp || '0').toLocaleString('fr-FR')}**`;
+        pgLines = [
+          `**${g.name}**`,
+          `**Grade** : ${label(g.grade || '')}`,
+          `**GXP guilde** : ${BigInt(g.gxp || '0').toLocaleString('fr-FR')}`,
+        ];
       }
     }
-    const embed = new EmbedBuilder()
-      .setTitle(`💰 ${interaction.user.username}`)
-      .setColor(0xf1c40f)
-      .addFields(
-        { name: 'Starss', value: fmt(u.stars), inline: true },
-        { name: 'RP (ranked)', value: fmt(u.points), inline: true },
-        { name: 'Monnaie d’évent', value: fmt(u.event_currency || '0'), inline: true },
-        {
-          name: 'Niveau / XP',
-          value: `Nv **${xpSt.level}** · **${xpSt.xpInto}** / palier (total **${xpTot}** XP)`,
-          inline: true,
-        },
-        {
-          name: 'Gains RP (palier actuel)',
-          value: `**${rpRates.msg}** / msg · **${rpRates.vocMin}** / min voc`,
-          inline: true,
-        },
-        { name: 'GXP (ce serveur)', value: fmt(gxp), inline: true },
-        { name: 'GRP (ce serveur)', value: fmt(grp), inline: true },
-        { name: 'Guilde REBORN', value: pgLine, inline: false },
-        {
-          name: 'Boosts actifs',
-          value: `XP ×2 : ${fmtMs(u.xp_boost_ms)}\nGXP ×2 : ${fmtMs(u.gxp_boost_ms)}\nStarss ×2 : ${fmtMs(u.starss_boost_ms)}`,
-          inline: false,
-        },
-        {
-          name: 'Gains passifs (doc REBORN)',
-          value: `**${STARSS_PER_MESSAGE}** starss / msg · **${STARSS_PER_VOICE_MINUTE}** starss / min voc · **${XP_PER_MESSAGE}** XP/msg · **${XP_PER_VOICE_MINUTE}** XP/min voc (hors boosts).`,
-          inline: false,
-        },
-      );
-    await interaction.reply({ embeds: [embed] });
+
+    const wallet = new TextDisplayBuilder().setContent(
+      [
+        `# Solde — ${interaction.user.username}`,
+        '',
+        `**Starss** : **${fmt(u.stars)}**`,
+        `**RP (ranked)** : **${fmt(u.points)}**`,
+        `**Monnaie d’événement** : **${fmt(u.event_currency || '0')}**`,
+      ].join('\n'),
+    );
+    const xpBlock = new TextDisplayBuilder().setContent(
+      [
+        '## Niveau & RP',
+        `**Niveau** : **${xpSt.level}** — **${xpSt.xpInto}** XP dans le palier (total **${xpTot}** XP)`,
+        `**Gains RP** (palier actuel) : **${rpRates.msg}** / msg · **${rpRates.vocMin}** / min voc`,
+        `**GXP (hub)** : **${fmt(gxp)}**`,
+        `**GRP (hub)** : **${fmt(grp)}**`,
+      ].join('\n'),
+    );
+    const guildBlock = new TextDisplayBuilder().setContent(
+      ['## Guilde REBORN', ...pgLines].join('\n'),
+    );
+    const boosts = new TextDisplayBuilder().setContent(
+      [
+        '## Boosts actifs',
+        `XP ×2 : **${fmtMs(u.xp_boost_ms)}**`,
+        `GXP ×2 : **${fmtMs(u.gxp_boost_ms)}**`,
+        `Starss ×2 : **${fmtMs(u.starss_boost_ms)}**`,
+      ].join('\n'),
+    );
+    const passive = new TextDisplayBuilder().setContent(
+      [
+        '## Gains de base (hors boosts)',
+        `**${STARSS_PER_MESSAGE}** starss / msg · **${STARSS_PER_VOICE_MINUTE}** starss / min voc`,
+        `**${XP_PER_MESSAGE}** XP / msg · **${XP_PER_VOICE_MINUTE}** XP / min voc`,
+      ].join('\n'),
+    );
+    const c = new ContainerBuilder().addTextDisplayComponents(
+      wallet,
+      xpBlock,
+      guildBlock,
+      boosts,
+      passive,
+    );
+    await interaction.reply({ components: [c], flags: MessageFlags.IsComponentsV2 });
   },
 };
