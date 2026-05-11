@@ -11,10 +11,30 @@ const skillTree = require('./skillTree');
 const meta = require('./meta');
 const rankedRoles = require('./rankedRoles');
 const indexRoles = require('./indexRoles');
+const templeDiscordRoles = require('./templeDiscordRoles');
 const { notifyQuestUnlocks } = require('../lib/questNotify');
 
 /** @type {Map<string, { guildId: string, since: number }>} */
 const voiceSince = new Map();
+
+/** Throttle Temple sync + rôles Discord (évite un hit DB/API à chaque message). */
+const lastTempleEarnSync = new Map(); // `${hub}:${uid}` -> ts
+const TEMPLE_EARN_SYNC_MS = 60_000;
+
+function maybeSyncTempleFromEarn(client, hub, userId) {
+  if (!client || !hub || !userId) return;
+  const k = `${hub}:${userId}`;
+  const now = Date.now();
+  if (now - (lastTempleEarnSync.get(k) || 0) < TEMPLE_EARN_SYNC_MS) return;
+  lastTempleEarnSync.set(k, now);
+  try {
+    const temple = require('./temple');
+    temple.sync(userId, hub);
+    templeDiscordRoles.syncTempleRolesForUser(client, hub, userId).catch(() => {});
+  } catch {
+    /* ignore */
+  }
+}
 
 /** Référence au client (renseignée par `registerEarn`). Utilisée pour sync roles. */
 let _earnClient = null;
