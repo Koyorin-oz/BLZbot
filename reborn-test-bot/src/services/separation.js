@@ -137,6 +137,10 @@ function tickSeparations() {
           users.addStars(uid, bonus);
           temple.markKey(uid, 'separation_won');
           try {
+            const tdr = require('./templeDiscordRoles');
+            tdr.queueTempleRoleSync(s.hub_discord_id, uid);
+          } catch { /* ignore */ }
+          try {
             db.prepare('UPDATE users SET separations_won = COALESCE(separations_won, 0) + 1 WHERE id = ?').run(uid);
           } catch { /* ignore */ }
           // 1 point séparatiste pour le gagnant côté split (récompense de la voie).
