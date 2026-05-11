@@ -259,6 +259,18 @@ module.exports = {
       return interaction.reply({ content: `✅ Index 100 % → ${role}` });
     }
 
+    if (sub === 'definir-temple-roi') {
+      const role = interaction.options.getRole('role', true);
+      templeDiscordRoles.setRoiRoleId(hub, role.id);
+      return interaction.reply({ content: `✅ Temple Roi → ${role}` });
+    }
+
+    if (sub === 'definir-temple-legende') {
+      const role = interaction.options.getRole('role', true);
+      templeDiscordRoles.setLegendeRoleId(hub, role.id);
+      return interaction.reply({ content: `✅ Temple Légende → ${role}` });
+    }
+
     if (sub === 'voir') {
       const list = rankedRoles.listConfiguredRoles(hub);
       const lines = list.map((t) =>
