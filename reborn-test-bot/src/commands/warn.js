@@ -6,6 +6,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('warn')
     .setDescription('Poser un warn (léger / moyen / fort / critique) — admin ou owner app.')
+    .setDMPermission(false)
     .addUserOption((o) => o.setName('membre').setDescription('Cible').setRequired(true))
     .addStringOption((o) =>
       o
@@ -28,7 +29,19 @@ module.exports = {
       return interaction.reply({ content: 'Permission refusée.' });
     }
     const t = interaction.options.getUser('membre', true);
-    if (t.bot) return interaction.reply({ content: 'Pas sur un bot.' });
+    const member = await interaction.guild.members.fetch(t.id).catch(() => null);
+    if (!member) {
+      return interaction.reply({
+        content:
+          '❌ Ce **membre** n’est pas sur le serveur (ou introuvable). Ouvre la liste des membres et choisis quelqu’un du salon — pas le bot ni l’application.',
+      });
+    }
+    if (member.user.bot) {
+      return interaction.reply({
+        content:
+          '❌ Un warn ne s’applique qu’à un **compte joueur**. Les bots et l’application ne peuvent pas être warnés.',
+      });
+    }
     const deg = interaction.options.getString('degre', true);
     const raison = interaction.options.getString('raison') || '';
     const r = passport.addWarn(hub, t.id, interaction.user.id, deg, raison);
