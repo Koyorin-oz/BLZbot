@@ -188,19 +188,19 @@ async function renderGrpVoirCard(p) {
   rr(ctx, barX, barY, fillW, barH, 5);
   ctx.fill();
 
-  const metaY = boxY + 200;
+  const metaY = boxY + 216;
   ctx.fillStyle = MUTED;
   ctx.font = '500 15px "Segoe UI", sans-serif';
   ctx.fillText(`Saison ${p.season}`, pad + 28, metaY);
 
   ctx.fillStyle = TEXT;
   ctx.font = '500 15px "Segoe UI", sans-serif';
-  const peaks = p.peaksLine.slice(0, 120);
+  const peaks = p.peaksLine.replace(/\*\*/g, '').slice(0, 130);
   ctx.fillText(`Pics : ${peaks}`, pad + 28, metaY + 26);
 
   ctx.fillStyle = MUTED;
   ctx.font = 'italic 14px "Segoe UI", sans-serif';
-  const next = p.nextLine.slice(0, 140);
+  const next = p.nextLine.replace(/\*\*/g, '').slice(0, 160);
   ctx.fillText(next, pad + 28, metaY + 54);
 
   return canvas.toBuffer('image/png');
