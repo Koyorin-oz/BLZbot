@@ -19,6 +19,9 @@ module.exports = {
               { name: 'Chasse aux étoiles (24h)', value: 'chasse' },
               { name: 'Raid Cosmique (12h)', value: 'raid' },
               { name: 'Marathon Stellaire (48h)', value: 'marathon' },
+              { name: 'Siège stellaire (18h)', value: 'siege' },
+              { name: 'Arène flash (6h)', value: 'arene' },
+              { name: 'Conquête galactique (36h)', value: 'conquete' },
             ),
         ),
     )
