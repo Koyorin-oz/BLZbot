@@ -82,6 +82,7 @@ module.exports = {
   hackerRoleId,
   HACKER_SALON_COOLDOWN_MS,
   mirrorNiveauExecute,
+  mirrorNiveauSlash,
   minimalDiscordIntents,
   assertToken,
   assertClientIdForDeploy,
