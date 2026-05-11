@@ -19,7 +19,7 @@ Chaque ligne = une commande racine ; les sous-commandes principales sont indiqu�
 | `/classement` | Classements Starss, niveau XP, RP ranked, GRP guildes (option `type`). |
 | `/daily` | Daily / streak / items (canvas V2). |
 | `/echange` | Trades starss + monnaie event (`proposer`, `accepter`). |
-| `/event` | Events serveur (`lancer`, `contribuer`, `classement`, `actifs`, `cloturer`). |
+| `/event` | Events serveur (`lancer` : chasse, raid, marathon, siege, arene, conquete · `contribuer`, `classement`, `actifs`, `cloturer`). |
 | `/grp` | Guilde : GRP perso (`voir`, `classement`). |
 | `/guilde` | Guildes joueur : créer, rejoindre, trésor, grades, focus, salon, rôles internes, etc. (nombreux sous-commandes). |
 | `/hacker` | Obtenir / utiliser l’accès salon hacker (config). |
