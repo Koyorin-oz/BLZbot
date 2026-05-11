@@ -31,13 +31,28 @@ function totalOfferValue(stars, invRows, eventCurrency = 0n) {
 function tradeAllowed(aStars, aInv, bStars, bInv, aEvent = 0n, bEvent = 0n) {
   const va = totalOfferValue(aStars, aInv, aEvent);
   const vb = totalOfferValue(bStars, bInv, bEvent);
-  if (va === 0n && vb === 0n) return { ok: false, error: 'Offres vides.' };
+  if (va === 0n && vb === 0n) {
+    return {
+      ok: false,
+      error:
+        '❌ **Échange refusé.** Les deux offres sont vides : ajoute des **starss**, des **objets** ou de la **monnaie d’événement**.',
+    };
+  }
   const hi = va > vb ? va : vb;
   const lo = va > vb ? vb : va;
   if (hi === 0n) return { ok: true };
   const diff = hi - lo;
-  if (diff * 100n > hi * 40n) return { ok: false, error: 'Écart de valeur > 40 % (règle REBORN).' };
-  return { ok: true };
+  if (diff * 100n > hi * 40n) {
+    const ecartPct = hi > 0n ? Number((diff * 100n) / hi) : 0;
+    return {
+      ok: false,
+      error: [
+        '❌ **Échange refusé.**',
+        `L’écart de « valeur totale » entre les deux côtés est trop important (**~${ecartPct} %**, max autorisé **40 %**).`,
+        'Rééquilibre les **starss**, les **objets** (valeur selon rareté) et la **monnaie d’événement** (1 unité = 5 de valeur).',
+      ].join('\n'),
+    };
+  }
 }
 
 function genId() {
