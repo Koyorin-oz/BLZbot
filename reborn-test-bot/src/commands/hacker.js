@@ -22,84 +22,70 @@ function fmtCooldown(ms) {
   if (ms <= 0) return 'bientôt';
   const h = Math.floor(ms / 3_600_000);
   const m = Math.ceil((ms % 3_600_000) / 60_000);
-  if (h > 0) return `~**${h}** h **${m}** min`;
-  return `~**${m}** min`;
+  if (h > 0) return `~${h} h ${m} min`;
+  return `~${m} min`;
 }
 
 function buildDeniedContainer() {
-  const t = new TextDisplayBuilder().setContent(
-    [
-      '# 🔒 Salon Hacker',
-      '',
-      '🚫 **Accès refusé**',
-      '',
-      'Il te faut le rôle **Hacker** sur ce serveur pour ouvrir le salon.',
-      cfg.hackerRoleId ? `\n🎫 Rôle attendu : <@&${cfg.hackerRoleId}>` : '',
-      '\n👑 *Les owners peuvent toujours tester sans rôle.*',
-    ].join('\n'),
-  );
-  return new ContainerBuilder().addTextDisplayComponents(t);
+  const lines = [
+    '# Salon Hacker',
+    '',
+    '**Accès refusé**',
+    '',
+    'Cette commande est réservée aux membres avec le rôle **Hacker** sur ce serveur.',
+  ];
+  if (cfg.hackerRoleId) lines.push('', `Rôle attendu : <@&${cfg.hackerRoleId}>.`);
+  lines.push('', '*Les owners peuvent tester sans rôle.*');
+  return new ContainerBuilder().addTextDisplayComponents(new TextDisplayBuilder().setContent(lines.join('\n')));
 }
 
 function buildCooldownContainer(msLeft) {
-  const t = new TextDisplayBuilder().setContent(
-    [
-      '# ⏳ Salon Hacker',
-      '',
-      '🧊 **Patience, hacker…**',
-      '',
-      `Le salon reprend dans **${fmtCooldown(msLeft)}**.`,
-      '\n_💡 Un passage = un tirage d’objet. Reviens après le cooldown._',
-    ].join('\n'),
+  return new ContainerBuilder().addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(
+      [
+        '# Salon Hacker',
+        '',
+        '**Cooldown actif**',
+        '',
+        `Prochain tirage possible dans **${fmtCooldown(msLeft)}** (limite **12 h** entre deux passages).`,
+      ].join('\n'),
+    ),
   );
-  return new ContainerBuilder().addTextDisplayComponents(t);
 }
 
 function buildSuccessContainer({ loot, guildName }) {
   const head = new TextDisplayBuilder().setContent(
     [
-      '# 🕶️ **Salon Hacker**',
-      `📡 *${guildName}*`,
+      '# Salon Hacker',
+      `*${guildName}*`,
       '',
-      '> ✨ *Backdoor ouverte — un paquet vient de tomber.*',
-    ].join('\n'),
-  );
-  const pitch = new TextDisplayBuilder().setContent(
-    [
-      '## 🎯 C’est quoi ?',
-      '',
-      '🎲 **Loot surprise** — probas **pondérées** (pas la boutique).',
-      '⏱️ **Cooldown 12 h** entre deux tirages.',
-      '🎭 Pensé pour le **RP hack / exploit**.',
-      '🎒 Idéal pour remplir **`/inventaire`** en mode test.',
+      'Tirage **pondéré** d’un objet (hors boutique), utile pour le **RP hack** et pour tester l’**inventaire**.',
     ].join('\n'),
   );
   const lootBlock = new TextDisplayBuilder().setContent(
     [
-      '## 🎁 **Ton drop**',
+      '## Récompense',
       '',
-      `### ${loot.name}`,
+      `**${loot.name}**`,
       '',
-      `🆔 \`${loot.itemId}\``,
+      `\`${loot.itemId}\``,
       '',
-      '✅ *Objet ajouté à ton inventaire.*',
+      '_Objet ajouté à ton inventaire._',
     ].join('\n'),
   );
   const foot = new TextDisplayBuilder().setContent(
     [
-      '## 📋 Suite',
+      '## Suite',
       '',
-      '👉 Fais **`/inventaire`** pour voir la pile.',
+      'Ouvre **`/inventaire`** pour voir le détail et les quantités.',
       '',
       cfg.hackerRoleId
-        ? `🔐 **Accès salon** — rôle <@&${cfg.hackerRoleId}> requis pour la prochaine fois.`
-        : '🌐 **Accès** — aucun rôle requis sur cette instance.',
+        ? `Rôle requis pour les prochains passages : <@&${cfg.hackerRoleId}>.`
+        : 'Sur cette instance, aucun rôle n’est requis.',
     ].join('\n'),
   );
   return new ContainerBuilder()
     .addTextDisplayComponents(head)
-    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small))
-    .addTextDisplayComponents(pitch)
     .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small))
     .addTextDisplayComponents(lootBlock)
     .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small))
@@ -115,7 +101,9 @@ module.exports = {
       return interaction.reply({
         components: [
           new ContainerBuilder().addTextDisplayComponents(
-            new TextDisplayBuilder().setContent('# 🕶️ Salon Hacker\n\n⚠️ **Serveur uniquement** — utilise cette commande dans un salon du serveur.'),
+            new TextDisplayBuilder().setContent(
+              '# Salon Hacker\n\n**Serveur uniquement** — utilise cette commande dans un salon du serveur.',
+            ),
           ),
         ],
         flags: MessageFlags.IsComponentsV2,
