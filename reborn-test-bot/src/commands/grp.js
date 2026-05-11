@@ -132,9 +132,8 @@ module.exports = {
       const lines = sorted.map((r, i) => {
         const rk = grpRankFromTotal(r.grp);
         const rkL = rk ? label(rk) : '—';
-        const pad = String(i + 1).padStart(2, ' ');
-        const pts = r.grp.toLocaleString('fr-FR').padStart(12, ' ');
-        return `${pad}. ${pts}  ${rkL.padEnd(10, ' ')}  <@${r.user_id}>`;
+        const pts = r.grp.toLocaleString('fr-FR');
+        return `**${i + 1}.** <@${r.user_id}>  ·  **${pts}** GRP  ·  ${rkL}`;
       });
       const c = buildClassementContainer({ guildName, season, lines });
       return interaction.reply({ components: [c], flags: MessageFlags.IsComponentsV2 });
