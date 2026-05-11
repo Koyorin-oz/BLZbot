@@ -179,13 +179,7 @@ async function buildBoutiquePayload(uid, username) {
 async function buildInventairePayload(uid, username) {
   users.getOrCreate(uid, username);
   const rows = users.getInventory(uid);
-  const blz = getBlzAttachment();
   const container = new ContainerBuilder();
-  if (blz) {
-    container.addMediaGalleryComponents(
-      new MediaGalleryBuilder().addItems({ media: { url: blz.mediaUrl } }),
-    );
-  }
   if (!rows.length) {
     const td = new TextDisplayBuilder().setContent(
       ['# 🎒 Inventaire', "Tu n'as **aucun** objet pour le moment. Passe à la **boutique** pour en acheter !"].join('\n'),
