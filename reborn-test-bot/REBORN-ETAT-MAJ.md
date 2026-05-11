@@ -68,7 +68,7 @@ Légende : **OK** = présent et jouable sur le bot de test · **Partiel** = là 
 | GRP, ladder guildes, saison (tick) | **OK** | `grpSeason`, `/grp`, `/guilde classement` |
 | Palier rewards RP | **OK** | `/ranked reclamer` + `rankedMilestones` |
 | Focus + mode ÷2 GRP | **OK** | `useFocus`, métas |
-| Modération abuse focus | **Absent / Prod** | Pas de module dédié dans ce bot |
+| Modération abuse focus | **OK** (garde-fou) | `FOCUS_MAX_PER_ATTACKER_GUILD_PER_DAY` (défaut **3** / 24 h, **0** = off) + logs `FOCUS_LOG_CHANNEL_ID` existants |
 
 ---
 
