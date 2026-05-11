@@ -38,9 +38,7 @@ function buildDeniedContainer() {
       '\n👑 *Les owners peuvent toujours tester sans rôle.*',
     ].join('\n'),
   );
-  return new ContainerBuilder()
-    .addTextDisplayComponents(t)
-    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
+  return new ContainerBuilder().addTextDisplayComponents(t);
 }
 
 function buildCooldownContainer(msLeft) {
@@ -54,9 +52,7 @@ function buildCooldownContainer(msLeft) {
       '\n_💡 Un passage = un tirage d’objet. Reviens après le cooldown._',
     ].join('\n'),
   );
-  return new ContainerBuilder()
-    .addTextDisplayComponents(t)
-    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
+  return new ContainerBuilder().addTextDisplayComponents(t);
 }
 
 function buildSuccessContainer({ loot, guildName }) {
