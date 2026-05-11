@@ -50,7 +50,7 @@ Légende : **OK** = présent et jouable sur le bot de test · **Partiel** = là 
 | Sujet | Statut | Notes |
 |-------|--------|--------|
 | Quêtes + arbre quête | **OK** | `/quetes`, `quests` |
-| Défi minijeu → progression REBORN | **OK** (monorepo) | `niveau` → `rebornQuestBridge` → `quests.trackMinijeuWin` après victoire morpion / rps / p4 |
+| Défi minijeu → progression REBORN | **OK** (opt-in) | `niveau` + `rebornQuestBridge` : activer **`REBORN_QUEST_HOOK=1`** sur le process **niveau** (même clone avec `reborn-test-bot/`) |
 | Index + matrice | **OK** | `/itemindex` |
 | Rôle Discord « index 100 % » | **Manuel** | `/admin-roles definir-index-full` pour lier un rôle ; pas d’auto si non configuré |
 | Temple 11 clés | **OK** | `SOURCE_DEFS` ×11 |
