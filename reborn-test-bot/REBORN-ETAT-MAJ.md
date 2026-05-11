@@ -1,6 +1,6 @@
 # État de la MAJ REBORN (revue code — `reborn-test-bot`)
 
-*Dernière passe : revue du dépôt local, pas du Google Doc ligne à ligne.*
+*Dernière passe : revue du dépôt local, pas du Google Doc ligne à ligne. Voir **`PROVENANCE-GDOC.md`** pour l’origine des listes « manques ».*
 
 Légende : **OK** = présent et jouable sur le bot de test · **Partiel** = là mais à valider wording/doc/équilibre · **Absent** = pas dans ce sandbox · **Prod** = dépend merge BLZbot / infra · **Manuel** = rôle ou process hors bot.
 
