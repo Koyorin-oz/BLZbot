@@ -94,6 +94,7 @@ function grantVoiceMinutes(guildId, userId, minutes) {
     rankedRoles
       .syncRankRoleForUser(_earnClient, guildId, userId)
       .catch(() => { /* best-effort */ });
+    maybeSyncTempleFromEarn(_earnClient, guildId, userId);
   }
   const gr = C.gxpRatesForPlayerLevel(row?.level || 1);
   const mult = gxpMultForUser(userId);
