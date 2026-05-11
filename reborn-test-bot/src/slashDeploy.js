@@ -162,13 +162,20 @@ async function deploySlashCommands() {
   if (!body.length) return { ok: false, reason: 'no-commands' };
   if (!cfg.clientId) return { ok: false, reason: 'no-client-id' };
 
+  const includesProfil = body.some((j) => j.name === 'profil');
   const rest = new REST({ version: '10' }).setToken(cfg.token);
   if (cfg.guildId) {
     await rest.put(Routes.applicationGuildCommands(cfg.clientId, cfg.guildId), { body });
-    return { ok: true, scope: 'guild', count: body.length, guildId: cfg.guildId };
+    return {
+      ok: true,
+      scope: 'guild',
+      count: body.length,
+      guildId: cfg.guildId,
+      includesProfil,
+    };
   }
   await rest.put(Routes.applicationCommands(cfg.clientId), { body });
-  return { ok: true, scope: 'global', count: body.length };
+  return { ok: true, scope: 'global', count: body.length, includesProfil };
 }
 
 module.exports = {
