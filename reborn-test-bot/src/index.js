@@ -10,6 +10,18 @@ const {
 } = require('discord.js');
 require('./db');
 const cfg = require('./config');
+/** Handoff profil niveau → REBORN : évite la course avec le collector si les vars ne sont pas dans `.env`. */
+if (cfg.mirrorNiveauExecute) {
+  const defaults = {
+    REBORN_PROFIL_QUEST_BYPASS: '1',
+    REBORN_PROFIL_GUILD_BYPASS: '1',
+    REBORN_PROFIL_ARBRE_BYPASS: '1',
+    REBORN_PROFIL_CLASSES_BYPASS: '1',
+  };
+  for (const [k, v] of Object.entries(defaults)) {
+    if (process.env[k] === undefined) process.env[k] = v;
+  }
+}
 const { refreshApplicationOwners, isOwner } = require('./lib/owners');
 const { registerEarn } = require('./services/earn');
 const { handlePurchase } = require('./services/purchase');
