@@ -142,4 +142,4 @@ Légende :
 
 Pour le détail joueur, voir aussi **`TUTORIEL-REBORN.md`**.
 
-Synthèse maintenance : **`REBORN-ETAT-MAJ.md`** · commandes : **`REBORN-COMMANDES.md`**.
+Synthèse maintenance : **`REBORN-ETAT-MAJ.md`** · commandes : **`REBORN-COMMANDES.md`** · **traçabilité spec** : **`PROVENANCE-GDOC.md`**.
