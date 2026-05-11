@@ -225,7 +225,7 @@ async function buildInventairePayload(uid, username) {
     container.addActionRowComponents(row0, row1);
   }
   return {
-    files: blz ? [blz.file] : [],
+    files: [],
     components: [container],
     flags: MessageFlags.IsComponentsV2,
   };
