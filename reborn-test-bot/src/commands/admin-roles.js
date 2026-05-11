@@ -279,6 +279,10 @@ module.exports = {
       const idxRole = indexRoles.getIndexFullRoleId(hub);
       lines.push('');
       lines.push(idxRole ? `📚 **Index 100 %** → <@&${idxRole}>` : '📚 **Index 100 %** → *non configuré*');
+      const roiT = templeDiscordRoles.getRoiRoleId(hub);
+      const legT = templeDiscordRoles.getLegendeRoleId(hub);
+      lines.push(roiT ? `⛩️ **Temple Roi** → <@&${roiT}>` : '⛩️ **Temple Roi** → *non configuré*');
+      lines.push(legT ? `✨ **Temple Légende** → <@&${legT}>` : '✨ **Temple Légende** → *non configuré*');
       const e = new EmbedBuilder()
         .setTitle('🛡️ Rôles Discord — configuration')
         .setColor(0x3498db)
