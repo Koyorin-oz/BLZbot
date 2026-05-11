@@ -211,8 +211,8 @@ async function buildProfilGuildePayload(interaction, { hub, gRow }) {
   } catch { /* ignore */ }
   const focusDis = !!g.focus_disabled;
   const sepLine = antiSep.protected
-    ? `🛡️ **Anti-séparation : oui** *(${antiSep.reason})*`
-    : '⚔️ Anti-séparation : non';
+    ? `**Anti-séparation** : oui — ${antiSep.reason}`
+    : '**Anti-séparation** : non';
   const focusLine = focusDis
     ? '🚫 Focus **désactivé** (admin)'
     : '🎯 Focus disponible (CD 7 j)';
