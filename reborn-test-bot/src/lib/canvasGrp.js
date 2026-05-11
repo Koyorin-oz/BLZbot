@@ -99,7 +99,7 @@ function drawAvatar(ctx, img, cx, cy, r) {
 /** Fraction [0,1] vers le prochain palier GRP (0 = aucun palier atteint). */
 function progressToNext(grp, GRP_RANK_KEYS, GRP_THRESHOLDS) {
   const g = typeof grp === 'bigint' ? grp : BigInt(Math.floor(Number(grp)));
-  const cur = require('../reborn/grades').grpRankFromTotal(g);
+  const cur = grpRankFromTotal(g);
   const idx = cur ? GRP_RANK_KEYS.indexOf(cur) : -1;
   if (idx >= GRP_RANK_KEYS.length - 1) return { frac: 1, low: g, high: g, atMax: true };
   const low = idx < 0 ? 0n : GRP_THRESHOLDS[idx];
