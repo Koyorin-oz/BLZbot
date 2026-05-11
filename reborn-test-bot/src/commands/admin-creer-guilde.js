@@ -33,8 +33,17 @@ module.exports = {
       return interaction.reply({ content: r.error });
     }
     const leaderLine = leader.id === interaction.user.id ? 'Toi' : `${leader} (${leader.tag})`;
-    return interaction.reply({
-      content: `Guilde **${nom.slice(0, 80)}** créée — ID \`${r.guildId}\` · chef : ${leaderLine}.`,
-    });
+    const embed = new EmbedBuilder()
+      .setTitle('Guilde créée (admin)')
+      .setColor(0x2ecc71)
+      .setDescription(
+        'Création **sans exigence de niveau** — la guilde est enregistrée sur ce hub REBORN.',
+      )
+      .addFields(
+        { name: 'Nom', value: nom.slice(0, 256), inline: true },
+        { name: 'ID guilde', value: `\`${r.guildId}\``, inline: true },
+        { name: 'Chef', value: leaderLine, inline: false },
+      );
+    return interaction.reply({ embeds: [embed] });
   },
 };
