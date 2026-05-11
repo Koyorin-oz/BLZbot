@@ -218,10 +218,12 @@ async function buildProfilGuildePayload(interaction, { hub, gRow }) {
     : '🎯 Focus disponible (CD 7 j)';
   const reborn = new TextDisplayBuilder().setContent(
     [
-      `**Grade REBORN** : ${label(g.grade || '')}`,
+      '## REBORN — guilde',
+      `**Grade** : ${label(g.grade || '') || '—'}`,
+      '',
       sepLine,
       focusLine,
-    ].join(' · '),
+    ].join('\n'),
   );
   container.addTextDisplayComponents(reborn);
 
