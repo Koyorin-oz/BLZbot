@@ -1,6 +1,6 @@
 /**
- * Parse une durée saisie en un seul champ (ex. 30min, 7j, 2sem, 1h30min).
- * Unités : sem / semaine(s), j / jour(s), h / heure(s), min / mn / m (minute).
+ * Parse une durée dans un seul champ : 30min, 7j, 2sem, 1h, 1j12h, etc.
+ * Unités : sem · j · h · min / mn / m (minute).
  * @returns {{ ok: true, minutes: number } | { ok: false, error: string }}
  */
 function parseMuteDuration(raw) {
@@ -9,57 +9,58 @@ function parseMuteDuration(raw) {
     return { ok: false, error: 'Indique une durée (ex. `30min`, `7j`, `2sem`, `1h`).' };
   }
   let s = s0.replace(/\s+/g, '');
-  const MAX_MIN = 28 * 24 * 60; // plafond Discord timeout ~28 j
+  const MAX_MIN = 28 * 24 * 60;
 
-  const consume = (re) => {
+  const take = (re) => {
     const m = s.match(re);
-    if (!m) return 0;
-    s = s.slice(m[0].length);
+    if (!m) return null;
     const n = parseFloat(String(m[1]).replace(',', '.'));
-    return Number.isFinite(n) ? n : 0;
+    if (!Number.isFinite(n) || n <= 0) return null;
+    s = s.slice(m[0].length);
+    return n;
   };
 
   let total = 0;
-  let guard = 0;
-  while (s.length && guard++ < 50) {
-    const before = s;
-    let n = consume(/^(\d+(?:[.,]\d+)?)(sem(?:aines?)?)\b/);
-    if (n) {
-      total += Math.round(n * 7 * 24 * 60);
+  for (let i = 0; i < 40 && s.length; i++) {
+    let n = take(/^(\d+(?:[.,]\d+)?)sem(?:aines?)?/);
+    if (n != null) {
+      total += n * 7 * 24 * 60;
       continue;
     }
-    n = consume(/^(\d+(?:[.,]\d+)?)(j(?:ours?)?)\b/);
-    if (n) {
-      total += Math.round(n * 24 * 60);
+    n = take(/^(\d+(?:[.,]\d+)?)j(?:ours?)?/);
+    if (n != null) {
+      total += n * 24 * 60;
       continue;
     }
-    n = consume(/^(\d+(?:[.,]\d+)?)(h(?:eures?)?)\b/);
-    if (n) {
-      total += Math.round(n * 60);
+    n = take(/^(\d+(?:[.,]\d+)?)h(?:eures?)?/);
+    if (n != null) {
+      total += n * 60;
       continue;
     }
-    n = consume(/^(\d+(?:[.,]\d+)?)(min(?:utes?)?|mn)\b/);
-    if (n) {
-      total += Math.round(n);
+    n = take(/^(\d+(?:[.,]\d+)?)min(?:utes?)?/);
+    if (n != null) {
+      total += n;
       continue;
     }
-    n = consume(/^(\d+(?:[.,]\d+)?)m\b/);
-    if (n) {
-      total += Math.round(n);
+    n = take(/^(\d+(?:[.,]\d+)?)mn/);
+    if (n != null) {
+      total += n;
       continue;
     }
-    if (s === before) break;
-  }
-  s = s.replace(/[,;]+/g, '').trim();
-  if (s.length) {
+    n = take(/^(\d+(?:[.,]\d+)?)m/);
+    if (n != null) {
+      total += n;
+      continue;
+    }
     return {
       ok: false,
-      error: `Suffixe non reconnu après « ${s0} ». Utilise **sem**, **j**, **h**, **min** ou **m** (minute).`,
+      error: `Je n’ai pas compris « ${s} » dans \`${s0}\`. Exemples valides : \`45min\`, \`3j\`, \`1sem\`, \`2h30m\`.`,
     };
   }
+
   const minutes = Math.max(1, Math.floor(total));
   if (minutes > MAX_MIN) {
-    return { ok: false, error: `Durée trop longue (max **28 j** / ${MAX_MIN} min, limite Discord).` };
+    return { ok: false, error: `Durée trop longue (max **28 j**, limite Discord).` };
   }
   return { ok: true, minutes };
 }
