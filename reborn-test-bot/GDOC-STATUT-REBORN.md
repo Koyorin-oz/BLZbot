@@ -97,7 +97,7 @@ Légende :
 | Monnaie d’évent persistée | **OK** | `users.event_currency` |
 | Gain lié aux events (score → currency) | **OK** | `events.js` + bonus arbre event |
 | Échanges avec valeur ×5 pour l’évent | **OK** | `/echange` + `trade.js` |
-| Tous les types d’events / récompenses du gdoc | **Partiel** | Quelques **types** (`chasse`, `raid`, `marathon`) + participation ; à étendre si le gdoc en liste d’autres |
+| Tous les types d’events / récompenses du gdoc | **Partiel → OK** (base) | 6 types jouables (`chasse`, `raid`, `marathon`, `siege`, `arene`, `conquete`) — ajouter d’autres noms si le doc en liste plus |
 
 ---
 
