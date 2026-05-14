@@ -78,4 +78,49 @@ function antiSepStatus(guildId, hubDiscordId) {
   return { protected: false, reason: '' };
 }
 
-module.exports = { ladderForHub, topGuilds, isTopLadderProtected, antiSepStatus };
+/**
+ * Guildes du hub triées par somme d’une colonne `users` sur les membres
+ * (starss = CAST stars, rp = points ranked, niveau = xp_total).
+ * Renvoie `[{ id, name, leader_id, guild_level, grade, members, score }]`.
+ */
+function memberAggLadderForHub(hubDiscordId, metric) {
+  const col =
+    metric === 'starss'
+      ? "COALESCE(SUM(CAST(COALESCE(u.stars, '0') AS INTEGER)), 0)"
+      : metric === 'rp'
+        ? "COALESCE(SUM(CAST(COALESCE(u.points, '0') AS INTEGER)), 0)"
+        : metric === 'niveau'
+          ? 'COALESCE(SUM(COALESCE(u.xp_total, 0)), 0)'
+          : '0';
+  const rows = db
+    .prepare(
+      `SELECT g.id, g.name, g.leader_id, g.guild_level, g.grade,
+              COUNT(pgm.user_id) AS members,
+              ${col} AS score
+       FROM player_guilds g
+       INNER JOIN player_guild_members pgm ON pgm.guild_id = g.id
+       INNER JOIN users u ON u.id = pgm.user_id
+       WHERE g.hub_discord_id = ?
+       GROUP BY g.id
+       HAVING members >= 1
+       ORDER BY score DESC`,
+    )
+    .all(hubDiscordId);
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    leader_id: r.leader_id,
+    guild_level: r.guild_level,
+    grade: r.grade,
+    members: r.members,
+    score: BigInt(r.score ?? 0),
+  }));
+}
+
+module.exports = {
+  ladderForHub,
+  topGuilds,
+  isTopLadderProtected,
+  antiSepStatus,
+  memberAggLadderForHub,
+};
