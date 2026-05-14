@@ -96,16 +96,11 @@ function buildEmbed(type, hub, requesterId) {
     }
   }
 
-  const foot =
-    type === 'rp'
-      ? `${def.description} · La ligne « tier » est basée sur la somme RP (approx.), pas un tier officiel de guilde.`
-      : def.description;
-
   return new EmbedBuilder()
     .setTitle(`${def.emoji} Classement guildes — ${def.label}`)
     .setColor(def.color)
     .setDescription(lines.join('\n') + myRankLine)
-    .setFooter({ text: foot });
+    .setFooter({ text: def.description });
 }
 
 function buildSelect(currentType) {
