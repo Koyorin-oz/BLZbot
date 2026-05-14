@@ -14,7 +14,7 @@ module.exports = {
           '**Boutique** — `/boutique` (slots, coffres CAT*, boosts).',
           '**Guilde joueur** — `/guilde` … + **`/profil-guilde`** (même **canvas** que BLZbot + ligne REBORN + boutons Liste / Carrières / Quêtes).',
           '**Miroir slash BLZbot** — `REBORN_MIRROR_NIVEAU_SLASH=1` (défaut) : slash **niveau** + avec `REBORN_MIRROR_NIVEAU_EXECUTE=1` (défaut) exécution **identique** au module `niveau` (même BDD / deps que BLZbot ; `0` = message « utiliser BLZbot »), priorité **locale** si même nom — plafond **100** commandes.',
-          '**GRP** — `/grp voir` + `/grp classement` ; reset mensuel auto + pics (grades guilde).',
+          '**GRP** — `/grp` (carte perso) ; tops joueurs / guildes dans **`/classement`** ; reset mensuel + pics.',
           '**Séparation** — `/separation` + tick 60s.',
           '**Échanges** — `/echange` règle 40 % (starss + objets `item:qty`).',
           '**Index** — `/itemindex`.',
