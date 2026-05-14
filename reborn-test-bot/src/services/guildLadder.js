@@ -22,7 +22,7 @@ function B(s) {
 function ladderForHub(hubDiscordId) {
   const guilds = db
     .prepare(
-      'SELECT id, name, leader_id, member_cap, guild_level, grade, treasury, gxp FROM player_guilds WHERE hub_discord_id = ? ORDER BY created_ms DESC',
+      'SELECT id, name, icon_url, leader_id, member_cap, guild_level, grade, treasury, gxp FROM player_guilds WHERE hub_discord_id = ? ORDER BY created_ms DESC',
     )
     .all(hubDiscordId);
   const grpStmt = db.prepare(
