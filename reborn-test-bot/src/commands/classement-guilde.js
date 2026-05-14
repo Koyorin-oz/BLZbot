@@ -109,7 +109,7 @@ function buildEmbed(type, hub, requesterId) {
     if (myIdx >= 0) {
       const me = full[myIdx];
       const scoreStr = me.score.toLocaleString('fr-FR');
-      myRankLine = `\n\n*Ta guilde **${me.name}** : **${scoreStr}** ${def.unit} — rang **#${myIdx + 1}**.*`;
+      myRankLine = `\n\n*Ta guilde **${escGuildName(me.name)}** : **${scoreStr}** ${def.unit} — rang **#${myIdx + 1}**.*`;
     }
   }
 
