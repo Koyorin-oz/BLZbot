@@ -8,7 +8,6 @@ const {
 const db = require('../db');
 const users = require('../services/users');
 const playerGuilds = require('../services/playerGuilds');
-const rankedRoles = require('../services/rankedRoles');
 const ladder = require('../services/guildLadder');
 const { label: gradeLabel } = require('../reborn/grades');
 
