@@ -9,12 +9,11 @@ const db = require('../db');
 const users = require('../services/users');
 const playerGuilds = require('../services/playerGuilds');
 const rankedRoles = require('../services/rankedRoles');
-const { label: gradeLabel } = require('../reborn/grades');
+const ladder = require('../services/guildLadder');
+const { label: gradeLabel, grpRankFromTotal } = require('../reborn/grades');
 
 /**
- * Définitions des classements supportés. La même commande change de type via
- * un menu déroulant (5 minutes d'écoute), ce qui évite à l'utilisateur de
- * relancer `/classement` pour chaque vue.
+ * Types de classement. Le menu permet de basculer sans relancer la commande.
  */
 const TYPES = {
   starss: {
@@ -38,12 +37,19 @@ const TYPES = {
     unit: 'RP',
     description: 'Classement par Ranked Points (tier Bronze → Apex).',
   },
-  grp: {
-    label: '🛡️ GRP guildes',
-    emoji: '🛡️',
+  guildes: {
+    label: '🏰 Guildes (GRP total)',
+    emoji: '🏰',
+    color: 0xe67e22,
+    unit: 'GRP guilde',
+    description: 'Guildes REBORN du serveur, triées par somme des GRP des membres.',
+  },
+  grp_membres: {
+    label: '📊 Joueurs (GRP perso)',
+    emoji: '📊',
     color: 0x9b59b6,
     unit: 'GRP',
-    description: 'Classement des guildes du serveur par GRP total (saison en cours).',
+    description: 'Joueurs du serveur triés par leur total GRP personnel (saison hub).',
   },
 };
 
@@ -53,54 +59,72 @@ function buildEmbed(type, hub, requesterId) {
   let lines = [];
   let myRankLine = '';
 
-  if (type === 'grp') {
-    const guilds = playerGuilds.listGuildsOnHub(hub);
-    const enriched = guilds
-      .map((g) => {
-        const grp = db
-          .prepare(
-            'SELECT COALESCE(SUM(CAST(grp AS INTEGER)), 0) AS s FROM guild_member_gxp WHERE guild_id = ?',
-          )
-          .get(g.id).s;
-        const members = db
-          .prepare('SELECT COUNT(*) AS c FROM player_guild_members WHERE guild_id = ?')
-          .get(g.id).c;
-        return { id: g.id, name: g.name, grade: g.grade || '', level: g.guild_level || 1, score: BigInt(grp), members };
-      })
-      .sort((a, b) => (a.score > b.score ? -1 : a.score < b.score ? 1 : 0));
-    lines = enriched.slice(0, 10).map((g, i) => {
-      const star = i < 3 ? ['🥇', '🥈', '🥉'][i] : `**${i + 1}.**`;
-      return `${star} **${g.name}** — **${g.score.toLocaleString('fr-FR')}** GRP · grade ${gradeLabel(g.grade)} · nv ${g.level} · ${g.members} membre(s)`;
-    });
+  if (type === 'guildes') {
+    const top = ladder.ladderForHub(hub).slice(0, 10);
+    if (!top.length) {
+      lines = ['*Aucune guilde sur ce serveur.*'];
+    } else {
+      lines = top.map((g, i) => {
+        const star = i < 3 ? ['🥇', '🥈', '🥉'][i] : `**${i + 1}.**`;
+        return `${star} **${g.name}** \`${g.id}\` — nv **${g.guild_level}** — grade **${gradeLabel(g.grade || '')}** — **${g.totalGrp.toLocaleString('fr-FR')}** GRP total · ${g.members} membre(s)`;
+      });
+    }
     const myMembership = playerGuilds.getMembershipInHub(requesterId, hub);
     if (myMembership) {
-      const myIdx = enriched.findIndex((g) => g.id === myMembership.guild_id);
+      const full = ladder.ladderForHub(hub);
+      const myIdx = full.findIndex((g) => g.id === myMembership.guild_id);
       if (myIdx >= 0) {
-        const me = enriched[myIdx];
-        myRankLine = `\n\n*Ta guilde **${me.name}** : **${me.score.toLocaleString('fr-FR')}** GRP — rang **#${myIdx + 1}**.*`;
+        const me = full[myIdx];
+        myRankLine = `\n\n*Ta guilde **${me.name}** : **${me.totalGrp.toLocaleString('fr-FR')}** GRP total — rang **#${myIdx + 1}**.*`;
       }
     }
     return new EmbedBuilder()
       .setTitle(`${def.emoji} Classement — ${def.label}`)
       .setColor(def.color)
-      .setDescription(
-        (lines.length ? lines.join('\n') : '*Aucune guilde sur ce serveur.*') + myRankLine,
-      )
-      .setFooter({ text: `${def.description} · Saison reset 1er du mois.` });
+      .setDescription(lines.join('\n') + myRankLine)
+      .setFooter({ text: `${def.description} · Top 3 = protection anti-séparation (ladder).` });
   }
 
-  // Classements joueur (starss / niveau / rp) — même schéma : top 10 + ton rang.
+  if (type === 'grp_membres') {
+    const rows = db.prepare('SELECT user_id, grp FROM guild_member_gxp WHERE guild_id = ?').all(hub);
+    const sorted = rows
+      .map((r) => ({ user_id: r.user_id, grp: users.B(r.grp) }))
+      .sort((a, b) => (a.grp < b.grp ? 1 : a.grp > b.grp ? -1 : 0));
+    const top = sorted.slice(0, 10);
+    lines = top.map((r, i) => {
+      const star = i < 3 ? ['🥇', '🥈', '🥉'][i] : `**${i + 1}.**`;
+      const rk = grpRankFromTotal(r.grp);
+      const rkL = rk ? gradeLabel(rk) : '—';
+      return `${star} <@${r.user_id}> — **${r.grp.toLocaleString('fr-FR')}** GRP · palier **${rkL}**`;
+    });
+    if (!lines.length) lines = ['*Aucune donnée GRP sur ce serveur.*'];
+    const myPos = sorted.findIndex((r) => r.user_id === requesterId);
+    if (myPos >= 0) {
+      const me = sorted[myPos];
+      const rk = grpRankFromTotal(me.grp);
+      const rkL = rk ? gradeLabel(rk) : '—';
+      myRankLine = `\n\n*Ton rang : **#${myPos + 1}** — **${me.grp.toLocaleString('fr-FR')}** GRP · palier **${rkL}**.*`;
+    }
+    return new EmbedBuilder()
+      .setTitle(`${def.emoji} Classement — ${def.label}`)
+      .setColor(def.color)
+      .setDescription(lines.join('\n') + myRankLine)
+      .setFooter({ text: `${def.description} · Saison reset 1er du mois (UTC).` });
+  }
+
+  // Classements joueur (starss / niveau / rp)
   let sql;
-  let scoreCol = 'score';
   if (type === 'starss') {
     sql = `SELECT id, username, CAST(stars AS INTEGER) AS score FROM users ORDER BY CAST(stars AS INTEGER) DESC LIMIT 10`;
   } else if (type === 'niveau') {
     sql = `SELECT id, username, level AS score, xp_total AS xptot FROM users ORDER BY level DESC, xp_total DESC LIMIT 10`;
   } else if (type === 'rp') {
     sql = `SELECT id, username, CAST(points AS INTEGER) AS score FROM users ORDER BY CAST(points AS INTEGER) DESC LIMIT 10`;
+  } else {
+    sql = `SELECT id, username, CAST(stars AS INTEGER) AS score FROM users ORDER BY CAST(stars AS INTEGER) DESC LIMIT 10`;
   }
-  const rows = db.prepare(sql).all();
-  lines = rows.map((r, i) => {
+  const rowList = db.prepare(sql).all();
+  lines = rowList.map((r, i) => {
     const star = i < 3 ? ['🥇', '🥈', '🥉'][i] : `**${i + 1}.**`;
     let extra = '';
     if (type === 'niveau' && r.xptot) extra = ` (XP total ${Number(r.xptot).toLocaleString('fr-FR')})`;
@@ -112,7 +136,6 @@ function buildEmbed(type, hub, requesterId) {
     return `${star} <@${r.id}> — **${BigInt(r.score || 0).toLocaleString('fr-FR')}** ${def.unit}${extra}`;
   });
 
-  // Rang perso (calcul brut sans LIMIT pour trouver la position exacte).
   try {
     let countSql;
     let myValSql;
@@ -139,7 +162,7 @@ function buildEmbed(type, hub, requesterId) {
     }
     myRankLine = `\n\n*Ton rang : **#${(myRank ?? 0) + 1}** — **${myVal}** ${def.unit}.*`;
   } catch {
-    /* ignore — rang perso est best-effort */
+    /* ignore */
   }
 
   return new EmbedBuilder()
@@ -155,9 +178,9 @@ function buildSelect(currentType) {
       .setCustomId('rb_classement_type')
       .setPlaceholder('Changer de classement')
       .addOptions(
-        Object.entries(TYPES).map(([key, def]) => ({
-          label: def.label,
-          description: def.description.slice(0, 100),
+        Object.entries(TYPES).map(([key, d]) => ({
+          label: d.label,
+          description: d.description.slice(0, 100),
           value: key,
           default: key === currentType,
         })),
@@ -168,26 +191,28 @@ function buildSelect(currentType) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('classement')
-    .setDescription('Classements REBORN : Starss, Niveau XP, Ranked RP, GRP guildes.')
+    .setDescription('Classements : Starss, XP, Ranked RP, guildes GRP, joueurs GRP.')
     .addStringOption((o) =>
       o
         .setName('type')
-        .setDescription('Type de classement à afficher en premier (par défaut : Starss).')
+        .setDescription('Vue affichée en premier (défaut : Starss).')
         .setRequired(false)
         .addChoices(
           { name: '💸 Starss', value: 'starss' },
           { name: '⭐ Niveau XP', value: 'niveau' },
           { name: '⚔️ Ranked RP', value: 'rp' },
-          { name: '🛡️ GRP guildes', value: 'grp' },
+          { name: '🏰 Guildes (GRP total)', value: 'guildes' },
+          { name: '📊 Joueurs (GRP perso)', value: 'grp_membres' },
         ),
     ),
 
   async execute(interaction) {
     const hub = interaction.guildId;
     if (!hub) return interaction.reply({ content: 'Sur un serveur uniquement.' });
-    // S'assure que l'auteur a une entrée DB pour que « ton rang » ne dise pas « #1 — 0 ».
     users.getOrCreate(interaction.user.id, interaction.user.username);
     let currentType = interaction.options.getString('type') || 'starss';
+    if (currentType === 'grp') currentType = 'guildes';
+    if (!TYPES[currentType]) currentType = 'starss';
     const embed = buildEmbed(currentType, hub, interaction.user.id);
     await interaction.reply({ embeds: [embed], components: [buildSelect(currentType)] });
     const msg = await interaction.fetchReply();
