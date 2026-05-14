@@ -38,7 +38,17 @@ function nextGrpStep(grpTotal) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('grp')
-    .setDescription('Carte GRP perso (total, palier, progression). Le top joueurs est dans /classement.')
+    .setDescription('Carte GRP perso ou classement joueurs GRP du serveur.')
+    .addStringOption((o) =>
+      o
+        .setName('action')
+        .setDescription('Par défaut : carte GRP.')
+        .setRequired(false)
+        .addChoices(
+          { name: 'Carte GRP', value: 'carte' },
+          { name: 'Classement joueurs (GRP)', value: 'classement' },
+        ),
+    )
     .addUserOption((o) =>
       o.setName('membre').setDescription('Voir la carte d’un autre membre').setRequired(false),
     ),
@@ -48,6 +58,35 @@ module.exports = {
     const season = grpSeason.currentSeasonKey();
     const guildName = interaction.guild.name;
     const target = interaction.options.getUser('membre') || interaction.user;
+
+    if (interaction.options.getString('action') === 'classement') {
+      await interaction.deferReply();
+      const rows = db.prepare('SELECT user_id, grp FROM guild_member_gxp WHERE guild_id = ?').all(hub);
+      const sorted = rows
+        .map((r) => ({ user_id: r.user_id, grp: users.B(r.grp) }))
+        .sort((a, b) => (a.grp < b.grp ? 1 : a.grp > b.grp ? -1 : 0));
+      const top = sorted.slice(0, 10);
+      const lines = top.map((r, i) => {
+        const star = i < 3 ? ['🥇', '🥈', '🥉'][i] : `**${i + 1}.**`;
+        const rk = grpRankFromTotal(r.grp);
+        const rkL = rk ? label(rk) : '—';
+        return `${star} <@${r.user_id}> — **${r.grp.toLocaleString('fr-FR')}** GRP · palier **${rkL}**`;
+      });
+      let desc = lines.length ? lines.join('\n') : '*Aucune donnée GRP sur ce serveur.*';
+      const myPos = sorted.findIndex((r) => r.user_id === interaction.user.id);
+      if (myPos >= 0) {
+        const me = sorted[myPos];
+        const rk = grpRankFromTotal(me.grp);
+        const rkL = rk ? label(rk) : '—';
+        desc += `\n\n*Ton rang : **#${myPos + 1}** — **${me.grp.toLocaleString('fr-FR')}** GRP · palier **${rkL}**.*`;
+      }
+      const embed = new EmbedBuilder()
+        .setTitle('📊 Classement joueurs — GRP (serveur)')
+        .setColor(0x9b59b6)
+        .setDescription(desc)
+        .setFooter({ text: 'Saison reset 1er du mois (UTC). · Guildes : /classement-guilde' });
+      return interaction.editReply({ embeds: [embed] });
+    }
 
     await interaction.deferReply();
 
