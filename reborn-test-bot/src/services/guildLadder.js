@@ -81,7 +81,7 @@ function antiSepStatus(guildId, hubDiscordId) {
 /**
  * Guildes du hub triées par somme d’une colonne `users` sur les membres
  * (starss = CAST stars, rp = points ranked, niveau = xp_total).
- * Renvoie `[{ id, name, leader_id, guild_level, grade, members, score }]`.
+ * Renvoie `[{ id, name, icon_url, members, score }]` (members utile seulement au filtre SQL).
  */
 function memberAggLadderForHub(hubDiscordId, metric) {
   const col =
@@ -94,7 +94,9 @@ function memberAggLadderForHub(hubDiscordId, metric) {
           : '0';
   const rows = db
     .prepare(
-      `SELECT g.id, g.name, g.leader_id, g.guild_level, g.grade,
+      `SELECT g.id,
+              MAX(g.name) AS name,
+              MAX(TRIM(COALESCE(g.icon_url, ''))) AS icon_url,
               COUNT(pgm.user_id) AS members,
               ${col} AS score
        FROM player_guilds g
@@ -109,9 +111,7 @@ function memberAggLadderForHub(hubDiscordId, metric) {
   return rows.map((r) => ({
     id: r.id,
     name: r.name,
-    leader_id: r.leader_id,
-    guild_level: r.guild_level,
-    grade: r.grade,
+    icon_url: r.icon_url || '',
     members: r.members,
     score: BigInt(r.score ?? 0),
   }));
