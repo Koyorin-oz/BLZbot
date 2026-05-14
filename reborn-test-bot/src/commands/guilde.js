@@ -160,9 +160,6 @@ module.exports = {
     )
     .addSubcommand((sc) =>
       sc.setName('grade_info').setDescription('Voir les exigences de chaque grade (Bronze → Star).'),
-    )
-    .addSubcommand((sc) =>
-      sc.setName('classement').setDescription('Top guildes du serveur (par GRP total).'),
     ),
   async execute(interaction) {
     const hub = interaction.guildId;
