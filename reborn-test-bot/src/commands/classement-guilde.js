@@ -5,7 +5,6 @@ const {
   StringSelectMenuBuilder,
   ComponentType,
 } = require('discord.js');
-const db = require('../db');
 const users = require('../services/users');
 const playerGuilds = require('../services/playerGuilds');
 const ladder = require('../services/guildLadder');
