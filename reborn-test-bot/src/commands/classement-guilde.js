@@ -99,7 +99,7 @@ function buildEmbed(type, hub, requesterId) {
     lines = top.map((g, i) => {
       const star = i < 3 ? ['🥇', '🥈', '🥉'][i] : `**${i + 1}.**`;
       const scoreStr = g.score.toLocaleString('fr-FR');
-      return `${star} **${g.name}** \`${g.id}\` — **${scoreStr}** ${def.unit} · ${g.members} membre(s)`;
+      return formatGuildLine(star, g.icon_url, g.name, scoreStr, def.unit, def.emoji);
     });
   }
 
