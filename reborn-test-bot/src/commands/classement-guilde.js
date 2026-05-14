@@ -70,7 +70,8 @@ function buildEmbed(type, hub, requesterId) {
     } else {
       lines = top.map((g, i) => {
         const star = i < 3 ? ['🥇', '🥈', '🥉'][i] : `**${i + 1}.**`;
-        return `${star} **${g.name}** \`${g.id}\` — nv **${g.guild_level}** — grade **${gradeLabel(g.grade || '')}** — **${g.totalGrp.toLocaleString('fr-FR')}** GRP total · ${g.members} membre(s)`;
+        const val = g.totalGrp.toLocaleString('fr-FR');
+        return formatGuildLine(star, g.icon_url, g.name, val, 'GRP total', '🏰');
       });
     }
     const myMembership = playerGuilds.getMembershipInHub(requesterId, hub);
@@ -79,7 +80,7 @@ function buildEmbed(type, hub, requesterId) {
       const myIdx = full.findIndex((g) => g.id === myMembership.guild_id);
       if (myIdx >= 0) {
         const me = full[myIdx];
-        myRankLine = `\n\n*Ta guilde **${me.name}** : **${me.totalGrp.toLocaleString('fr-FR')}** GRP total — rang **#${myIdx + 1}**.*`;
+        myRankLine = `\n\n*Ta guilde **${escGuildName(me.name)}** : **${me.totalGrp.toLocaleString('fr-FR')}** GRP total — rang **#${myIdx + 1}**.*`;
       }
     }
     return new EmbedBuilder()
