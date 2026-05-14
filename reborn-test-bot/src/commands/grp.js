@@ -5,6 +5,7 @@ const {
   MediaGalleryBuilder,
   TextDisplayBuilder,
   MessageFlags,
+  EmbedBuilder,
 } = require('discord.js');
 const gm = require('../services/guildMember');
 const grpSeason = require('../services/grpSeason');
