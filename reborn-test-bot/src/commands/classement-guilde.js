@@ -13,18 +13,16 @@ function escGuildName(name) {
   return String(name || 'Sans nom').replace(/\\/g, '\\\\').replace(/\*/g, '\\*');
 }
 
-/** Préfixe visuel : image Discord si URL valide, sinon emoji guilde. */
+/** Préfixe visuel : image (embed) si URL valide, sinon emoji guilde. */
 function guildVisualPrefix(iconUrl, fallbackEmoji) {
   const u = String(iconUrl || '').trim();
-  if (/^https?:\/\//i.test(u) && u.length < 2048) return `![](${u})`;
+  if (/^https?:\/\//i.test(u) && u.length < 2048) return `![](${u}) `;
   return `${fallbackEmoji} `;
 }
 
 function formatGuildLine(rankToken, iconUrl, name, valueStr, unit, fallbackEmoji) {
   const vis = guildVisualPrefix(iconUrl, fallbackEmoji);
-  const hasImg = vis.startsWith('![');
-  const afterRank = hasImg ? `${vis}` : `${vis}`;
-  return `${rankToken} ${afterRank}**${escGuildName(name)}** — **${valueStr}** ${unit}`;
+  return `${rankToken} ${vis}**${escGuildName(name)}** — **${valueStr}** ${unit}`;
 }
 
 const TYPES = {
