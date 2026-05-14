@@ -508,21 +508,6 @@ module.exports = {
         .setFooter({ text: 'Tu peux acheter le prochain grade avec /guilde grade_up (chef).' });
       return interaction.reply({ embeds: [e] });
     }
-
-    if (sub === 'classement') {
-      const top = ladder.ladderForHub(hub).slice(0, 10);
-      if (!top.length) return interaction.reply({ content: 'Aucune guilde sur ce serveur.' });
-      const lines = top.map((g, i) => {
-        const star = i < 3 ? '🛡️' : '•';
-        return `${star} **${i + 1}.** **${g.name}** \`${g.id}\` — nv **${g.guild_level}** — grade **${label(g.grade || '')}** — GRP total **${g.totalGrp.toLocaleString('fr-FR')}** · ${g.members} membre(s)`;
-      });
-      const e = new EmbedBuilder()
-        .setTitle('Classement guildes (par GRP total)')
-        .setColor(0xe67e22)
-        .setDescription(lines.join('\n').slice(0, 4000))
-        .setFooter({ text: 'Top 3 = protégé contre les séparations (règle haut de ladder).' });
-      return interaction.reply({ embeds: [e] });
-    }
   },
 
   /**
