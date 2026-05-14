@@ -7,13 +7,11 @@ const {
 } = require('discord.js');
 const db = require('../db');
 const users = require('../services/users');
-const playerGuilds = require('../services/playerGuilds');
 const rankedRoles = require('../services/rankedRoles');
-const ladder = require('../services/guildLadder');
-const { label: gradeLabel, grpRankFromTotal } = require('../reborn/grades');
 
 /**
- * Types de classement. Le menu permet de basculer sans relancer la commande.
+ * Types de classement joueurs. Le menu permet de basculer sans relancer la commande.
+ * Les classements guildes sont dans `/classement-guilde`.
  */
 const TYPES = {
   starss: {
@@ -37,82 +35,14 @@ const TYPES = {
     unit: 'RP',
     description: 'Classement par Ranked Points (tier Bronze → Apex).',
   },
-  guildes: {
-    label: '🏰 Guildes (GRP total)',
-    emoji: '🏰',
-    color: 0xe67e22,
-    unit: 'GRP guilde',
-    description: 'Guildes REBORN du serveur, triées par somme des GRP des membres.',
-  },
-  grp_membres: {
-    label: '📊 Joueurs (GRP perso)',
-    emoji: '📊',
-    color: 0x9b59b6,
-    unit: 'GRP',
-    description: 'Joueurs du serveur triés par leur total GRP personnel (saison hub).',
-  },
 };
 
 /** Construit l'embed pour un type donné. Renvoie aussi le rang perso de l'auteur. */
-function buildEmbed(type, hub, requesterId) {
+function buildEmbed(type, requesterId) {
   const def = TYPES[type] || TYPES.starss;
   let lines = [];
   let myRankLine = '';
 
-  if (type === 'guildes') {
-    const top = ladder.ladderForHub(hub).slice(0, 10);
-    if (!top.length) {
-      lines = ['*Aucune guilde sur ce serveur.*'];
-    } else {
-      lines = top.map((g, i) => {
-        const star = i < 3 ? ['🥇', '🥈', '🥉'][i] : `**${i + 1}.**`;
-        return `${star} **${g.name}** \`${g.id}\` — nv **${g.guild_level}** — grade **${gradeLabel(g.grade || '')}** — **${g.totalGrp.toLocaleString('fr-FR')}** GRP total · ${g.members} membre(s)`;
-      });
-    }
-    const myMembership = playerGuilds.getMembershipInHub(requesterId, hub);
-    if (myMembership) {
-      const full = ladder.ladderForHub(hub);
-      const myIdx = full.findIndex((g) => g.id === myMembership.guild_id);
-      if (myIdx >= 0) {
-        const me = full[myIdx];
-        myRankLine = `\n\n*Ta guilde **${me.name}** : **${me.totalGrp.toLocaleString('fr-FR')}** GRP total — rang **#${myIdx + 1}**.*`;
-      }
-    }
-    return new EmbedBuilder()
-      .setTitle(`${def.emoji} Classement — ${def.label}`)
-      .setColor(def.color)
-      .setDescription(lines.join('\n') + myRankLine)
-      .setFooter({ text: `${def.description} · Top 3 = protection anti-séparation (ladder).` });
-  }
-
-  if (type === 'grp_membres') {
-    const rows = db.prepare('SELECT user_id, grp FROM guild_member_gxp WHERE guild_id = ?').all(hub);
-    const sorted = rows
-      .map((r) => ({ user_id: r.user_id, grp: users.B(r.grp) }))
-      .sort((a, b) => (a.grp < b.grp ? 1 : a.grp > b.grp ? -1 : 0));
-    const top = sorted.slice(0, 10);
-    lines = top.map((r, i) => {
-      const star = i < 3 ? ['🥇', '🥈', '🥉'][i] : `**${i + 1}.**`;
-      const rk = grpRankFromTotal(r.grp);
-      const rkL = rk ? gradeLabel(rk) : '—';
-      return `${star} <@${r.user_id}> — **${r.grp.toLocaleString('fr-FR')}** GRP · palier **${rkL}**`;
-    });
-    if (!lines.length) lines = ['*Aucune donnée GRP sur ce serveur.*'];
-    const myPos = sorted.findIndex((r) => r.user_id === requesterId);
-    if (myPos >= 0) {
-      const me = sorted[myPos];
-      const rk = grpRankFromTotal(me.grp);
-      const rkL = rk ? gradeLabel(rk) : '—';
-      myRankLine = `\n\n*Ton rang : **#${myPos + 1}** — **${me.grp.toLocaleString('fr-FR')}** GRP · palier **${rkL}**.*`;
-    }
-    return new EmbedBuilder()
-      .setTitle(`${def.emoji} Classement — ${def.label}`)
-      .setColor(def.color)
-      .setDescription(lines.join('\n') + myRankLine)
-      .setFooter({ text: `${def.description} · Saison reset 1er du mois (UTC).` });
-  }
-
-  // Classements joueur (starss / niveau / rp)
   let sql;
   if (type === 'starss') {
     sql = `SELECT id, username, CAST(stars AS INTEGER) AS score FROM users ORDER BY CAST(stars AS INTEGER) DESC LIMIT 10`;
@@ -169,7 +99,7 @@ function buildEmbed(type, hub, requesterId) {
     .setTitle(`${def.emoji} Classement — ${def.label}`)
     .setColor(def.color)
     .setDescription((lines.length ? lines.join('\n') : '*Aucune donnée.*') + myRankLine)
-    .setFooter({ text: def.description });
+    .setFooter({ text: `${def.description} · Guildes : /classement-guilde` });
 }
 
 function buildSelect(currentType) {
@@ -191,7 +121,7 @@ function buildSelect(currentType) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('classement')
-    .setDescription('Classements : Starss, XP, Ranked RP, guildes GRP, joueurs GRP.')
+    .setDescription('Classements joueurs : Starss, niveau XP, Ranked RP.')
     .addStringOption((o) =>
       o
         .setName('type')
@@ -201,19 +131,18 @@ module.exports = {
           { name: '💸 Starss', value: 'starss' },
           { name: '⭐ Niveau XP', value: 'niveau' },
           { name: '⚔️ Ranked RP', value: 'rp' },
-          { name: '🏰 Guildes (GRP total)', value: 'guildes' },
-          { name: '📊 Joueurs (GRP perso)', value: 'grp_membres' },
         ),
     ),
 
   async execute(interaction) {
-    const hub = interaction.guildId;
-    if (!hub) return interaction.reply({ content: 'Sur un serveur uniquement.' });
+    if (!interaction.guildId) return interaction.reply({ content: 'Sur un serveur uniquement.' });
     users.getOrCreate(interaction.user.id, interaction.user.username);
     let currentType = interaction.options.getString('type') || 'starss';
-    if (currentType === 'grp') currentType = 'guildes';
+    if (currentType === 'grp' || currentType === 'guildes' || currentType === 'grp_membres') {
+      currentType = 'starss';
+    }
     if (!TYPES[currentType]) currentType = 'starss';
-    const embed = buildEmbed(currentType, hub, interaction.user.id);
+    const embed = buildEmbed(currentType, interaction.user.id);
     await interaction.reply({ embeds: [embed], components: [buildSelect(currentType)] });
     const msg = await interaction.fetchReply();
 
@@ -231,7 +160,7 @@ module.exports = {
       }
       if (i.customId !== 'rb_classement_type') return;
       currentType = i.values[0];
-      const e2 = buildEmbed(currentType, hub, interaction.user.id);
+      const e2 = buildEmbed(currentType, interaction.user.id);
       await i.update({ embeds: [e2], components: [buildSelect(currentType)] });
     });
 
