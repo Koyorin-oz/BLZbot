@@ -81,14 +81,8 @@ function buildEmbed(type, hub, requesterId) {
   } else {
     lines = top.map((g, i) => {
       const star = i < 3 ? ['🥇', '🥈', '🥉'][i] : `**${i + 1}.**`;
-      let extra = '';
-      if (type === 'rp') {
-        const tier = rankedRoles.tierForRp(g.score);
-        const tierDef = rankedRoles.TIER_DEFS.find((t) => t.key === tier);
-        extra = ` · somme RP · tier moyen affiché : **${tierDef?.label || tier}** (indicatif)`;
-      }
       const scoreStr = g.score.toLocaleString('fr-FR');
-      return `${star} **${g.name}** \`${g.id}\` — **${scoreStr}** ${def.unit} · ${g.members} membre(s)${extra}`;
+      return `${star} **${g.name}** \`${g.id}\` — **${scoreStr}** ${def.unit} · ${g.members} membre(s)`;
     });
   }
 
