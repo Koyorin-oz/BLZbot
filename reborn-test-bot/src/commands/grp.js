@@ -119,7 +119,7 @@ module.exports = {
       const file = new AttachmentBuilder(buf, { name });
       const gallery = new MediaGalleryBuilder().addItems({ media: { url: `attachment://${name}` } });
       const caption = new TextDisplayBuilder().setContent(
-        `**GRP** — fiche **${target.displayName || target.username}** · saison \`${season}\`\n*Classement joueurs :* \`/classement\` → **Joueurs (GRP perso)**.`,
+        `**GRP** — fiche **${target.displayName || target.username}** · saison \`${season}\`\n*Classement joueurs :* \`/grp\` → **action : Classement joueurs (GRP)**.`,
       );
       const container = new ContainerBuilder()
         .addMediaGalleryComponents(gallery)
