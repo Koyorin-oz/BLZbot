@@ -10,7 +10,7 @@ const users = require('../services/users');
 const playerGuilds = require('../services/playerGuilds');
 const rankedRoles = require('../services/rankedRoles');
 const ladder = require('../services/guildLadder');
-const { label: gradeLabel, grpRankFromTotal } = require('../reborn/grades');
+const { label: gradeLabel } = require('../reborn/grades');
 
 const TYPES = {
   grp: {
