@@ -125,7 +125,8 @@ async function handleHackerSalonButton(interaction) {
   const key = `hacker_salon_last_${uid}`;
   const last = parseInt(meta.get(key) || '0', 10) || 0;
   const now = Date.now();
-  if (!cfg.TEST_NO_LIMITS && now - last < cfg.HACKER_SALON_COOLDOWN_MS) {
+  const skipCooldown = cfg.TEST_NO_LIMITS || bypassHackerCooldown(interaction, uid);
+  if (!skipCooldown && now - last < cfg.HACKER_SALON_COOLDOWN_MS) {
     const left = cfg.HACKER_SALON_COOLDOWN_MS - (now - last);
     const buf = await renderHackerStatusCard('cooldown', { waitLabel: fmtCooldown(left) });
     const fileName = 'hacker_wait.png';
