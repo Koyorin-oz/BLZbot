@@ -46,7 +46,7 @@ module.exports = {
     const owner = isOwner(uid);
 
     if (!owner && cfg.hackerRoleId && !hasHackerRole(member)) {
-      const buf = renderHackerStatusCard('denied');
+      const buf = await renderHackerStatusCard('denied');
       const file = new AttachmentBuilder(buf, { name: 'hacker_denied.png' });
       const roleLine = cfg.hackerRoleId ? `Rôle attendu : <@&${cfg.hackerRoleId}>.` : '';
       const embed = new EmbedBuilder()
