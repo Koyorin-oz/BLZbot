@@ -1,13 +1,13 @@
 const { createCanvas } = require('canvas');
 
 const RARITY_HEX = {
-  Commun: '#95a5a6',
+  Commun: '#bdc3c7',
   Rare: '#3498db',
-  Epique: '#9b59b6',
-  Légendaire: '#e67e22',
+  Epique: '#af7ac5',
+  Légendaire: '#f39c12',
   Mythique: '#e74c3c',
   Goatesque: '#1abc9c',
-  Staresque: '#f1c40f',
+  Staresque: '#f4d03f',
 };
 
 function rr(ctx, x, y, w, h, rad) {
@@ -21,11 +21,11 @@ function rr(ctx, x, y, w, h, rad) {
   ctx.closePath();
 }
 
-function noiseGrid(ctx, W, H) {
+function noiseGrid(ctx, W, H, color, alpha) {
   ctx.save();
-  ctx.globalAlpha = 0.07;
-  ctx.strokeStyle = '#00ff8844';
-  const step = 24;
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = color;
+  const step = 22;
   for (let x = 0; x < W; x += step) {
     ctx.beginPath();
     ctx.moveTo(x, 0);
@@ -41,129 +41,177 @@ function noiseGrid(ctx, W, H) {
   ctx.restore();
 }
 
+function wrapLines(ctx, text, maxW) {
+  const words = String(text).split(/\s+/);
+  const lines = [];
+  let line = '';
+  for (const w of words) {
+    const test = line ? `${line} ${w}` : w;
+    if (ctx.measureText(test).width > maxW && line) {
+      lines.push(line);
+      line = w;
+    } else line = test;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
 /**
- * Carte « déchiffrage » salon hacker après loot.
  * @param {{ guildName: string, itemName: string, itemId: string, rarity: string }} opts
  */
 function renderHackerLootCard(opts) {
   const { guildName, itemName, itemId, rarity } = opts;
   const accent = RARITY_HEX[rarity] || '#2ecc71';
-  const W = 900;
-  const H = 440;
+  const W = 920;
+  const H = 480;
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
+  const cx = W / 2;
 
   const bg = ctx.createLinearGradient(0, 0, W, H);
-  bg.addColorStop(0, '#05080c');
-  bg.addColorStop(0.5, '#0a1520');
-  bg.addColorStop(1, '#020406');
+  bg.addColorStop(0, '#1a0a2e');
+  bg.addColorStop(0.45, '#0f3460');
+  bg.addColorStop(1, '#16213e');
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, W, H);
 
-  noiseGrid(ctx, W, H);
+  const glowL = ctx.createRadialGradient(0, H * 0.3, 0, 0, H * 0.3, 320);
+  glowL.addColorStop(0, 'rgba(0, 255, 200, 0.25)');
+  glowL.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glowL;
+  ctx.fillRect(0, 0, W, H);
 
-  ctx.fillStyle = 'rgba(0, 255, 136, 0.03)';
-  for (let i = 0; i < 40; i += 1) {
-    ctx.fillRect(0, (i * 17 + (i % 3) * 4) % H, W, 1);
-  }
+  const glowR = ctx.createRadialGradient(W, 0, 0, W, 0, 300);
+  glowR.addColorStop(0, `${accent}55`);
+  glowR.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glowR;
+  ctx.fillRect(0, 0, W, H);
 
-  ctx.strokeStyle = accent + '99';
-  ctx.lineWidth = 2;
-  rr(ctx, 28, 28, W - 56, H - 56, 18);
+  noiseGrid(ctx, W, H, '#00ffb355', 0.11);
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1;
+  rr(ctx, 20, 20, W - 40, H - 40, 20);
   ctx.stroke();
 
   ctx.shadowColor = accent;
-  ctx.shadowBlur = 28;
-  ctx.strokeStyle = accent + '55';
-  ctx.lineWidth = 1;
-  rr(ctx, 38, 38, W - 76, H - 76, 14);
+  ctx.shadowBlur = 22;
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 2.5;
+  rr(ctx, 32, 32, W - 64, H - 64, 16);
   ctx.stroke();
   ctx.shadowBlur = 0;
 
-  ctx.fillStyle = '#00ff99';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#00ffd0';
   ctx.font = 'bold 11px Consolas, monospace';
-  ctx.fillText('◆ SALON HACKER // SESSION AUTH', 52, 72);
-  ctx.fillStyle = '#6abf8f';
+  ctx.fillText('◆ SALON HACKER // CANAL SÉCURISÉ', cx, 58);
+
+  ctx.fillStyle = 'rgba(255, 232, 200, 0.85)';
   ctx.font = '12px Consolas, monospace';
-  ctx.fillText(`NODE: ${String(guildName).slice(0, 42)}`, 52, 92);
+  ctx.fillText(`NODE :: ${String(guildName).slice(0, 48)}`, cx, 78);
 
-  ctx.fillStyle = '#1b4332';
-  rr(ctx, 52, 112, W - 104, 4, 2);
+  const barY = 98;
+  const barW = W - 200;
+  const barX = (W - barW) / 2;
+  rr(ctx, barX, barY, barW, 8, 4);
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
   ctx.fill();
-  ctx.fillStyle = accent;
-  ctx.fillRect(52, 112, (W - 104) * 0.72, 4);
-
-  ctx.font = 'bold 13px Consolas, monospace';
-  ctx.fillStyle = '#8899aa';
-  ctx.fillText('[PACKET_DECRYPTED]', 52, 148);
-
-  ctx.fillStyle = '#ecf0f1';
-  ctx.font = 'bold 28px "Segoe UI", sans-serif';
-  const name = String(itemName || '???').toUpperCase();
-  ctx.fillText(name.length > 34 ? `${name.slice(0, 32)}…` : name, 52, 196);
-
-  ctx.fillStyle = accent;
-  ctx.font = '13px Consolas, monospace';
-  ctx.fillText(`RARETÉ :: ${String(rarity || '?').toUpperCase()}`, 52, 228);
-
-  ctx.fillStyle = '#7f8c9a';
-  ctx.font = '14px Consolas, monospace';
-  ctx.fillText(`id: ${itemId}`, 52, 258);
-
-  ctx.fillStyle = 'rgba(0, 255, 170, 0.15)';
-  rr(ctx, 52, 278, W - 104, 72, 10);
+  const pulse = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+  pulse.addColorStop(0, accent);
+  pulse.addColorStop(0.5, '#00ffd0');
+  pulse.addColorStop(1, accent);
+  ctx.fillStyle = pulse;
+  rr(ctx, barX, barY, barW * 0.78, 8, 4);
   ctx.fill();
-  ctx.strokeStyle = 'rgba(0, 255, 170, 0.25)';
-  ctx.stroke();
-  ctx.fillStyle = '#a8ffb8';
-  ctx.font = '12px Consolas, monospace';
-  const lines = [
-    '> flux :: loot pondéré hors boutique',
-    '> statut :: OBJET_INJECTÉ → inventaire joueur',
-    "> prochaine étape :: `/inventaire` pour contrôle",
-  ];
-  let ly = 302;
-  for (const ln of lines) {
-    ctx.fillText(ln, 68, ly);
-    ly += 22;
+
+  ctx.fillStyle = '#98f5e9';
+  ctx.font = 'bold 12px Consolas, monospace';
+  ctx.fillText('[ DECRYPT_PAYLOAD_OK ]', cx, 128);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 30px "Segoe UI", sans-serif';
+  const nameUpper = String(itemName || '???').toUpperCase();
+  const nameLines = wrapLines(ctx, nameUpper, W - 120);
+  let ny = 168;
+  for (const ln of nameLines) {
+    const lg = ctx.createLinearGradient(cx - 200, 0, cx + 200, 0);
+    lg.addColorStop(0, '#ffffff');
+    lg.addColorStop(0.5, accent);
+    lg.addColorStop(1, '#ffffff');
+    ctx.fillStyle = lg;
+    ctx.fillText(ln, cx, ny);
+    ny += 36;
   }
 
-  ctx.fillStyle = '#3d5a4a';
+  ctx.font = 'bold 14px Consolas, monospace';
+  ctx.fillStyle = accent;
+  ctx.fillText(`◆ RARETÉ  ${String(rarity || '?').toUpperCase()}`, cx, ny + 8);
+
+  ctx.fillStyle = 'rgba(200, 220, 255, 0.75)';
+  ctx.font = '13px Consolas, monospace';
+  ctx.fillText(`uid.hash  ${itemId}`, cx, ny + 36);
+
+  const boxY = ny + 56;
+  const boxH = 96;
+  const boxW = W - 120;
+  const boxX = (W - boxW) / 2;
+  rr(ctx, boxX, boxY, boxW, boxH, 14);
+  ctx.fillStyle = 'rgba(0, 40, 35, 0.55)';
+  ctx.fill();
+  ctx.strokeStyle = `rgba(0, 255, 200, 0.35)`;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#7bed9f';
+  ctx.font = '12px Consolas, monospace';
+  const lines = [
+    '> flux :: loot pondéré (hors boutique)',
+    '> inject :: inventaire joueur — OK',
+    "> suite :: `/inventaire` pour contrôle",
+  ];
+  let ly = boxY + 26;
+  const lx = boxX + 28;
+  for (const ln of lines) {
+    ctx.fillText(ln, lx, ly);
+    ly += 24;
+  }
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(255, 180, 120, 0.65)';
   ctx.font = '10px Consolas, monospace';
-  ctx.fillText('// cooldown 12h · rôle requis selon config', 52, H - 36);
+  ctx.fillText('// cooldown 12h · rôle requis selon config', cx, H - 28);
 
   return canvas.toBuffer('image/png');
 }
 
-/**
- * Petite carte statique refus / cooldown (même esthétique).
- * @param {'denied'|'cooldown'} kind
- * @param {{ waitLabel?: string }} extra
- */
 function renderHackerStatusCard(kind, extra = {}) {
   const W = 720;
   const H = 280;
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
+  const cx = W / 2;
 
   const bg = ctx.createLinearGradient(0, 0, W, H);
-  bg.addColorStop(0, '#0c0505');
-  bg.addColorStop(1, '#1a0a0a');
+  bg.addColorStop(0, '#2c0a0a');
+  bg.addColorStop(1, '#1a0508');
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, W, H);
-  noiseGrid(ctx, W, H);
+  noiseGrid(ctx, W, H, '#ff555544', 0.08);
 
-  const accent = kind === 'denied' ? '#ff4444' : '#ffaa00';
-  ctx.strokeStyle = accent + 'aa';
+  const accent = kind === 'denied' ? '#ff6b6b' : '#feca57';
+  ctx.strokeStyle = accent + 'cc';
   ctx.lineWidth = 2;
-  rr(ctx, 24, 24, W - 48, H - 48, 14);
+  rr(ctx, 20, 20, W - 40, H - 40, 14);
   ctx.stroke();
 
+  ctx.textAlign = 'center';
   ctx.fillStyle = accent;
-  ctx.font = 'bold 20px "Segoe UI", sans-serif';
-  ctx.fillText(kind === 'denied' ? 'ACCES REFUSE' : 'COOLDOWN ACTIF', 48, 88);
+  ctx.font = 'bold 22px "Segoe UI", sans-serif';
+  ctx.fillText(kind === 'denied' ? 'ACCES REFUSE' : 'COOLDOWN ACTIF', cx, 92);
 
-  ctx.fillStyle = '#e0e0e0';
+  ctx.fillStyle = '#ecf0f1';
   ctx.font = '14px "Segoe UI", sans-serif';
   const msg =
     kind === 'denied'
@@ -171,8 +219,9 @@ function renderHackerStatusCard(kind, extra = {}) {
       : `Prochain tirage dans ${extra.waitLabel || '…'} (limite 12 h).`;
   const words = msg.split(' ');
   let line = '';
-  let y = 124;
-  const maxW = W - 100;
+  let y = 126;
+  const maxW = W - 80;
+  ctx.textAlign = 'left';
   for (const w of words) {
     const test = line ? `${line} ${w}` : w;
     if (ctx.measureText(test).width > maxW && line) {
@@ -183,9 +232,10 @@ function renderHackerStatusCard(kind, extra = {}) {
   }
   if (line) ctx.fillText(line, 48, y);
 
-  ctx.fillStyle = '#885555';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(255,200,200,0.5)';
   ctx.font = '11px Consolas, monospace';
-  ctx.fillText('// SALON HACKER — même terminal que le loot', 48, H - 40);
+  ctx.fillText('// SALON HACKER', cx, H - 36);
 
   return canvas.toBuffer('image/png');
 }
