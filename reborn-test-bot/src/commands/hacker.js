@@ -66,7 +66,7 @@ module.exports = {
     const now = Date.now();
     if (!cfg.TEST_NO_LIMITS && now - last < cfg.HACKER_SALON_COOLDOWN_MS) {
       const left = cfg.HACKER_SALON_COOLDOWN_MS - (now - last);
-      const buf = renderHackerStatusCard('cooldown', { waitLabel: fmtCooldown(left) });
+      const buf = await renderHackerStatusCard('cooldown', { waitLabel: fmtCooldown(left) });
       const file = new AttachmentBuilder(buf, { name: 'hacker_wait.png' });
       const embed = new EmbedBuilder()
         .setTitle('⏳ Cooldown')
