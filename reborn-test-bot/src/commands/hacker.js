@@ -3,10 +3,8 @@ const {
   AttachmentBuilder,
   ContainerBuilder,
   MediaGalleryBuilder,
-  SectionBuilder,
   SeparatorBuilder,
   TextDisplayBuilder,
-  ThumbnailBuilder,
   MessageFlags,
   SeparatorSpacingSize,
 } = require('discord.js');
