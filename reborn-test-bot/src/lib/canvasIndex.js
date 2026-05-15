@@ -292,15 +292,13 @@ async function renderIndexCard(opts) {
   ctx.fillText('BONUS INDEX ACTIFS', mainX + 14, bonusTop + 26);
 
   const activeBonuses = INDEX_BONUSES.filter((b) => pct >= b.pct);
-  let ly = bonusTop + 44;
+  let   ly = bonusTop + 44;
   ctx.font = '600 12px "Segoe UI", Arial';
   if (!activeBonuses.length) {
     ctx.fillStyle = T.sub;
     ctx.fillText('Aucun — atteins 10 % pour +1 % XP', mainX + 14, ly);
   } else {
-    const maxL = 6;
-    const shown = activeBonuses.slice(0, maxL);
-    for (const b of shown) {
+    for (const b of shownBonuses) {
       ctx.fillStyle = T.text;
       ctx.fillText(`${b.pct} %`, mainX + 14, ly);
       ctx.fillStyle = T.sub;
@@ -313,7 +311,7 @@ async function renderIndexCard(opts) {
     }
   }
 
-  const hintY = bonusTop + 125;
+  const hintY = bonusTop + bonusH + 10;
   glassPanel(ctx, mainX, hintY, mainW, 52, 12);
   ctx.font = '600 13px "Segoe UI", Arial';
   ctx.fillStyle = T.text;
