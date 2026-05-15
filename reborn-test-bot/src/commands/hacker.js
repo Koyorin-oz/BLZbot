@@ -9,7 +9,7 @@ const users = require('../services/users');
 const catalog = require('../reborn/catalog');
 const { rollHackerSalon } = require('../reborn/chestLoot');
 const { isOwner } = require('../lib/owners');
-const { renderHackerLootCard, renderHackerStatusCard, RARITY_HEX } = require('../lib/canvasHacker');
+const { renderHackerLootCard, renderHackerStatusCard, RARITY_RING } = require('../lib/canvasHacker');
 
 function hasHackerRole(member) {
   if (!cfg.hackerRoleId) return true;
