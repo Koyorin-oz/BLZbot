@@ -147,15 +147,25 @@ function drawLootFace(ctx, W, H, pad, { guildName, itemName, itemId, rarity }) {
   ctx.globalAlpha = 1;
 
   ctx.textAlign = 'center';
-  ctx.font = '700 10px "Segoe UI", Arial';
-  ctx.fillStyle = T.label;
-  ctx.fillText('OBJET OBTENU', cx, innerY + 28);
+  const labelTxt = 'OBJET OBTENU';
+  ctx.font = '800 15px "Segoe UI", Arial';
+  ctx.fillStyle = T.accent;
+  ctx.fillText(labelTxt, cx, innerY + 34);
+  const labelW = ctx.measureText(labelTxt).width;
+  ctx.strokeStyle = ring;
+  ctx.globalAlpha = 0.85;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx - labelW / 2 - 4, innerY + 42);
+  ctx.lineTo(cx + labelW / 2 + 4, innerY + 42);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
 
-  const titleFont = '800 30px "Segoe UI", Arial';
+  const titleFont = '800 28px "Segoe UI", Arial';
   const rawName = String(itemName || '???').toUpperCase();
   ctx.font = titleFont;
   const nameLines = wrapLines(ctx, rawName, innerW - 56, titleFont);
-  let ty = innerY + 58;
+  let ty = innerY + 72;
   ctx.fillStyle = T.text;
   for (const ln of nameLines) {
     ctx.fillText(ln, cx, ty);
