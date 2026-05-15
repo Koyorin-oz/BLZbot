@@ -190,13 +190,14 @@ module.exports = {
         ? m.index.bonuses.map((b) => `**${b.pct}%** · ${b.label}`).join('\n')
         : '_Atteins **10 %** pour activer le premier bonus (+1 % XP)._';
 
-      const rankedExtra = [];
-      rankedExtra.push(
-        `${unicodeBar(Math.min(100, Number((m.ranked.rp * 100n) / 100000n)))} *échelle indicative*`,
-      );
+      const rankedLines = [
+        `RP **${m.ranked.rp.toLocaleString('fr-FR')}**`,
+        `Multi arbre **+${(m.ranked.pctBp - 10000) / 100}%**`,
+      ];
       if (m.ranked.flatMsg > 0n || m.ranked.flatVoc > 0n) {
-        rankedExtra.push(`Flats RP · msg **+${m.ranked.flatMsg}** · voc **+${m.ranked.flatVoc}**/min`);
+        rankedLines.push(`Bonus plats · msg **+${m.ranked.flatMsg}** · voc **+${m.ranked.flatVoc}**/min`);
       }
+      if (m.ranked.perks.length) rankedLines.push(`*${m.ranked.perks.join(' · ')}*`);
 
       const guildeBlock = m.guilde
         ? [
