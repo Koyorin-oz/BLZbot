@@ -40,6 +40,15 @@ function hasHackerRole(member) {
   return member.roles.cache.has(cfg.hackerRoleId);
 }
 
+/** Pas de cooldown 12 h : owners app, proprio du serveur, permission Administrateur. */
+function bypassHackerCooldown(interaction, userId) {
+  if (isOwner(userId)) return true;
+  const g = interaction.guild;
+  if (g && g.ownerId === userId) return true;
+  if (interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) return true;
+  return false;
+}
+
 function fmtCooldown(ms) {
   if (ms <= 0) return 'bientôt';
   const h = Math.floor(ms / 3_600_000);
