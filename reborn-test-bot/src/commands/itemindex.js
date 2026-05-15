@@ -63,8 +63,25 @@ module.exports = {
         steps: idx.STEPS,
         claimed,
       });
-      const file = new AttachmentBuilder(buf, { name: 'index_catalogue.png' });
-      return interaction.editReply({ files: [file] });
+      const name = 'index_catalogue.png';
+      const file = new AttachmentBuilder(buf, { name });
+      const gallery = new MediaGalleryBuilder().addItems({ media: { url: `attachment://${name}` } });
+      const caption = new TextDisplayBuilder().setContent(
+        [
+          '### Index catalogue REBORN',
+          `**${displayName}** — **${pct} %** complété`,
+          '',
+          `Paliers, jauge et bonus sur l’image · \`/itemindex matrice\` pour **Index × Ranked × Guilde** · \`/itemindex reclamer\` pour récupérer une récompense.`,
+        ].join('\n'),
+      );
+      const container = new ContainerBuilder()
+        .addMediaGalleryComponents(gallery)
+        .addTextDisplayComponents(caption);
+      return interaction.editReply({
+        files: [file],
+        components: [container],
+        flags: MessageFlags.IsComponentsV2,
+      });
     }
 
     if (sub === 'definir') {
