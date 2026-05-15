@@ -84,8 +84,7 @@ module.exports = {
     users.addInventory(uid, loot.itemId, 1);
     meta.set(key, String(now));
 
-    const buf = await Promise.resolve(
-      renderHackerLootCard({
+    const buf = renderHackerLootCard({
         guildName: interaction.guild.name,
         itemName: loot.name,
         itemId: loot.itemId,
