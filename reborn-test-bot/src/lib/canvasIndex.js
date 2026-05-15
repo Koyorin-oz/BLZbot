@@ -1,5 +1,5 @@
 /**
- * Carte /itemindex voir — même vocabulaire visuel que /profil (fiche 2 : canvas-profile-variants).
+ * Carte /itemindex voir — style /profil, format paysage (bandeau PP + jauge en haut).
  */
 const { createCanvas, loadImage } = require('canvas');
 const fs = require('node:fs');
@@ -9,7 +9,6 @@ const { INDEX_BONUSES } = require('../services/itemMatrix');
 
 const BLZ_BG = path.join(__dirname, '..', '..', '..', 'niveau', 'src', 'assets', 'blz_bg.png');
 
-/** Aligné sur PROFILE_CARD_THEME + fiche 1 bordure (canvas-profile-variants.js). */
 const T = {
   overlay: 'rgba(0,0,0,0.28)',
   panel: 'rgba(0,0,0,0.56)',
@@ -129,8 +128,8 @@ async function renderIndexCard(opts) {
   const claimedSet = new Set(claimed);
   const pct = Math.min(100, Math.max(0, completionPct | 0));
 
-  const W = 1040;
-  const H = 720;
+  const W = 1240;
+  const H = 600;
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
 
@@ -143,8 +142,8 @@ async function renderIndexCard(opts) {
   ctx.fillStyle = ob;
   ctx.fillRect(0, 0, W, H);
 
-  const pad = 18;
-  const outerR = 22;
+  const pad = 16;
+  const outerR = 20;
   rr(ctx, pad, pad, W - pad * 2, H - pad * 2, outerR);
   ctx.fillStyle = T.shell;
   ctx.fill();
@@ -152,23 +151,18 @@ async function renderIndexCard(opts) {
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
-  const innerPad = 14;
+  const innerPad = 12;
   const x0 = pad + innerPad;
   const y0 = pad + innerPad;
   const innerW = W - pad * 2 - innerPad * 2;
-  const innerH = H - pad * 2 - innerPad * 2;
 
-  const colAvatar = 128;
-  const gap = 14;
-  const mainX = x0 + colAvatar + gap;
-  const mainW = innerW - colAvatar - gap;
-
-  glassPanel(ctx, x0, y0, colAvatar, innerH, 16);
+  const stripH = 122;
+  glassPanel(ctx, x0, y0, innerW, stripH, 14);
 
   const avatar = await loadSafe(avatarUrl);
-  const avR = 40;
-  const avCx = x0 + colAvatar / 2;
-  const avCy = y0 + 72;
+  const avR = 44;
+  const avCx = x0 + 24 + avR;
+  const avCy = y0 + stripH / 2 - 6;
   ctx.save();
   ctx.beginPath();
   ctx.arc(avCx, avCy, avR, 0, Math.PI * 2);
@@ -186,45 +180,43 @@ async function renderIndexCard(opts) {
   ctx.stroke();
 
   ctx.textAlign = 'center';
-  ctx.font = '600 11px "Segoe UI", Arial';
-  ctx.fillStyle = T.label;
-  ctx.fillText('INDEX', avCx, avCy + avR + 14);
-
-  const sbW = colAvatar - 20;
-  const sbX = x0 + 10;
-  const sbY = y0 + innerH - 48;
-  drawXpBar(ctx, sbX, sbY, sbW, 8, pct / 100);
-  ctx.font = '500 10px "Segoe UI", Arial';
-  ctx.fillStyle = 'rgba(255, 250, 245, 0.88)';
-  ctx.fillText(`${pct} % catalogue`, avCx, sbY + 20);
-  ctx.textAlign = 'left';
-
   ctx.textBaseline = 'alphabetic';
-  ctx.font = '700 13px "Segoe UI", Arial';
+  ctx.font = '700 12px "Segoe UI", Arial';
   ctx.fillStyle = T.label;
-  ctx.fillText('CATALOGUE REBORN', mainX, y0 + 22);
+  ctx.fillText('INDEX', avCx, avCy + avR + 16);
 
-  ctx.font = '700 32px "Segoe UI", Arial';
+  const textColX = x0 + 24 + avR * 2 + 28;
+  const textRightLimit = x0 + innerW - 120;
+  ctx.textAlign = 'left';
+  ctx.font = '700 14px "Segoe UI", Arial';
+  ctx.fillStyle = T.label;
+  ctx.fillText('CATALOGUE REBORN', textColX, y0 + 34);
+
+  ctx.font = '700 30px "Segoe UI", Arial';
   ctx.fillStyle = T.text;
-  ctx.fillText(truncateText(ctx, String(displayName || 'Joueur'), mainW - 200), mainX, y0 + 54);
+  ctx.fillText(truncateText(ctx, String(displayName || 'Joueur'), textRightLimit - textColX - 20), textColX, y0 + 68);
 
-  ctx.font = '600 36px "Segoe UI", Arial';
-  ctx.fillStyle = T.accent;
+  ctx.font = '600 16px "Segoe UI", Arial';
+  ctx.fillStyle = T.sub;
+  ctx.fillText(`Progression ${pct} / 100`, textColX, y0 + 94);
+
   ctx.textAlign = 'right';
-  ctx.fillText(`${pct} %`, mainX + mainW, y0 + 56);
+  ctx.font = '700 40px "Segoe UI", Arial';
+  ctx.fillStyle = T.accent;
+  ctx.fillText(`${pct} %`, x0 + innerW - 22, y0 + 72);
   ctx.textAlign = 'left';
 
-  const barY = y0 + 68;
-  const barW = mainW;
-  drawXpBar(ctx, mainX, barY, barW, 12, pct / 100);
-  ctx.font = '600 13px "Segoe UI", Arial';
-  ctx.fillStyle = T.sub;
-  ctx.fillText(`Progression ${pct} / 100`, mainX, barY + 28);
+  const barPadX = textColX;
+  const barY = y0 + stripH - 22;
+  const barW = x0 + innerW - barPadX - 20;
+  drawXpBar(ctx, barPadX, barY, barW, 18, pct / 100);
 
-  const gridTop = y0 + 116;
-  const cellGap = 10;
-  const cellW = (mainW - cellGap) / 2;
-  const cellH = 46;
+  const gridTop = y0 + stripH + 14;
+  const cellGap = 12;
+  const cellW = (innerW - cellGap) / 2;
+  const cellH = 54;
+  const mainX = x0;
+
   let idx = 0;
   for (const s of steps) {
     const col = idx % 2;
@@ -234,39 +226,40 @@ async function renderIndexCard(opts) {
     const done = claimedSet.has(s.pct);
     const reached = pct >= s.pct;
 
-    statPanel(ctx, cx, cy, cellW, cellH, 10);
+    statPanel(ctx, cx, cy, cellW, cellH, 12);
     if (done) {
       ctx.save();
-      rr(ctx, cx, cy, cellW, cellH, 10);
+      rr(ctx, cx, cy, cellW, cellH, 12);
       ctx.clip();
       const gl = ctx.createLinearGradient(cx, cy, cx + cellW, cy);
-      gl.addColorStop(0, 'rgba(34, 197, 94, 0.12)');
+      gl.addColorStop(0, 'rgba(34, 197, 94, 0.14)');
       gl.addColorStop(1, 'rgba(34, 197, 94, 0.02)');
       ctx.fillStyle = gl;
       ctx.fillRect(cx, cy, cellW, cellH);
       ctx.restore();
       ctx.strokeStyle = 'rgba(74, 222, 128, 0.45)';
-      ctx.lineWidth = 1.5;
-      rr(ctx, cx, cy, cellW, cellH, 10);
+      ctx.lineWidth = 2;
+      rr(ctx, cx, cy, cellW, cellH, 12);
       ctx.stroke();
     } else if (reached) {
-      ctx.strokeStyle = 'rgba(251, 191, 36, 0.4)';
-      ctx.lineWidth = 1.5;
-      rr(ctx, cx, cy, cellW, cellH, 10);
+      ctx.strokeStyle = 'rgba(251, 191, 36, 0.45)';
+      ctx.lineWidth = 2;
+      rr(ctx, cx, cy, cellW, cellH, 12);
       ctx.stroke();
     }
 
-    ctx.font = '600 14px "Segoe UI", Arial';
+    const midY = cy + cellH / 2 + 6;
+    ctx.font = '700 17px "Segoe UI", Arial';
     ctx.fillStyle = done ? '#86efac' : reached ? T.accent : T.sub;
-    ctx.fillText(done ? 'OK' : reached ? '!' : '·', cx + 12, cy + 30);
+    ctx.fillText(done ? 'OK' : reached ? '!' : '·', cx + 14, midY);
 
-    ctx.font = '700 14px "Segoe UI", Arial';
+    ctx.font = '700 17px "Segoe UI", Arial';
     ctx.fillStyle = T.text;
-    ctx.fillText(`${s.pct} %`, cx + 38, cy + 30);
+    ctx.fillText(`${s.pct} %`, cx + 44, midY);
 
-    ctx.font = '600 13px "Segoe UI", Arial';
+    ctx.font = '700 15px "Segoe UI", Arial';
     ctx.fillStyle = T.label;
-    ctx.fillText(`+${s.stars.toLocaleString('fr-FR')} ★`, cx + 92, cy + 30);
+    ctx.fillText(`+${s.stars.toLocaleString('fr-FR')} ★`, cx + 108, midY);
 
     const chests = (s.chests || [])
       .map((c) => `${c.qty > 1 ? `${c.qty}× ` : ''}${c.id.replace(/_/g, ' ')}`)
@@ -274,59 +267,60 @@ async function renderIndexCard(opts) {
     let extra = chests;
     if (s.roleNote) extra = extra ? `${extra} · rôle` : 'rôle';
     if (extra) {
-      ctx.font = '500 11px Consolas, monospace';
-      ctx.fillStyle = 'rgba(255, 214, 180, 0.85)';
-      ctx.fillText(truncateText(ctx, extra, cellW - 200), cx + 200, cy + 30);
+      ctx.font = '600 12px Consolas, monospace';
+      ctx.fillStyle = 'rgba(255, 214, 180, 0.9)';
+      ctx.fillText(truncateText(ctx, extra, cellW - 268), cx + 260, midY);
     }
     idx += 1;
   }
 
   const activeBonuses = INDEX_BONUSES.filter((b) => pct >= b.pct);
+  const gridBottom = gridTop + 5 * (cellH + cellGap);
+  const bottomY = gridBottom + 10;
+  const bottomGap = 12;
+  const halfW = (innerW - bottomGap) / 2;
+  const bottomH = 78;
 
-  const bonusTop = gridTop + 5 * (cellH + cellGap) + 8;
-  const maxL = 4;
-  const shownBonuses = activeBonuses.slice(0, maxL);
-  const bonusExtra = activeBonuses.length > maxL ? 1 : 0;
-  const bonusBodyLines = activeBonuses.length === 0 ? 1 : shownBonuses.length + bonusExtra;
-  const bonusH = 36 + bonusBodyLines * 18 + 16;
-  statPanel(ctx, mainX, bonusTop, mainW, bonusH, 12);
-  ctx.font = '700 14px "Segoe UI", Arial';
+  statPanel(ctx, x0, bottomY, halfW, bottomH, 12);
+  ctx.font = '700 15px "Segoe UI", Arial';
   ctx.fillStyle = T.label;
-  ctx.fillText('BONUS INDEX ACTIFS', mainX + 14, bonusTop + 26);
+  ctx.fillText('BONUS INDEX ACTIFS', x0 + 16, bottomY + 26);
 
-  let ly = bonusTop + 44;
-  ctx.font = '600 12px "Segoe UI", Arial';
+  let ly = bottomY + 44;
+  ctx.font = '600 14px "Segoe UI", Arial';
+  const maxL = 2;
+  const shownBonuses = activeBonuses.slice(0, maxL);
   if (!activeBonuses.length) {
     ctx.fillStyle = T.sub;
-    ctx.fillText('Aucun — atteins 10 % pour +1 % XP', mainX + 14, ly);
+    ctx.fillText('Aucun — atteins 10 % pour +1 % XP', x0 + 16, ly);
   } else {
     for (const b of shownBonuses) {
       ctx.fillStyle = T.text;
-      ctx.fillText(`${b.pct} %`, mainX + 14, ly);
+      ctx.fillText(`${b.pct} %`, x0 + 16, ly);
       ctx.fillStyle = T.sub;
-      ctx.fillText(`→  ${b.label}`, mainX + 52, ly);
-      ly += 18;
+      ctx.fillText(`→  ${truncateText(ctx, b.label, halfW - 90)}`, x0 + 56, ly);
+      ly += 20;
     }
     if (activeBonuses.length > maxL) {
       ctx.fillStyle = T.sub;
-      ctx.fillText(`+ ${activeBonuses.length - maxL} autres paliers cumulés`, mainX + 14, ly);
+      ctx.fillText(`+ ${activeBonuses.length - maxL} autres paliers`, x0 + 16, ly);
     }
   }
 
-  const hintY = bonusTop + bonusH + 10;
-  glassPanel(ctx, mainX, hintY, mainW, 52, 12);
-  ctx.font = '600 13px "Segoe UI", Arial';
+  const hintX = x0 + halfW + bottomGap;
+  glassPanel(ctx, hintX, bottomY, halfW, bottomH, 12);
+  ctx.font = '600 14px "Segoe UI", Arial';
   ctx.fillStyle = T.text;
-  ctx.fillText(milestoneHint(pct, steps, claimedSet), mainX + 14, hintY + 22);
-  ctx.font = '500 11px "Segoe UI", Arial';
+  ctx.fillText(truncateText(ctx, milestoneHint(pct, steps, claimedSet), halfW - 28), hintX + 16, bottomY + 32);
+  ctx.font = '600 13px "Segoe UI", Arial';
   ctx.fillStyle = T.sub;
-  ctx.fillText('/itemindex matrice · Index × Ranked × Guilde', mainX + 14, hintY + 40);
+  ctx.fillText('/itemindex matrice · Index × Ranked × Guilde', hintX + 16, bottomY + 56);
 
   ctx.textAlign = 'center';
-  ctx.font = '500 10px "Segoe UI", Arial';
+  ctx.font = '500 11px "Segoe UI", Arial';
   ctx.fillStyle = 'rgba(255,245,240,0.45)';
-  ctx.fillText('OK = réclamé  ·  ! = atteignable  ·  · = verrouillé', W / 2, H - pad - 10);
-  ctx.fillText('Par Koyorin et Roxxor', W / 2, H - pad - 26);
+  ctx.fillText('OK = réclamé  ·  ! = atteignable  ·  · = verrouillé', W / 2, H - pad - 8);
+  ctx.fillText('Par Koyorin et Roxxor', W / 2, H - pad - 22);
 
   return canvas.toBuffer('image/png');
 }
