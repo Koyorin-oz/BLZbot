@@ -60,7 +60,7 @@ function buildLootContainer(interaction, { fileName, loot, rarity }) {
       '- Statut · **`+1` en inventaire**',
       `- Serveur · ${interaction.guild.name}`,
     ].join('\n'),
-      );
+  );
 
   const section = new SectionBuilder()
     .setThumbnailAccessory(
