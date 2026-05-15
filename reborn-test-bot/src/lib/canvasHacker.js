@@ -129,7 +129,7 @@ function drawLootFace(ctx, W, H, pad, { guildName, itemName, itemId, rarity }) {
   const innerX = cardX + 20;
   const innerY = cardY + 22;
   const innerW = cardW - 40;
-  const innerH = cardH - 82;
+  const innerH = cardH - 72;
   rr(ctx, innerX, innerY, innerW, innerH, 16);
   ctx.fillStyle = T.glass;
   ctx.fill();
