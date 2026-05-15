@@ -28,7 +28,7 @@ function fmtCooldown(ms) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('hacker')
-    .setDescription('Salon Hacker : loot pondéré en image terminal (cooldown 12 h, rôle si configuré).'),
+    .setDescription('Salon Hacker : carte loot au style profil (cooldown 12 h, rôle si configuré).'),
   async execute(interaction) {
     if (!interaction.guild) {
       const e = new EmbedBuilder()
