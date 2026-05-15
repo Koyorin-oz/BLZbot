@@ -41,93 +41,37 @@ function fmtCooldown(ms) {
   return `~${m} min`;
 }
 
-function buildLootContainer(interaction, { fileName, loot, rarity }) {
+function buildLootContainer(_interaction, { fileName, loot, rarity }) {
   const accent = RARITY_ACCENT[rarity] ?? 0xf59e0b;
-  const thumbUrl = interaction.user.displayAvatarURL({ extension: 'png', size: 128 });
-
-  const gallery = new MediaGalleryBuilder().addItems({ media: { url: `attachment://${fileName}` } });
-  const sepAfterImg = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Large).setDivider(true);
-
-  const mainBlock = new TextDisplayBuilder().setContent(
-    [
-      `## ${loot.name}`,
-      `-# *${rarity}* · **Salon Hacker**`,
-      '',
-      '**Détails du drop**',
-      `- Identifiant · \`${loot.itemId}\``,
-      '- Statut · **`+1` en inventaire**',
-      `- Serveur · ${interaction.guild.name}`,
-    ].join('\n'),
+  const head = new TextDisplayBuilder().setContent(
+    `-# **${loot.name}** · \`${loot.itemId}\` · *${rarity}*`,
   );
-
-  const section = new SectionBuilder()
-    .setThumbnailAccessory(
-      new ThumbnailBuilder().setURL(thumbUrl).setDescription(`${interaction.user.username} · drop`),
-    )
-    .addTextDisplayComponents(mainBlock);
-
-  const sepMid = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true);
-
-  const nextLines = [
-    '### Étape suivante',
-    '- **`/inventaire`** — tout ton butin et les quantités',
-    '- Loot **pondéré** (hors boutique) — idéal **RP / tests**',
-    '- **Cooldown 12 h** entre deux récompenses sur ce salon',
-  ];
-  if (cfg.hackerRoleId) {
-    nextLines.push(`- Prochaine utilisation · rôle <@&${cfg.hackerRoleId}>`);
-  }
-
-  const footerBlock = new TextDisplayBuilder().setContent(nextLines.join('\n'));
-
+  const sep = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false);
+  const gallery = new MediaGalleryBuilder().addItems({ media: { url: `attachment://${fileName}` } });
   return new ContainerBuilder()
     .setAccentColor(accent)
-    .addMediaGalleryComponents(gallery)
-    .addSeparatorComponents(sepAfterImg)
-    .addSectionComponents(section)
-    .addSeparatorComponents(sepMid)
-    .addTextDisplayComponents(footerBlock);
+    .addTextDisplayComponents(head)
+    .addSeparatorComponents(sep)
+    .addMediaGalleryComponents(gallery);
 }
 
-function buildStatusContainer(interaction, kind, extra, fileName) {
+function buildStatusContainer(_interaction, kind, extra, fileName) {
   const accent = kind === 'denied' ? 0xf87171 : 0xfbbf24;
-  const thumbUrl = interaction.user.displayAvatarURL({ extension: 'png', size: 128 });
-
-  const gallery = new MediaGalleryBuilder().addItems({ media: { url: `attachment://${fileName}` } });
-  const sep = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Large).setDivider(true);
-
-  const title = kind === 'denied' ? '## Accès refusé' : '## Cooldown actif';
-  const body =
+  const head =
     kind === 'denied'
-      ? [
-          title,
-          '',
-          'Ce salon est **réservé** aux membres avec le rôle **Hacker**.',
-          cfg.hackerRoleId ? `\n> Rôle requis · <@&${cfg.hackerRoleId}>` : '',
-          '\n*Les **owners** du bot peuvent tester sans rôle.*',
-        ]
-          .filter(Boolean)
-          .join('\n')
-      : [
-          title,
-          '',
-          `Patience : prochain tirage **${extra.waitLabel}**`,
-          '\n> Limite **12 h** entre deux récompenses.',
-        ].join('\n');
-
-  const section = new SectionBuilder()
-    .setThumbnailAccessory(
-      new ThumbnailBuilder()
-        .setURL(thumbUrl)
-        .setDescription(kind === 'denied' ? 'Verrou' : 'Horloge'),
-    )
-    .addTextDisplayComponents(new TextDisplayBuilder().setContent(body));
-
+      ? new TextDisplayBuilder().setContent(
+          cfg.hackerRoleId
+            ? `-# **Accès refusé** · <@&${cfg.hackerRoleId}>`
+            : '-# **Accès refusé**',
+        )
+      : new TextDisplayBuilder().setContent(`-# **Cooldown** · ${extra.waitLabel}`);
+  const sep = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false);
+  const gallery = new MediaGalleryBuilder().addItems({ media: { url: `attachment://${fileName}` } });
   return new ContainerBuilder()
     .setAccentColor(accent)
-    .addMediaGalleryComponents(gallery)
+    .addTextDisplayComponents(head)
     .addSeparatorComponents(sep)
-    .addSectionComponents(section);
+    .addMediaGalleryComponents(gallery);
 }
 
 async function v2Edit(interaction, { fileName, buffer, container }) {
