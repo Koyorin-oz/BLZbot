@@ -188,7 +188,7 @@ async function useItem(userId, itemId) {
     return { ok: true, message: '💠 **Crystal** consommé : +500 000 starss (et tu peux toujours en garder pour un palier de grade).' };
   }
 
-  // Hacker token : non consommé ici (utilisé via /hacker dédié).
+  // Hacker token : non consommé ici (panneau /salon-hacker + bouton).
   if (id === 'hacker_token') {
     return { ok: false, error: 'Le **jeton hacker** s’utilise via le **bouton** du panneau `/salon-hacker`.' };
   }
