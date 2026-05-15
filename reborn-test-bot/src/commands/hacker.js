@@ -7,6 +7,11 @@ const {
   TextDisplayBuilder,
   MessageFlags,
   SeparatorSpacingSize,
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  PermissionFlagsBits,
 } = require('discord.js');
 const cfg = require('../config');
 const meta = require('../services/meta');
@@ -15,6 +20,8 @@ const catalog = require('../reborn/catalog');
 const { rollHackerSalon } = require('../reborn/chestLoot');
 const { isOwner } = require('../lib/owners');
 const { renderHackerLootCard, renderHackerStatusCard } = require('../lib/canvasHacker');
+
+const HACKER_SALON_BUTTON_ID = 'rb:hacker:claim';
 
 /** Couleur d’accent du container V2 (proche rareté). */
 const RARITY_ACCENT = {
@@ -62,7 +69,7 @@ function buildStatusContainer(_interaction, kind, extra, fileName) {
       ? new TextDisplayBuilder().setContent(
           cfg.hackerRoleId
             ? `-# **Accès refusé** · <@&${cfg.hackerRoleId}>`
-            : '-# **Accès refusé**',
+            : '-|** Accès refusé**',
         )
       : new TextDisplayBuilder().setContent(`-# **Cooldown** · ${extra.waitLabel}`);
   const sep = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false);
@@ -83,65 +90,102 @@ async function v2Edit(interaction, { fileName, buffer, container }) {
   });
 }
 
+/**
+ * même logique que l’ancien `/hacker`, déclenchée par le bouton du panneau.
+ */
+async function handleHackerSalonButton(interaction) {
+  if (!interaction.guild) {
+    await interaction.reply({ content: 'Utilise ce bouton dans un salon du serveur.', ephemeral: true });
+    return;
+  }
+
+  await interaction.deferReply();
+
+  const uid = interaction.user.id;
+  users.getOrCreate(uid, interaction.user.username);
+  const member = interaction.member;
+  const owner = isOwner(uid);
+
+  if (!owner && cfg.hackerRoleId && !hasHackerRole(member)) {
+    const buf = await renderHackerStatusCard('denied');
+    const fileName = 'hacker_denied.png';
+    const container = buildStatusContainer(interaction, 'denied', {}, fileName);
+    return v2Edit(interaction, { fileName, buffer: buf, container });
+  }
+
+  const key = `hacker_salon_last_${uid}`;
+  const last = parseInt(meta.get(key) || '0', 10) || 0;
+  const now = Date.now();
+  if (!cfg.TEST_NO_LIMITS && now - last < cfg.HACKER_SALON_COOLDOWN_MS) {
+    const left = cfg.HACKER_SALON_COOLDOWN_MS - (now - last);
+    const buf = await renderHackerStatusCard('cooldown', { waitLabel: fmtCooldown(left) });
+    const fileName = 'hacker_wait.png';
+    const container = buildStatusContainer(interaction, 'cooldown', { waitLabel: fmtCooldown(left) }, fileName);
+    return v2Edit(interaction, { fileName, buffer: buf, container });
+  }
+
+  const loot = rollHackerSalon();
+  const itemDef = catalog.getItem(loot.itemId);
+  const rarity = itemDef?.rarity || 'Rare';
+  users.addInventory(uid, loot.itemId, 1);
+  meta.set(key, String(now));
+
+  const buf = await renderHackerLootCard({
+    guildName: interaction.guild.name,
+    itemName: loot.name,
+    itemId: loot.itemId,
+    rarity,
+  });
+  const fileName = 'hacker_loot.png';
+  const container = buildLootContainer(interaction, { fileName, loot, rarity });
+  return v2Edit(interaction, { fileName, buffer: buf, container });
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('hacker')
-    .setDescription('Salon Hacker : carte + panneau détaillé (Components V2).'),
+    .setName('salon-hacker')
+    .setDescription('Publie le panneau Salon Hacker (bouton, loot toutes les 12 h).')
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
+  HACKER_SALON_BUTTON_ID,
+  handleHackerSalonButton,
   async execute(interaction) {
     if (!interaction.guild) {
-      const container = new ContainerBuilder()
-        .setAccentColor(0x64748b)
-        .addTextDisplayComponents(
-          new TextDisplayBuilder().setContent(
-            [
-              '## Salon Hacker',
-              '',
-              '**Serveur uniquement** — lance la commande dans un salon du serveur.',
-            ].join('\n'),
-          ),
-        );
-      return interaction.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
+      return interaction.reply({
+        content: 'Utilise cette commande sur un serveur.',
+        ephemeral: true,
+      });
+    }
+    const canPost =
+      isOwner(interaction.user.id) ||
+      Boolean(interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild));
+    if (!canPost) {
+      return interaction.reply({
+        content:
+          'Permission **Gérer le serveur** requise pour poster le panneau (owners du bot exclus).',
+        ephemeral: true,
+      });
     }
 
-    await interaction.deferReply();
+    const embed = new EmbedBuilder()
+      .setColor(0x7c2d12)
+      .setTitle('🔒 Salon Secret Hackeur')
+      .setDescription(
+        [
+          'En tant que **Hackeur**, tu peux récupérer un **item aléatoire** toutes les **12 heures** !',
+          '',
+          'Clique sur le bouton ci-dessous pour récupérer ton item.',
+          '',
+          '*Tu ne peux réclamer qu’**une fois** toutes les 12 heures.*',
+        ].join('\n'),
+      );
 
-    const uid = interaction.user.id;
-    users.getOrCreate(uid, interaction.user.username);
-    const member = interaction.member;
-    const owner = isOwner(uid);
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId(HACKER_SALON_BUTTON_ID)
+        .setLabel('Récupérer mon item')
+        .setStyle(ButtonStyle.Primary),
+    );
 
-    if (!owner && cfg.hackerRoleId && !hasHackerRole(member)) {
-      const buf = await renderHackerStatusCard('denied');
-      const fileName = 'hacker_denied.png';
-      const container = buildStatusContainer(interaction, 'denied', {}, fileName);
-      return v2Edit(interaction, { fileName, buffer: buf, container });
-    }
-
-    const key = `hacker_salon_last_${uid}`;
-    const last = parseInt(meta.get(key) || '0', 10) || 0;
-    const now = Date.now();
-    if (!cfg.TEST_NO_LIMITS && now - last < cfg.HACKER_SALON_COOLDOWN_MS) {
-      const left = cfg.HACKER_SALON_COOLDOWN_MS - (now - last);
-      const buf = await renderHackerStatusCard('cooldown', { waitLabel: fmtCooldown(left) });
-      const fileName = 'hacker_wait.png';
-      const container = buildStatusContainer(interaction, 'cooldown', { waitLabel: fmtCooldown(left) }, fileName);
-      return v2Edit(interaction, { fileName, buffer: buf, container });
-    }
-
-    const loot = rollHackerSalon();
-    const itemDef = catalog.getItem(loot.itemId);
-    const rarity = itemDef?.rarity || 'Rare';
-    users.addInventory(uid, loot.itemId, 1);
-    meta.set(key, String(now));
-
-    const buf = await renderHackerLootCard({
-      guildName: interaction.guild.name,
-      itemName: loot.name,
-      itemId: loot.itemId,
-      rarity,
-    });
-    const fileName = 'hacker_loot.png';
-    const container = buildLootContainer(interaction, { fileName, loot, rarity });
-    return v2Edit(interaction, { fileName, buffer: buf, container });
+    await interaction.reply({ embeds: [embed], components: [row] });
   },
 };
