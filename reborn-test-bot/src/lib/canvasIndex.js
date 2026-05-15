@@ -282,7 +282,11 @@ async function renderIndexCard(opts) {
   }
 
   const bonusTop = gridTop + 5 * (cellH + cellGap) + 8;
-  statPanel(ctx, mainX, bonusTop, mainW, 120, 12);
+  const maxL = 4;
+  const shownBonuses = activeBonuses.slice(0, maxL);
+  const bonusExtra = activeBonuses.length > maxL ? 1 : 0;
+  const bonusH = 36 + Math.max(1, shownBonuses.length + bonusExtra) * 18 + 16;
+  statPanel(ctx, mainX, bonusTop, mainW, bonusH, 12);
   ctx.font = '700 14px "Segoe UI", Arial';
   ctx.fillStyle = T.label;
   ctx.fillText('BONUS INDEX ACTIFS', mainX + 14, bonusTop + 26);
