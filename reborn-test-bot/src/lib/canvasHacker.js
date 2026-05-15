@@ -167,9 +167,10 @@ function drawLootFace(ctx, W, H, pad, { guildName, itemName, itemId, rarity }) {
   const nameLines = wrapLines(ctx, rawName, innerW - 56, titleFont);
   let ty = innerY + 72;
   ctx.fillStyle = T.text;
+  ctx.fillStyle = T.text;
   for (const ln of nameLines) {
     ctx.fillText(ln, cx, ty);
-    ty += 36;
+    ty += 34;
   }
 
   const pillW = 176;
