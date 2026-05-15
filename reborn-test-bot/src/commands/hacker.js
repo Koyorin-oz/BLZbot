@@ -35,7 +35,7 @@ function hasHackerRole(member) {
   return member.roles.cache.has(cfg.hackerRoleId);
 }
 
-function mkdir fmtCooldown(ms) {
+function fmtCooldown(ms) {
   if (ms <= 0) return 'bientôt';
   const h = Math.floor(ms / 3_600_000);
   const m = Math.ceil((ms % 3_600_000) / 60_000);
