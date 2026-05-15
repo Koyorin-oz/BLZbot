@@ -326,8 +326,9 @@ async function renderIndexCard(opts) {
   ctx.textAlign = 'center';
   ctx.font = '500 11px "Segoe UI", Arial';
   ctx.fillStyle = 'rgba(255,245,240,0.45)';
-  ctx.fillText('OK = réclamé  ·  ! = atteignable  ·  · = verrouillé', W / 2, H - pad - 8);
-  ctx.fillText('Par Koyorin et Roxxor', W / 2, H - pad - 22);
+  const footBase = H - pad - 20;
+  ctx.fillText('OK = réclamé  ·  ! = atteignable  ·  · = verrouillé', W / 2, footBase);
+  ctx.fillText('Par Koyorin et Roxxor', W / 2, footBase - 16);
 
   return canvas.toBuffer('image/png');
 }
