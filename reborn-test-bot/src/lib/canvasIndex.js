@@ -3,11 +3,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const BLZ_BG = path.join(__dirname, '..', '..', '..', 'niveau', 'src', 'assets', 'blz_bg.png');
-const GOLD = '#e8c547';
-const MUTED = '#7f8c9a';
+const { INDEX_BONUSES } = require('../services/itemMatrix');
 
 function rgba(hex, a) {
-  const h = hex.replace('#', '');
+  const h = String(hex).replace('#', '');
   const r = parseInt(h.slice(0, 2), 16);
   const g = parseInt(h.slice(2, 4), 16);
   const b = parseInt(h.slice(4, 6), 16);
@@ -46,22 +45,35 @@ function rr(ctx, x, y, w, h, rad) {
   ctx.closePath();
 }
 
-function drawAvatarRing(ctx, img, cx, cy, rOuter) {
+function drawAvatarRing(ctx, img, cx, cy, rOuter, ringColor) {
   ctx.save();
   ctx.beginPath();
   ctx.arc(cx, cy, rOuter, 0, Math.PI * 2);
   ctx.clip();
   if (img) ctx.drawImage(img, cx - rOuter, cy - rOuter, rOuter * 2, rOuter * 2);
   else {
-    ctx.fillStyle = '#2c3e50';
+    ctx.fillStyle = '#4a235a';
     ctx.fillRect(cx - rOuter, cy - rOuter, rOuter * 2, rOuter * 2);
   }
   ctx.restore();
-  ctx.strokeStyle = GOLD;
-  ctx.lineWidth = 3;
+  ctx.strokeStyle = ringColor;
+  ctx.lineWidth = 4;
   ctx.beginPath();
-  ctx.arc(cx, cy, rOuter + 1.5, 0, Math.PI * 2);
+  ctx.arc(cx, cy, rOuter + 2, 0, Math.PI * 2);
   ctx.stroke();
+}
+
+function milestoneHint(pct, steps, claimedSet) {
+  const claimable = steps.find((s) => !claimedSet.has(s.pct) && pct >= s.pct);
+  if (claimable) return `▶ Réclame le palier ${claimable.pct} % avec /itemindex reclamer`;
+  const upcoming = steps.find((s) => pct < s.pct);
+  if (upcoming) return `▶ Prochain palier : ${upcoming.pct} % (encore ${upcoming.pct - pct} %)`;
+  return '▶ Catalogue complet — pense à tout réclamer';
+}
+
+function stepAccent(i) {
+  const hues = ['#e74c3c', '#e67e22', '#f1c40f', '#2ecc71', '#1abc9c', '#3498db', '#9b59b6', '#e91e63', '#00bcd4', '#ff5722'];
+  return hues[i % hues.length];
 }
 
 /**
@@ -70,125 +82,222 @@ function drawAvatarRing(ctx, img, cx, cy, rOuter) {
 async function renderIndexCard(opts) {
   const { displayName, avatarUrl, completionPct, steps, claimed } = opts;
   const claimedSet = new Set(claimed);
-  const W = 928;
-  const H = 682;
+  const pct = Math.min(100, Math.max(0, completionPct | 0));
+
+  const W = 980;
+  const H = 920;
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
 
-  const bg = await loadSafe(BLZ_BG);
-  if (bg) drawImageCover(ctx, bg, 0, 0, W, H);
-  else {
-    const g = ctx.createLinearGradient(0, 0, W, H);
-    g.addColorStop(0, '#141a28');
-    g.addColorStop(1, '#0a0d14');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
-  }
-  ctx.fillStyle = 'rgba(10, 14, 22, 0.88)';
+  const g0 = ctx.createLinearGradient(0, 0, W, H);
+  g0.addColorStop(0, '#2d1b4e');
+  g0.addColorStop(0.35, '#162447');
+  g0.addColorStop(0.7, '#1f4068');
+  g0.addColorStop(1, '#1b3c59');
+  ctx.fillStyle = g0;
   ctx.fillRect(0, 0, W, H);
 
-  const vignette = ctx.createRadialGradient(W * 0.45, H * 0.25, 20, W * 0.5, H * 0.45, W * 0.85);
-  vignette.addColorStop(0, rgba('#e8c547', 0.06));
-  vignette.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = vignette;
+  const orb = ctx.createRadialGradient(W * 0.85, H * 0.12, 0, W * 0.85, H * 0.12, 280);
+  orb.addColorStop(0, 'rgba(233, 30, 99, 0.35)');
+  orb.addColorStop(0.5, 'rgba(155, 89, 182, 0.12)');
+  orb.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = orb;
   ctx.fillRect(0, 0, W, H);
+
+  const orb2 = ctx.createRadialGradient(W * 0.1, H * 0.85, 0, W * 0.1, H * 0.85, 260);
+  orb2.addColorStop(0, 'rgba(26, 188, 156, 0.4)');
+  orb2.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = orb2;
+  ctx.fillRect(0, 0, W, H);
+
+  const bg = await loadSafe(BLZ_BG);
+  if (bg) {
+    ctx.save();
+    ctx.globalAlpha = 0.22;
+    drawImageCover(ctx, bg, 0, 0, W, H);
+    ctx.restore();
+  }
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  for (let d = -H; d < W + H; d += 28) {
+    ctx.beginPath();
+    ctx.moveTo(d, 0);
+    ctx.lineTo(d + H, H);
+    ctx.stroke();
+  }
 
   const avatar = await loadSafe(avatarUrl);
-  drawAvatarRing(ctx, avatar, W - 86, 74, 46);
+  const ringColor = pct >= 75 ? '#f1c40f' : pct >= 40 ? '#9b59b6' : '#1abc9c';
+  drawAvatarRing(ctx, avatar, 96, 118, 52, ringColor);
 
-  ctx.fillStyle = '#f4f7fb';
-  ctx.font = 'bold 26px "Segoe UI", sans-serif';
-  ctx.fillText('Index catalogue', 36, 52);
-  ctx.font = '16px "Segoe UI", sans-serif';
-  ctx.fillStyle = MUTED;
-  ctx.fillText(String(displayName || 'Joueur'), 36, 78);
-
-  ctx.font = 'bold 42px "Segoe UI", sans-serif';
-  ctx.fillStyle = GOLD;
-  ctx.fillText(`${completionPct} %`, 36, 130);
-  ctx.font = '13px "Segoe UI", sans-serif';
-  ctx.fillStyle = MUTED;
-  ctx.fillText('Complétion du catalogue REBORN', 36, 152);
-
-  const bx = 36;
-  const by = 168;
-  const bw = W - 72;
-  const bh = 26;
-  rr(ctx, bx, by, bw, bh, 13);
-  ctx.fillStyle = 'rgba(0,0,0,0.45)';
-  ctx.fill();
-  const fillRatio = Math.min(1, Math.max(0, completionPct / 100));
-  const innerW = Math.max(fillRatio * bw, completionPct > 0 ? 14 : 0);
-  const grad = ctx.createLinearGradient(bx, 0, bx + bw, 0);
-  grad.addColorStop(0, '#27ae60');
-  grad.addColorStop(0.55, '#2ecc71');
-  grad.addColorStop(1, '#3498db');
-  ctx.fillStyle = grad;
-  rr(ctx, bx, by, innerW, bh, 13);
-  ctx.fill();
-  ctx.fillStyle = '#ecf0f1';
-  ctx.font = 'bold 13px Consolas, monospace';
-  ctx.textAlign = 'right';
-  ctx.fillText(`${completionPct}/100`, bx + bw - 12, by + 17);
   ctx.textAlign = 'left';
+  ctx.fillStyle = '#ff6b9d';
+  ctx.font = 'bold 15px "Segoe UI", sans-serif';
+  ctx.fillText('CATALOGUE REBORN', 176, 78);
 
-  ctx.strokeStyle = rgba(GOLD, 0.35);
-  ctx.lineWidth = 1;
-  rr(ctx, 28, 210, W - 56, H - 224, 14);
+  const titleGrad = ctx.createLinearGradient(176, 0, 176 + 400, 0);
+  titleGrad.addColorStop(0, '#fff');
+  titleGrad.addColorStop(0.5, '#ffeaa7');
+  titleGrad.addColorStop(1, '#74b9ff');
+  ctx.fillStyle = titleGrad;
+  ctx.font = 'bold 34px "Segoe UI", sans-serif';
+  ctx.fillText('Index & progression', 176, 118);
+
+  ctx.fillStyle = '#dfe6e9';
+  ctx.font = '600 17px "Segoe UI", sans-serif';
+  ctx.fillText(String(displayName || 'Joueur'), 176, 148);
+
+  const pctGrad = ctx.createLinearGradient(W - 280, 60, W - 40, 140);
+  pctGrad.addColorStop(0, '#fd79a8');
+  pctGrad.addColorStop(0.5, '#ffeaa7');
+  pctGrad.addColorStop(1, '#55efc4');
+  ctx.fillStyle = pctGrad;
+  ctx.font = 'bold 56px "Segoe UI", sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText(`${pct}`, W - 48, 128);
+  ctx.font = 'bold 28px "Segoe UI", sans-serif';
+  ctx.fillStyle = '#fab1a0';
+  ctx.fillText('%', W - 42, 128);
+
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.font = '13px "Segoe UI", sans-serif';
+  ctx.fillText('complété', W - 148, 152);
+
+  const bx = 40;
+  const by = 196;
+  const bw = W - 80;
+  const bh = 32;
+  rr(ctx, bx, by, bw, bh, 16);
+  const track = ctx.createLinearGradient(bx, 0, bx + bw, 0);
+  track.addColorStop(0, 'rgba(0,0,0,0.45)');
+  track.addColorStop(1, 'rgba(45,52,54,0.5)');
+  ctx.fillStyle = track;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = 1.5;
   ctx.stroke();
 
-  ctx.fillStyle = '#bdc3c7';
-  ctx.font = 'bold 14px "Segoe UI", sans-serif';
-  ctx.fillText('Paliers & récompenses', 44, 232);
+  const fillRatio = pct / 100;
+  const innerW = Math.max(fillRatio * bw, pct > 0 ? 20 : 0);
+  const barG = ctx.createLinearGradient(bx, 0, bx + bw, 0);
+  barG.addColorStop(0, '#00cec9');
+  barG.addColorStop(0.35, '#6c5ce7');
+  barG.addColorStop(0.7, '#fd79a8');
+  barG.addColorStop(1, '#ffeaa7');
+  ctx.fillStyle = barG;
+  rr(ctx, bx + 3, by + 3, Math.max(0, innerW - 6), bh - 6, 13);
+  ctx.fill();
 
-  const colGap = 16;
-  const colW = (W - 88 - colGap) / 2;
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 14px Consolas, monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText(`${pct} / 100`, bx + bw - 14, by + 21);
+  ctx.textAlign = 'left';
+
+  ctx.fillStyle = '#ffeaa7';
+  ctx.font = 'bold 18px "Segoe UI", sans-serif';
+  ctx.fillText('◆ Paliers & récompenses', 48, 268);
+
+  const padX = 44;
+  const colGap = 14;
+  const colW = (W - padX * 2 - colGap) / 2;
   let i = 0;
   for (const s of steps) {
     const col = i % 2;
     const row = Math.floor(i / 2);
-    const x = 44 + col * (colW + colGap);
-    const y = 248 + row * 44;
+    const x = padX + col * (colW + colGap);
+    const y = 288 + row * 54;
     const done = claimedSet.has(s.pct);
-    const reached = completionPct >= s.pct;
+    const reached = pct >= s.pct;
+    const accent = stepAccent(i);
 
-    rr(ctx, x, y, colW, 38, 8);
-    ctx.fillStyle = done ? 'rgba(39, 174, 96, 0.12)' : reached ? 'rgba(52, 152, 219, 0.08)' : 'rgba(255,255,255,0.03)';
+    rr(ctx, x, y, colW, 48, 12);
+    if (done) {
+      const cg = ctx.createLinearGradient(x, y, x + colW, y + 48);
+      cg.addColorStop(0, 'rgba(46, 204, 113, 0.45)');
+      cg.addColorStop(1, 'rgba(39, 174, 96, 0.25)');
+      ctx.fillStyle = cg;
+    } else if (reached) {
+      const cg = ctx.createLinearGradient(x, y, x + colW, y + 48);
+      cg.addColorStop(0, rgba(accent, 0.35));
+      cg.addColorStop(1, rgba(accent, 0.12));
+      ctx.fillStyle = cg;
+    } else {
+      ctx.fillStyle = 'rgba(44, 62, 80, 0.55)';
+    }
     ctx.fill();
-    ctx.strokeStyle = done ? rgba('#2ecc71', 0.5) : reached ? rgba('#3498db', 0.35) : 'rgba(127,140,154,0.2)';
+    ctx.strokeStyle = done ? '#2ecc71' : reached ? accent : 'rgba(127,140,154,0.4)';
+    ctx.lineWidth = done || reached ? 2 : 1;
     ctx.stroke();
 
-    const badge = done ? '✓' : reached ? '◆' : '·';
-    ctx.font = '16px "Segoe UI", sans-serif';
-    ctx.fillStyle = done ? '#2ecc71' : reached ? GOLD : MUTED;
-    ctx.fillText(badge, x + 10, y + 25);
+    ctx.font = '18px "Segoe UI", sans-serif';
+    ctx.fillStyle = done ? '#2ecc71' : reached ? '#ffeaa7' : '#636e72';
+    ctx.fillText(done ? '✓' : reached ? '◆' : '○', x + 12, y + 32);
 
-    ctx.font = 'bold 13px "Segoe UI", sans-serif';
-    ctx.fillStyle = '#ecf0f1';
-    ctx.fillText(`${s.pct}%`, x + 34, y + 25);
+    ctx.font = 'bold 15px "Segoe UI", sans-serif';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(`${s.pct}%`, x + 42, y + 31);
 
-    const starsTxt = `+${s.stars.toLocaleString('fr-FR')} ★`;
-    ctx.font = '12px Consolas, monospace';
-    ctx.fillStyle = MUTED;
-    ctx.fillText(starsTxt, x + 76, y + 25);
+    ctx.font = '600 13px Consolas, monospace';
+    ctx.fillStyle = '#fdcb6e';
+    ctx.fillText(`+${s.stars.toLocaleString('fr-FR')} ★`, x + 96, y + 31);
 
     const chests = (s.chests || [])
-      .map((c) => `${c.qty > 1 ? `${c.qty}×` : ''}${c.id}`)
+      .map((c) => `${c.qty > 1 ? `${c.qty}×` : ''}${c.id.replace(/_/g, ' ')}`)
       .join(', ');
     let extra = chests || '';
     if (s.roleNote) extra = extra ? `${extra} · rôle` : 'rôle';
     if (extra) {
       ctx.font = '11px Consolas, monospace';
-      ctx.fillStyle = rgba('#e8c547', 0.85);
-      const short = extra.length > 28 ? `${extra.slice(0, 26)}…` : extra;
-      ctx.fillText(short, x + 200, y + 25);
+      ctx.fillStyle = rgba('#a29bfe', 0.95);
+      const short = extra.length > 32 ? `${extra.slice(0, 30)}…` : extra;
+      ctx.fillText(short, x + 210, y + 31);
     }
     i += 1;
   }
 
-  ctx.font = '11px Consolas, monospace';
-  ctx.fillStyle = rgba(MUTED, 0.9);
-  ctx.fillText('✓ réclamé  ·  ◆ atteignable  ·  · verrouillé', 44, H - 18);
+  const bonusY = 288 + 5 * 54 + 24;
+  ctx.fillStyle = '#74b9ff';
+  ctx.font = 'bold 17px "Segoe UI", sans-serif';
+  ctx.fillText('⚡ Bonus index actifs (permanents)', 48, bonusY);
+
+  const activeBonuses = INDEX_BONUSES.filter((b) => pct >= b.pct);
+  let byLine = bonusY + 28;
+  if (!activeBonuses.length) {
+    ctx.fillStyle = 'rgba(255,255,255,0.65)';
+    ctx.font = '14px "Segoe UI", sans-serif';
+    ctx.fillText('Aucun pour l’instant — atteins 10 % pour +1 % XP.', 48, byLine);
+    byLine += 24;
+  } else {
+    for (const b of activeBonuses) {
+      rr(ctx, 48, byLine - 4, W - 96, 26, 8);
+      ctx.fillStyle = 'rgba(116, 185, 255, 0.2)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(116, 185, 255, 0.45)';
+      ctx.stroke();
+      ctx.fillStyle = '#dfe6e9';
+      ctx.font = '13px "Segoe UI", sans-serif';
+      ctx.fillText(`${b.pct}%  →  ${b.label}`, 62, byLine + 14);
+      byLine += 34;
+    }
+  }
+
+  byLine += 12;
+  rr(ctx, 40, byLine, W - 80, 56, 12);
+  ctx.fillStyle = 'rgba(253, 121, 168, 0.15)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(253, 121, 168, 0.5)';
+  ctx.stroke();
+  ctx.fillStyle = '#ffeaa7';
+  ctx.font = 'bold 14px "Segoe UI", sans-serif';
+  ctx.fillText(milestoneHint(pct, steps, claimedSet), 56, byLine + 22);
+
+  byLine += 72;
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '12px Consolas, monospace';
+  ctx.fillText('✓ réclamé   ·   ◆ atteignable (réclame !)   ·   ○ verrouillé', 48, byLine);
+  ctx.fillText('/itemindex matrice  ·  cumul Index × Ranked × Guilde', 48, byLine + 20);
 
   return canvas.toBuffer('image/png');
 }
