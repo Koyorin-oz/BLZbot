@@ -226,40 +226,44 @@ async function renderHackerLootCard(opts) {
 }
 
 function drawStatusFace(ctx, W, H, pad, kind, extra) {
+  const inset = 26;
+  const leftX = pad + inset;
+  const rightX = W - pad - inset;
   const cx = W / 2;
-  ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
 
-  ctx.font = '700 12px "Segoe UI", Arial';
+  ctx.textAlign = 'left';
+  ctx.font = '800 11px "Segoe UI", Arial';
   ctx.fillStyle = T.label;
-  ctx.fillText('SALON HACKER', cx, pad + 36);
+  ctx.fillText('SALON HACKER', leftX, pad + 30);
+  ctx.textAlign = 'right';
+  ctx.font = '600 11px "Segoe UI", Arial';
+  ctx.fillStyle = T.sub;
+  ctx.fillText(kind === 'denied' ? 'Verrou' : 'Délai', rightX, pad + 30);
 
   const accent = kind === 'denied' ? '#f87171' : T.accent;
-  ctx.font = '700 24px "Segoe UI", Arial';
+  ctx.textAlign = 'center';
+  ctx.font = '800 24px "Segoe UI", Arial';
   ctx.fillStyle = accent;
-  ctx.fillText(kind === 'denied' ? 'Accès refusé' : 'Patience…', cx, pad + 82);
+  ctx.fillText(kind === 'denied' ? 'ACCÈS REFUSÉ' : 'COOLDOWN', cx, pad + 88);
 
   const msg =
     kind === 'denied'
-      ? 'Rôle Hacker requis sur ce serveur (les owners sont exemptés).'
-      : `Prochain tirage dans ${extra.waitLabel || '…'}`;
+      ? 'Rôle **Hacker** requis (owners exemptés).'
+      : `Prochain tirage · ${extra.waitLabel || '…'}`;
 
-  ctx.font = '500 16px "Segoe UI", Arial';
+  ctx.font = '500 15px "Segoe UI", Arial';
   ctx.fillStyle = T.text;
-  const lines = wrapLines(ctx, msg, W - 80, '500 16px "Segoe UI", Arial');
-  let y = pad + 118;
+  const lines = wrapLines(ctx, msg.replace(/\*\*/g, ''), W - 88, '500 15px "Segoe UI", Arial');
+  let y = pad + 120;
   for (const ln of lines) {
     ctx.fillText(ln, cx, y);
-    y += 24;
+    y += 22;
   }
 
-  ctx.font = '500 12px "Segoe UI", Arial';
-  ctx.fillStyle = T.sub;
-  ctx.fillText(
-    kind === 'denied' ? 'Réessaie quand tu as le rôle' : 'Limite : 12 h entre deux récompenses',
-    cx,
-    H - pad - 16,
-  );
+  ctx.font = '500 10px "Segoe UI", Arial';
+  ctx.fillStyle = 'rgba(255,245,240,0.35)';
+  ctx.fillText('Par Koyorin et Roxxor', cx, H - pad - 12);
 }
 
 async function renderHackerStatusCard(kind, extra = {}) {
