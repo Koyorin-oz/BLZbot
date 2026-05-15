@@ -69,7 +69,7 @@ function buildStatusContainer(_interaction, kind, extra, fileName) {
       ? new TextDisplayBuilder().setContent(
           cfg.hackerRoleId
             ? `-# **Accès refusé** · <@&${cfg.hackerRoleId}>`
-            : '-|** Accès refusé**',
+            : '-# **Accès refusé**',
         )
       : new TextDisplayBuilder().setContent(`-# **Cooldown** · ${extra.waitLabel}`);
   const sep = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false);
