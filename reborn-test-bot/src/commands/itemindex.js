@@ -230,14 +230,7 @@ module.exports = {
           },
           {
             name: `⚔️ Ranked — ${m.ranked.label}`,
-            value: [
-              `RP **${m.ranked.rp.toLocaleString('fr-FR')}**`,
-              `Multi arbre **+${(m.ranked.pctBp - 10000) / 100}%**`,
-              rankedExtra.join('\n'),
-              m.ranked.perks.length ? `\n*${m.ranked.perks.join(' · ')}*` : '',
-            ]
-              .join('\n')
-              .slice(0, 1024),
+            value: rankedLines.join('\n').slice(0, 1024),
             inline: true,
           },
           { name: '\u200b', value: '\u200b', inline: false },
