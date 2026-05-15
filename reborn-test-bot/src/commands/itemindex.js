@@ -3,10 +3,6 @@ const {
   EmbedBuilder,
   PermissionFlagsBits,
   AttachmentBuilder,
-  ContainerBuilder,
-  MediaGalleryBuilder,
-  TextDisplayBuilder,
-  MessageFlags,
 } = require('discord.js');
 const idx = require('../services/indexProgress');
 const users = require('../services/users');
