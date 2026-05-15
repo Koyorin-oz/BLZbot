@@ -281,18 +281,20 @@ async function renderIndexCard(opts) {
     idx += 1;
   }
 
+  const activeBonuses = INDEX_BONUSES.filter((b) => pct >= b.pct);
+
   const bonusTop = gridTop + 5 * (cellH + cellGap) + 8;
   const maxL = 4;
   const shownBonuses = activeBonuses.slice(0, maxL);
   const bonusExtra = activeBonuses.length > maxL ? 1 : 0;
-  const bonusH = 36 + Math.max(1, shownBonuses.length + bonusExtra) * 18 + 16;
+  const bonusBodyLines = activeBonuses.length === 0 ? 1 : shownBonuses.length + bonusExtra;
+  const bonusH = 36 + bonusBodyLines * 18 + 16;
   statPanel(ctx, mainX, bonusTop, mainW, bonusH, 12);
   ctx.font = '700 14px "Segoe UI", Arial';
   ctx.fillStyle = T.label;
   ctx.fillText('BONUS INDEX ACTIFS', mainX + 14, bonusTop + 26);
 
-  const activeBonuses = INDEX_BONUSES.filter((b) => pct >= b.pct);
-  let   ly = bonusTop + 44;
+  let ly = bonusTop + 44;
   ctx.font = '600 12px "Segoe UI", Arial';
   if (!activeBonuses.length) {
     ctx.fillStyle = T.sub;
