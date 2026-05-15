@@ -270,7 +270,9 @@ async function renderIndexCard(opts) {
     ctx.fillText('Aucun pour l’instant — atteins 10 % pour +1 % XP.', 48, byLine);
     byLine += 24;
   } else {
-    for (const b of activeBonuses) {
+    const maxShow = 8;
+    const shown = activeBonuses.slice(0, maxShow);
+    for (const b of shown) {
       rr(ctx, 48, byLine - 4, W - 96, 26, 8);
       ctx.fillStyle = 'rgba(116, 185, 255, 0.2)';
       ctx.fill();
@@ -280,6 +282,12 @@ async function renderIndexCard(opts) {
       ctx.font = '13px "Segoe UI", sans-serif';
       ctx.fillText(`${b.pct}%  →  ${b.label}`, 62, byLine + 14);
       byLine += 34;
+    }
+    if (activeBonuses.length > maxShow) {
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.font = '12px "Segoe UI", sans-serif';
+      ctx.fillText(`… et ${activeBonuses.length - maxShow} palier(s) bonus cumulés`, 48, byLine + 10);
+      byLine += 26;
     }
   }
 
