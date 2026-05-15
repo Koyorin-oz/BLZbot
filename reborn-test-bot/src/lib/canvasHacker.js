@@ -94,77 +94,99 @@ function truncate(str, maxLen) {
 }
 
 function drawLootFace(ctx, W, H, pad, { guildName, itemName, itemId, rarity }) {
-  const cx = W / 2;
   const ring = RARITY_RING[rarity] || T.accent;
+  const inset = 26;
+  const leftX = pad + inset;
+  const rightX = W - pad - inset;
+  const cx = W / 2;
 
-  ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
-
-  ctx.font = '700 12px "Segoe UI", Arial';
+  ctx.textAlign = 'left';
+  ctx.font = '800 11px "Segoe UI", Arial';
   ctx.fillStyle = T.label;
-  ctx.fillText('SALON HACKER', cx, pad + 30);
-
-  ctx.font = '500 13px "Segoe UI", Arial';
+  ctx.fillText('SALON HACKER', leftX, pad + 30);
+  ctx.textAlign = 'right';
+  ctx.font = '600 12px "Segoe UI", Arial';
   ctx.fillStyle = T.sub;
-  ctx.fillText(truncate(guildName, 52), cx, pad + 52);
+  ctx.fillText(truncate(guildName, 40), rightX, pad + 30);
 
-  const cardW = Math.min(620, W - 72);
-  const cardH = 286;
+  const cardW = Math.min(796, rightX - leftX);
+  const cardH = Math.min(336, H - pad * 2 - 100);
   const cardX = (W - cardW) / 2;
-  const cardY = pad + 66;
+  const cardY = pad + 48;
 
-  statPanel(ctx, cardX, cardY, cardW, cardH, 18);
+  statPanel(ctx, cardX, cardY, cardW, cardH, 22);
 
+  ctx.save();
   ctx.shadowColor = ring;
-  ctx.shadowBlur = 20;
-  rr(ctx, cardX + 4, cardY + 4, cardW - 8, cardH - 8, 16);
+  ctx.shadowBlur = 22;
+  rr(ctx, cardX + 6, cardY + 6, cardW - 12, cardH - 12, 19);
   ctx.strokeStyle = ring;
   ctx.lineWidth = 2.5;
   ctx.stroke();
-  ctx.shadowBlur = 0;
+  ctx.restore();
 
-  const innerY = cardY + 32;
-  ctx.font = '700 11px "Segoe UI", Arial';
+  const innerX = cardX + 20;
+  const innerY = cardY + 22;
+  const innerW = cardW - 40;
+  const innerH = cardH - 82;
+  rr(ctx, innerX, innerY, innerW, innerH, 16);
+  ctx.fillStyle = T.glass;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  const accentBarX = innerX + 12;
+  const accentBarTop = innerY + 14;
+  const accentBarH = innerH - 28;
+  rr(ctx, accentBarX, accentBarTop, 5, accentBarH, 2);
+  ctx.fillStyle = ring;
+  ctx.globalAlpha = 0.92;
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  ctx.textAlign = 'center';
+  ctx.font = '700 10px "Segoe UI", Arial';
   ctx.fillStyle = T.label;
-  ctx.fillText('OBJET OBTENU', cx, innerY);
+  ctx.fillText('OBJET OBTENU', cx, innerY + 28);
 
-  const titleFont = '700 28px "Segoe UI", Arial';
+  const titleFont = '800 30px "Segoe UI", Arial';
   const rawName = String(itemName || '???').toUpperCase();
-  const nameLines = wrapLines(ctx, rawName, cardW - 72, titleFont);
-  let ty = innerY + 42;
   ctx.font = titleFont;
+  const nameLines = wrapLines(ctx, rawName, innerW - 56, titleFont);
+  let ty = innerY + 58;
   ctx.fillStyle = T.text;
   for (const ln of nameLines) {
     ctx.fillText(ln, cx, ty);
-    ty += 34;
+    ty += 36;
   }
 
-  const pillW = 168;
-  const pillH = 30;
+  const pillW = 176;
+  const pillH = 32;
   const pillX = cx - pillW / 2;
-  const pillY = ty + 16;
+  const pillY = ty + 14;
   rr(ctx, pillX, pillY, pillW, pillH, pillH / 2);
-  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.fillStyle = 'rgba(0,0,0,0.45)';
   ctx.fill();
   ctx.strokeStyle = ring;
   ctx.lineWidth = 1.5;
   ctx.stroke();
-  ctx.font = '600 12px "Segoe UI", Arial';
+  ctx.font = '700 11px "Segoe UI", Arial';
   ctx.fillStyle = T.accent;
-  ctx.fillText(String(rarity || '?').toUpperCase(), cx, pillY + 20);
+  ctx.fillText(String(rarity || '?').toUpperCase(), cx, pillY + 21);
 
-  ctx.font = '500 13px Consolas, monospace';
-  ctx.fillStyle = 'rgba(242,215,211,0.9)';
-  ctx.fillText(itemId, cx, pillY + pillH + 32);
+  ctx.font = '500 12px Consolas, monospace';
+  ctx.fillStyle = 'rgba(242,215,211,0.95)';
+  ctx.fillText(itemId, cx, pillY + pillH + 28);
 
-  ctx.font = '500 14px "Segoe UI", Arial';
+  ctx.font = '500 12px "Segoe UI", Arial';
   ctx.fillStyle = T.sub;
-  ctx.fillText('Ajouté à ton inventaire — /inventaire', cx, cardY + cardH - 20);
+  ctx.fillText('Ajouté à ton inventaire', cx, innerY + innerH - 14);
 
   ctx.font = '500 10px "Segoe UI", Arial';
-  ctx.fillStyle = 'rgba(255,245,240,0.38)';
-  ctx.fillText('Loot pondéré (hors boutique) · Cooldown 12 h', cx, H - pad - 10);
-  ctx.fillText('Par Koyorin et Roxxor', cx, H - pad - 26);
+  ctx.fillStyle = 'rgba(255,245,240,0.35)';
+  ctx.fillText('Par Koyorin et Roxxor', cx, H - pad - 12);
 }
 
 async function renderHackerLootCard(opts) {
