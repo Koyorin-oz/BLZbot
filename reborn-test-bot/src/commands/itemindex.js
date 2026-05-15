@@ -7,46 +7,7 @@ const {
 const idx = require('../services/indexProgress');
 const users = require('../services/users');
 const indexRoles = require('../services/indexRoles');
-const { INDEX_BONUSES } = require('../services/itemMatrix');
 const { renderIndexCard } = require('../lib/canvasIndex');
-
-function unicodeBar(pct, width = 18) {
-  const f = Math.round((Math.min(100, Math.max(0, pct)) / 100) * width);
-  return `${'█'.repeat(f)}${'░'.repeat(width - f)}`;
-}
-
-function indexEmbedColor(pct) {
-  if (pct >= 100) return 0x2ecc71;
-  if (pct >= 70) return 0x3498db;
-  if (pct >= 40) return 0x9b59b6;
-  if (pct >= 20) return 0xe67e22;
-  return 0x5d6d7e;
-}
-
-function nextMilestone(pct, claimed) {
-  const claimable = idx.STEPS.find((s) => !claimed.includes(s.pct) && pct >= s.pct);
-  if (claimable) {
-    return {
-      title: '🎁 Palier prêt',
-      text: `Tu peux réclamer **${claimable.pct} %** — \`/itemindex reclamer\``,
-    };
-  }
-  const upcoming = idx.STEPS.find((s) => pct < s.pct);
-  if (upcoming) {
-    return {
-      title: '🎯 Prochain objectif',
-      text: `**${upcoming.pct} %** du catalogue — encore **${upcoming.pct - pct} %**`,
-    };
-  }
-  return {
-    title: '✨ Catalogue',
-    text: '**100 %** atteint — vérifie les paliers non réclamés si besoin.',
-  };
-}
-
-function activeIndexBonuses(pct) {
-  return INDEX_BONUSES.filter((b) => pct >= b.pct);
-}
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -55,7 +16,7 @@ module.exports = {
     .addSubcommand((sc) =>
       sc
         .setName('voir')
-        .setDescription('Vue détaillée + jauge (image) et récap embed')
+        .setDescription('Panneau index (image : paliers, jauge, bonus, objectifs)')
         .addUserOption((o) => o.setName('membre').setDescription('Optionnel')),
     )
     .addSubcommand((sc) =>
@@ -70,7 +31,7 @@ module.exports = {
     .addSubcommand((sc) =>
       sc.setName('matrice').setDescription('Vue combinée Index × Ranked × Guilde (bonus actifs).'),
     ),
-  async execute(interaction, ctx) {
+  async execute(interaction ctx) {
     const uid = interaction.options.getUser('membre')?.id || interaction.user.id;
     const memberUser = interaction.options.getUser('membre') || interaction.user;
     if (
@@ -99,42 +60,7 @@ module.exports = {
         claimed,
       });
       const file = new AttachmentBuilder(buf, { name: 'index_catalogue.png' });
-
-      const milestone = nextMilestone(pct, claimed);
-      const bonuses = activeIndexBonuses(pct);
-      const bonusLine = bonuses.length
-        ? bonuses.map((b) => `${b.pct}% → *${b.label}*`).join('\n')
-        : '*Aucun bonus encore — atteins **10 %** pour le premier (+1 % XP).*';
-
-      const embed = new EmbedBuilder()
-        .setAuthor({ name: displayName, iconURL: avatarUrl })
-        .setTitle('📚 Index catalogue REBORN')
-        .setColor(indexEmbedColor(pct))
-        .setDescription(
-          [
-            `${unicodeBar(pct)} **${pct} %**`,
-            '',
-            '_L’**index** mesure ta complétion du **catalogue d’objets** : paliers 10 → 100 % donnent starss, coffres et bonus permanents (voir matrice)._',
-          ].join('\n'),
-        )
-        .addFields(
-          { name: milestone.title, value: milestone.text, inline: false },
-          {
-            name: '⚡ Bonus index déjà actifs',
-            value: bonusLine.slice(0, 1024),
-            inline: false,
-          },
-          {
-            name: '🔭 Aller plus loin',
-            value: '`/itemindex matrice` — cumul **Index × Ranked × Guilde**\n`/itemindex reclamer` — récupère la prochaine récompense',
-            inline: false,
-          },
-        )
-        .setImage('attachment://index_catalogue.png')
-        .setFooter({ text: 'Carte = paliers & récompenses · Embed = récap bonus & objectifs' })
-        .setTimestamp();
-
-      return interaction.editReply({ embeds: [embed], files: [file] });
+      return interaction.editReply({ files: [file] });
     }
 
     if (sub === 'definir') {
