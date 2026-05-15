@@ -102,7 +102,7 @@ module.exports = {
           `**Rareté :** ${rarity}`,
           `\`${loot.itemId}\``,
           '',
-          'Objet **inject** dans ton inventaire — ouvre `/inventaire`.',
+          'Objet **injecté** dans ton inventaire — ouvre `/inventaire`.',
           cfg.hackerRoleId ? `\nRôle pour la prochaine fois : <@&${cfg.hackerRoleId}>.` : '',
         ]
           .filter(Boolean)
