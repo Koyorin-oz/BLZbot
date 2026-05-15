@@ -190,8 +190,8 @@ function drawLootFace(ctx, W, H, pad, { guildName, itemName, itemId, rarity }) {
 }
 
 async function renderHackerLootCard(opts) {
-  const W = 900;
-  const H = 500;
+  const W = 920;
+  const H = 524;
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
   const pad = 20;
@@ -210,6 +210,16 @@ async function renderHackerLootCard(opts) {
   ctx.strokeStyle = T.outlineWarm;
   ctx.lineWidth = 1.5;
   ctx.stroke();
+
+  const capY = pad + 6;
+  const capW = W - pad * 2 - 40;
+  const capG = ctx.createLinearGradient(pad + 20, capY, pad + 20 + capW, capY);
+  capG.addColorStop(0, 'rgba(255, 209, 102, 0)');
+  capG.addColorStop(0.5, 'rgba(255, 209, 102, 0.72)');
+  capG.addColorStop(1, 'rgba(255, 209, 102, 0)');
+  ctx.fillStyle = capG;
+  rr(ctx, pad + 20, capY, capW, 3, 1.5);
+  ctx.fill();
 
   drawLootFace(ctx, W, H, pad, opts);
   return canvas.toBuffer('image/png');
