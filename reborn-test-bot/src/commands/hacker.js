@@ -1,7 +1,10 @@
 const {
   SlashCommandBuilder,
-  EmbedBuilder,
   AttachmentBuilder,
+  ContainerBuilder,
+  MediaGalleryBuilder,
+  TextDisplayBuilder,
+  MessageFlags,
 } = require('discord.js');
 const cfg = require('../config');
 const meta = require('../services/meta');
@@ -25,17 +28,32 @@ function fmtCooldown(ms) {
   return `~${m} min`;
 }
 
+function v2Reply(interaction, { fileName, buffer, textLines }) {
+  const file = new AttachmentBuilder(buffer, { name: fileName });
+  const gallery = new MediaGalleryBuilder().addItems({ media: { url: `attachment://${fileName}` } });
+  const caption = new TextDisplayBuilder().setContent(textLines.filter(Boolean).join('\n'));
+  const container = new ContainerBuilder()
+    .addMediaGalleryComponents(gallery)
+    .addTextDisplayComponents(caption);
+  return interaction.editReply({
+    files: [file],
+    components: [container],
+    flags: MessageFlags.IsComponentsV2,
+  });
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('hacker')
-    .setDescription('Salon Hacker : carte loot au style profil (cooldown 12 h, rôle si configuré).'),
+    .setDescription('Salon Hacker : carte loot (Components V2 · cooldown 12 h, rôle si configuré).'),
   async execute(interaction) {
     if (!interaction.guild) {
-      const e = new EmbedBuilder()
-        .setTitle('Salon Hacker')
-        .setColor(0x95a5a6)
-        .setDescription('**Serveur uniquement** — lance la commande dans un salon du serveur.');
-      return interaction.reply({ embeds: [e] });
+      const container = new ContainerBuilder().addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(
+          '### Salon Hacker\n\n**Serveur uniquement** — utilise cette commande dans un salon du serveur.',
+        ),
+      );
+      return interaction.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
     }
 
     await interaction.deferReply();
@@ -47,18 +65,19 @@ module.exports = {
 
     if (!owner && cfg.hackerRoleId && !hasHackerRole(member)) {
       const buf = await renderHackerStatusCard('denied');
-      const file = new AttachmentBuilder(buf, { name: 'hacker_denied.png' });
-      const roleLine = cfg.hackerRoleId ? `Rôle attendu : <@&${cfg.hackerRoleId}>.` : '';
-      const embed = new EmbedBuilder()
-        .setTitle('🔐 Accès refusé')
-        .setColor(0xe74c3c)
-        .setDescription(
-          ['Réservé aux membres avec le rôle **Hacker** sur ce serveur.', roleLine, '', '*Owners : test sans rôle.*']
-            .filter(Boolean)
-            .join('\n'),
-        )
-        .setImage('attachment://hacker_denied.png');
-      return interaction.editReply({ embeds: [embed], files: [file] });
+      const roleLine = cfg.hackerRoleId ? `Rôle requis : <@&${cfg.hackerRoleId}>.` : '';
+      return v2Reply(interaction, {
+        fileName: 'hacker_denied.png',
+        buffer: buf,
+        textLines: [
+          '### Accès refusé',
+          '',
+          'Réservé aux membres avec le rôle **Hacker** sur ce serveur.',
+          roleLine,
+          '',
+          '*Owners : déjà autorisés sans rôle.*',
+        ],
+      });
     }
 
     const key = `hacker_salon_last_${uid}`;
@@ -67,15 +86,15 @@ module.exports = {
     if (!cfg.TEST_NO_LIMITS && now - last < cfg.HACKER_SALON_COOLDOWN_MS) {
       const left = cfg.HACKER_SALON_COOLDOWN_MS - (now - last);
       const buf = await renderHackerStatusCard('cooldown', { waitLabel: fmtCooldown(left) });
-      const file = new AttachmentBuilder(buf, { name: 'hacker_wait.png' });
-      const embed = new EmbedBuilder()
-        .setTitle('⏳ Cooldown')
-        .setColor(0xf39c12)
-        .setDescription(
-          `Prochain tirage dans **${fmtCooldown(left)}** (limite **12 h** entre deux injections).`,
-        )
-        .setImage('attachment://hacker_wait.png');
-      return interaction.editReply({ embeds: [embed], files: [file] });
+      return v2Reply(interaction, {
+        fileName: 'hacker_wait.png',
+        buffer: buf,
+        textLines: [
+          '### Cooldown',
+          '',
+          `Prochain tirage dans **${fmtCooldown(left)}** (limite **12 h** entre deux récompenses).`,
+        ],
+      });
     }
 
     const loot = rollHackerSalon();
@@ -90,29 +109,20 @@ module.exports = {
       itemId: loot.itemId,
       rarity,
     });
-    const file = new AttachmentBuilder(buf, { name: 'hacker_loot.png' });
-    const accentHex = (RARITY_RING[rarity] || '#ffd166').replace('#', '');
-    const accentNum = parseInt(accentHex, 16);
 
-    const embed = new EmbedBuilder()
-      .setAuthor({ name: 'Salon Hacker', iconURL: interaction.user.displayAvatarURL({ size: 64 }) })
-      .setTitle(`💠 ${loot.name}`)
-      .setColor(Number.isFinite(accentNum) ? accentNum : 0x2ecc71)
-      .setDescription(
-        [
-          `**Rareté :** ${rarity}`,
-          `\`${loot.itemId}\``,
-          '',
-          'Objet **injecté** dans ton inventaire — ouvre `/inventaire`.',
-          cfg.hackerRoleId ? `\nRôle pour la prochaine fois : <@&${cfg.hackerRoleId}>.` : '',
-        ]
-          .filter(Boolean)
-          .join('\n'),
-      )
-      .setImage('attachment://hacker_loot.png')
-      .setFooter({ text: 'Loot pondéré hors boutique · RP hack / test inventaire' })
-      .setTimestamp();
+    const lines = [
+      '### Salon Hacker',
+      `**${loot.name}** · *${rarity}*`,
+      `\`${loot.itemId}\``,
+      '',
+      'Objet **ajouté** à ton inventaire — `/inventaire`.',
+    ];
+    if (cfg.hackerRoleId) lines.push('', `Pour les prochains passages : rôle <@&${cfg.hackerRoleId}>.`);
 
-    return interaction.editReply({ embeds: [embed], files: [file] });
+    return v2Reply(interaction, {
+      fileName: 'hacker_loot.png',
+      buffer: buf,
+      textLines: lines,
+    });
   },
 };
