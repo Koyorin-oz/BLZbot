@@ -208,13 +208,10 @@ async function renderIndexCard(opts) {
   ctx.fillStyle = T.text;
   ctx.fillText(truncateText(ctx, String(displayName || 'Joueur'), mainW - 200), mainX, y0 + 54);
 
-  ctx.font = '600 42px "Segoe UI", Arial';
+  ctx.font = '600 36px "Segoe UI", Arial';
   ctx.fillStyle = T.accent;
   ctx.textAlign = 'right';
-  ctx.fillText(`${pct}`, mainX + mainW - 4, y0 + 56);
-  ctx.font = '700 22px "Segoe UI", Arial';
-  ctx.fillStyle = T.sub;
-  ctx.fillText('%', mainX + mainW - 4, y0 + 56);
+  ctx.fillText(`${pct} %`, mainX + mainW, y0 + 56);
   ctx.textAlign = 'left';
 
   const barY = y0 + 68;
