@@ -156,7 +156,7 @@ async function renderIndexCard(opts) {
   const y0 = pad + innerPad;
   const innerW = W - pad * 2 - innerPad * 2;
 
-  const stripH = 122;
+  const stripH = 136;
   glassPanel(ctx, x0, y0, innerW, stripH, 14);
 
   const avatar = await loadSafe(avatarUrl);
