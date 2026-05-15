@@ -1,6 +1,5 @@
 /**
  * Carte salon Hacker — même ADN visuel que /profil (blz_bg, panneaux, or).
- * Centré, lisible, sans esthétique « terminal néon ».
  */
 const { createCanvas, loadImage } = require('canvas');
 const fs = require('node:fs');
@@ -21,9 +20,10 @@ const T = {
   outlineWarm: 'rgba(255, 180, 120, 0.3)',
 };
 
+/** Anneau + embed Discord (hex sans # pour parseInt). */
 const RARITY_RING = {
-  Commun: '#9ca3af',
-  Rare: '#60a5fa',
+  Commun: '#94a3b8',
+  Rare: '#38bdf8',
   Epique: '#c084fc',
   Légendaire: '#fb923c',
   Mythique: '#f87171',
@@ -87,10 +87,14 @@ function wrapLines(ctx, text, maxW, font) {
   return lines;
 }
 
-function renderLoot(ctx, W, H, { guildName, itemName, itemId, rarity }) {
-  const pad = 22;
-  const cx = W / 2;
+function truncate(str, maxLen) {
+  const t = String(str);
+  if (t.length <= maxLen) return t;
+  return `${t.slice(0, maxLen - 1)}…`;
+}
 
+function drawLootFace(ctx, W, H, pad, { guildName, itemName, itemId, rarity }) {
+  const cx = W / 2;
   const ring = RARITY_RING[rarity] || T.accent;
 
   ctx.textAlign = 'center';
@@ -98,158 +102,150 @@ function renderLoot(ctx, W, H, { guildName, itemName, itemId, rarity }) {
 
   ctx.font = '700 12px "Segoe UI", Arial';
   ctx.fillStyle = T.label;
-  ctx.fillText('SALON HACKER', cx, pad + 28);
+  ctx.fillText('SALON HACKER', cx, pad + 30);
 
   ctx.font = '500 13px "Segoe UI", Arial';
   ctx.fillStyle = T.sub;
-  ctx.fillText(truncate(ctx, String(guildName), 50), cx, pad + 48);
+  ctx.fillText(truncate(guildName, 52), cx, pad + 52);
 
-  const cardW = Math.min(640, W - 80);
-  const cardH = 268;
+  const cardW = Math.min(620, W - 72);
+  const cardH = 286;
   const cardX = (W - cardW) / 2;
-  const cardY = pad + 62;
+  const cardY = pad + 66;
 
   statPanel(ctx, cardX, cardY, cardW, cardH, 18);
+
   ctx.shadowColor = ring;
-  ctx.shadowBlur = 18;
-  rr(ctx, cardX + 3, cardY + 3, cardW - 6, cardH - 6, 16);
+  ctx.shadowBlur = 20;
+  rr(ctx, cardX + 4, cardY + 4, cardW - 8, cardH - 8, 16);
   ctx.strokeStyle = ring;
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.5;
   ctx.stroke();
   ctx.shadowBlur = 0;
 
-  const innerY = cardY + 28;
+  const innerY = cardY + 32;
   ctx.font = '700 11px "Segoe UI", Arial';
   ctx.fillStyle = T.label;
   ctx.fillText('OBJET OBTENU', cx, innerY);
 
-  const titleFont = '700 26px "Segoe UI", Arial';
-  const nameLines = wrapLines(ctx, String(itemName || '???').toUpperCase(), cardW - 80, titleFont);
-  let ty = innerY + 36;
+  const titleFont = '700 28px "Segoe UI", Arial';
+  const rawName = String(itemName || '???').toUpperCase();
+  const nameLines = wrapLines(ctx, rawName, cardW - 72, titleFont);
+  let ty = innerY + 42;
   ctx.font = titleFont;
   ctx.fillStyle = T.text;
   for (const ln of nameLines) {
     ctx.fillText(ln, cx, ty);
-    ty += 32;
+    ty += 34;
   }
 
-  const pillW = 160;
-  const pillH = 28;
+  const pillW = 168;
+  const pillH = 30;
   const pillX = cx - pillW / 2;
-  const pillY = ty + 12;
+  const pillY = ty + 16;
   rr(ctx, pillX, pillY, pillW, pillH, pillH / 2);
-  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
   ctx.fill();
   ctx.strokeStyle = ring;
   ctx.lineWidth = 1.5;
   ctx.stroke();
   ctx.font = '600 12px "Segoe UI", Arial';
   ctx.fillStyle = T.accent;
-  ctx.fillText(String(rarity || '?').toUpperCase(), cx, pillY + 19);
+  ctx.fillText(String(rarity || '?').toUpperCase(), cx, pillY + 20);
 
   ctx.font = '500 13px Consolas, monospace';
-  ctx.fillStyle = 'rgba(242,215,211,0.85)';
-  ctx.fillText(itemId, cx, pillY + pillH + 28);
+  ctx.fillStyle = 'rgba(242,215,211,0.9)';
+  ctx.fillText(itemId, cx, pillY + pillH + 32);
 
-  ctx.font = '500 13px "Segoe UI", Arial';
+  ctx.font = '500 14px "Segoe UI", Arial';
   ctx.fillStyle = T.sub;
-  ctx.fillText("Ajouté à ton inventaire — commande /inventaire", cx, cardY + cardH - 22);
+  ctx.fillText('Ajouté à ton inventaire — /inventaire', cx, cardY + cardH - 20);
 
-  ctx.textAlign = 'center';
   ctx.font = '500 10px "Segoe UI", Arial';
-  ctx.fillStyle = 'rgba(255,245,240,0.4)';
-  ctx.fillText('Loot pondéré (hors boutique) · Cooldown 12 h', cx, H - pad - 12);
-  ctx.fillText('Par Koyorin et Roxxor', cx, H - pad - 28);
+  ctx.fillStyle = 'rgba(255,245,240,0.38)';
+  ctx.fillText('Loot pondéré (hors boutique) · Cooldown 12 h', cx, H - pad - 10);
+  ctx.fillText('Par Koyorin et Roxxor', cx, H - pad - 26);
 }
 
-function truncate(ctx, s, maxLen) {
-  const t = String(s);
-  if (t.length <= maxLen) return t;
-  return `${t.slice(0, maxLen - 1)}…`;
-}
-
-function renderHackerLootCard(opts) {
-  const W = 920;
-  const H = 480;
+async function renderHackerLootCard(opts) {
+  const W = 900;
+  const H = 500;
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
+  const pad = 20;
 
-  return (async () => {
-    await drawBackdrop(ctx, W, H);
+  await drawBackdrop(ctx, W, H);
 
-    const ob = ctx.createLinearGradient(0, H, W, 0);
-    ob.addColorStop(0, 'rgba(120, 20, 35, 0.2)');
-    ob.addColorStop(1, 'rgba(20, 6, 10, 0.25)');
-    ctx.fillStyle = ob;
-    ctx.fillRect(0, 0, W, H);
+  const ob = ctx.createLinearGradient(0, H, W, 0);
+  ob.addColorStop(0, 'rgba(120, 20, 35, 0.18)');
+  ob.addColorStop(1, 'rgba(20, 6, 10, 0.22)');
+  ctx.fillStyle = ob;
+  ctx.fillRect(0, 0, W, H);
 
-    const pad = 18;
-    rr(ctx, pad, pad, W - pad * 2, H - pad * 2, 20);
-    ctx.fillStyle = T.shell;
-    ctx.fill();
-    ctx.strokeStyle = T.outlineWarm;
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+  rr(ctx, pad, pad, W - pad * 2, H - pad * 2, 22);
+  ctx.fillStyle = T.shell;
+  ctx.fill();
+  ctx.strokeStyle = T.outlineWarm;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
 
-    renderLoot(ctx, W, H, opts);
-    return canvas.toBuffer('image/png');
-  })();
+  drawLootFace(ctx, W, H, pad, opts);
+  return canvas.toBuffer('image/png');
 }
 
-function renderStatus(ctx, W, H, kind, extra) {
+function drawStatusFace(ctx, W, H, pad, kind, extra) {
   const cx = W / 2;
-  const pad = 24;
   ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
 
   ctx.font = '700 12px "Segoe UI", Arial';
   ctx.fillStyle = T.label;
-  ctx.fillText('SALON HACKER', cx, pad + 32);
+  ctx.fillText('SALON HACKER', cx, pad + 36);
 
   const accent = kind === 'denied' ? '#f87171' : T.accent;
-  ctx.font = '700 22px "Segoe UI", Arial';
+  ctx.font = '700 24px "Segoe UI", Arial';
   ctx.fillStyle = accent;
-  ctx.fillText(kind === 'denied' ? 'Accès refusé' : 'Patience…', cx, pad + 72);
+  ctx.fillText(kind === 'denied' ? 'Accès refusé' : 'Patience…', cx, pad + 82);
 
   const msg =
     kind === 'denied'
-      ? 'Tu dois avoir le rôle Hacker sur ce serveur (sauf owners).'
+      ? 'Rôle Hacker requis sur ce serveur (les owners sont exemptés).'
       : `Prochain tirage dans ${extra.waitLabel || '…'}`;
 
-  ctx.font = '500 15px "Segoe UI", Arial';
+  ctx.font = '500 16px "Segoe UI", Arial';
   ctx.fillStyle = T.text;
-  const lines = wrapLines(ctx, msg, W - 100, '500 15px "Segoe UI", Arial');
-  let y = pad + 108;
+  const lines = wrapLines(ctx, msg, W - 80, '500 16px "Segoe UI", Arial');
+  let y = pad + 118;
   for (const ln of lines) {
     ctx.fillText(ln, cx, y);
-    y += 22;
+    y += 24;
   }
 
   ctx.font = '500 12px "Segoe UI", Arial';
   ctx.fillStyle = T.sub;
-  ctx.fillText(kind === 'denied' ? '/hacker une fois le rôle obtenu' : 'Limite : 12 h entre deux récompenses', cx, H - 36);
+  ctx.fillText(
+    kind === 'denied' ? 'Réessaie quand tu as le rôle' : 'Limite : 12 h entre deux récompenses',
+    cx,
+    H - pad - 16,
+  );
 }
 
-function renderHackerStatusCard(kind, extra = {}) {
-  const W = 720;
+async function renderHackerStatusCard(kind, extra = {}) {
+  const W = 700;
   const H = 300;
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
+  const pad = 18;
 
-  return (async () => {
-    await drawBackdrop(ctx, W, H);
-    const pad = 16;
-    rr(ctx, pad, pad, W - pad * 2, H - pad * 2, 18);
-    ctx.fillStyle = T.shell;
-    ctx.fill();
-    ctx.strokeStyle = T.outlineWarm;
-    ctx.stroke();
-    renderStatus(ctx, W, H, kind, extra);
-    return canvas.toBuffer('image/png');
-  })();
+  await drawBackdrop(ctx, W, H);
+  rr(ctx, pad, pad, W - pad * 2, H - pad * 2, 18);
+  ctx.fillStyle = T.shell;
+  ctx.fill();
+  ctx.strokeStyle = T.outlineWarm;
+  ctx.stroke();
+
+  drawStatusFace(ctx, W, H, pad, kind, extra);
+  return canvas.toBuffer('image/png');
 }
 
-module.exports = {
-  renderHackerLootCard,
-  renderHackerStatusCard,
-  RARITY_RING,
-};
+module.exports = { renderHackerLootCard, renderHackerStatusCard, RARITY_RING };
