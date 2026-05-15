@@ -31,7 +31,7 @@ module.exports = {
     .addSubcommand((sc) =>
       sc.setName('matrice').setDescription('Vue combinée Index × Ranked × Guilde (bonus actifs).'),
     ),
-  async execute(interaction ctx) {
+  async execute(interaction, ctx) {
     const uid = interaction.options.getUser('membre')?.id || interaction.user.id;
     const memberUser = interaction.options.getUser('membre') || interaction.user;
     if (
