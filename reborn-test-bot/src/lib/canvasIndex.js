@@ -207,9 +207,15 @@ async function renderIndexCard(opts) {
   ctx.textAlign = 'left';
 
   const barPadX = textColX;
-  const barY = y0 + stripH - 22;
+  const barH = 30;
+  const barY = y0 + stripH - barH - 14;
   const barW = x0 + innerW - barPadX - 20;
-  drawXpBar(ctx, barPadX, barY, barW, 18, pct / 100);
+  drawXpBar(ctx, barPadX, barY, barW, barH, pct / 100);
+  ctx.font = '600 13px Consolas, monospace';
+  ctx.fillStyle = 'rgba(255, 250, 245, 0.92)';
+  ctx.textAlign = 'right';
+  ctx.fillText(`${pct} / 100`, x0 + innerW - 22, barY + barH / 2 + 5);
+  ctx.textAlign = 'left';
 
   const gridTop = y0 + stripH + 14;
   const cellGap = 12;
