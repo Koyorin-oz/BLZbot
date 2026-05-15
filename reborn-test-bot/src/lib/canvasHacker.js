@@ -249,12 +249,12 @@ function drawStatusFace(ctx, W, H, pad, kind, extra) {
 
   const msg =
     kind === 'denied'
-      ? 'Rôle **Hacker** requis (owners exemptés).'
+      ? 'Rôle Hacker requis (owners exemptés).'
       : `Prochain tirage · ${extra.waitLabel || '…'}`;
 
   ctx.font = '500 15px "Segoe UI", Arial';
   ctx.fillStyle = T.text;
-  const lines = wrapLines(ctx, msg.replace(/\*\*/g, ''), W - 88, '500 15px "Segoe UI", Arial');
+  const lines = wrapLines(ctx, msg, W - 88, '500 15px "Segoe UI", Arial');
   let y = pad + 120;
   for (const ln of lines) {
     ctx.fillText(ln, cx, y);
