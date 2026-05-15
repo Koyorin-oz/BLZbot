@@ -316,6 +316,25 @@ client.on('interactionCreate', async (interaction) => {
     // Pas l'auteur → laisser niveau répondre.
   }
 
+  if (interaction.isButton() && interaction.customId === 'rb:hacker:claim') {
+    try {
+      const { handleHackerSalonButton } = require('./commands/hacker');
+      await handleHackerSalonButton(interaction);
+    } catch (e) {
+      if (e?.code !== 10062 && e?.code !== 40060) {
+        console.error('[hacker salon bouton]', e?.message || e);
+      }
+      try {
+        if (!interaction.replied && !interaction.deferred) {
+          await interaction.reply({ content: 'Erreur salon hacker.', ephemeral: true });
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    return;
+  }
+
   if (interaction.isStringSelectMenu()) {
     const id = interaction.customId;
     if (id === 'rb:shop:sel' || id === 'rb:inv:sel' || id === 'rb:tree:sel' || id === 'rb:q:pick') {

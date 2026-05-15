@@ -190,7 +190,7 @@ async function useItem(userId, itemId) {
 
   // Hacker token : non consommé ici (utilisé via /hacker dédié).
   if (id === 'hacker_token') {
-    return { ok: false, error: 'Le **jeton hacker** s’utilise via la commande dédiée `/hacker`.' };
+    return { ok: false, error: 'Le **jeton hacker** s’utilise via le **bouton** du panneau `/salon-hacker`.' };
   }
 
   // Items « décoratifs » (planète, étoile, baleine…) : pas d'effet direct,

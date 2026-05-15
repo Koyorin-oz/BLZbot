@@ -19,7 +19,7 @@ module.exports = {
           '**Échanges** — `/echange` règle 40 % (starss + objets `item:qty`).',
           '**Index** — `/itemindex`.',
           '**Quêtes** — `/quete` voir, quotidienne, hebdo, **choisir**, **reclamer_selection**.',
-          '**Trophées** — `/trophees`. **Hacker** — `/hacker`.',
+          '**Trophées** — `/trophees`. **Hacker** — panneau `/salon-hacker` + bouton.',
           '**Staff** — `/passeport`, `/warn`, `/purge`.',
           '',
           '_Données : `reborn-test-bot` + SQLite `data/reborn.sqlite`._',
