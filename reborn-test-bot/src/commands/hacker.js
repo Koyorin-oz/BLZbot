@@ -84,14 +84,15 @@ module.exports = {
     users.addInventory(uid, loot.itemId, 1);
     meta.set(key, String(now));
 
-    const buf = renderHackerLootCard({
+    const buf = await renderHackerLootCard({
       guildName: interaction.guild.name,
       itemName: loot.name,
       itemId: loot.itemId,
       rarity,
     });
     const file = new AttachmentBuilder(buf, { name: 'hacker_loot.png' });
-    const accentNum = parseInt(String(RARITY_HEX[rarity] || '#2ecc71').replace('#', ''), 16);
+    const accentHex = (RARITY_RING[rarity] || '#ffd166').replace('#', '');
+    const accentNum = parseInt(accentHex, 16);
 
     const embed = new EmbedBuilder()
       .setAuthor({ name: 'Salon Hacker', iconURL: interaction.user.displayAvatarURL({ size: 64 }) })
