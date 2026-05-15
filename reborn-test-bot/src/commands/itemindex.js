@@ -2,22 +2,60 @@ const {
   SlashCommandBuilder,
   EmbedBuilder,
   PermissionFlagsBits,
-  ContainerBuilder,
-  TextDisplayBuilder,
-  MessageFlags,
+  AttachmentBuilder,
 } = require('discord.js');
 const idx = require('../services/indexProgress');
 const users = require('../services/users');
 const indexRoles = require('../services/indexRoles');
+const { INDEX_BONUSES } = require('../services/itemMatrix');
+const { renderIndexCard } = require('../lib/canvasIndex');
+
+function unicodeBar(pct, width = 18) {
+  const f = Math.round((Math.min(100, Math.max(0, pct)) / 100) * width);
+  return `${'█'.repeat(f)}${'░'.repeat(width - f)}`;
+}
+
+function indexEmbedColor(pct) {
+  if (pct >= 100) return 0x2ecc71;
+  if (pct >= 70) return 0x3498db;
+  if (pct >= 40) return 0x9b59b6;
+  if (pct >= 20) return 0xe67e22;
+  return 0x5d6d7e;
+}
+
+function nextMilestone(pct, claimed) {
+  const claimable = idx.STEPS.find((s) => !claimed.includes(s.pct) && pct >= s.pct);
+  if (claimable) {
+    return {
+      title: '🎁 Palier prêt',
+      text: `Tu peux réclamer **${claimable.pct} %** — \`/itemindex reclamer\``,
+    };
+  }
+  const upcoming = idx.STEPS.find((s) => pct < s.pct);
+  if (upcoming) {
+    return {
+      title: '🎯 Prochain objectif',
+      text: `**${upcoming.pct} %** du catalogue — encore **${upcoming.pct - pct} %**`,
+    };
+  }
+  return {
+    title: '✨ Catalogue',
+    text: '**100 %** atteint — vérifie les paliers non réclamés si besoin.',
+  };
+}
+
+function activeIndexBonuses(pct) {
+  return INDEX_BONUSES.filter((b) => pct >= b.pct);
+}
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('itemindex')
-    .setDescription('Progression index items (palier 10 % → 100 %).')
+    .setDescription('Progression index items (palier 10 % → 100 %) + matrice bonus.')
     .addSubcommand((sc) =>
       sc
         .setName('voir')
-        .setDescription('Voir ton % et les récompenses')
+        .setDescription('Vue détaillée + jauge (image) et récap embed')
         .addUserOption((o) => o.setName('membre').setDescription('Optionnel')),
     )
     .addSubcommand((sc) =>
@@ -34,6 +72,7 @@ module.exports = {
     ),
   async execute(interaction, ctx) {
     const uid = interaction.options.getUser('membre')?.id || interaction.user.id;
+    const memberUser = interaction.options.getUser('membre') || interaction.user;
     if (
       uid !== interaction.user.id &&
       !ctx.isOwner() &&
@@ -41,32 +80,61 @@ module.exports = {
     ) {
       return interaction.reply({ content: 'Interdit.' });
     }
-    users.getOrCreate(uid, interaction.options.getUser('membre')?.username || interaction.user.username);
+    users.getOrCreate(uid, memberUser.username);
     const sub = interaction.options.getSubcommand();
 
     if (sub === 'voir') {
+      await interaction.deferReply();
       const r = idx.getRow(uid);
       const claimed = idx.parseClaimed(r.claimed_json);
-      const lines = idx.STEPS.map((s) => {
-        const chest = (s.chests || []).map((c) => `${c.qty > 1 ? `${c.qty}× ` : ''}\`${c.id}\``).join(', ');
-        const chestPart = chest ? ` + ${chest}` : '';
-        const rolePart = s.roleNote ? ` + ${s.roleNote}` : '';
-        const done = claimed.includes(s.pct) ? '✅' : '○';
-        return `${done} **${s.pct} %** — +${s.stars.toLocaleString('fr-FR')} starss${chestPart}${rolePart}`;
+      const pct = r.completion_pct || 0;
+      const displayName = interaction.guild?.members?.cache?.get(uid)?.displayName || memberUser.username;
+      const avatarUrl = memberUser.displayAvatarURL({ extension: 'png', size: 256 });
+
+      const buf = await renderIndexCard({
+        displayName,
+        avatarUrl,
+        completionPct: pct,
+        steps: idx.STEPS,
+        claimed,
       });
-      const intro = new TextDisplayBuilder().setContent(
-        [
-          '# Index items',
-          '**C’est quoi ?** L’**index** mesure à quel point tu as « complété » le **catalogue d’objets** du bot : plus tu montes en **%**, plus tu débloques des **paliers** (starss, coffres, parfois un rôle Discord à 100 %).',
-          '',
-          `**Ton avancement** : **${r.completion_pct} %**`,
-        ].join('\n'),
-      );
-      const steps = new TextDisplayBuilder().setContent(
-        ['## Paliers', lines.join('\n')].join('\n').slice(0, 3800),
-      );
-      const c = new ContainerBuilder().addTextDisplayComponents(intro, steps);
-      return interaction.reply({ components: [c], flags: MessageFlags.IsComponentsV2 });
+      const file = new AttachmentBuilder(buf, { name: 'index_catalogue.png' });
+
+      const milestone = nextMilestone(pct, claimed);
+      const bonuses = activeIndexBonuses(pct);
+      const bonusLine = bonuses.length
+        ? bonuses.map((b) => `${b.pct}% → *${b.label}*`).join('\n')
+        : '*Aucun bonus encore — atteins **10 %** pour le premier (+1 % XP).*';
+
+      const embed = new EmbedBuilder()
+        .setAuthor({ name: displayName, iconURL: avatarUrl })
+        .setTitle('📚 Index catalogue REBORN')
+        .setColor(indexEmbedColor(pct))
+        .setDescription(
+          [
+            `${unicodeBar(pct)} **${pct} %**`,
+            '',
+            '_L’**index** mesure ta complétion du **catalogue d’objets** : paliers 10 → 100 % donnent starss, coffres et bonus permanents (voir matrice)._',
+          ].join('\n'),
+        )
+        .addFields(
+          { name: milestone.title, value: milestone.text, inline: false },
+          {
+            name: '⚡ Bonus index déjà actifs',
+            value: bonusLine.slice(0, 1024),
+            inline: false,
+          },
+          {
+            name: '🔭 Aller plus loin',
+            value: '`/itemindex matrice` — cumul **Index × Ranked × Guilde**\n`/itemindex reclamer` — récupère la prochaine récompense',
+            inline: false,
+          },
+        )
+        .setImage('attachment://index_catalogue.png')
+        .setFooter({ text: 'Carte = paliers & récompenses · Embed = récap bonus & objectifs' })
+        .setTimestamp();
+
+      return interaction.editReply({ embeds: [embed], files: [file] });
     }
 
     if (sub === 'definir') {
@@ -78,7 +146,9 @@ module.exports = {
       if (interaction.guildId) {
         indexRoles
           .syncIndexFullRole(interaction.client, interaction.guildId, uid)
-          .catch(() => { /* best-effort */ });
+          .catch(() => {
+            /* best-effort */
+          });
       }
       return interaction.reply({ content: `Index **${uid}** → **${p} %**` });
     }
@@ -89,61 +159,102 @@ module.exports = {
       if (interaction.guildId) {
         indexRoles
           .syncIndexFullRole(interaction.client, interaction.guildId, uid)
-          .catch(() => { /* best-effort */ });
+          .catch(() => {
+            /* best-effort */
+          });
       }
       const chest = (r.step.chests || [])
         .map((c) => `+**${c.qty || 1}** \`${c.id}\``)
         .join(' ');
       const extra = [chest, r.step.roleNote].filter(Boolean).join(' ');
-      return interaction.reply({
-        content: `Étape **${r.step.pct} %** : +**${r.step.stars.toLocaleString('fr-FR')}** starss${extra ? ` · ${extra}` : ''}`,
-      });
+      const claimEmbed = new EmbedBuilder()
+        .setTitle('🎁 Palier réclamé')
+        .setColor(0x2ecc71)
+        .setDescription(
+          [
+            `Étape **${r.step.pct} %** validée.`,
+            '',
+            `+**${r.step.stars.toLocaleString('fr-FR')}** ⭐ starss`,
+            extra ? `\n${extra}` : '',
+          ].join('\n'),
+        )
+        .setFooter({ text: '/itemindex voir pour la carte à jour' });
+      return interaction.reply({ embeds: [claimEmbed] });
     }
 
     if (sub === 'matrice') {
       const matrix = require('../services/itemMatrix');
       const m = matrix.summary(uid, interaction.guildId || null);
-      const lines = [];
-      lines.push('# 🧭 Matrice — Index × Ranked × Guilde');
-      lines.push('');
-      lines.push('## 📚 Index items');
-      lines.push(`Complétion : **${m.index.pct} %**`);
-      if (m.index.bonuses.length) {
-        lines.push(`Bonus actifs : ${m.index.bonuses.map((b) => `**${b.label}**`).join(' · ')}`);
-      } else {
-        lines.push('*Aucun bonus encore — atteins **10 %** pour démarrer.*');
-      }
-      lines.push('');
-      lines.push('## ⚔️ Ranked RP');
-      lines.push(
-        `Tier : **${m.ranked.label}** · RP **${m.ranked.rp.toLocaleString('fr-FR')}** · multiplicateur arbre **+${(m.ranked.pctBp - 10000) / 100}%**`,
+      const thumb = interaction.user.displayAvatarURL({ extension: 'png', size: 128 });
+      const indexBonusList = m.index.bonuses.length
+        ? m.index.bonuses.map((b) => `**${b.pct}%** · ${b.label}`).join('\n')
+        : '_Atteins **10 %** pour activer le premier bonus (+1 % XP)._';
+
+      const rankedExtra = [];
+      rankedExtra.push(
+        `${unicodeBar(Math.min(100, Number((m.ranked.rp * 100n) / 100000n)))} *échelle indicative*`,
       );
       if (m.ranked.flatMsg > 0n || m.ranked.flatVoc > 0n) {
-        lines.push(
-          `Flats : +**${m.ranked.flatMsg}** RP/msg · +**${m.ranked.flatVoc}** RP/min voc`,
-        );
+        rankedExtra.push(`Flats RP · msg **+${m.ranked.flatMsg}** · voc **+${m.ranked.flatVoc}**/min`);
       }
-      lines.push(`Perks : ${m.ranked.perks.map((p) => `*${p}*`).join(' · ')}`);
-      lines.push('');
-      lines.push('## 🛡️ Guilde');
-      if (m.guilde) {
-        lines.push(
-          `**${m.guilde.name}** — niveau **${m.guilde.level}** — grade **${m.guilde.gradeLabel}**${m.guilde.antiSeparation ? ' · 🛡️ anti-séparation' : ''}`,
-        );
-        lines.push(
-          `Trésorerie **${m.guilde.treasury.toLocaleString('fr-FR')}** · Tes **GRP ${m.guilde.memberGrp.toLocaleString('fr-FR')}** · GXP perso **${m.guilde.memberGxp.toLocaleString('fr-FR')}**`,
-        );
-      } else {
-        lines.push('*Tu n’es dans aucune guilde sur ce serveur — `/guilde creer` ou `/guilde rejoindre`.*');
-      }
-      lines.push('');
-      lines.push('## ⛩️ Classes (arbre)');
-      lines.push(m.classes.map((c) => `${c.icon} **${c.name}**`).join(' · '));
-      const e = new EmbedBuilder()
-        .setTitle('🧭 Matrice — Index × Ranked × Guilde')
-        .setColor(0x9b59b6)
-        .setDescription(lines.join('\n').slice(0, 4000));
-      return interaction.reply({ embeds: [e] });
+
+      const guildeBlock = m.guilde
+        ? [
+            `${m.guilde.name} · nv **${m.guilde.level}** · **${m.guilde.gradeLabel}**${
+              m.guilde.antiSeparation ? ' · 🛡️ anti-séparation' : ''
+            }`,
+            `Trésor **${m.guilde.treasury.toLocaleString('fr-FR')}** ⭐ · ton GRP **${m.guilde.memberGrp.toLocaleString(
+              'fr-FR',
+            )}**`,
+          ].join('\n')
+        : "*Pas de guilde — `/guilde creer` ou `/guilde rejoindre`*";
+
+      const classesLine =
+        m.classes.length > 0
+          ? m.classes.map((c) => `${c.icon} **${c.name}**`).join(' · ')
+          : '_Aucune classe — progresse dans `/arbre`._';
+
+      const matriceEmbed = new EmbedBuilder()
+        .setAuthor({ name: 'Matrice REBORN', iconURL: thumb })
+        .setTitle('🧭 Index × Ranked × Guilde')
+        .setColor(0x8e44ad)
+        .setDescription(
+          'Récap des **bonus cumulés** : chaque pilier amplifie l’économie et la progression (index, arbre ranked, guilde).',
+        )
+        .addFields(
+          {
+            name: `📊 Index — ${m.index.pct} %`,
+            value: indexBonusList.slice(0, 1024),
+            inline: true,
+          },
+          {
+            name: `⚔️ Ranked — ${m.ranked.label}`,
+            value: [
+              `RP **${m.ranked.rp.toLocaleString('fr-FR')}**`,
+              `Multi arbre **+${(m.ranked.pctBp - 10000) / 100}%**`,
+              rankedExtra.join('\n'),
+              m.ranked.perks.length ? `\n*${m.ranked.perks.join(' · ')}*` : '',
+            ]
+              .join('\n')
+              .slice(0, 1024),
+            inline: true,
+          },
+          { name: '\u200b', value: '\u200b', inline: false },
+          {
+            name: '🛡️ Guilde',
+            value: guildeBlock.slice(0, 1024),
+            inline: true,
+          },
+          {
+            name: '⛩️ Classes (arbre)',
+            value: classesLine.slice(0, 1024),
+            inline: true,
+          },
+        )
+        .setFooter({ text: '/itemindex voir · carte paliers  ·  /ranked voir' })
+        .setTimestamp();
+
+      return interaction.reply({ embeds: [matriceEmbed] });
     }
   },
 };
