@@ -85,12 +85,11 @@ module.exports = {
     meta.set(key, String(now));
 
     const buf = renderHackerLootCard({
-        guildName: interaction.guild.name,
-        itemName: loot.name,
-        itemId: loot.itemId,
-        rarity,
-      }),
-    );
+      guildName: interaction.guild.name,
+      itemName: loot.name,
+      itemId: loot.itemId,
+      rarity,
+    });
     const file = new AttachmentBuilder(buf, { name: 'hacker_loot.png' });
     const accentNum = parseInt(String(RARITY_HEX[rarity] || '#2ecc71').replace('#', ''), 16);
 
