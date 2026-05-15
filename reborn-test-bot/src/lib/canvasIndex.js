@@ -85,7 +85,7 @@ async function renderIndexCard(opts) {
   const pct = Math.min(100, Math.max(0, completionPct | 0));
 
   const W = 980;
-  const H = 920;
+  const H = 1020;
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
 
