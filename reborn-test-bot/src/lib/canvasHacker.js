@@ -280,6 +280,16 @@ async function renderHackerStatusCard(kind, extra = {}) {
   ctx.strokeStyle = T.outlineWarm;
   ctx.stroke();
 
+  const capY = pad + 6;
+  const capW = W - pad * 2 - 36;
+  const capG = ctx.createLinearGradient(pad + 18, capY, pad + 18 + capW, capY);
+  capG.addColorStop(0, 'rgba(255, 209, 102, 0)');
+  capG.addColorStop(0.5, 'rgba(255, 209, 102, 0.72)');
+  capG.addColorStop(1, 'rgba(255, 209, 102, 0)');
+  ctx.fillStyle = capG;
+  rr(ctx, pad + 18, capY, capW, 3, 1.5);
+  ctx.fill();
+
   drawStatusFace(ctx, W, H, pad, kind, extra);
   return canvas.toBuffer('image/png');
 }
