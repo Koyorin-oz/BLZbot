@@ -71,7 +71,7 @@ function buildLootContainer(interaction, { fileName, loot, rarity }) {
   const sepMid = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true);
 
   const nextLines = [
-    '### Et maintenant ?',
+    '### Étape suivante',
     '- **`/inventaire`** — tout ton butin et les quantités',
     '- Loot **pondéré** (hors boutique) — idéal **RP / tests**',
     '- **Cooldown 12 h** entre deux récompenses sur ce salon',
