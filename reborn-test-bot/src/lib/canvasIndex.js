@@ -190,25 +190,25 @@ async function renderIndexCard(opts) {
   ctx.textAlign = 'left';
   ctx.font = '700 14px "Segoe UI", Arial';
   ctx.fillStyle = T.label;
-  ctx.fillText('CATALOGUE REBORN', textColX, y0 + 34);
+  ctx.fillText('CATALOGUE REBORN', textColX, y0 + 32);
 
   ctx.font = '700 30px "Segoe UI", Arial';
   ctx.fillStyle = T.text;
-  ctx.fillText(truncateText(ctx, String(displayName || 'Joueur'), textRightLimit - textColX - 20), textColX, y0 + 68);
+  ctx.fillText(truncateText(ctx, String(displayName || 'Joueur'), textRightLimit - textColX - 20), textColX, y0 + 64);
 
   ctx.font = '600 16px "Segoe UI", Arial';
   ctx.fillStyle = T.sub;
-  ctx.fillText(`Progression ${pct} / 100`, textColX, y0 + 94);
+  ctx.fillText(`Progression ${pct} / 100`, textColX, y0 + 90);
 
   ctx.textAlign = 'right';
   ctx.font = '700 40px "Segoe UI", Arial';
   ctx.fillStyle = T.accent;
-  ctx.fillText(`${pct} %`, x0 + innerW - 22, y0 + 72);
+  ctx.fillText(`${pct} %`, x0 + innerW - 22, y0 + 68);
   ctx.textAlign = 'left';
 
   const barPadX = textColX;
-  const barH = 30;
-  const barY = y0 + stripH - barH - 14;
+  const barH = 38;
+  const barY = y0 + stripH - barH - 12;
   const barW = x0 + innerW - barPadX - 20;
   drawXpBar(ctx, barPadX, barY, barW, barH, pct / 100);
   ctx.font = '600 13px Consolas, monospace';
