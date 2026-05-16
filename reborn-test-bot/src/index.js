@@ -149,6 +149,13 @@ client.once(Events.ClientReady, async () => {
       console.error('[temple roles flush]', e);
     }
   }, 30_000);
+
+  try {
+    const { scheduleStreakReset } = require('./services/streak');
+    scheduleStreakReset();
+  } catch (e) {
+    console.error('[streak init]', e?.message || e);
+  }
 });
 
 client.on('interactionCreate', async (interaction) => {
