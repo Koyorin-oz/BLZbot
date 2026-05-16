@@ -54,4 +54,32 @@ function ownedCount(userId) {
   return parseOwned(row?.owned_json).size;
 }
 
-module.exports = { markDiscovered, refreshCompletion, ownedCount, parseOwned };
+/** Recalcule la collection depuis l’inventaire actuel (qty > 0). */
+function syncFromInventory(userId) {
+  indexProgress.getRow(userId);
+  const inv = users.getInventory(userId);
+  const owned = new Set();
+  for (const row of inv) {
+    if (row.qty > 0 && isIndexable(row.item_id)) owned.add(row.item_id);
+  }
+  return saveOwned(userId, owned);
+}
+
+/**
+ * Sync inventaire → % index → récompenses de paliers manquantes.
+ * @returns {{ pct: number, owned: number, total: number, grant: ReturnType<indexProgress.autoClaimAll> }}
+ */
+function syncProgress(userId) {
+  const pct = syncFromInventory(userId);
+  const grant = indexProgress.autoClaimAll(userId, users);
+  return { pct, owned: ownedCount(userId), total: totalIndexable(), grant };
+}
+
+module.exports = {
+  markDiscovered,
+  refreshCompletion,
+  ownedCount,
+  parseOwned,
+  syncFromInventory,
+  syncProgress,
+};
