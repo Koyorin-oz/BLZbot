@@ -215,15 +215,20 @@ function createBot(opts) {
   }
 
   client.once(Events.ClientReady, async (c) => {
-    console.log(`[bot] Connecté : ${c.user.tag}`);
-    console.log(
-      `[bot] Build ${VERIF_BUILD_ID} — OAuth bouton = discord.com + ticket SQLite (state court). GET /health`,
-    );
+    const { isCompact, blzLine } = require(path.join(__dirname, '..', '..', 'blz-log.js'));
     try {
       await c.application.commands.set(buildSlashCommands());
-      console.log(
-        '[bot] Commandes slash globales enregistrées (/verify, /man-verify, /setup-verification, /unverify, /antiraid).',
-      );
+      if (isCompact()) {
+        blzLine('verif', `${c.user.tag} · OAuth · slash enregistrés`);
+      } else {
+        console.log(`[bot] Connecté : ${c.user.tag}`);
+        console.log(
+          `[bot] Build ${VERIF_BUILD_ID} — OAuth bouton = discord.com + ticket SQLite (state court). GET /health`,
+        );
+        console.log(
+          '[bot] Commandes slash globales enregistrées (/verify, /man-verify, /setup-verification, /unverify, /antiraid).',
+        );
+      }
     } catch (e) {
       console.error('[bot] Échec enregistrement des commandes globales :', e);
     }
