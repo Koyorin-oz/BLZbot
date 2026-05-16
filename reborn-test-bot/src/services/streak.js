@@ -47,6 +47,7 @@ function updateStreak(client, userId) {
   if (lastTs === yesterdayTs) {
     newStreak += 1;
     streakUpdated = true;
+    db.prepare('UPDATE users SET streak = ?, last_streak_timestamp = ? WHERE id = ?').run(newStreak, todayTs, userId);
   } else if (lastTs > 0 && lastTs < yesterdayTs) {
     db.prepare(
       'UPDATE users SET streak_lost_timestamp = ?, previous_streak = ?, streak = 1, last_streak_timestamp = ? WHERE id = ?',
@@ -56,10 +57,7 @@ function updateStreak(client, userId) {
   } else if (lastTs === 0) {
     newStreak = 1;
     streakUpdated = true;
-  }
-
-  if (streakUpdated && lastTs !== yesterdayTs && !(lastTs > 0 && lastTs < yesterdayTs)) {
-    db.prepare('UPDATE users SET streak = ?, last_streak_timestamp = ? WHERE id = ?').run(newStreak, todayTs, userId);
+    db.prepare('UPDATE users SET streak = ?, last_streak_timestamp = ? WHERE id = ?').run(1, todayTs, userId);
   }
 
   if (!streakUpdated) {
@@ -99,7 +97,6 @@ async function sendStreakAnnouncement(client, userId, newStreak, reward) {
   await channel.send({ content: message.slice(0, 1900) });
 }
 
-/** Tick périodique : remet streak à 0 si pas de message « hier » (comme le bot principal). */
 function tickStreakReset() {
   try {
     const yesterdayTs = todayStartMs() - 24 * 60 * 60 * 1000;
@@ -121,7 +118,6 @@ function scheduleStreakReset() {
   console.log('[streak] Vérification reset streak toutes les 60 s.');
 }
 
-/** Streak Keeper : restaure la streak perdue si < 48 h (bot principal). */
 function restoreLostStreak(userId) {
   const u = users.getUser(userId);
   if (!u?.streak_lost_timestamp) {
@@ -141,5 +137,6 @@ module.exports = {
   updateStreak,
   calculateStreakReward,
   scheduleStreakReset,
+  tickStreakReset,
   restoreLostStreak,
 };
