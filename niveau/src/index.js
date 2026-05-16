@@ -89,7 +89,7 @@ const skipSlashDeployEnv = ['1', 'true', 'yes'].includes(
 if (skipSlashDeployEnv) {
     console.warn(
         '[niveau] SKIP_SLASH_DEPLOY_ON_START est activé : aucune commande slash ne sera enregistrée au démarrage. ' +
-            'Mets 0 ou supprime la variable, ou lance : npm run deploy:commands'
+            'Mets SKIP_SLASH_DEPLOY_ON_START=0 dans le .env (Pebble File Manager) puis redémarre le serveur.'
     );
 }
 
