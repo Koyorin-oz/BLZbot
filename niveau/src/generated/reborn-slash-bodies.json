@@ -1,0 +1,1437 @@
+[
+  {
+    "options": [
+      {
+        "type": 3,
+        "name": "nom",
+        "description": "Nom de la guilde",
+        "required": true
+      },
+      {
+        "name": "chef",
+        "description": "Membre qui devient chef (défaut : toi)",
+        "required": false,
+        "type": 6
+      }
+    ],
+    "name": "admin-creer-guilde",
+    "description": "🛡️ Crée une guilde joueur sans exigence de niveau (admin).",
+    "default_member_permissions": "8",
+    "type": 1
+  },
+  {
+    "options": [
+      {
+        "type": 1,
+        "name": "audit",
+        "description": "État courant + récap sources/sinks.",
+        "options": []
+      },
+      {
+        "type": 1,
+        "name": "simu",
+        "description": "Simuler l'inflation pour N joueurs × D jours.",
+        "options": [
+          {
+            "max_value": 10000,
+            "min_value": 1,
+            "type": 4,
+            "name": "joueurs",
+            "description": "Nombre de joueurs actifs",
+            "required": true
+          },
+          {
+            "max_value": 365,
+            "min_value": 1,
+            "type": 4,
+            "name": "jours",
+            "description": "Durée en jours",
+            "required": true
+          },
+          {
+            "max_value": 1000,
+            "min_value": 0,
+            "type": 4,
+            "name": "msg_par_jour",
+            "description": "Messages moyens / joueur / jour (def 30)",
+            "required": false
+          },
+          {
+            "max_value": 1440,
+            "min_value": 0,
+            "type": 4,
+            "name": "voc_par_jour",
+            "description": "Minutes de voc / joueur / jour (def 30)",
+            "required": false
+          }
+        ]
+      }
+    ],
+    "name": "admin-economie",
+    "description": "📊 Audit et simulation de l’économie du serveur (admin).",
+    "default_member_permissions": "8",
+    "type": 1
+  },
+  {
+    "options": [
+      {
+        "type": 1,
+        "name": "desactiver",
+        "description": "Désactiver le focus pour une guilde abusive.",
+        "options": [
+          {
+            "type": 3,
+            "name": "guild_id",
+            "description": "Identifiant de la guilde",
+            "required": true
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "reactiver",
+        "description": "Réactiver le focus pour une guilde.",
+        "options": [
+          {
+            "type": 3,
+            "name": "guild_id",
+            "description": "Identifiant de la guilde",
+            "required": true
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "reset-cd",
+        "description": "Réinitialiser le cooldown focus 7 j.",
+        "options": [
+          {
+            "type": 3,
+            "name": "guild_id",
+            "description": "Identifiant de la guilde",
+            "required": true
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "historique",
+        "description": "Voir les 10 derniers focus impliquant cette guilde.",
+        "options": [
+          {
+            "type": 3,
+            "name": "guild_id",
+            "description": "Identifiant de la guilde",
+            "required": true
+          }
+        ]
+      }
+    ],
+    "name": "admin-focus",
+    "description": "🎯 Modération des Focus de guilde (admin).",
+    "default_member_permissions": "8",
+    "type": 1
+  },
+  {
+    "options": [
+      {
+        "type": 1,
+        "name": "creer-ranked",
+        "description": "🏅 Crée les rôles Bronze → Apex sur ce serveur.",
+        "options": []
+      },
+      {
+        "type": 1,
+        "name": "creer-index-full",
+        "description": "📦 Crée le rôle « Pipelette ultime » (index 100 %).",
+        "options": []
+      },
+      {
+        "type": 1,
+        "name": "creer-temple",
+        "description": "🏛️ Crée les rôles Temple — Roi et Légende.",
+        "options": []
+      },
+      {
+        "type": 1,
+        "name": "definir-ranked",
+        "description": "🔗 Associe un rôle existant à un tier ranked.",
+        "options": [
+          {
+            "type": 3,
+            "choices": [
+              {
+                "name": "Apex",
+                "value": "apex"
+              },
+              {
+                "name": "Master",
+                "value": "master"
+              },
+              {
+                "name": "Diamond",
+                "value": "diamond"
+              },
+              {
+                "name": "Platine",
+                "value": "platine"
+              },
+              {
+                "name": "Or",
+                "value": "or"
+              },
+              {
+                "name": "Argent",
+                "value": "argent"
+              },
+              {
+                "name": "Bronze",
+                "value": "bronze"
+              }
+            ],
+            "name": "tier",
+            "description": "Tier ranked",
+            "required": true
+          },
+          {
+            "name": "role",
+            "description": "Rôle Discord à utiliser",
+            "required": true,
+            "type": 8
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "definir-index-full",
+        "description": "🔗 Associe un rôle existant à l'index 100 %.",
+        "options": [
+          {
+            "name": "role",
+            "description": "Rôle Discord à utiliser",
+            "required": true,
+            "type": 8
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "definir-temple-roi",
+        "description": "👑 Associe un rôle aux joueurs Roi du Temple.",
+        "options": [
+          {
+            "name": "role",
+            "description": "Rôle Discord à utiliser",
+            "required": true,
+            "type": 8
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "definir-temple-legende",
+        "description": "✨ Associe un rôle aux joueurs Légende du Temple.",
+        "options": [
+          {
+            "name": "role",
+            "description": "Rôle Discord à utiliser",
+            "required": true,
+            "type": 8
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "voir",
+        "description": "📋 Voir la configuration actuelle des rôles.",
+        "options": []
+      },
+      {
+        "type": 1,
+        "name": "resync",
+        "description": "🔄 Resynchroniser les rôles d'un membre.",
+        "options": [
+          {
+            "name": "membre",
+            "description": "Membre à resync",
+            "required": true,
+            "type": 6
+          }
+        ]
+      }
+    ],
+    "name": "admin-roles",
+    "description": "⚙️ Gestion des rôles Discord (Ranked, Index 100 %, Temple).",
+    "default_member_permissions": "8",
+    "type": 1
+  },
+  {
+    "options": [
+      {
+        "type": 1,
+        "name": "voir",
+        "description": "👁️ Affiche ton arbre (canvas) et les paliers.",
+        "options": []
+      },
+      {
+        "type": 1,
+        "name": "acheter",
+        "description": "⬆️ Achète le prochain palier d’une branche.",
+        "options": [
+          {
+            "type": 3,
+            "choices": [
+              {
+                "name": "Quête",
+                "value": "quest"
+              },
+              {
+                "name": "Guilde",
+                "value": "guild"
+              },
+              {
+                "name": "Boutique",
+                "value": "shop"
+              },
+              {
+                "name": "Ranked",
+                "value": "ranked"
+              },
+              {
+                "name": "Événement",
+                "value": "event"
+              }
+            ],
+            "name": "branche",
+            "description": "Branche",
+            "required": true
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "classe",
+        "description": "🎓 Affiche tes classes débloquées.",
+        "options": []
+      },
+      {
+        "type": 1,
+        "name": "separatiste",
+        "description": "⚔️ Branche séparatiste — paliers et séparations.",
+        "options": [
+          {
+            "type": 3,
+            "choices": [
+              {
+                "name": "Voir",
+                "value": "voir"
+              },
+              {
+                "name": "Acheter le prochain palier",
+                "value": "acheter"
+              }
+            ],
+            "name": "action",
+            "description": "Action",
+            "required": true
+          }
+        ]
+      }
+    ],
+    "name": "arbre",
+    "description": "🌳 Arbre de compétences — paliers, classes et branches.",
+    "type": 1
+  },
+  {
+    "options": [],
+    "name": "boutique",
+    "description": "🛒 Boutique du jour — items, coffres et boosts.",
+    "type": 1
+  },
+  {
+    "options": [
+      {
+        "type": 3,
+        "choices": [
+          {
+            "name": "💸 Starss",
+            "value": "starss"
+          },
+          {
+            "name": "⭐ Niveau XP",
+            "value": "niveau"
+          },
+          {
+            "name": "⚔️ Ranked RP",
+            "value": "rp"
+          }
+        ],
+        "name": "type",
+        "description": "Vue affichée en premier (défaut : Starss).",
+        "required": false
+      }
+    ],
+    "name": "classement",
+    "description": "📈 Classements joueurs — Starss, XP, Ranked RP.",
+    "type": 1
+  },
+  {
+    "options": [],
+    "name": "daily",
+    "description": "🎁 Réclame ta récompense journalière (carte illustrée).",
+    "type": 1
+  },
+  {
+    "options": [
+      {
+        "type": 1,
+        "name": "proposer",
+        "description": "Proposer un échange",
+        "options": [
+          {
+            "name": "vers",
+            "description": "Destinataire",
+            "required": true,
+            "type": 6
+          },
+          {
+            "type": 3,
+            "name": "starss_envoyes",
+            "description": "Starss que tu proposes au destinataire",
+            "required": true
+          },
+          {
+            "type": 3,
+            "name": "starss_recus",
+            "description": "Starss que tu demandes au destinataire",
+            "required": true
+          },
+          {
+            "type": 3,
+            "name": "objets_envoyes",
+            "description": "Optionnel : ex. corail:2,xp_boost:1",
+            "required": false
+          },
+          {
+            "type": 3,
+            "name": "objets_recus",
+            "description": "Optionnel : items demandés au destinataire (même format)",
+            "required": false
+          },
+          {
+            "type": 3,
+            "name": "monnaie_evenement_envoyee",
+            "description": "Monnaie d’événement que tu donnes (entier ; 1 = 5 valeur)",
+            "required": false
+          },
+          {
+            "type": 3,
+            "name": "monnaie_evenement_recue",
+            "description": "Monnaie d’événement demandée au destinataire",
+            "required": false
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "accepter",
+        "description": "Accepter un trade en attente",
+        "options": [
+          {
+            "type": 3,
+            "name": "trade_id",
+            "description": "ID du trade",
+            "required": true
+          }
+        ]
+      }
+    ],
+    "name": "echange",
+    "description": "🔁 Échange starss + objets (écart max 40 %).",
+    "type": 1
+  },
+  {
+    "options": [
+      {
+        "type": 1,
+        "name": "lancer",
+        "description": "[Owner] Lancer un événement",
+        "options": [
+          {
+            "type": 3,
+            "choices": [
+              {
+                "name": "Chasse aux étoiles (24h)",
+                "value": "chasse"
+              },
+              {
+                "name": "Raid Cosmique (12h)",
+                "value": "raid"
+              },
+              {
+                "name": "Marathon Stellaire (48h)",
+                "value": "marathon"
+              },
+              {
+                "name": "Siège stellaire (18h)",
+                "value": "siege"
+              },
+              {
+                "name": "Arène flash (6h)",
+                "value": "arene"
+              },
+              {
+                "name": "Conquête galactique (36h)",
+                "value": "conquete"
+              }
+            ],
+            "name": "type",
+            "description": "Type",
+            "required": true
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "contribuer",
+        "description": "Ajouter un score à un event en cours",
+        "options": [
+          {
+            "type": 3,
+            "name": "cle",
+            "description": "Clé event",
+            "required": true
+          },
+          {
+            "min_value": 1,
+            "type": 4,
+            "name": "score",
+            "description": "Score à ajouter",
+            "required": true
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "classement",
+        "description": "Top 10 d'un event",
+        "options": [
+          {
+            "type": 3,
+            "name": "cle",
+            "description": "Clé event",
+            "required": true
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "actifs",
+        "description": "Voir les événements actifs",
+        "options": []
+      },
+      {
+        "type": 1,
+        "name": "cloturer",
+        "description": "[Owner] Clôturer un événement et distribuer les récompenses",
+        "options": [
+          {
+            "type": 3,
+            "name": "cle",
+            "description": "Clé event",
+            "required": true
+          }
+        ]
+      }
+    ],
+    "name": "event",
+    "description": "🎉 Événements serveur — scores, classement et récompenses.",
+    "type": 1
+  },
+  {
+    "options": [
+      {
+        "type": 3,
+        "choices": [
+          {
+            "name": "Carte GRP",
+            "value": "carte"
+          },
+          {
+            "name": "Classement joueurs (GRP)",
+            "value": "classement"
+          }
+        ],
+        "name": "action",
+        "description": "Par défaut : carte GRP.",
+        "required": false
+      },
+      {
+        "name": "membre",
+        "description": "Voir la carte d’un autre membre",
+        "required": false,
+        "type": 6
+      }
+    ],
+    "name": "grp",
+    "description": "⚡ Carte GRP perso ou classement GRP du serveur.",
+    "type": 1
+  },
+  {
+    "options": [
+      {
+        "type": 1,
+        "name": "creer",
+        "description": "✨ Créer une guilde (nv 15+, 5 places).",
+        "options": [
+          {
+            "type": 3,
+            "name": "nom",
+            "description": "Nom de la guilde",
+            "required": true
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "rejoindre",
+        "description": "🤝 Rejoindre une guilde par ID",
+        "options": [
+          {
+            "type": 3,
+            "name": "guild_id",
+            "description": "ID guilde",
+            "required": true
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "quitter",
+        "description": "🚪 Quitter ta guilde (pas le chef).",
+        "options": []
+      },
+      {
+        "type": 1,
+        "name": "info",
+        "description": "ℹ️ Infos sur ta guilde",
+        "options": []
+      },
+      {
+        "type": 1,
+        "name": "liste",
+        "description": "📜 Liste des guildes sur ce serveur",
+        "options": []
+      },
+      {
+        "type": 1,
+        "name": "inviter",
+        "description": "Inviter un membre (chef ou permission « rôles »)",
+        "options": [
+          {
+            "name": "membre",
+            "description": "Joueur",
+            "required": true,
+            "type": 6
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "tresor_depot",
+        "description": "Déposer des starss en trésorerie",
+        "options": [
+          {
+            "type": 3,
+            "name": "montant",
+            "description": "Starss",
+            "required": true
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "tresor_retrait",
+        "description": "Retirer des starss (chef ou permission « retrait »)",
+        "options": [
+          {
+            "type": 3,
+            "name": "montant",
+            "description": "Starss",
+            "required": true
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "tresor_voir",
+        "description": "Voir la trésorerie",
+        "options": []
+      },
+      {
+        "type": 1,
+        "name": "grade_up",
+        "description": "Acheter le prochain grade (chef)",
+        "options": []
+      },
+      {
+        "type": 1,
+        "name": "perm_voir",
+        "description": "Voir les permissions guilde (toi ou un membre)",
+        "options": [
+          {
+            "name": "membre",
+            "description": "Membre (chef)",
+            "required": false,
+            "type": 6
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "perm_set",
+        "description": "Définir une permission pour un membre (chef)",
+        "options": [
+          {
+            "name": "membre",
+            "description": "Membre",
+            "required": true,
+            "type": 6
+          },
+          {
+            "type": 3,
+            "choices": [
+              {
+                "name": "Dépôt trésorerie",
+                "value": "depot"
+              },
+              {
+                "name": "Retrait trésorerie",
+                "value": "retrait"
+              },
+              {
+                "name": "Expulsion membre",
+                "value": "kick"
+              },
+              {
+                "name": "Invitations",
+                "value": "roles"
+              }
+            ],
+            "name": "cle",
+            "description": "Permission",
+            "required": true
+          },
+          {
+            "name": "actif",
+            "description": "Activé",
+            "required": true,
+            "type": 5
+          }
+        ]
+      },
+      {
+        "type": 2,
+        "name": "sous-chef",
+        "description": "Gérer les sous-chefs (max 3 par guilde, peuvent lancer un focus).",
+        "options": [
+          {
+            "type": 1,
+            "name": "ajouter",
+            "description": "Promouvoir un membre en sous-chef (chef uniquement).",
+            "options": [
+              {
+                "name": "membre",
+                "description": "Membre à promouvoir",
+                "required": true,
+                "type": 6
+              }
+            ]
+          },
+          {
+            "type": 1,
+            "name": "retirer",
+            "description": "Rétrograder un sous-chef (chef uniquement).",
+            "options": [
+              {
+                "name": "membre",
+                "description": "Sous-chef à rétrograder",
+                "required": true,
+                "type": 6
+              }
+            ]
+          },
+          {
+            "type": 1,
+            "name": "lister",
+            "description": "Voir les sous-chefs actuels de ta guilde.",
+            "options": []
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "expulser",
+        "description": "Expulser un membre (chef ou permission « kick »)",
+        "options": [
+          {
+            "name": "membre",
+            "description": "Membre à expulser",
+            "required": true,
+            "type": 6
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "transferer_chef",
+        "description": "Transférer le lead à un membre (chef actuel)",
+        "options": [
+          {
+            "name": "nouveau_chef",
+            "description": "Membre",
+            "required": true,
+            "type": 6
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "dissoudre",
+        "description": "Supprimer la guilde (chef, irréversible)",
+        "options": []
+      },
+      {
+        "type": 1,
+        "name": "focus",
+        "description": "Focus guilde (500k trésorerie, CD 7j) — chef ou sous-chef.",
+        "options": [
+          {
+            "autocomplete": true,
+            "type": 3,
+            "name": "cible",
+            "description": "Tape le début du nom de la guilde cible",
+            "required": true
+          },
+          {
+            "type": 3,
+            "choices": [
+              {
+                "name": "-500 GRP / membre cible",
+                "value": "1"
+              },
+              {
+                "name": "-3000 GRP total réparti",
+                "value": "2"
+              },
+              {
+                "name": "÷2 GRP de la cible pendant 2h",
+                "value": "3"
+              }
+            ],
+            "name": "mode",
+            "description": "Effet",
+            "required": true
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "salon",
+        "description": "Créer le salon privé de ta guilde (chef).",
+        "options": []
+      },
+      {
+        "type": 1,
+        "name": "decrire",
+        "description": "Définir la description publique de ta guilde (chef).",
+        "options": [
+          {
+            "type": 3,
+            "name": "texte",
+            "description": "Description (≤ 200 caractères)",
+            "required": true
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "role_set",
+        "description": "Donner un rôle interne à un membre (chef, ex. « Officier »).",
+        "options": [
+          {
+            "name": "membre",
+            "description": "Membre",
+            "required": true,
+            "type": 6
+          },
+          {
+            "type": 3,
+            "name": "label",
+            "description": "Étiquette (≤ 32 caractères, vide = retirer)",
+            "required": true
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "grade_info",
+        "description": "Voir les exigences de chaque grade (Bronze → Star).",
+        "options": []
+      }
+    ],
+    "name": "guilde",
+    "description": "🛡️ Guildes joueur — création, membres, trésorerie et focus.",
+    "type": 1
+  },
+  {
+    "options": [],
+    "name": "salon-hacker",
+    "description": "🔒 Publie le panneau Salon Hacker (loot toutes les 12 h).",
+    "default_member_permissions": "32",
+    "type": 1
+  },
+  {
+    "options": [],
+    "name": "inventaire",
+    "description": "🎒 Consulte ton inventaire et utilise tes objets.",
+    "type": 1
+  },
+  {
+    "options": [
+      {
+        "name": "membre",
+        "description": "Voir le catalogue d’un autre joueur (modération)",
+        "required": false,
+        "type": 6
+      }
+    ],
+    "name": "itemindex",
+    "description": "📚 Catalogue d’items — progression et paliers auto.",
+    "type": 1
+  },
+  {
+    "options": [
+      {
+        "type": 1,
+        "name": "give",
+        "description": "Donner des starss",
+        "options": [
+          {
+            "name": "membre",
+            "description": "Cible",
+            "required": true,
+            "type": 6
+          },
+          {
+            "type": 3,
+            "name": "montant",
+            "description": "Nombre entier",
+            "required": true
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "remove",
+        "description": "Retirer des starss",
+        "options": [
+          {
+            "name": "membre",
+            "description": "Cible",
+            "required": true,
+            "type": 6
+          },
+          {
+            "type": 3,
+            "name": "montant",
+            "description": "Nombre entier",
+            "required": true
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "set",
+        "description": "Définir starss ou points exactement",
+        "options": [
+          {
+            "name": "membre",
+            "description": "Cible",
+            "required": true,
+            "type": 6
+          },
+          {
+            "type": 3,
+            "choices": [
+              {
+                "name": "Starss",
+                "value": "stars"
+              },
+              {
+                "name": "Points",
+                "value": "points"
+              }
+            ],
+            "name": "type",
+            "description": "Type",
+            "required": true
+          },
+          {
+            "type": 3,
+            "name": "montant",
+            "description": "Nombre entier",
+            "required": true
+          }
+        ]
+      }
+    ],
+    "name": "money",
+    "description": "💎 Gère les starss et points d’un membre (admin / owner).",
+    "type": 1
+  },
+  {
+    "options": [
+      {
+        "name": "membre",
+        "description": "Cible",
+        "required": true,
+        "type": 6
+      },
+      {
+        "type": 3,
+        "name": "duree",
+        "description": "Ex. 30min, 2h, 7j, 2sem (combinable : 1j12h)",
+        "required": true
+      },
+      {
+        "type": 3,
+        "name": "raison",
+        "description": "Raison (≤ 500 car.)",
+        "required": false
+      }
+    ],
+    "name": "mute",
+    "description": "🔇 Applique un time-out temporaire (trace passeport).",
+    "default_member_permissions": "1099511627776",
+    "dm_permission": false,
+    "type": 1
+  },
+  {
+    "options": [
+      {
+        "type": 1,
+        "name": "voir",
+        "description": "Afficher la carte passeport (canvas)",
+        "options": [
+          {
+            "name": "membre",
+            "description": "Cible",
+            "required": false,
+            "type": 6
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "maj_staff",
+        "description": "Mettre à jour tests mod / candidature (admin ou owner)",
+        "options": [
+          {
+            "name": "membre",
+            "description": "Cible",
+            "required": true,
+            "type": 6
+          },
+          {
+            "max_value": 100,
+            "min_value": 0,
+            "type": 4,
+            "name": "score_tests",
+            "description": "Score tests mod (0–100, optionnel)",
+            "required": false
+          },
+          {
+            "type": 3,
+            "choices": [
+              {
+                "name": "Aucune",
+                "value": "aucune"
+              },
+              {
+                "name": "En attente",
+                "value": "en_attente"
+              },
+              {
+                "name": "Acceptée",
+                "value": "acceptee"
+              },
+              {
+                "name": "Refusée",
+                "value": "refusee"
+              }
+            ],
+            "name": "candidature",
+            "description": "Statut candidature staff (optionnel)",
+            "required": false
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "audit",
+        "description": "Audit staff (admin / owner) : actions récentes sur le serveur.",
+        "options": [
+          {
+            "name": "membre",
+            "description": "Filtrer par cible",
+            "required": false,
+            "type": 6
+          },
+          {
+            "max_value": 50,
+            "min_value": 1,
+            "type": 4,
+            "name": "limite",
+            "description": "Nombre de lignes (1 → 50)",
+            "required": false
+          }
+        ]
+      }
+    ],
+    "name": "passeport",
+    "description": "🪪 Passeport staff / sécu (carte canvas).",
+    "type": 1
+  },
+  {
+    "options": [
+      {
+        "name": "membre",
+        "description": "Destinataire",
+        "required": true,
+        "type": 6
+      },
+      {
+        "type": 3,
+        "name": "montant",
+        "description": "Montant entier",
+        "required": true
+      }
+    ],
+    "name": "payer",
+    "description": "💸 Transfère des starss à un autre membre.",
+    "type": 1
+  },
+  {
+    "options": [],
+    "name": "ping",
+    "description": "🏓 Latence WebSocket + REST.",
+    "type": 1
+  },
+  {
+    "options": [
+      {
+        "type": 3,
+        "name": "nom",
+        "description": "Nom ou ID de la guilde (défaut : la tienne sur ce serveur)",
+        "required": false
+      }
+    ],
+    "name": "profil-guilde",
+    "description": "🛡️ Profil visuel d’une guilde — stats et actions.",
+    "type": 1
+  },
+  {
+    "options": [
+      {
+        "max_value": 1000,
+        "min_value": 1,
+        "type": 4,
+        "name": "nombre",
+        "description": "1 à 1000 (paquets de 100 ; messages de moins de 14 j)",
+        "required": true
+      }
+    ],
+    "name": "purge",
+    "description": "🧹 Supprime jusqu’à 1 000 messages récents (owner bot).",
+    "type": 1
+  },
+  {
+    "options": [],
+    "name": "quetes",
+    "description": "🎯 Quêtes quotidiennes, hebdomadaires et progression.",
+    "type": 1
+  },
+  {
+    "options": [
+      {
+        "type": 1,
+        "name": "voir",
+        "description": "📊 Voir ton tier ranked et les bonus actifs.",
+        "options": [
+          {
+            "name": "membre",
+            "description": "Voir un autre joueur",
+            "required": false,
+            "type": 6
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "paliers",
+        "description": "🎖️ Liste des 12 paliers de récompense.",
+        "options": []
+      },
+      {
+        "type": 1,
+        "name": "reclamer",
+        "description": "🎁 Réclamer les paliers franchis non encore pris.",
+        "options": []
+      }
+    ],
+    "name": "ranked",
+    "description": "🏆 Ranked RP — tier, paliers et récompenses.",
+    "type": 1
+  },
+  {
+    "options": [],
+    "name": "reborn-ref",
+    "description": "📖 Aperçu des commandes disponibles sur ce serveur.",
+    "type": 1
+  },
+  {
+    "options": [
+      {
+        "type": 1,
+        "name": "lancer",
+        "description": "📣 Lancer une séparation (membre de la guilde).",
+        "options": []
+      },
+      {
+        "type": 1,
+        "name": "rejoindre",
+        "description": "🚩 Rejoindre le camp séparatiste",
+        "options": [
+          {
+            "type": 3,
+            "name": "id",
+            "description": "ID séparation",
+            "required": true
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "statut",
+        "description": "📋 Séparations actives sur ce serveur",
+        "options": []
+      }
+    ],
+    "name": "separation",
+    "description": "⚔️ Séparation de guilde — recrutement puis guerre GRP.",
+    "type": 1
+  },
+  {
+    "options": [],
+    "name": "server",
+    "description": "🖥️ Infos serveur (debug).",
+    "type": 1
+  },
+  {
+    "options": [
+      {
+        "type": 1,
+        "name": "give",
+        "description": "Ajouter des points de compétence",
+        "options": [
+          {
+            "name": "membre",
+            "description": "Cible",
+            "required": true,
+            "type": 6
+          },
+          {
+            "max_value": 10000,
+            "min_value": 1,
+            "type": 4,
+            "name": "montant",
+            "description": "Nombre à ajouter",
+            "required": true
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "remove",
+        "description": "Retirer des points de compétence (plancher 0)",
+        "options": [
+          {
+            "name": "membre",
+            "description": "Cible",
+            "required": true,
+            "type": 6
+          },
+          {
+            "max_value": 10000,
+            "min_value": 1,
+            "type": 4,
+            "name": "montant",
+            "description": "Nombre à retirer",
+            "required": true
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "set",
+        "description": "Définir le solde exact de points de compétence",
+        "options": [
+          {
+            "name": "membre",
+            "description": "Cible",
+            "required": true,
+            "type": 6
+          },
+          {
+            "max_value": 10000,
+            "min_value": 0,
+            "type": 4,
+            "name": "montant",
+            "description": "Solde exact",
+            "required": true
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "voir",
+        "description": "Lire les points & paliers actuels d’un membre (admin)",
+        "options": [
+          {
+            "name": "membre",
+            "description": "Cible",
+            "required": true,
+            "type": 6
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "reset-arbre",
+        "description": "Remettre toutes les branches à 0 (les points dépensés ne sont pas remboursés)",
+        "options": [
+          {
+            "name": "membre",
+            "description": "Cible",
+            "required": true,
+            "type": 6
+          }
+        ]
+      }
+    ],
+    "name": "skill-points",
+    "description": "✨ Gère les points de compétence d’un membre (admin).",
+    "type": 1
+  },
+  {
+    "options": [],
+    "name": "solde",
+    "description": "💰 Consulte ton solde starss, points, XP et guilde.",
+    "type": 1
+  },
+  {
+    "options": [
+      {
+        "type": 1,
+        "name": "voir",
+        "description": "👁️ Points + statut (recalcul auto)",
+        "options": []
+      },
+      {
+        "type": 1,
+        "name": "sync",
+        "description": "🔄 Forcer le recalcul (serveur actuel)",
+        "options": []
+      },
+      {
+        "type": 1,
+        "name": "classement",
+        "description": "👑 Classement Roi & Légende du Temple.",
+        "options": []
+      }
+    ],
+    "name": "temple",
+    "description": "🏛️ Temple — points, sync et classement Roi/Légende.",
+    "type": 1
+  },
+  {
+    "options": [
+      {
+        "type": 1,
+        "name": "voir",
+        "description": "👁️ Tes trophées et critères",
+        "options": []
+      },
+      {
+        "type": 1,
+        "name": "verifier",
+        "description": "🔍 Revérifier les critères maintenant",
+        "options": []
+      },
+      {
+        "type": 1,
+        "name": "tirage",
+        "description": "🎲 Tirage 1×/24h — tente un trophée aléatoire.",
+        "options": []
+      }
+    ],
+    "name": "trophees",
+    "description": "🏅 Trophées — collection et tirage quotidien.",
+    "type": 1
+  },
+  {
+    "options": [
+      {
+        "name": "membre",
+        "description": "Cible",
+        "required": true,
+        "type": 6
+      },
+      {
+        "type": 3,
+        "choices": [
+          {
+            "name": "Léger (−1 pt)",
+            "value": "leger"
+          },
+          {
+            "name": "Moyen (−2 pts)",
+            "value": "moyen"
+          },
+          {
+            "name": "Fort (−5 pts)",
+            "value": "fort"
+          },
+          {
+            "name": "Critique (−9 pts) — fautes proches du ban def",
+            "value": "critique"
+          }
+        ],
+        "name": "degre",
+        "description": "Gravité",
+        "required": true
+      },
+      {
+        "type": 3,
+        "name": "raison",
+        "description": "Motif",
+        "required": false
+      }
+    ],
+    "name": "warn",
+    "description": "⚠️ Enregistre un avertissement staff (léger → critique).",
+    "dm_permission": false,
+    "type": 1
+  }
+]
