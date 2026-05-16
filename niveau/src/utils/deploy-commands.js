@@ -194,6 +194,7 @@ module.exports = async function deployCommands(client) {
         const commandsToDeploy = new Map();
         for (const [name, command] of localCommands.entries()) {
             const shouldBeActive =
+                command.source === 'reborn' ||
                 command.source === 'normal' ||
                 (command.source === 'halloween' && isHalloweenActive) ||
                 (command.source === 'christmas' && isChristmasActive) ||
