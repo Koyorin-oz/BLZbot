@@ -15,7 +15,7 @@ module.exports = {
     .addSubcommand((sc) =>
       sc
         .setName('voir')
-        .setDescription('Voir ton tier ranked et les bonus actifs.')
+        .setDescription(d('📊', 'Voir ton tier ranked et les bonus actifs.'))
         .addUserOption((o) => o.setName('membre').setDescription('Voir un autre joueur').setRequired(false)),
     )
     .addSubcommand((sc) =>
