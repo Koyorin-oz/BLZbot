@@ -38,7 +38,7 @@ function assertRebornSlashReady(opts = {}) {
         return fail(
             `[REBORN] Dossier reborn-test-bot absent sur ce serveur.\n` +
                 `  Attendu : ${RUNTIME_PATH}\n` +
-                `  → git pull sur Pebble, puis npm run deploy:commands:all`,
+                `  → mets à jour le dépôt sur Pebble (git / upload) puis redémarre le serveur`,
         );
     }
 
