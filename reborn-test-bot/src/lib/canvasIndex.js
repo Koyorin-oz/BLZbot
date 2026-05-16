@@ -113,6 +113,23 @@ function truncateText(ctx, text, maxW) {
   return t + ell;
 }
 
+/** Libellé coffre pour le canvas (nom catalogue, pas l’id abrégé). */
+function chestDisplayName(chestId) {
+  const item = catalog.getItem(chestId);
+  if (item?.name) return item.name;
+  return String(chestId).replace(/_/g, ' ');
+}
+
+function formatStepChestLine(step) {
+  const parts = (step.chests || []).map((c) => {
+    const label = chestDisplayName(c.id);
+    return c.qty > 1 ? `${c.qty}× ${label}` : label;
+  });
+  let extra = parts.join(', ');
+  if (step.roleNote) extra = extra ? `${extra} · rôle` : 'rôle';
+  return extra;
+}
+
 function milestoneHint(pct, steps, claimedSet) {
   const claimable = steps.find((s) => !claimedSet.has(s.pct) && pct >= s.pct);
   if (claimable) return `Palier ${claimable.pct} % disponible — /itemindex reclamer`;
