@@ -801,15 +801,11 @@ async function start() {
         console.error('❌ Erreur lors du chargement des logs:', error?.message || error);
     }
 
-    if (BLZ_COMPACT) {
-        console.log(`[COMMANDS] ${cmdLoaded} commandes chargées.`);
-        console.log(`[EVENTS] ${eventLoaded} événements chargés.`);
-    }
-
     await client.login(config.BOT_TOKEN);
 
     if (BLZ_COMPACT) {
-        console.log(`[READY] Connecté en tant que ${client.user.tag}`);
+        const { blzLine } = require(path.join(__dirname, '..', 'blz-log.js'));
+        blzLine('modération', `${client.user.tag} · ${cmdLoaded} cmd · ${eventLoaded} événements`);
     }
 
     // Le système de vérification (OAuth + capture IP) tourne désormais dans un
