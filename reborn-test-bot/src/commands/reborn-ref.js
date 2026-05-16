@@ -6,23 +6,18 @@ module.exports = {
     .setDescription('Aperçu des commandes et modules disponibles sur ce serveur.'),
   async execute(interaction) {
     const embed = new EmbedBuilder()
-      .setTitle('REBORN — bot de test')
+      .setTitle('Guide des commandes')
       .setColor(0x9b59b6)
       .setDescription(
         [
-          '**Économie** — `/solde`, `/payer`, `/daily`, `/money` ; gains msg + vocal ; boosts.',
-          '**Boutique** — `/boutique` (slots, coffres CAT*, boosts).',
-          '**Guilde joueur** — `/guilde` … + **`/profil-guilde`** (même **canvas** que BLZbot + ligne REBORN + boutons Liste / Carrières / Quêtes).',
-          '**Miroir slash BLZbot** — `REBORN_MIRROR_NIVEAU_SLASH=1` (défaut) : slash **niveau** + avec `REBORN_MIRROR_NIVEAU_EXECUTE=1` (défaut) exécution **identique** au module `niveau` (même BDD / deps que BLZbot ; `0` = message « utiliser BLZbot »), priorité **locale** si même nom — plafond **100** commandes.',
-          '**GRP** — `/grp` (carte perso, option **classement** joueurs) ; tops guildes **`/classement-guilde`** ; **`/classement`** = Starss / XP / RP ; reset mensuel + pics.',
-          '**Séparation** — `/separation` + tick 60s.',
-          '**Échanges** — `/echange` règle 40 % (starss + objets `item:qty`).',
-          '**Index** — `/itemindex`.',
-          '**Quêtes** — `/quete` voir, quotidienne, hebdo, **choisir**, **reclamer_selection**.',
-          '**Trophées** — `/trophees`. **Hacker** — panneau `/salon-hacker` + bouton.',
-          '**Staff** — `/passeport`, `/warn`, `/purge`.',
-          '',
-          '_Données : `reborn-test-bot` + SQLite `data/reborn.sqlite`._',
+          '**Économie** — `/solde`, `/payer`, `/daily` ; gains message et vocal ; boosts.',
+          '**Boutique** — `/boutique` (slots du jour, coffres, boosts).',
+          '**Guilde** — `/guilde`, `/profil-guilde`, focus, trésorerie, grades.',
+          '**Progression** — `/arbre`, `/quetes`, `/ranked`, `/itemindex`, `/temple`.',
+          '**Classements** — `/classement`, `/classement-guilde`, `/grp`.',
+          '**Événements** — `/event`, `/echange`, `/separation`.',
+          '**Collection** — `/trophees`, `/inventaire`, salon `/salon-hacker`.',
+          '**Administration** — `/admin-roles`, `/admin-economie`, `/admin-focus`, `/passeport`, `/warn`.',
         ].join('\n'),
       );
     await interaction.reply({ embeds: [embed] });
