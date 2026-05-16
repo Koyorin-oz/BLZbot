@@ -238,6 +238,7 @@ module.exports = {
     MAIN_COMMAND_SUBDIRS,
     isArchivedSlashCommandFile,
     isLegacyTestProfilFile,
+    isCommandHelperFile,
     loadTopLevelCommands,
     loadSeasonalCommands,
     loadRebornSlashCommands,

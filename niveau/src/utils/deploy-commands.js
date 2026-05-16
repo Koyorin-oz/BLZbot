@@ -238,7 +238,10 @@ module.exports = async function deployCommands(client) {
     const localCommands = new Map();
 
     const isLoadable = (file) =>
-        file.endsWith('.js') && !isArchivedSlashCommandFile(file) && !isLegacyTestProfilFile(file);
+        file.endsWith('.js') &&
+        !isArchivedSlashCommandFile(file) &&
+        !isLegacyTestProfilFile(file) &&
+        !isCommandHelperFile(file);
 
     for (const sub of mainCommandSubdirs) {
         const dir = path.join(commandsPath, sub);
