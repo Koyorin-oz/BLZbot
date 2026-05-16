@@ -54,8 +54,21 @@ async function main() {
         client.login(token);
     });
 
+    const appId = client.application?.id;
+    const wantId = String(process.env.CLIENT_ID || '').trim();
+    if (wantId && appId && wantId !== appId) {
+        blzError(
+            'deploy',
+            `BOT_TOKEN pointe vers l'app ${appId}, pas CLIENT_ID=${wantId}. Corrige le .env avant deploy.`,
+        );
+        process.exit(1);
+    }
     if (!isCompact()) {
-        console.log(`[deploy-all] Connecté : ${client.user.tag} (GUILD_ID=${process.env.GUILD_ID})\n`);
+        console.log(
+            `[deploy-all] Connecté : ${client.user.tag} · app ${appId || '?'} · GUILD_ID=${process.env.GUILD_ID}\n`,
+        );
+    } else {
+        blzLine('deploy', `Connecté ${client.user.tag} · app ${appId || '?'}`);
     }
 
     try {

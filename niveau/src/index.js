@@ -46,8 +46,22 @@ const client = new Client({
 client.commands = new Collection();
 loadTopLevelCommands(client);
 loadSeasonalCommands(client);
-loadRebornSlashCommands(client);
-require('./utils/reborn-integration').bootstrap(client);
+const rebornIntegration = require('./utils/reborn-integration');
+const rebornLoaded = loadRebornSlashCommands(client);
+if (rebornIntegration.isEnabled()) {
+    if (!rebornIntegration.rebornAvailable()) {
+        console.error(
+            '[niveau] REBORN : dossier reborn-test-bot/src absent — git pull requis. Aucune commande /salon-hacker, /itemindex, etc.',
+        );
+    } else if (rebornLoaded === 0) {
+        console.error(
+            '[niveau] REBORN : 0 commande chargée (erreur au require). Lance npm run deploy:reborn:check puis corrige les logs.',
+        );
+    } else if (!BLZ_COMPACT) {
+        logger.info(`[reborn] ${rebornLoaded} commande(s) actives (écrasent les homonymes niveau).`);
+    }
+}
+rebornIntegration.bootstrap(client);
 
 const eventsPath = path.join(__dirname, 'events');
 const eventFiles = fs.readdirSync(eventsPath).filter((file) => file.endsWith('.js'));
