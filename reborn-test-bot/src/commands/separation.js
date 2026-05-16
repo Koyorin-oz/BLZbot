@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const sep = require('../services/separation');
 const pg = require('../services/playerGuilds');
+const { d } = require('../lib/slashDesc');
 
 module.exports = {
   data: new SlashCommandBuilder()
