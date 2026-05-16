@@ -11,6 +11,8 @@ const skillTree = require('./skillTree');
 const meta = require('./meta');
 const rankedRoles = require('./rankedRoles');
 const indexRoles = require('./indexRoles');
+const indexBonuses = require('./indexBonuses');
+const streak = require('./streak');
 const templeDiscordRoles = require('./templeDiscordRoles');
 const { notifyQuestUnlocks } = require('../lib/questNotify');
 

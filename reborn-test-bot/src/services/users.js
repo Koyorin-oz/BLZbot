@@ -60,9 +60,13 @@ function addPoints(userId, delta) {
 
 function applyStarssMultiplier(userId, base) {
   const u = getStmt.get(userId);
-  if (!u) return base;
-  if (Date.now() < (u.starss_boost_ms || 0)) return base * 2n;
-  return base;
+  let b = typeof base === 'bigint' ? base : BigInt(base);
+  if (u && Date.now() < (u.starss_boost_ms || 0)) b *= 2n;
+  try {
+    return require('./indexBonuses').applyStars(userId, b);
+  } catch {
+    return b;
+  }
 }
 
 const { totalToLevelState } = require('../reborn/xpCurve');
