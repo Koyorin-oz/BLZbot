@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const users = require('../services/users');
 const { isOwner } = require('../lib/owners');
+const { d } = require('../lib/slashDesc');
 
 function parseAmount(raw) {
   const s = String(raw || '').replace(/\s/g, '');
