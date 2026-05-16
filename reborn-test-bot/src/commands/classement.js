@@ -8,6 +8,7 @@ const {
 const db = require('../db');
 const users = require('../services/users');
 const rankedRoles = require('../services/rankedRoles');
+const { d } = require('../lib/slashDesc');
 
 /**
  * Types de classement joueurs. Le menu permet de basculer sans relancer la commande.

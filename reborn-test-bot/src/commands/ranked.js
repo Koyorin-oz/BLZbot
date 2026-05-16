@@ -7,6 +7,7 @@ const {
 const users = require('../services/users');
 const rankedRoles = require('../services/rankedRoles');
 const rankedMilestones = require('../services/rankedMilestones');
+const { d } = require('../lib/slashDesc');
 
 module.exports = {
   data: new SlashCommandBuilder()

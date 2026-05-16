@@ -13,6 +13,7 @@ const { grpRankFromTotal, label, GRP_RANK_KEYS, GRP_THRESHOLDS } = require('../r
 const db = require('../db');
 const users = require('../services/users');
 const { renderGrpVoirCard } = require('../lib/canvasGrp');
+const { d } = require('../lib/slashDesc');
 
 function nextGrpStep(grpTotal) {
   const curKey = grpRankFromTotal(grpTotal);
