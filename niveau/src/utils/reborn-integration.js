@@ -110,12 +110,23 @@ function loadRebornCommands(client) {
  * @returns {Map<string, object>}
  */
 function collectRebornSlashMap() {
-  const rt = getRuntime();
   const map = new Map();
-  if (!rt) return map;
-  initEnvironment();
-  for (const body of rt.collectSlashBodies()) {
-    if (body?.name) map.set(body.name, body);
+  const rt = getRuntime();
+  if (rt) {
+    initEnvironment();
+    for (const body of rt.collectSlashBodies()) {
+      if (body?.name) map.set(body.name, body);
+    }
+  }
+  if (map.size === 0 && isEnabled()) {
+    const cached = loadRebornSlashFromGeneratedJson();
+    for (const [name, body] of cached) map.set(name, body);
+    if (map.size > 0) {
+      logger.warn(
+        `[reborn] ${map.size} slash depuis generated/reborn-slash-bodies.json` +
+          (rebornAvailable() ? ' (runtime vide).' : ' (reborn-test-bot absent sur le serveur).'),
+      );
+    }
   }
   return map;
 }
