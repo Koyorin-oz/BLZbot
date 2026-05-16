@@ -24,7 +24,7 @@ Chaque ligne = une commande racine ; les sous-commandes principales sont indiqu�
 | `/guilde` | Guildes joueur : créer, rejoindre, trésor, grades, focus, salon, rôles internes, etc. (nombreux sous-commandes). |
 | `/salon-hacker` | Publier le panneau salon hacker (bouton loot 12 h). |
 | `/inventaire` | Inventaire + menu. |
-| `/itemindex` | Index objets : progression, paliers, matrice bonus (`voir`, `definir`, `reclamer`, `matrice`). |
+| `/itemindex` | Catalogue d’items : progression auto + paliers crédités automatiquement. |
 | `/money` | Owner : give/remove/set starss (`give`, `remove`, `set`). |
 | `/mute` | Modération simple (timeout). |
 | `/passeport` | Staff : fiche staff/sécu (`voir`, `maj_staff`, `audit`). |
