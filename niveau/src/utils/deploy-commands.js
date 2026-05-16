@@ -133,6 +133,22 @@ function commandsAreEqual(remote, local) {
  * quand l'événement est actif ; sinon elles sont retirées du global.
  */
 module.exports = async function deployCommands(client) {
+    const strictReborn =
+        String(process.env.BLZ_REBORN_DEPLOY_STRICT ?? '1').trim().toLowerCase() !== '0';
+    try {
+        const { assertRebornSlashReady } = require(path.join(__dirname, '..', '..', '..', 'scripts', 'reborn-slash-preflight'));
+        const pre = assertRebornSlashReady({ exitOnFail: strictReborn });
+        if (pre.ok && !pre.skipped) {
+            console.log(`[niveau/deploy] REBORN preflight OK (${pre.count} commandes locales)`);
+        } else if (pre.skipped) {
+            console.warn('[niveau/deploy] BLZ_REBORN_INTEGRATION désactivé — slash REBORN ignorés.');
+        } else if (!strictReborn) {
+            console.warn(`[niveau/deploy] REBORN preflight échoué (deploy continue) : ${pre.message || ''}`);
+        }
+    } catch (preErr) {
+        console.warn('[niveau/deploy] preflight REBORN:', preErr?.message || preErr);
+    }
+
     const compact = process.env.BLZ_COMPACT_LOG === '1';
     if (!compact) {
         console.log('\n═══════════════════════════════════════════════════════════════');
