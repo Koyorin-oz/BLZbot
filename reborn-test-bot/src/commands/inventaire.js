@@ -2,7 +2,7 @@ const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const { buildInventairePayload } = require('../lib/shopV2Ui');
 
 module.exports = {
-  data: new SlashCommandBuilder().setName('inventaire').setDescription('Inventaire (même bannière que le profil + menu).'),
+  data: new SlashCommandBuilder().setName('inventaire').setDescription('Consulte ton inventaire et utilise tes objets.'),
   /**
    * @param {import('discord.js').ChatInputCommandInteraction} interaction
    */

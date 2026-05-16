@@ -5,7 +5,7 @@ const users = require('../services/users');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('quetes')
-    .setDescription('Tes quêtes (daily / hebdo / archives). Même écran que le bouton **Quêtes** du `/profil`.'),
+    .setDescription('Quêtes quotidiennes, hebdomadaires et archives de progression.')
   async execute(interaction) {
     if (!interaction.guildId) return interaction.reply({ content: 'Serveur uniquement.' });
     users.getOrCreate(interaction.user.id, interaction.user.username);

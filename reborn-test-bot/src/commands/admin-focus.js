@@ -23,7 +23,7 @@ module.exports = {
         .setName('desactiver')
         .setDescription("Désactiver le focus pour une guilde abusive.")
         .addStringOption((o) =>
-          o.setName('guild_id').setDescription('ID guilde REBORN').setRequired(true),
+          o.setName('guild_id').setDescription('Identifiant de la guilde').setRequired(true),
         ),
     )
     .addSubcommand((sc) =>
@@ -31,7 +31,7 @@ module.exports = {
         .setName('reactiver')
         .setDescription('Réactiver le focus pour une guilde.')
         .addStringOption((o) =>
-          o.setName('guild_id').setDescription('ID guilde REBORN').setRequired(true),
+          o.setName('guild_id').setDescription('Identifiant de la guilde').setRequired(true),
         ),
     )
     .addSubcommand((sc) =>
@@ -39,7 +39,7 @@ module.exports = {
         .setName('reset-cd')
         .setDescription('Réinitialiser le cooldown focus 7 j.')
         .addStringOption((o) =>
-          o.setName('guild_id').setDescription('ID guilde REBORN').setRequired(true),
+          o.setName('guild_id').setDescription('Identifiant de la guilde').setRequired(true),
         ),
     )
     .addSubcommand((sc) =>
@@ -47,7 +47,7 @@ module.exports = {
         .setName('historique')
         .setDescription('Voir les 10 derniers focus impliquant cette guilde.')
         .addStringOption((o) =>
-          o.setName('guild_id').setDescription('ID guilde REBORN').setRequired(true),
+          o.setName('guild_id').setDescription('Identifiant de la guilde').setRequired(true),
         ),
     ),
 

@@ -8,7 +8,7 @@ function parseAmount(raw) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('payer')
-    .setDescription('Transférer des starss à un membre (comme sur BLZbot).')
+    .setDescription('Transfère des starss à un autre membre.')
     .addUserOption((o) => o.setName('membre').setDescription('Destinataire').setRequired(true))
     .addStringOption((o) => o.setName('montant').setDescription('Montant entier').setRequired(true)),
   async execute(interaction) {
