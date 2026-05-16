@@ -1,6 +1,7 @@
 const logger = require('./logger');
 const fs = require('node:fs');
 const path = require('node:path');
+const { getSlashDeployGuildIds } = require(path.join(__dirname, '..', '..', '..', 'blzbot-env.js'));
 const {
     MAIN_COMMAND_SUBDIRS: mainCommandSubdirs,
     isArchivedSlashCommandFile,
