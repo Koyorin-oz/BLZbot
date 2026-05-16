@@ -278,6 +278,7 @@ module.exports = async function deployCommands(client) {
         const forceRefreshNames = new Set(
             [
                 'profil',
+                'deploy-slash',
                 'admin-roles',
                 'salon-hacker',
                 'daily',

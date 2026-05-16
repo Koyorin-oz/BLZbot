@@ -55,7 +55,7 @@ if (rebornIntegration.isEnabled()) {
         );
     } else if (rebornLoaded === 0) {
         console.error(
-            '[niveau] REBORN : 0 commande chargée (erreur au require). Lance npm run deploy:reborn:check puis corrige les logs.',
+            '[niveau] REBORN : 0 commande chargée — vérifie que reborn-test-bot/ est sur le serveur (logs Pebble au démarrage).',
         );
     } else if (process.env.BLZ_COMPACT_LOG !== '1') {
         logger.info(`[reborn] ${rebornLoaded} commande(s) actives (écrasent les homonymes niveau).`);
