@@ -20,6 +20,13 @@
  */
 const path = require('node:path');
 const fs = require('node:fs');
+const { applyGlobalLogPolicy, isCompact, blzLine, blzWarn } = require(path.join(
+  __dirname,
+  '..',
+  '..',
+  'blz-log.js',
+));
+applyGlobalLogPolicy();
 
 const candidates = [
   path.join(__dirname, '..', '.env'),               // verification/.env (standalone)
