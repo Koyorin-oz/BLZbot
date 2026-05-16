@@ -40,22 +40,46 @@ function setCompletion(userId, pct) {
   db.prepare('UPDATE user_item_index SET completion_pct = ? WHERE user_id = ?').run(Math.min(100, Math.max(0, pct)), userId);
 }
 
+/** @deprecated Utiliser `autoClaimAll` — conservé pour compat interne. */
 function claimNext(userId, usersSvc) {
-  getRow(userId);
-  const r = db.prepare('SELECT * FROM user_item_index WHERE user_id = ?').get(userId);
-  const claimed = parseClaimed(r.claimed_json);
-  const pct = r.completion_pct || 0;
-  const next = STEPS.find((s) => !claimed.includes(s.pct) && pct >= s.pct);
-  if (!next) {
-    return { ok: false, error: 'Aucune étape réclamable (augmente ton % d’index ou tout est déjà pris).' };
+  const r = autoClaimAll(userId, usersSvc);
+  if (!r.newly.length) {
+    return { ok: false, error: 'Aucun palier à valider (collectionne plus d’items ou tout est déjà reçu).' };
   }
-  claimed.push(next.pct);
-  usersSvc.addStars(userId, next.stars);
-  for (const c of next.chests || []) {
-    usersSvc.addInventory(userId, c.id, c.qty || 1);
-  }
-  db.prepare('UPDATE user_item_index SET claimed_json = ? WHERE user_id = ?').run(JSON.stringify(claimed.sort((a, b) => a - b)), userId);
-  return { ok: true, step: next };
+  return { ok: true, step: r.newly[r.newly.length - 1] };
 }
 
-module.exports = { STEPS, getRow, setCompletion, claimNext, parseClaimed };
+/**
+ * Crédite tous les paliers atteints et pas encore enregistrés dans `claimed_json`.
+ * @returns {{ pct: number, claimed: number[], newly: typeof STEPS }}
+ */
+function autoClaimAll(userId, usersSvc) {
+  getRow(userId);
+  const r = db.prepare('SELECT * FROM user_item_index WHERE user_id = ?').get(userId);
+  let claimed = parseClaimed(r.claimed_json);
+  const pct = r.completion_pct || 0;
+  const newly = [];
+
+  for (const step of STEPS) {
+    if (claimed.includes(step.pct)) continue;
+    if (pct < step.pct) continue;
+    claimed.push(step.pct);
+    usersSvc.addStars(userId, step.stars);
+    for (const c of step.chests || []) {
+      usersSvc.addInventory(userId, c.id, c.qty || 1);
+    }
+    newly.push(step);
+  }
+
+  if (newly.length) {
+    claimed = [...new Set(claimed)].sort((a, b) => a - b);
+    db.prepare('UPDATE user_item_index SET claimed_json = ? WHERE user_id = ?').run(
+      JSON.stringify(claimed),
+      userId,
+    );
+  }
+
+  return { pct, claimed, newly };
+}
+
+module.exports = { STEPS, getRow, setCompletion, claimNext, parseClaimed, autoClaimAll };
