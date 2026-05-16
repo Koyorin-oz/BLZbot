@@ -158,13 +158,13 @@ async function handlePurchase(interaction, parts) {
     // Les items « uniques » (diamant) et les jetons d'accès (hacker_token) restent en qty 1.
     const lootMultN = indexBonuses.chestLootMultN(uid, Number(skillTree.chestLootMult(uid)));
     const NON_STACKABLE = new Set(['diamant', 'hacker_token']);
-    if (lootMult > 1n) {
-      loot.stars *= lootMult;
+    if (lootMultN > 1) {
+      loot.stars *= BigInt(lootMultN);
       loot.xp *= lootMultN;
       loot.items = loot.items.map((it) =>
         NON_STACKABLE.has(it.id) ? it : { ...it, qty: it.qty * lootMultN },
       );
-      loot.lines.push(`*(×${lootMultN} contenu — arbre boutique)*`);
+      loot.lines.push(`*(×${lootMultN} contenu — arbre + index)*`);
     }
     totalStars += loot.stars;
     totalXp += loot.xp;
