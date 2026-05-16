@@ -827,7 +827,9 @@ async function start() {
     };
 
     if (deferMs > 0) {
-        console.log(`[modération] Déploiement slash dans ${deferMs / 1000}s (BLZ_DEFER_SLASH_DEPLOY_MS)…`);
+        if (!BLZ_COMPACT) {
+            console.log(`[modération] Déploiement slash dans ${deferMs / 1000}s (BLZ_DEFER_SLASH_DEPLOY_MS)…`);
+        }
         setTimeout(runSlash, deferMs);
     } else {
         await runSlash();
