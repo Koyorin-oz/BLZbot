@@ -57,6 +57,12 @@ function loadBlzbotEnvFiles(repoRoot) {
         require('dotenv').config({ path: resolved, quiet: true });
         loadedPaths.push(resolved);
     }
+    for (const [key, val] of Object.entries(process.env)) {
+        const trimmed = key.trim();
+        if (trimmed !== key && val != null && !String(process.env[trimmed] || '').trim()) {
+            process.env[trimmed] = val;
+        }
+    }
     return { loadedPaths };
 }
 
