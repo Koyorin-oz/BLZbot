@@ -10,6 +10,7 @@ const {
 } = require('discord.js');
 const temple = require('../services/temple');
 const users = require('../services/users');
+const { d } = require('../lib/slashDesc');
 
 const RENDER = path.join(__dirname, '..', '..', '..', 'niveau', 'src', 'utils', 'canvas-skill-tree-reborn');
 

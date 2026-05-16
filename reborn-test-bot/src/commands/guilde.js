@@ -21,7 +21,7 @@ module.exports = {
     .addSubcommand((sc) =>
       sc
         .setName('creer')
-        .setDescription('Créer une guilde (nv 15+, gratuit, 5 places de base).')
+        .setDescription(d('✨', 'Créer une guilde (nv 15+, 5 places).'))
         .addStringOption((o) => o.setName('nom').setDescription('Nom de la guilde').setRequired(true)),
     )
     .addSubcommand((sc) =>
