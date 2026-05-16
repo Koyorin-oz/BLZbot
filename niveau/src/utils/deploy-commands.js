@@ -273,8 +273,10 @@ module.exports = async function deployCommands(client) {
             });
     }
 
+    let rebornSlashScope = 'guild';
     try {
-        const { collectRebornSlashMap, isEnabled } = require('./reborn-integration');
+        const { collectRebornSlashMap, isEnabled, getRebornSlashScope } = require('./reborn-integration');
+        rebornSlashScope = getRebornSlashScope();
         if (isEnabled()) {
             const rebornMap = collectRebornSlashMap();
             let rebornOverwrites = 0;
@@ -285,7 +287,11 @@ module.exports = async function deployCommands(client) {
             }
             if (rebornMap.size > 0) {
                 console.log(
-                    `[niveau/deploy] REBORN : ${rebornMap.size} slash (${rebornOverwrites} remplacement(s) d’une commande niveau existante)`,
+                    `[niveau/deploy] REBORN : ${rebornMap.size} slash (${rebornOverwrites} écrasement(s)) · scope=${rebornSlashScope}`,
+                );
+            } else {
+                console.error(
+                    '[niveau/deploy] REBORN : 0 slash — git pull requis (reborn-test-bot/ ou generated/reborn-slash-bodies.json).',
                 );
             }
         }
