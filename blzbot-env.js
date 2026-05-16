@@ -32,6 +32,43 @@ function resolveDotenvPath(...candidates) {
     return PEBBLE_HOST_ENV_PATH;
 }
 
+/**
+ * Charge tous les `.env` présents (racine repo, Pebble, modération).
+ * Le `.env` n’est **pas** sur GitHub : après un `git pull`, il faut toujours le recréer sur l’hébergeur.
+ * @param {string} [repoRoot] Racine du dépôt (parent de orchestrator/)
+ * @returns {{ loadedPaths: string[] }}
+ */
+function loadBlzbotEnvFiles(repoRoot) {
+    const root = repoRoot || path.join(__dirname);
+    const candidates = [
+        process.env.DOTENV_CONFIG_PATH,
+        path.join(root, '.env'),
+        PEBBLE_HOST_ENV_PATH,
+        path.join(process.cwd(), '.env'),
+        path.join(root, 'modération', '.env'),
+    ];
+    const loadedPaths = [];
+    const seen = new Set();
+    for (const p of candidates) {
+        if (!p || typeof p !== 'string') continue;
+        const resolved = path.resolve(p);
+        if (seen.has(resolved) || !fs.existsSync(resolved)) continue;
+        seen.add(resolved);
+        require('dotenv').config({ path: resolved, quiet: true });
+        loadedPaths.push(resolved);
+    }
+    return { loadedPaths };
+}
+
+/**
+ * @param {string[]} keys
+ * @returns {{ ok: boolean, missing: string[] }}
+ */
+function validateRequiredEnv(keys) {
+    const missing = keys.filter((k) => !String(process.env[k] || '').trim());
+    return { ok: missing.length === 0, missing };
+}
+
 /** Guilde dédiée aux tests (slash + fetch quand le mode TEST est actif). */
 const BLZ_DEFAULT_TEST_GUILD_ID = '1493276404643532810';
 
