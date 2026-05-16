@@ -244,6 +244,19 @@ module.exports = async function deployCommands(client) {
         await new Promise((resolve) => client.once('clientReady', resolve));
     }
 
+    const expectedClientId = String(process.env.CLIENT_ID || '').trim();
+    const appId = String(client.application?.id || '').trim();
+    if (expectedClientId && appId && expectedClientId !== appId) {
+        const mismatch =
+            `[niveau/deploy] BOT_TOKEN ≠ CLIENT_ID : application Discord=${appId}, .env CLIENT_ID=${expectedClientId}. ` +
+            'Les slash partent sur la mauvaise app — corrige BOT_TOKEN ou CLIENT_ID puis relance le deploy.';
+        console.error(mismatch);
+        throw new Error(mismatch);
+    }
+    if (!compact && appId) {
+        console.log(`[niveau/deploy] Application Discord : ${appId}${expectedClientId ? '' : ' (CLIENT_ID non défini dans .env)'}`);
+    }
+
     try {
         // 2. Filtrer : ne garder que les commandes actives (events saisonniers éteints = à retirer)
         const commandsToDeploy = new Map();

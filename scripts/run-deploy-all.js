@@ -8,22 +8,16 @@
 const path = require('node:path');
 const { applyGlobalLogPolicy, isCompact, blzLine, blzError } = require(path.join(__dirname, '..', 'blz-log.js'));
 applyGlobalLogPolicy();
-const { resolveDotenvPath, PEBBLE_HOST_ENV_PATH, applyTestGuildOverride } = require(path.join(
-    __dirname,
-    '..',
-    'blzbot-env.js'
-));
+const { loadBlzbotEnvFiles, applyTestGuildOverride } = require(path.join(__dirname, '..', 'blzbot-env.js'));
+const { assertRebornSlashReady } = require(path.join(__dirname, 'reborn-slash-preflight.js'));
 
-require('dotenv').config({
-    path: resolveDotenvPath(
-        path.join(__dirname, '..', '.env'),
-        PEBBLE_HOST_ENV_PATH,
-        path.join(process.cwd(), '.env')
-    ),
-    quiet: true,
-});
-require('dotenv').config({ path: path.join(__dirname, '..', 'modération', '.env'), quiet: true, override: true });
+loadBlzbotEnvFiles(path.join(__dirname, '..'));
 applyTestGuildOverride();
+
+const rebornPre = assertRebornSlashReady({ exitOnFail: true });
+if (rebornPre.ok && !rebornPre.skipped) {
+    blzLine('deploy', `REBORN ${rebornPre.count} cmd prêtes (/salon-hacker inclus)`);
+}
 
 if (!isCompact()) {
     console.log(
