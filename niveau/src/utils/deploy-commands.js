@@ -155,6 +155,26 @@ module.exports = async function deployCommands(client) {
             });
     }
 
+    try {
+        const { collectRebornSlashMap, isEnabled } = require('./reborn-integration');
+        if (isEnabled()) {
+            const rebornMap = collectRebornSlashMap();
+            let rebornOverwrites = 0;
+            for (const [name, body] of rebornMap.entries()) {
+                const had = localCommands.has(name);
+                localCommands.set(name, { ...body, source: 'reborn' });
+                if (had) rebornOverwrites++;
+            }
+            if (rebornMap.size > 0) {
+                console.log(
+                    `[niveau/deploy] REBORN : ${rebornMap.size} slash (${rebornOverwrites} remplacement(s) d’une commande niveau existante)`,
+                );
+            }
+        }
+    } catch (e) {
+        logger.warn('[reborn/deploy] merge slash:', e?.message || e);
+    }
+
     if (!compact) console.log(`[DEPLOY] Loaded ${localCommands.size} local commands`);
     const hasPanelVoc = localCommands.has('panel-voc');
     const hasStatsVocPanel = localCommands.has('stats-voc-panel');
