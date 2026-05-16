@@ -6,8 +6,8 @@ const { d } = require('../lib/slashDesc');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('separation')
-    .setDescription('Appel à la séparation (12 h recrutement, puis 48 h guerre GRP).')
-    .addSubcommand((sc) => sc.setName('lancer').setDescription('Lancer une séparation (membre de la guilde).'))
+    .setDescription(d('⚔️', 'Séparation de guilde — recrutement puis guerre GRP.'))
+    .addSubcommand((sc) => sc.setName('lancer').setDescription(d('📣', 'Lancer une séparation (membre de la guilde).')))
     .addSubcommand((sc) =>
       sc
         .setName('rejoindre')
