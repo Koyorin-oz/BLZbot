@@ -21,7 +21,7 @@ Légende : **OK** = présent et jouable sur le bot de test · **Partiel** = là 
 | Sujet | Statut | Notes |
 |-------|--------|--------|
 | Starss / voc, boosts, courbe XP, RP, décrépitude, pool RP | **OK** | `earn`, `rankedRp`, `xpCurve`, etc. |
-| Tiers RP + **rôles Discord** | **Partiel** | Auto-sync si `/admin-roles` + IDs stockés (`rankedRoles.js`) — pas « gratuit » sans setup admin |
+| Tiers RP + **rôles Discord** | **OK** (config) | `rankedRoles.js` + `/admin-roles creer-ranked` — sync auto à chaque gain RP (`earn`) |
 | Classements | **OK** | `/classement` |
 
 ---
