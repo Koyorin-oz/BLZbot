@@ -492,10 +492,17 @@ function createOAuthServer(opts) {
   });
 
   const server = app.listen(opts.httpPort, httpHost, () => {
-    console.log(
-      `[http] OAuth sur ${httpHost}:${opts.httpPort} — callback ${opts.redirectUri}` +
-        (proxyEnforced ? ' — ⛓️ reverse proxy obligatoire' : ' — ⚠️  pas de garde-fou proxy'),
-    );
+    if (isCompact()) {
+      blzLine(
+        'verif',
+        `HTTP :${opts.httpPort}${proxyEnforced ? ' · proxy OK' : ' · ⚠ sans proxy'}`,
+      );
+    } else {
+      console.log(
+        `[http] OAuth sur ${httpHost}:${opts.httpPort} — callback ${opts.redirectUri}` +
+          (proxyEnforced ? ' — ⛓️ reverse proxy obligatoire' : ' — ⚠️  pas de garde-fou proxy'),
+      );
+    }
   });
 
   return { app, server };
