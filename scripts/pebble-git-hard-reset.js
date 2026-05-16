@@ -40,10 +40,7 @@ function main() {
         console.log(`[pebble-git] Alignement sur origin/${branch} (fetch + reset --hard)…`);
         execSync(`git fetch origin ${branch}`, { cwd: REPO_ROOT, stdio: 'inherit' });
         execSync(`git reset --hard origin/${branch}`, { cwd: REPO_ROOT, stdio: 'inherit' });
-        execSync('git clean -fd -e .env -e "modération/.env" -e "reborn-test-bot/.env"', {
-            cwd: REPO_ROOT,
-            stdio: 'inherit',
-        });
+        execSync('git clean -fd', { cwd: REPO_ROOT, stdio: 'inherit' });
         console.log('[pebble-git] Dépôt = GitHub.');
     } catch (e) {
         console.error('[pebble-git] Échec reset :', e?.message || e);
