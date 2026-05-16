@@ -16,6 +16,7 @@ const {
 } = require('../reborn/constants');
 const rankedRp = require('../services/rankedRp');
 const { totalToLevelState } = require('../reborn/xpCurve');
+const { d } = require('../lib/slashDesc');
 
 function fmt(n) {
   try {
