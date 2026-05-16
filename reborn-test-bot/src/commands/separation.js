@@ -11,7 +11,7 @@ module.exports = {
     .addSubcommand((sc) =>
       sc
         .setName('rejoindre')
-        .setDescription('Rejoindre le camp séparatiste')
+        .setDescription(d('🚩', 'Rejoindre le camp séparatiste'))
         .addStringOption((o) => o.setName('id').setDescription('ID séparation').setRequired(true)),
     )
     .addSubcommand((sc) => sc.setName('statut').setDescription('Séparations actives sur ce serveur')),
