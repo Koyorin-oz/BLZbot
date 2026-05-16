@@ -22,25 +22,25 @@ const { d } = require('../lib/slashDesc');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('admin-roles')
-    .setDescription('Gestion des rôles Discord (Ranked RP, Index 100 %, Temple Roi/Légende).')
+    .setDescription(d('⚙️', 'Gestion des rôles Discord (Ranked, Index 100 %, Temple).'))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand((sc) =>
-      sc.setName('creer-ranked').setDescription('Crée les rôles Bronze → Apex sur ce serveur.'),
+      sc.setName('creer-ranked').setDescription(d('🏅', 'Crée les rôles Bronze → Apex sur ce serveur.')),
     )
     .addSubcommand((sc) =>
       sc
         .setName('creer-index-full')
-        .setDescription("Crée le rôle « Pipelette ultime » (100 % d'index)."),
+        .setDescription(d('📦', "Crée le rôle « Pipelette ultime » (index 100 %).")),
     )
     .addSubcommand((sc) =>
       sc
         .setName('creer-temple')
-        .setDescription('Crée les rôles « Temple — Roi » et « Temple — Légende » (classement /temple).'),
+        .setDescription(d('🏛️', 'Crée les rôles Temple — Roi et Légende.')),
     )
     .addSubcommand((sc) =>
       sc
         .setName('definir-ranked')
-        .setDescription('Associe un rôle existant à un tier ranked.')
+        .setDescription(d('🔗', 'Associe un rôle existant à un tier ranked.'))
         .addStringOption((o) =>
           o
             .setName('tier')
