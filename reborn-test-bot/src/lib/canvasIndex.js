@@ -286,14 +286,10 @@ async function renderIndexCard(opts) {
     ctx.fillStyle = T.label;
     ctx.fillText(`+${s.stars.toLocaleString('fr-FR')} ★`, cx + 108, midY);
 
-    const chests = (s.chests || [])
-      .map((c) => `${c.qty > 1 ? `${c.qty}× ` : ''}${c.id.replace(/_/g, ' ')}`)
-      .join(', ');
-    let extra = chests;
-    if (s.roleNote) extra = extra ? `${extra} · rôle` : 'rôle';
+    const extra = formatStepChestLine(s);
     if (extra) {
-      ctx.font = '600 12px Consolas, monospace';
-      ctx.fillStyle = 'rgba(255, 214, 180, 0.9)';
+      ctx.font = '600 10px "Segoe UI", Arial';
+      ctx.fillStyle = 'rgba(255, 214, 180, 0.92)';
       ctx.fillText(truncateText(ctx, extra, cellW - 268), cx + 260, midY);
     }
     idx += 1;
