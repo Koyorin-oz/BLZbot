@@ -335,7 +335,7 @@ module.exports = async function deployCommands(client) {
                 const existing = await guild.commands.fetch();
                 for (const cmd of existing.values()) {
                     const shouldDelete =
-                        commandsToDeploy.has(cmd.name) ||
+                        commandsToDeployFinal.has(cmd.name) ||
                         localCommands.has(cmd.name) ||
                         OBSOLETE_SLASH_NAMES.has(cmd.name);
                     if (!shouldDelete) continue;
