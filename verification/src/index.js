@@ -39,7 +39,7 @@ for (const p of candidates) {
   try {
     if (p && fs.existsSync(p)) {
       require('dotenv').config({ path: p, quiet: true });
-      console.log(`[verif] .env chargé : ${p}`);
+      if (!isCompact()) console.log(`[verif] .env chargé : ${p}`);
       envLoaded = true;
       break;
     }
