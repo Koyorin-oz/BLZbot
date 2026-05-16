@@ -22,7 +22,7 @@ Chaque ligne = une commande racine ; les sous-commandes principales sont indiqu�
 | `/event` | Events serveur (`lancer` : chasse, raid, marathon, siege, arene, conquete · `contribuer`, `classement`, `actifs`, `cloturer`). |
 | `/grp` | Guilde : GRP perso (`voir`, `classement`). |
 | `/guilde` | Guildes joueur : créer, rejoindre, trésor, grades, focus, salon, rôles internes, etc. (nombreux sous-commandes). |
-| `/hacker` | Obtenir / utiliser l’accès salon hacker (config). |
+| `/salon-hacker` | Publier le panneau salon hacker (bouton loot 12 h). |
 | `/inventaire` | Inventaire + menu. |
 | `/itemindex` | Index objets : progression, paliers, matrice bonus (`voir`, `definir`, `reclamer`, `matrice`). |
 | `/money` | Owner : give/remove/set starss (`give`, `remove`, `set`). |
