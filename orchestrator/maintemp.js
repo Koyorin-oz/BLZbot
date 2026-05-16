@@ -193,6 +193,7 @@ function runScript(scriptObj) {
     ...process.env,
     DOTENV_CONFIG_QUIET: 'true',
     BLZ_COMPACT_LOG: '1',
+    BLZ_SUPPRESS_TEST_BANNER: '1',
     // Aligné avec niveau/src/utils/logger.js (compact → ERROR sauf BLZ_CHILD_LOG_LEVEL).
     LOG_LEVEL: process.env.BLZ_CHILD_LOG_LEVEL || 'ERROR',
     NODE_OPTIONS: process.env.NODE_OPTIONS
