@@ -22,14 +22,12 @@ applyGlobalLogPolicy();
 /** Racine du dépôt (parent de orchestrator/) */
 const REPO_ROOT = path.join(__dirname, '..');
 
-const {
-  loadBlzbotEnvFiles,
-  validateRequiredEnv,
-  applyProductionGuildDefaults,
-  applyTestGuildOverride,
-} = require(path.join(__dirname, '..', 'blzbot-env.js'));
+const { loadBlzbotEnvFiles, validateRequiredEnv, applyTestGuildOverride } = require(path.join(
+  __dirname,
+  '..',
+  'blzbot-env.js'
+));
 const { loadedPaths: envLoadedFrom } = loadBlzbotEnvFiles(REPO_ROOT);
-applyProductionGuildDefaults();
 applyTestGuildOverride();
 
 /** Délai entre chaque process forké (ms). 0 = tout lancer d’un coup. Défaut 400 ms. */
