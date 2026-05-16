@@ -12,6 +12,7 @@ const users = require('./users');
 const shop = require('./shop');
 const meta = require('./meta');
 const skillTree = require('./skillTree');
+const indexBonuses = require('./indexBonuses');
 const quests = require('./quests');
 const trophies = require('./trophies');
 
