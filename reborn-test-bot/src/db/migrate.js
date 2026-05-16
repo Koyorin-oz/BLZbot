@@ -280,6 +280,11 @@ function migrate(db) {
   addColumnIfMissing(db, 'users', 'item_cd_json', "TEXT NOT NULL DEFAULT '{}'");
   addColumnIfMissing(db, 'trades', 'from_event', "TEXT NOT NULL DEFAULT '0'");
   addColumnIfMissing(db, 'trades', 'to_event', "TEXT NOT NULL DEFAULT '0'");
+  addColumnIfMissing(db, 'users', 'streak', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'users', 'last_streak_timestamp', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'users', 'streak_lost_timestamp', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'users', 'previous_streak', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'user_item_index', 'owned_json', "TEXT NOT NULL DEFAULT '[]'");
 
   /** Recaler xp_total si colonne ajoutée à une base existante (approx. depuis level + ancien xp). */
   try {
