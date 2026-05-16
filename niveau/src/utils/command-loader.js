@@ -22,6 +22,11 @@ function isLegacyTestProfilFile(basename) {
     return typeof basename === 'string' && /^testprofil/i.test(basename);
 }
 
+/** Helpers partagés (ex. profil-v2-factory.js) — pas des slash à enregistrer. */
+function isCommandHelperFile(basename) {
+    return typeof basename === 'string' && /-factory\.js$/i.test(basename);
+}
+
 /**
  * Charge les commandes slash depuis commands/core, guilde, admin, misc.
  * @param {import('discord.js').Client} client
