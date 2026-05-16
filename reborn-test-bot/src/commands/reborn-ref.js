@@ -4,7 +4,7 @@ const { d } = require('../lib/slashDesc');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('reborn-ref')
-    .setDescription('Aperçu des commandes et modules disponibles sur ce serveur.'),
+    .setDescription(d('📖', 'Aperçu des commandes disponibles sur ce serveur.')),
   async execute(interaction) {
     const embed = new EmbedBuilder()
       .setTitle('Guide des commandes')
