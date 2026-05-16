@@ -163,11 +163,12 @@ async function deployModerationSlashCommands(client, _config, opts = {}) {
     const mirrorGuildIdSet = new Set(mirrorGuildIds);
 
     const localNames = [...localCommands.keys()];
-    console.log(
-        `[modération/deploy] ${localNames.length} commande(s) locales — global sauf guild-only (${guildOnlyCommandNames.size}).`
-    );
-
-    if (!compact) console.log('🔄 Modération — enregistrement GLOBAL des slash commands…');
+    if (!compact) {
+        console.log(
+            `[modération/deploy] ${localNames.length} commande(s) locales — global sauf guild-only (${guildOnlyCommandNames.size}).`
+        );
+        console.log('🔄 Modération — enregistrement GLOBAL des slash commands…');
+    }
 
     if (!client.isReady()) {
         await new Promise((resolve) => client.once('clientReady', resolve));

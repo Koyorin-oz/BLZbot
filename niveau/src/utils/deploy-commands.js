@@ -178,11 +178,13 @@ module.exports = async function deployCommands(client) {
     if (!compact) console.log(`[DEPLOY] Loaded ${localCommands.size} local commands`);
     const hasPanelVoc = localCommands.has('panel-voc');
     const hasStatsVocPanel = localCommands.has('stats-voc-panel');
-    console.log(
-        `[niveau/deploy] /panel-voc code : ${hasPanelVoc ? 'OUI ✓' : 'NON ✗'} · /stats-voc-panel code : ${
-            hasStatsVocPanel ? 'OUI ✓' : 'NON ✗'
-        }`
-    );
+    if (!compact) {
+        console.log(
+            `[niveau/deploy] /panel-voc code : ${hasPanelVoc ? 'OUI ✓' : 'NON ✗'} · /stats-voc-panel code : ${
+                hasStatsVocPanel ? 'OUI ✓' : 'NON ✗'
+            }`
+        );
+    }
 
     if (!client.isReady()) {
         if (!compact) console.log('[DEPLOY] Waiting for client to be ready...');
