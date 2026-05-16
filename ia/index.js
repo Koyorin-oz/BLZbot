@@ -1,5 +1,7 @@
 const path = require('path');
 const { normalizeGroqApiKey } = require('./normalize-groq-key.js');
+const { applyGlobalLogPolicy } = require(path.join(__dirname, '..', 'blz-log.js'));
+applyGlobalLogPolicy();
 const { resolveDotenvPath, PEBBLE_HOST_ENV_PATH } = require(path.join(__dirname, '..', 'blzbot-env.js'));
 require('dotenv').config({
     path: resolveDotenvPath(
