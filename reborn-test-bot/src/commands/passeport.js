@@ -28,7 +28,7 @@ function canStaff(interaction) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('passeport')
-    .setDescription('Passeport staff / sécu (carte canvas).')
+    .setDescription(d('🪪', 'Passeport staff / sécu (carte canvas).'))
     .addSubcommand((sc) =>
       sc
         .setName('voir')
