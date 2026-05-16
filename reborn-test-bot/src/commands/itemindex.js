@@ -22,7 +22,7 @@ module.exports = {
     .addSubcommand((sc) =>
       sc
         .setName('definir')
-        .setDescription('Définir ton % (test / admin)')
+        .setDescription('Définir le pourcentage d’index (administrateurs).')
         .addIntegerOption((o) =>
           o.setName('pourcent').setDescription('0–100').setRequired(true).setMinValue(0).setMaxValue(100),
         ),

@@ -3,7 +3,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('reborn-ref')
-    .setDescription('Récap modules REBORN sur ce bot de test (pas BLZbot prod).'),
+    .setDescription('Aperçu des commandes et modules disponibles sur ce serveur.'),
   async execute(interaction) {
     const embed = new EmbedBuilder()
       .setTitle('REBORN — bot de test')
