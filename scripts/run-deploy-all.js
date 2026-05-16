@@ -14,9 +14,13 @@ const { assertRebornSlashReady } = require(path.join(__dirname, 'reborn-slash-pr
 loadBlzbotEnvFiles(path.join(__dirname, '..'));
 applyTestGuildOverride();
 
-const rebornPre = assertRebornSlashReady({ exitOnFail: true });
+const rebornPre = assertRebornSlashReady({ exitOnFail: false });
 if (rebornPre.ok && !rebornPre.skipped) {
     blzLine('deploy', `REBORN ${rebornPre.count} cmd prêtes (/salon-hacker inclus)`);
+} else if (!rebornPre.skipped && !rebornPre.ok) {
+    blzError('deploy', rebornPre.message || 'REBORN absent');
+    blzError('deploy', 'Deploy annulé — vérifie le dossier reborn-test-bot/ puis redémarre le serveur Pebble.');
+    process.exit(1);
 }
 
 if (!isCompact()) {
