@@ -160,6 +160,8 @@ function isBlzTestGuild(guildId) {
 module.exports = {
     PEBBLE_HOST_ENV_PATH,
     resolveDotenvPath,
+    loadBlzbotEnvFiles,
+    validateRequiredEnv,
     BLZ_DEFAULT_TEST_GUILD_ID,
     isTestBotProfile,
     applyTestGuildOverride,
