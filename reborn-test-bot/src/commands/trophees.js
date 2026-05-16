@@ -5,6 +5,7 @@ const {
   MessageFlags,
 } = require('discord.js');
 const trophies = require('../services/trophies');
+const { d } = require('../lib/slashDesc');
 
 const TIER_EMOJI = {
   commun: '⚪',
