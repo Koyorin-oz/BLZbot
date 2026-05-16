@@ -37,7 +37,8 @@ function fmtMs(ms) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('solde')
-    .setDescription(d('💰', 'Consulte ton solde starss, points, XP et guilde.'))
+    .setDescription(d('💰', 'Consulte ton solde starss, points, XP et guilde.')),
+
   async execute(interaction) {
     const uid = interaction.user.id;
     users.getOrCreate(uid, interaction.user.username);
