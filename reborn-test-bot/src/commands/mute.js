@@ -17,6 +17,7 @@ const {
 const { isOwner } = require('../lib/owners');
 const users = require('../services/users');
 const { parseMuteDuration } = require('../lib/parseMuteDuration');
+const { d } = require('../lib/slashDesc');
 
 function canModerate(interaction) {
   const has = interaction.memberPermissions?.has(PermissionFlagsBits.ModerateMembers);

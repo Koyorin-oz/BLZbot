@@ -1,7 +1,8 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { d } = require('../lib/slashDesc');
 
 module.exports = {
-  data: new SlashCommandBuilder().setName('server').setDescription('Infos serveur (debug).'),
+  data: new SlashCommandBuilder().setName('server').setDescription(d('🖥️', 'Infos serveur (debug).')),
   /**
    * @param {import('discord.js').ChatInputCommandInteraction} interaction
    */
