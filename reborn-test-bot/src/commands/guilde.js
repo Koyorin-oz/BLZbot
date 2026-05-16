@@ -27,7 +27,7 @@ module.exports = {
     .addSubcommand((sc) =>
       sc
         .setName('rejoindre')
-        .setDescription('Rejoindre une guilde par ID')
+        .setDescription(d('🤝', 'Rejoindre une guilde par ID'))
         .addStringOption((o) => o.setName('guild_id').setDescription('ID guilde').setRequired(true)),
     )
     .addSubcommand((sc) => sc.setName('quitter').setDescription('Quitter ta guilde (pas le chef).'))
