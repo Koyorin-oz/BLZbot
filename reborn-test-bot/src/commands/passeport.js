@@ -7,6 +7,7 @@ const {
 const users = require('../services/users');
 const passport = require('../services/passport');
 const { isOwner } = require('../lib/owners');
+const { d } = require('../lib/slashDesc');
 
 const CANVAS_PASS = path.join(
   __dirname,
