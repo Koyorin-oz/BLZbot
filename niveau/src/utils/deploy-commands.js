@@ -127,6 +127,71 @@ function commandsAreEqual(remote, local) {
 }
 
 /**
+ * Slash REBORN sur la/les guilde(s) GUILD_ID (+ BLZ_MAIN_GUILD_ID) — visible tout de suite (pas d’attente global).
+ * @param {import('discord.js').Client} client
+ * @param {Map<string, object>} rebornCommands
+ */
+async function deployRebornSlashToGuilds(client, rebornCommands, { compact = false } = {}) {
+    const guildIds = getSlashDeployGuildIds();
+    if (!rebornCommands.size || !guildIds.length) {
+        console.warn('[niveau/deploy] REBORN guilde : rien à pousser (0 cmd ou 0 GUILD_ID).');
+        return { created: 0, updated: 0, errors: 0, guildIds: [] };
+    }
+
+    let created = 0;
+    let updated = 0;
+    let errors = 0;
+
+    for (const gid of guildIds) {
+        let guild = client.guilds.cache.get(gid);
+        if (!guild) {
+            guild = await client.guilds.fetch(gid).catch(() => null);
+        }
+        if (!guild) {
+            console.warn(`[niveau/deploy] REBORN guilde ${gid} : bot absent ou ID incorrect.`);
+            continue;
+        }
+
+        let existing;
+        try {
+            existing = await guild.commands.fetch();
+        } catch (e) {
+            console.warn(`[niveau/deploy] REBORN guilde ${guild.name} fetch:`, e?.message || e);
+            continue;
+        }
+        const existingMap = new Map();
+        existing.forEach((c) => existingMap.set(c.name, c));
+
+        for (const [name, commandData] of rebornCommands.entries()) {
+            const ex = existingMap.get(name);
+            try {
+                if (ex) {
+                    await guild.commands.edit(ex.id, commandData);
+                    updated++;
+                } else {
+                    await guild.commands.create(commandData);
+                    created++;
+                }
+                if (!compact) console.log(`  [REBORN guild ${guild.id}] /${name} OK`);
+            } catch (e) {
+                errors++;
+                console.error(`[niveau/deploy] REBORN guilde /${name}:`, e?.message || e);
+            }
+        }
+
+        for (const cmd of existing.values()) {
+            if (!rebornCommands.has(cmd.name)) continue;
+            if (rebornCommands.has(cmd.name)) continue;
+        }
+    }
+
+    console.log(
+        `[niveau/deploy] REBORN sur guilde(s) ${guildIds.join(', ')} : +${created} ~${updated} err ${errors} (${rebornCommands.size} cmd)`,
+    );
+    return { created, updated, errors, guildIds };
+}
+
+/**
  * Déploiement GLOBAL des slash commands du bot « niveau ».
  *
  * Politique : TOUTES les commandes vont sur l'application globale du bot et deviennent
