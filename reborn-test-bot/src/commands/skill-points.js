@@ -18,7 +18,7 @@ function getSp(userId) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('skill-points')
-    .setDescription('Gère les points de compétence d’un membre (administrateurs).')
+    .setDescription(d('✨', 'Gère les points de compétence d’un membre (admin).'))
     .addSubcommand((sc) =>
       sc
         .setName('give')

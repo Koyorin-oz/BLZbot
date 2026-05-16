@@ -4,7 +4,7 @@ const { d } = require('../lib/slashDesc');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('purge')
-    .setDescription('Supprime jusqu’à 1 000 messages récents dans le salon (propriétaire du bot).')
+    .setDescription(d('🧹', 'Supprime jusqu’à 1 000 messages récents (owner bot).'))
     .addIntegerOption((o) =>
       o
         .setName('nombre')
