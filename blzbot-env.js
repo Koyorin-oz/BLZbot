@@ -105,7 +105,10 @@ function applyProductionGuildDefaults() {
  * Garder un panel déploié ailleurs : `BLZ_TEST_KEEP_PANEL_GUILD=1` (ne pas écraser PANEL_GUILD_ID).
  */
 function applyTestGuildOverride() {
-    if (!isTestBotProfile()) return;
+    if (!isTestBotProfile()) {
+        applyProductionGuildDefaults();
+        return;
+    }
 
     const id = String(process.env.TEST_GUILD_ID || BLZ_DEFAULT_TEST_GUILD_ID).trim();
     if (!/^\d{17,22}$/.test(id)) {
