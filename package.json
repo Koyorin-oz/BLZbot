@@ -4,6 +4,7 @@
   "description": "Bot Discord blzbot",
   "main": "orchestrator/maintemp.js",
   "scripts": {
+    "prestart": "node scripts/pebble-sync-github.js",
     "start": "node orchestrator/maintemp.js",
     "start:test": "cross-env BLZ_TEST_MODE=1 node orchestrator/maintemp.js",
     "start:full": "cross-env BLZ_FORK_SERVICES=all node orchestrator/maintemp.js",
