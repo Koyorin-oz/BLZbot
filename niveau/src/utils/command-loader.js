@@ -213,12 +213,28 @@ function unloadValentinCommands(client) {
     }
 }
 
+/**
+ * Commandes REBORN (`reborn-test-bot`) — chargées en dernier pour écraser les homonymes niveau.
+ * @param {import('discord.js').Client} client
+ * @returns {number}
+ */
+function loadRebornSlashCommands(client) {
+    try {
+        const { loadRebornCommands } = require('./reborn-integration');
+        return loadRebornCommands(client);
+    } catch (e) {
+        logger.warn('[reborn] loadRebornSlashCommands:', e?.message || e);
+        return 0;
+    }
+}
+
 module.exports = {
     MAIN_COMMAND_SUBDIRS,
     isArchivedSlashCommandFile,
     isLegacyTestProfilFile,
     loadTopLevelCommands,
     loadSeasonalCommands,
+    loadRebornSlashCommands,
     loadHalloweenCommands,
     unloadHalloweenCommands,
     loadChristmasCommands,
