@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const users = require('../services/users');
+const { d } = require('../lib/slashDesc');
 
 function parseAmount(raw) {
   return BigInt(String(raw || '').replace(/\s/g, ''));
