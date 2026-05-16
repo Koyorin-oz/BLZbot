@@ -5,6 +5,7 @@ const {
 } = require('discord.js');
 const playerGuilds = require('../services/playerGuilds');
 const focusAudit = require('../services/focusAudit');
+const { d } = require('../lib/slashDesc');
 
 /**
  * Outils staff pour la modération du Focus de guilde :
