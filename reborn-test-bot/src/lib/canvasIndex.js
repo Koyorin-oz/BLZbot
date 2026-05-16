@@ -130,8 +130,7 @@ function formatStepChestLine(step) {
   return extra;
 }
 
-function milestoneHint(pct, steps, claimedSet) {
-  const claimable = steps.find((s) => !claimedSet.has(s.pct) && pct >= s.pct);
+function milestoneHint(pct, steps) {
   const upcoming = steps.find((s) => pct < s.pct);
   if (upcoming) return `Prochain objectif : ${upcoming.pct} % (${upcoming.pct - pct} % restants)`;
   return 'Catalogue à 100 % — paliers et bonus actifs';
