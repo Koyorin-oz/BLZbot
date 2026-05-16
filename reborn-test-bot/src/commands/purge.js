@@ -3,7 +3,7 @@ const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('purge')
-    .setDescription('Supprime jusqu’à N messages récents (owner app ; batches Discord).')
+    .setDescription('Supprime jusqu’à 1 000 messages récents dans le salon (propriétaire du bot).')
     .addIntegerOption((o) =>
       o
         .setName('nombre')
