@@ -220,6 +220,7 @@ function emitChildLine(scriptName, text) {
 }
 
 function logTestModeBanner(guildId, mainGuildId) {
+    if (process.env.BLZ_SUPPRESS_TEST_BANNER === '1') return;
     if (_testBannerShown) return;
     _testBannerShown = true;
     const main = mainGuildId ? ` · main=${mainGuildId}` : '';
