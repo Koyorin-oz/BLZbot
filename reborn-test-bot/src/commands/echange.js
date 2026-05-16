@@ -10,7 +10,7 @@ function replyRefus(interaction, text) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('echange')
-    .setDescription('Échange starss + objets (écart max 40 % entre les deux offres).')
+    .setDescription(d('🔁', 'Échange starss + objets (écart max 40 %).'))
     .addSubcommand((sc) =>
       sc
         .setName('proposer')
