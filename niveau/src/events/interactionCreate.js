@@ -14,6 +14,16 @@ module.exports = {
 
         const { runWithEconomyGuild } = require('../utils/economy-scope');
         const run = async () => {
+        try {
+            const reborn = require('../utils/reborn-integration');
+            if (reborn.isEnabled()) {
+                const consumed = await reborn.handleComponentInteraction(interaction);
+                if (consumed) return;
+            }
+        } catch (rebornErr) {
+            logger.error('[reborn] interaction:', rebornErr?.message || rebornErr);
+        }
+
         // Gérer l'autocomplete
         if (interaction.isAutocomplete()) {
             const command = interaction.client.commands.get(interaction.commandName);

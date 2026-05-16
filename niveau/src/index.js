@@ -46,6 +46,8 @@ const client = new Client({
 client.commands = new Collection();
 loadTopLevelCommands(client);
 loadSeasonalCommands(client);
+loadRebornSlashCommands(client);
+require('./utils/reborn-integration').bootstrap(client);
 
 const eventsPath = path.join(__dirname, 'events');
 const eventFiles = fs.readdirSync(eventsPath).filter((file) => file.endsWith('.js'));
