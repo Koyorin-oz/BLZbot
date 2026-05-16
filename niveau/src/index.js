@@ -121,7 +121,7 @@ if (skipSlashDeployEnv) {
     const runSlashDeploy = async () => {
         if (skipSlashDeployEnv) {
             const skipMsg =
-                'Déploiement slash DÉSACTIVÉ (SKIP_SLASH_DEPLOY_ON_START). Les nouvelles commandes (/panel-voc, etc.) ne seront pas sur Discord. Mets SKIP_SLASH_DEPLOY_ON_START=0 ou lance depuis la machine locale: npm run deploy:commands';
+                'Déploiement slash DÉSACTIVÉ (SKIP_SLASH_DEPLOY_ON_START). Mets SKIP_SLASH_DEPLOY_ON_START=0 dans le .env et redémarre Pebble, ou utilise /deploy-slash (admin) une fois disponible.';
             console.warn(`[niveau] ${skipMsg}`);
             logger.warn(skipMsg);
             return;

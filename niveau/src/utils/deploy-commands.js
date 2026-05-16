@@ -16,6 +16,7 @@ const OBSOLETE_SLASH_NAMES = new Set(['profil-v2', 'profile', 'testprofil', 'tes
 const DISCORD_APPLICATION_COMMAND_MAX = 100;
 /** Toujours tenter de (re)déployer ces noms — critiques REBORN / staff. */
 const REBORN_SLASH_PRIORITY_NAMES = [
+    'deploy-slash',
     'admin-roles',
     'salon-hacker',
     'itemindex',
