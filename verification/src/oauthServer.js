@@ -128,17 +128,22 @@ function createOAuthServer(opts) {
 
   const proxyOpts = { trustedProxySecret, trustedProxyIps };
 
-  if (proxyEnforced) {
-    if (trustedProxySecret) {
-      console.log('[verif] Reverse proxy obligatoire (header X-Verif-Proxy-Secret).');
+  const { isCompact, blzLine, blzWarn } = require(require('node:path').join(__dirname, '..', '..', 'blz-log.js'));
+  if (!isCompact()) {
+    if (proxyEnforced) {
+      if (trustedProxySecret) {
+        console.log('[verif] Reverse proxy obligatoire (header X-Verif-Proxy-Secret).');
+      } else {
+        console.log(`[verif] Reverse proxy obligatoire (whitelist ${trustedProxyIps.length} IP(s)).`);
+      }
     } else {
-      console.log(`[verif] Reverse proxy obligatoire (whitelist ${trustedProxyIps.length} IP(s)).`);
+      console.warn(
+        '[verif] Aucun garde-fou reverse proxy — TOUT le monde peut hit le port HTTP.\n' +
+          '       Recommandé : VERIFY_PROXY_SECRET=<long random> ou VERIFY_PROXY_IPS=<ip1,ip2>',
+      );
     }
-  } else {
-    console.warn(
-      '[verif] Aucun garde-fou reverse proxy — TOUT le monde peut hit le port HTTP.\n' +
-        '       Recommandé : VERIFY_PROXY_SECRET=<long random> ou VERIFY_PROXY_IPS=<ip1,ip2>',
-    );
+  } else if (!proxyEnforced) {
+    blzWarn('verif', 'HTTP sans garde-fou proxy (VERIFY_PROXY_SECRET recommandé)');
   }
 
   const app = express();
