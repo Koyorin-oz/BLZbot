@@ -36,38 +36,38 @@ function updateStreak(client, userId) {
 
   const todayTs = todayStartMs();
   const lastTs = u.last_streak_timestamp || 0;
-  let streak = u.streak || 0;
+  let newStreak = u.streak || 0;
   let streakUpdated = false;
 
   if (lastTs >= todayTs) {
-    return { streakUpdated: false, newStreak: streak };
+    return { streakUpdated: false, newStreak };
   }
 
   const yesterdayTs = todayTs - 24 * 60 * 60 * 1000;
 
   if (lastTs === yesterdayTs) {
-    streak += 1;
+    newStreak += 1;
     streakUpdated = true;
   } else if (lastTs > 0 && lastTs < yesterdayTs) {
     db.prepare(
       'UPDATE users SET streak_lost_timestamp = ?, previous_streak = ?, streak = 1, last_streak_timestamp = ? WHERE id = ?',
-    ).run(Date.now(), streak, todayTs, userId);
-    streak = 1;
+    ).run(Date.now(), u.streak || 0, todayTs, userId);
+    newStreak = 1;
     streakUpdated = true;
-  } else {
-    streak = 1;
+  } else if (lastTs === 0) {
+    newStreak = 1;
     streakUpdated = true;
   }
 
   if (streakUpdated && lastTs !== yesterdayTs && !(lastTs > 0 && lastTs < yesterdayTs)) {
-    db.prepare('UPDATE users SET streak = ?, last_streak_timestamp = ? WHERE id = ?').run(streak, todayTs, userId);
+    db.prepare('UPDATE users SET streak = ?, last_streak_timestamp = ? WHERE id = ?').run(newStreak, todayTs, userId);
   }
 
   if (!streakUpdated) {
-    return { streakUpdated: false, newStreak: streak };
+    return { streakUpdated: false, newStreak };
   }
 
-  const reward = calculateStreakReward(streak);
+  const reward = calculateStreakReward(newStreak);
   const indexBonuses = require('./indexBonuses');
   if (reward.stars > 0n) {
     users.addStars(userId, indexBonuses.applyStars(userId, reward.stars));
@@ -76,8 +76,8 @@ function updateStreak(client, userId) {
     users.addInventory(userId, reward.itemId, 1);
   }
 
-  sendStreakAnnouncement(client, userId, streak, reward).catch(() => {});
-  return { streakUpdated: true, newStreak: streak };
+  if (client) sendStreakAnnouncement(client, userId, newStreak, reward).catch(() => {});
+  return { streakUpdated: true, newStreak };
 }
 
 async function sendStreakAnnouncement(client, userId, newStreak, reward) {
@@ -86,7 +86,7 @@ async function sendStreakAnnouncement(client, userId, newStreak, reward) {
     process.env.STREAK_CHANNEL_ID ||
     ''
   ).trim();
-  if (!channelId || !client) return;
+  if (!channelId) return;
   const channel = await client.channels.fetch(channelId).catch(() => null);
   if (!channel || !channel.isTextBased()) return;
 
@@ -122,23 +122,19 @@ function scheduleStreakReset() {
   console.log('[streak] Reset quotidien 00:00 Europe/Paris actif.');
 }
 
-/**
- * Streak Keeper : restaure la streak perdue si < 48 h (comme le bot principal).
- */
+/** Streak Keeper : restaure la streak perdue si < 48 h (bot principal). */
 function restoreLostStreak(userId) {
   const u = users.getUser(userId);
   if (!u?.streak_lost_timestamp) {
     return { ok: false, error: 'Aucune streak perdue à restaurer.' };
   }
-  const lostAt = u.streak_lost_timestamp;
-  if (Date.now() - lostAt > 48 * 60 * 60 * 1000) {
-    return { ok: false, error: 'Trop tard : la streak a été perdue il y a plus de **48 h**.' };
+  if (Date.now() - u.streak_lost_timestamp > 48 * 60 * 60 * 1000) {
+    return { ok: false, error: 'Trop tard : plus de **48 h** depuis la perte de streak.' };
   }
   const prev = Math.max(1, u.previous_streak || 1);
-  const todayTs = todayStartMs();
   db.prepare(
     'UPDATE users SET streak = ?, last_streak_timestamp = ?, streak_lost_timestamp = 0, previous_streak = 0 WHERE id = ?',
-  ).run(prev, todayTs, userId);
+  ).run(prev, todayStartMs(), userId);
   return { ok: true, streak: prev };
 }
 
