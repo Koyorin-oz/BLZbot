@@ -13,6 +13,43 @@ const { getEventState: getValentinState } = require('./db-valentin');
 // Slash obsolètes à retirer (ancienne convention, remplacés par /profil, ou commandes de test retirées).
 const OBSOLETE_SLASH_NAMES = new Set(['profil-v2', 'profile', 'testprofil', 'testprofilguilde']);
 
+const DISCORD_APPLICATION_COMMAND_MAX = 100;
+/** Toujours tenter de (re)déployer ces noms — critiques REBORN / staff. */
+const REBORN_SLASH_PRIORITY_NAMES = [
+    'admin-roles',
+    'salon-hacker',
+    'itemindex',
+    'arbre',
+    'quetes',
+    'ranked',
+    'temple',
+    'profil',
+    'daily',
+    'boutique',
+];
+
+/**
+ * Discord : max 100 commandes globales. Garde d’abord la priorité REBORN + noms essentiels.
+ * @param {Map<string, object>} commandsToDeploy
+ * @param {Map<string, { source?: string }>} localCommands
+ */
+function capCommandsToDiscordLimit(commandsToDeploy, localCommands) {
+    if (commandsToDeploy.size <= DISCORD_APPLICATION_COMMAND_MAX) return commandsToDeploy;
+    const priority = new Set(REBORN_SLASH_PRIORITY_NAMES);
+    const prim = [];
+    const sec = [];
+    for (const [name, data] of commandsToDeploy.entries()) {
+        const src = localCommands.get(name)?.source;
+        if (priority.has(name) || src === 'reborn') prim.push([name, data]);
+        else sec.push([name, data]);
+    }
+    const merged = [...prim, ...sec].slice(0, DISCORD_APPLICATION_COMMAND_MAX);
+    console.warn(
+        `[niveau/deploy] ${commandsToDeploy.size} commandes → ${merged.length} après troncature (limite Discord ${DISCORD_APPLICATION_COMMAND_MAX}). Les noms REBORN prioritaires sont conservés en tête.`,
+    );
+    return new Map(merged);
+}
+
 function loadCommandData(filePath) {
     try {
         const resolved = path.resolve(filePath);
