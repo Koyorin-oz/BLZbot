@@ -20,6 +20,7 @@ const catalog = require('../reborn/catalog');
 const { rollHackerSalon } = require('../reborn/chestLoot');
 const { isOwner } = require('../lib/owners');
 const { renderHackerLootCard, renderHackerStatusCard } = require('../lib/canvasHacker');
+const { d } = require('../lib/slashDesc');
 
 const HACKER_SALON_BUTTON_ID = 'rb:hacker:claim';
 

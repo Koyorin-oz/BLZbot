@@ -57,7 +57,7 @@ module.exports = {
     .addSubcommand((sc) =>
       sc
         .setName('definir-index-full')
-        .setDescription("Associe un rôle existant à l'index 100 %.")
+        .setDescription(d('🔗', "Associe un rôle existant à l'index 100 %."))
         .addRoleOption((o) =>
           o.setName('role').setDescription('Rôle Discord à utiliser').setRequired(true),
         ),
