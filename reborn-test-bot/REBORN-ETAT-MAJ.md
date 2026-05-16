@@ -86,7 +86,7 @@ Légende : **OK** = présent et jouable sur le bot de test · **Partiel** = là 
 
 | Sujet | Statut | Notes |
 |-------|--------|--------|
-| Trophées, hacker, passeport | **OK** | Commandes dédiées |
+| Trophées, salon hacker, passeport | **OK** | `/salon-hacker` + bouton ; `/trophees`, `/passeport` |
 | Canvas profil / daily | **Partiel** | Objectif alignement prod — daily V2, profils hybrides |
 
 ---
