@@ -14,7 +14,7 @@ module.exports = {
         .setDescription(d('🚩', 'Rejoindre le camp séparatiste'))
         .addStringOption((o) => o.setName('id').setDescription('ID séparation').setRequired(true)),
     )
-    .addSubcommand((sc) => sc.setName('statut').setDescription('Séparations actives sur ce serveur')),
+    .addSubcommand((sc) => sc.setName('statut').setDescription(d('📋', 'Séparations actives sur ce serveur'))),
   async execute(interaction) {
     const hub = interaction.guildId;
     if (!hub) return interaction.reply({ content: 'Serveur uniquement.' });
