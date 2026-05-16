@@ -181,6 +181,7 @@ module.exports = {
     resolveDotenvPath,
     loadBlzbotEnvFiles,
     validateRequiredEnv,
+    applyProductionGuildDefaults,
     BLZ_DEFAULT_TEST_GUILD_ID,
     isTestBotProfile,
     applyTestGuildOverride,
