@@ -331,6 +331,7 @@ module.exports = async function deployCommands(client) {
     try {
         // 2. Filtrer : ne garder que les commandes actives (events saisonniers éteints = à retirer)
         const commandsToDeploy = new Map();
+        const rebornForGuild = new Map();
         for (const [name, command] of localCommands.entries()) {
             const shouldBeActive =
                 command.source === 'reborn' ||
@@ -340,6 +341,10 @@ module.exports = async function deployCommands(client) {
                 (command.source === 'valentin' && isValentinActive);
             if (!shouldBeActive) continue;
             const { source, ...cleanCmd } = command;
+            if (command.source === 'reborn') {
+                rebornForGuild.set(name, cleanCmd);
+                if (rebornSlashScope === 'guild') continue;
+            }
             commandsToDeploy.set(name, cleanCmd);
         }
 
