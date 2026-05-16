@@ -334,7 +334,7 @@ async function renderIndexCard(opts) {
   ctx.fillText(truncateText(ctx, milestoneHint(pct, steps, claimedSet), halfW - 28), hintX + 16, bottomY + 32);
   ctx.font = '600 13px "Segoe UI", Arial';
   ctx.fillStyle = T.sub;
-  ctx.fillText('/itemindex matrice · Index × Ranked × Guilde', hintX + 16, bottomY + 56);
+  ctx.fillText('Paliers crédités automatiquement', hintX + 16, bottomY + 56);
 
   ctx.textAlign = 'center';
   ctx.font = '500 11px "Segoe UI", Arial';
