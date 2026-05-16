@@ -77,8 +77,9 @@ async function main() {
         }
     }
     console.log(`[pebble-sync] Terminé : ${ok}/${FILES.length} fichiers.`);
-    if (!fs.existsSync(marker)) {
-        console.error('[pebble-sync] reborn-slash-bodies.json toujours absent — vérifie le repo GitHub.');
+    const marker = path.join(REPO_ROOT, 'niveau', 'src', 'generated', 'reborn-slash-bodies.json');
+    if (!fs.existsSync(marker) || fs.statSync(marker).size < 1000) {
+        console.error('[pebble-sync] reborn-slash-bodies.json absent — push sur GitHub puis restart.');
         process.exit(1);
     }
 }
