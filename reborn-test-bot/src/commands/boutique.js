@@ -1,8 +1,9 @@
 const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const { buildBoutiquePayload } = require('../lib/shopV2Ui');
+const { d } = require('../lib/slashDesc');
 
 module.exports = {
-  data: new SlashCommandBuilder().setName('boutique').setDescription('Boutique du serveur — items du jour, coffres et boosts.'),
+  data: new SlashCommandBuilder().setName('boutique').setDescription(d('🛒', 'Boutique du jour — items, coffres et boosts.')),
   /**
    * @param {import('discord.js').ChatInputCommandInteraction} interaction
    */
