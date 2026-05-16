@@ -33,6 +33,17 @@ function applyGlobalLogPolicy() {
     }
     process.env.DOTENV_CONFIG_QUIET = 'true';
 
+    try {
+        const dotenv = require('dotenv');
+        if (!dotenv.__blzQuietPatched) {
+            const orig = dotenv.config.bind(dotenv);
+            dotenv.config = (opts = {}) => orig({ quiet: true, ...opts, quiet: opts.quiet ?? true });
+            dotenv.__blzQuietPatched = true;
+        }
+    } catch {
+        /* dotenv absent */
+    }
+
     if (!process.env.NODE_OPTIONS?.includes('--no-deprecation')) {
         process.env.NODE_OPTIONS = [process.env.NODE_OPTIONS, '--no-deprecation'].filter(Boolean).join(' ').trim();
     }
