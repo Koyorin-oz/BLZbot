@@ -215,7 +215,7 @@ function createBot(opts) {
   }
 
   client.once(Events.ClientReady, async (c) => {
-    const { isCompact, blzLine } = require(path.join(__dirname, '..', '..', 'blz-log.js'));
+    const { isCompact, blzLine } = require(require('node:path').join(__dirname, '..', '..', 'blz-log.js'));
     try {
       await c.application.commands.set(buildSlashCommands());
       if (isCompact()) {
