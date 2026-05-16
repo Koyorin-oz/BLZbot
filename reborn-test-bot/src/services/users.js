@@ -81,6 +81,11 @@ function addXp(userId, delta) {
   }
   const mult = Date.now() < (u.xp_boost_ms || 0) ? 2 : 1;
   d *= mult;
+  try {
+    d = require('./indexBonuses').applyXpDelta(userId, d);
+  } catch {
+    /* ignore */
+  }
   const oldTotal = u.xp_total ?? 0;
   const oldLevel = totalToLevelState(oldTotal).level;
   const newTotal = oldTotal + d;
