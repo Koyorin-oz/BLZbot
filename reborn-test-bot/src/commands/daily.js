@@ -12,6 +12,7 @@ const { getItem } = require('../reborn/catalog');
 const meta = require('../services/meta');
 const cfg = require('../config');
 const { totalToLevelState, T_START, MAX_LEVEL } = require('../reborn/xpCurve');
+const { d } = require('../lib/slashDesc');
 
 const { renderDailyCard } = require(path.join(
   __dirname,
