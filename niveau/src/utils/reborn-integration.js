@@ -26,7 +26,11 @@ function getRuntime() {
     return rebornRuntime;
   } catch (e) {
     loadError = e;
-    logger.error('[reborn] Chargement rebornRuntime impossible:', e?.message || e);
+    logger.error(
+      `[reborn] Chargement rebornRuntime impossible (${REBORN_RUNTIME_PATH}):`,
+      e?.message || e,
+    );
+    if (e?.stack) logger.error(e.stack.split('\n').slice(0, 4).join('\n'));
     return null;
   }
 }
