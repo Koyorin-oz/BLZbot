@@ -126,7 +126,9 @@ if (skipSlashDeployEnv) {
     };
 
     if (slashDeferMs > 0) {
-        console.log(`[niveau] Déploiement slash dans ${slashDeferMs / 1000}s (BLZ_DEFER_SLASH_DEPLOY_MS)…`);
+        if (!BLZ_COMPACT) {
+            console.log(`[niveau] Déploiement slash dans ${slashDeferMs / 1000}s (BLZ_DEFER_SLASH_DEPLOY_MS)…`);
+        }
         setTimeout(() => {
             runSlashDeploy().catch((e) => logger.error(`[niveau] Slash: ${e?.message || e}`));
         }, slashDeferMs);
