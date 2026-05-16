@@ -53,11 +53,11 @@ async function fetchMainGuildIconUrl(client, guildId) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('temple')
-    .setDescription('Points « temple » (carte canvas + rappel texte).')
-    .addSubcommand((sc) => sc.setName('voir').setDescription('Points + statut (recalcul auto)'))
-    .addSubcommand((sc) => sc.setName('sync').setDescription('Forcer le recalcul (serveur actuel)'))
+    .setDescription(d('🏛️', 'Temple — points, sync et classement Roi/Légende.'))
+    .addSubcommand((sc) => sc.setName('voir').setDescription(d('👁️', 'Points + statut (recalcul auto)')))
+    .addSubcommand((sc) => sc.setName('sync').setDescription(d('🔄', 'Forcer le recalcul (serveur actuel)')))
     .addSubcommand((sc) =>
-      sc.setName('classement').setDescription('Classement Roi & Légende du Temple.'),
+      sc.setName('classement').setDescription(d('👑', 'Classement Roi & Légende du Temple.')),
     ),
   async execute(interaction) {
     // Défère immédiatement (canvas + fetch peuvent dépasser 3 s -> 10062).
