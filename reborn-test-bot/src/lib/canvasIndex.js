@@ -132,10 +132,9 @@ function formatStepChestLine(step) {
 
 function milestoneHint(pct, steps, claimedSet) {
   const claimable = steps.find((s) => !claimedSet.has(s.pct) && pct >= s.pct);
-  if (claimable) return `Palier ${claimable.pct} % disponible — /itemindex reclamer`;
   const upcoming = steps.find((s) => pct < s.pct);
   if (upcoming) return `Prochain objectif : ${upcoming.pct} % (${upcoming.pct - pct} % restants)`;
-  return 'Catalogue à 100 % — vérifie les récompenses non réclamées';
+  return 'Catalogue à 100 % — paliers et bonus actifs';
 }
 
 /**
