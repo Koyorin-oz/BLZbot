@@ -23,6 +23,9 @@ const FILES = [
     'niveau/src/utils/deploy-commands.js',
     'niveau/src/generated/reborn-slash-bodies.json',
     'niveau/src/commands/admin/deploy-slash.js',
+    'niveau/src/utils/command-loader.js',
+    'scripts/pebble-sync-github.js',
+    'scripts/pebble-git-hard-reset.js',
 ];
 
 function fetchUrl(url) {
