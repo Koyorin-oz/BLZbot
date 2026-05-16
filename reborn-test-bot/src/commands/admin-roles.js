@@ -65,7 +65,7 @@ module.exports = {
     .addSubcommand((sc) =>
       sc
         .setName('definir-temple-roi')
-        .setDescription('Associe un rôle Discord aux joueurs ≥ seuil Roi du Temple.')
+        .setDescription(d('👑', 'Associe un rôle aux joueurs Roi du Temple.'))
         .addRoleOption((o) =>
           o.setName('role').setDescription('Rôle Discord à utiliser').setRequired(true),
         ),
