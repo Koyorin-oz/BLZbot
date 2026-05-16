@@ -30,9 +30,9 @@ const CLASS_PERKS = {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('arbre')
-    .setDescription('Arbre de compétences : visualisation, achats de paliers et classes.')
+    .setDescription(d('🌳', 'Arbre de compétences — paliers, classes et branches.'))
     .addSubcommand((sc) =>
-      sc.setName('voir').setDescription('Affiche ton arbre (canvas) et le menu pour débloquer des paliers.'),
+      sc.setName('voir').setDescription(d('👁️', 'Affiche ton arbre (canvas) et les paliers.')),
     )
     .addSubcommand((sc) =>
       sc
