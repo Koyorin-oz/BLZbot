@@ -37,7 +37,9 @@ function markDiscovered(userId, itemId) {
   const owned = parseOwned(row?.owned_json);
   if (owned.has(itemId)) return null;
   owned.add(itemId);
-  return saveOwned(userId, owned);
+  const pct = saveOwned(userId, owned);
+  const grant = indexProgress.autoClaimAll(userId, users);
+  return { pct, newly: grant.newly };
 }
 
 /** Recalcule le % depuis owned_json (sans ajouter d’item). */
