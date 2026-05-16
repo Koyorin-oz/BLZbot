@@ -41,7 +41,8 @@ function loadTopLevelCommands(client) {
                 (file) =>
                     file.endsWith('.js') &&
                     !isArchivedSlashCommandFile(file) &&
-                    !isLegacyTestProfilFile(file),
+                    !isLegacyTestProfilFile(file) &&
+                    !isCommandHelperFile(file),
             );
         for (const file of commandFiles) {
             const filePath = path.join(dir, file);
