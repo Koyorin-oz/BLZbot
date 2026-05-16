@@ -34,11 +34,13 @@ function assertRebornSlashReady(opts = {}) {
         return { ok: true, skipped: true, count: 0 };
     }
 
-    if (!fs.existsSync(RUNTIME_PATH)) {
+    const jsonPath = integration.REBORN_SLASH_JSON_PATH;
+    const hasJson = integration.rebornSlashJsonAvailable?.() || fs.existsSync(jsonPath);
+
+    if (!fs.existsSync(RUNTIME_PATH) && !hasJson) {
         return fail(
-            `[REBORN] Dossier reborn-test-bot absent sur ce serveur.\n` +
-                `  Attendu : ${RUNTIME_PATH}\n` +
-                `  → mets à jour le dépôt sur Pebble (git / upload) puis redémarre le serveur`,
+            `[REBORN] reborn-test-bot ET reborn-slash-bodies.json absents.\n` +
+                `  → git pull (fichier niveau/src/generated/reborn-slash-bodies.json requis)`,
         );
     }
 
