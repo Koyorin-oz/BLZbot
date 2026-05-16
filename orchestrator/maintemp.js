@@ -19,23 +19,16 @@ const { applyGlobalLogPolicy, isCompact, blzLine, blzError, emitChildLine } = re
   'blz-log.js'
 ));
 applyGlobalLogPolicy();
-const { resolveDotenvPath, PEBBLE_HOST_ENV_PATH, applyTestGuildOverride } = require(path.join(
+/** Racine du dépôt (parent de orchestrator/) */
+const REPO_ROOT = path.join(__dirname, '..');
+
+const { loadBlzbotEnvFiles, validateRequiredEnv, applyTestGuildOverride } = require(path.join(
   __dirname,
   '..',
   'blzbot-env.js'
 ));
-require('dotenv').config({
-  path: resolveDotenvPath(
-    path.join(__dirname, '..', '.env'),
-    PEBBLE_HOST_ENV_PATH,
-    path.join(process.cwd(), '.env')
-  ),
-  quiet: true,
-});
+const { loadedPaths: envLoadedFrom } = loadBlzbotEnvFiles(REPO_ROOT);
 applyTestGuildOverride();
-
-/** Racine du dépôt (parent de orchestrator/) */
-const REPO_ROOT = path.join(__dirname, '..');
 
 /** Délai entre chaque process forké (ms). 0 = tout lancer d’un coup. Défaut 400 ms. */
 const FORK_DELAY_MS = Math.max(0, parseInt(process.env.BLZ_FORK_DELAY_MS || '400', 10));
