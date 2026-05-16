@@ -1,8 +1,10 @@
 /**
  * Progression index : % = items catalogue « collection » déjà obtenus au moins 1×.
+ * Paliers et récompenses : crédités automatiquement (`autoClaimAll`).
  */
 const db = require('../db');
 const indexProgress = require('./indexProgress');
+const users = require('./users');
 const { isIndexable, totalIndexable } = require('./indexCatalog');
 
 function parseOwned(json) {
