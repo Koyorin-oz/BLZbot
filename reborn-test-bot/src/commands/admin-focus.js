@@ -17,7 +17,7 @@ const { d } = require('../lib/slashDesc');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('admin-focus')
-    .setDescription('Modération des Focus de guilde (admin).')
+    .setDescription(d('🎯', 'Modération des Focus de guilde (admin).'))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand((sc) =>
       sc

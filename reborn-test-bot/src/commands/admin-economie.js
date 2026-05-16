@@ -17,7 +17,7 @@ const C = require('../reborn/constants');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('admin-economie')
-    .setDescription('Audit et simulation de l’économie du serveur (administrateurs).')
+    .setDescription(d('📊', 'Audit et simulation de l’économie du serveur (admin).'))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand((sc) =>
       sc.setName('audit').setDescription('État courant + récap sources/sinks.'),

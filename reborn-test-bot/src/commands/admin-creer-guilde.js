@@ -5,7 +5,7 @@ const { d } = require('../lib/slashDesc');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('admin-creer-guilde')
-    .setDescription('Crée une guilde joueur sans exigence de niveau (réservé aux administrateurs Discord).')
+    .setDescription(d('🛡️', 'Crée une guilde joueur sans exigence de niveau (admin).'))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addStringOption((o) => o.setName('nom').setDescription('Nom de la guilde').setRequired(true))
     .addUserOption((o) =>

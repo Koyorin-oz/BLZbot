@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const users = require('../services/users');
 const skillTree = require('../services/skillTree');
+const { d } = require('../lib/slashDesc');
 const db = require('../db');
 const { isOwner } = require('../lib/owners');
 

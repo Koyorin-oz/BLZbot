@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const passport = require('../services/passport');
+const { d } = require('../lib/slashDesc');
 const { isOwner } = require('../lib/owners');
 
 module.exports = {
