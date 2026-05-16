@@ -179,10 +179,6 @@ async function deployRebornSlashToGuilds(client, rebornCommands, { compact = fal
             }
         }
 
-        for (const cmd of existing.values()) {
-            if (!rebornCommands.has(cmd.name)) continue;
-            if (rebornCommands.has(cmd.name)) continue;
-        }
     }
 
     console.log(
