@@ -6,7 +6,7 @@ const { isOwner } = require('../lib/owners');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('warn')
-    .setDescription('Enregistre un avertissement (léger, moyen, fort ou critique).')
+    .setDescription(d('⚠️', 'Enregistre un avertissement staff (léger → critique).'))
     .setDMPermission(false)
     .addUserOption((o) => o.setName('membre').setDescription('Cible').setRequired(true))
     .addStringOption((o) =>
