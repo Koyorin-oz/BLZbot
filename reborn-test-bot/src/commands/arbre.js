@@ -5,6 +5,7 @@ const {
   MessageFlags,
 } = require('discord.js');
 const skillTree = require('../services/skillTree');
+const { d } = require('../lib/slashDesc');
 const { buildArbreContainer } = require('../services/panelComponents');
 
 const LABEL = {
