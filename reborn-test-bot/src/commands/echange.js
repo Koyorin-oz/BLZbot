@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const trade = require('../services/trade');
+const { d } = require('../lib/slashDesc');
 
 function replyRefus(interaction, text) {
   const msg = text.startsWith('❌') ? text : `❌ ${text}`;

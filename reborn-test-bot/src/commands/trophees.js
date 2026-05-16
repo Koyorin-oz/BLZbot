@@ -19,11 +19,11 @@ const TIER_EMOJI = {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('trophees')
-    .setDescription('Trophées : déblocage automatique, collection et tirage quotidien.')
-    .addSubcommand((sc) => sc.setName('voir').setDescription('Tes trophées et critères'))
-    .addSubcommand((sc) => sc.setName('verifier').setDescription('Revérifier les critères maintenant'))
+    .setDescription(d('🏅', 'Trophées — collection et tirage quotidien.'))
+    .addSubcommand((sc) => sc.setName('voir').setDescription(d('👁️', 'Tes trophées et critères')))
+    .addSubcommand((sc) => sc.setName('verifier').setDescription(d('🔍', 'Revérifier les critères maintenant')))
     .addSubcommand((sc) =>
-      sc.setName('tirage').setDescription('Tirage 1×/24h : tente de débloquer un trophée pondéré (biais sur les critères déjà remplis).'),
+      sc.setName('tirage').setDescription(d('🎲', 'Tirage 1×/24h — tente un trophée aléatoire.')),
     ),
   async execute(interaction) {
     const uid = interaction.user.id;

@@ -279,7 +279,7 @@ module.exports = {
   resolveGuildForProfilButton,
   data: new SlashCommandBuilder()
     .setName('profil-guilde')
-    .setDescription('Profil visuel d’une guilde : stats, grade et actions rapides.')
+    .setDescription(d('🛡️', 'Profil visuel d’une guilde — stats et actions.'))
     .addStringOption((o) =>
       o
         .setName('nom')
