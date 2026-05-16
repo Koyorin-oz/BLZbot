@@ -9,6 +9,7 @@ const indexCollection = require('../services/indexCollection');
 const indexRoles = require('../services/indexRoles');
 const catalog = require('../reborn/catalog');
 const { renderIndexCard } = require('../lib/canvasIndex');
+const { d } = require('../lib/slashDesc');
 
 function formatStepLine(step) {
   const parts = [`+${step.stars.toLocaleString('fr-FR')} ★`];

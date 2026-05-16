@@ -1,4 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js');
+const { d } = require('../lib/slashDesc');
 const { buildQuetesPayload } = require('../lib/quetesPanelUi');
 const users = require('../services/users');
 
