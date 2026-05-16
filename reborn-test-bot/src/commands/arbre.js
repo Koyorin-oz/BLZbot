@@ -51,11 +51,11 @@ module.exports = {
             ),
         ),
     )
-    .addSubcommand((sc) => sc.setName('classe').setDescription('Voir ta/tes classe(s) joueur (issue de l’arbre).'))
+    .addSubcommand((sc) => sc.setName('classe').setDescription('Affiche ta ou tes classes débloquées via l’arbre.'))
     .addSubcommand((sc) =>
       sc
         .setName('separatiste')
-        .setDescription('Branche séparatiste (5 paliers, 1 point gagné par séparation gagnée).')
+        .setDescription('Branche séparatiste : 5 paliers, 1 point par séparation remportée.')
         .addStringOption((o) =>
           o
             .setName('action')
