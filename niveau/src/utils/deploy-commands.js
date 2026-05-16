@@ -313,7 +313,7 @@ module.exports = async function deployCommands(client) {
         // 4. Purge globale : retirer du global les commandes obsolètes + events désactivés + commandes
         // supprimées côté code. Critère : présente en global mais absente de commandsToDeploy.
         for (const cmd of appCommands.values()) {
-            if (commandsToDeploy.has(cmd.name)) continue;
+            if (commandsToDeployFinal.has(cmd.name)) continue;
             // On ne touche qu'à ce qu'on connaît (obsolètes, ou commande qui était en local mais désactivée)
             const isKnownObsolete = OBSOLETE_SLASH_NAMES.has(cmd.name);
             const wasLocalButDisabled = localCommands.has(cmd.name);
