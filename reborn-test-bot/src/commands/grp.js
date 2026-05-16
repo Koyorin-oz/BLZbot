@@ -38,7 +38,7 @@ function nextGrpStep(grpTotal) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('grp')
-    .setDescription('Carte GRP perso ou classement joueurs GRP du serveur.')
+    .setDescription(d('⚡', 'Carte GRP perso ou classement GRP du serveur.'))
     .addStringOption((o) =>
       o
         .setName('action')

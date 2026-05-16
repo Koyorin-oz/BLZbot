@@ -137,7 +137,7 @@ function buildSelect(currentType) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('classement-guilde')
-    .setDescription('Classements des guildes : GRP, starss, XP membres, RP ranked.')
+    .setDescription(d('🏰', 'Classements des guildes — GRP, starss, XP, RP.'))
     .addStringOption((o) =>
       o
         .setName('type')

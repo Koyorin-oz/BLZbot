@@ -24,7 +24,7 @@ module.exports = {
     .addSubcommand((sc) =>
       sc
         .setName('reclamer')
-        .setDescription('Réclamer tous les paliers franchis non encore pris.'),
+        .setDescription(d('🎁', 'Réclamer les paliers franchis non encore pris.')),
     ),
 
   async execute(interaction) {

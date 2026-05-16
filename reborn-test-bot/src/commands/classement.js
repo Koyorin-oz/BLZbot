@@ -121,7 +121,7 @@ function buildSelect(currentType) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('classement')
-    .setDescription('Classements joueurs : Starss, niveau XP, Ranked RP.')
+    .setDescription(d('📈', 'Classements joueurs — Starss, XP, Ranked RP.'))
     .addStringOption((o) =>
       o
         .setName('type')
