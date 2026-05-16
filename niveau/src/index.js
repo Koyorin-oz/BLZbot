@@ -57,7 +57,7 @@ if (rebornIntegration.isEnabled()) {
         console.error(
             '[niveau] REBORN : 0 commande chargée (erreur au require). Lance npm run deploy:reborn:check puis corrige les logs.',
         );
-    } else if (!BLZ_COMPACT) {
+    } else if (process.env.BLZ_COMPACT_LOG !== '1') {
         logger.info(`[reborn] ${rebornLoaded} commande(s) actives (écrasent les homonymes niveau).`);
     }
 }
