@@ -205,8 +205,12 @@ module.exports = async function deployCommands(client) {
             console.log(`[niveau/deploy] REBORN preflight OK (${pre.count} commandes locales)`);
         } else if (pre.skipped) {
             console.warn('[niveau/deploy] BLZ_REBORN_INTEGRATION désactivé — slash REBORN ignorés.');
-        } else if (strictReborn) {
-            throw new Error(pre.message || '[REBORN] preflight échoué');
+        } else if (strictReborn && !pre.skipped) {
+            const { rebornSlashJsonAvailable } = require('./reborn-integration');
+            if (!rebornSlashJsonAvailable()) {
+                throw new Error(pre.message || '[REBORN] preflight échoué');
+            }
+            console.warn(`[niveau/deploy] REBORN preflight : ${pre.message || ''} — tentative via JSON embarqué.`);
         } else {
             console.warn(`[niveau/deploy] REBORN preflight échoué (deploy continue) : ${pre.message || ''}`);
         }

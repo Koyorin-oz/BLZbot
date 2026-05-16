@@ -87,9 +87,12 @@ try {
   if (rebornPre.skipped) {
     blzLine('maintemp', 'REBORN désactivé (BLZ_REBORN_INTEGRATION=0)');
   } else if (rebornPre.ok) {
-    blzLine('maintemp', `REBORN OK — ${rebornPre.count} slash (/salon-hacker…) · deploy auto ~15s`);
+    blzLine('maintemp', `REBORN OK — ${rebornPre.count} slash · deploy guilde auto (~15s)`);
   } else {
-    blzError('maintemp', rebornPre.message || 'REBORN indisponible — git pull ou upload reborn-test-bot/');
+    blzError(
+      'maintemp',
+      rebornPre.message || 'REBORN indisponible — git pull (fichier generated/reborn-slash-bodies.json)',
+    );
   }
 } catch (rebornCheckErr) {
   blzError('maintemp', 'Contrôle REBORN:', rebornCheckErr?.message || rebornCheckErr);

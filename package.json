@@ -16,6 +16,7 @@
     "deploy:commands:all": "node scripts/run-deploy-all.js",
     "deploy:commands:all:test": "cross-env BLZ_TEST_MODE=1 node scripts/run-deploy-all.js",
     "deploy:reborn:check": "node scripts/reborn-slash-preflight.js",
+    "generate:reborn-slash-json": "node scripts/generate-reborn-slash-json.js",
     "points-bot": "node legacy/points-bot/index.js",
     "rate-limit-test": "node scripts/dev/test-rate-limit.js",
     "reborn-test-bot:install": "npm install --prefix reborn-test-bot",
