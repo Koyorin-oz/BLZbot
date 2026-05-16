@@ -330,7 +330,7 @@ async function renderIndexCard(opts) {
   glassPanel(ctx, hintX, bottomY, halfW, bottomH, 12);
   ctx.font = '600 14px "Segoe UI", Arial';
   ctx.fillStyle = T.text;
-  ctx.fillText(truncateText(ctx, milestoneHint(pct, steps, claimedSet), halfW - 28), hintX + 16, bottomY + 32);
+  ctx.fillText(truncateText(ctx, milestoneHint(pct, steps), halfW - 28), hintX + 16, bottomY + 32);
   ctx.font = '600 13px "Segoe UI", Arial';
   ctx.fillStyle = T.sub;
   ctx.fillText('Paliers crédités automatiquement', hintX + 16, bottomY + 56);
