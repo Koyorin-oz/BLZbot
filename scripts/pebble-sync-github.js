@@ -62,15 +62,7 @@ async function main() {
     );
     if (off) return;
 
-    const marker = path.join(REPO_ROOT, 'niveau', 'src', 'generated', 'reborn-slash-bodies.json');
-    const force = ['1', 'true', 'yes', 'on'].includes(
-        String(process.env.BLZ_PEBBLE_GITHUB_SYNC_FORCE || '').trim().toLowerCase(),
-    );
-    if (!force && fs.existsSync(marker) && fs.statSync(marker).size > 1000) {
-        return;
-    }
-
-    console.log('[pebble-sync] Téléchargement MAJ REBORN depuis GitHub…');
+    console.log('[pebble-sync] Sync fichiers critiques depuis GitHub (main)…');
     let ok = 0;
     for (const rel of FILES) {
         try {
