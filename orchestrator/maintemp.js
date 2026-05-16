@@ -50,8 +50,33 @@ const crashHistory = new Map();
 // scriptName -> accumulated stderr string
 const stderrBuffers = new Map();
 
-if (!BOT_TOKEN || !GUILD_ID) {
-  console.error("BOT_TOKEN et/ou GUILD_ID manquant(s) dans le fichier .env.");
+const envCheck = validateRequiredEnv(['BOT_TOKEN', 'GUILD_ID']);
+if (!envCheck.ok) {
+  console.error('');
+  console.error('═══════════════════════════════════════════════════════════════');
+  console.error('[maintemp] Impossible de démarrer : variables obligatoires manquantes.');
+  console.error(`  Manquant : ${envCheck.missing.join(', ')}`);
+  console.error('');
+  console.error('  Le fichier .env n’est PAS sur GitHub (git pull ne le crée pas).');
+  console.error('  Sur PebbleHost → File Manager → crée ou édite :');
+  console.error('    /home/container/.env');
+  console.error('  (à la racine du projet, à côté de package.json)');
+  console.error('');
+  console.error('  Minimum à mettre dans ce fichier :');
+  console.error('    BOT_TOKEN=<token_du_bot_Discord>');
+  console.error('    GUILD_ID=<id_du_serveur_principal>');
+  console.error('    CLIENT_ID=1487192923350237244');
+  console.error('');
+  console.error('  Tu peux aussi définir BOT_TOKEN et GUILD_ID dans le panneau');
+  console.error('  « Variables d’environnement » de Pebble (sans fichier .env).');
+  console.error('');
+  if (envLoadedFrom.length) {
+    console.error(`  Fichiers .env chargés : ${envLoadedFrom.join(' ; ')}`);
+  } else {
+    console.error('  Aucun fichier .env trouvé sur le serveur.');
+  }
+  console.error('═══════════════════════════════════════════════════════════════');
+  console.error('');
   process.exit(1);
 }
 
