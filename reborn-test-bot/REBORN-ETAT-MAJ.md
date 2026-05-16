@@ -52,7 +52,8 @@ Légende : **OK** = présent et jouable sur le bot de test · **Partiel** = là 
 | Quêtes + arbre quête | **OK** | `/quetes`, `quests` |
 | Défi minijeu → progression REBORN | **OK** (opt-in) | `niveau` + `rebornQuestBridge` : activer **`REBORN_QUEST_HOOK=1`** sur le process **niveau** (même clone avec `reborn-test-bot/`) |
 | Index + matrice | **OK** | `/itemindex` |
-| Rôle Discord « index 100 % » | **Manuel** | `/admin-roles definir-index-full` pour lier un rôle ; pas d’auto si non configuré |
+| Index % auto + bonus appliqués | **OK** | `indexCollection` (items catalogue) + `indexBonuses` (earn / XP / coffres) |
+| Rôle Discord « index 100 % » | **OK** (config) | `/admin-roles creer-index-full` + `indexRoles.sync` à 100 % |
 | Temple 11 clés | **OK** | `SOURCE_DEFS` ×11 |
 | `/temple classement` Rois & Légendes | **OK** | Seuils **≥6** clés (Roi) et **3–5** clés (Légende) sur **11** max — constantes exportées (`TEMPLE_KEY_TOTAL`, `CLASSEMENT_*`) |
 | Rôles Discord auto « Roi / Légende » temple | **OK** (si config) | `/admin-roles creer-temple` ou `definir-temple-*` + sync sur activité (`earn`), `/temple`, fin event, séparation ; file d’attente 30 s |
