@@ -142,7 +142,8 @@ function registerEarn(client) {
       const gr = C.gxpRatesForPlayerLevel(u?.level || 1);
       const mult = gxpMultForUser(uid);
       const gxpBp = skillTree.guildGxpMultBp(uid);
-      const gxpGain = (gr.msg * mult * BigInt(gxpBp)) / 10000n;
+      let gxpGain = (gr.msg * mult * BigInt(gxpBp)) / 10000n;
+      gxpGain = indexBonuses.applyBp(uid, gxpGain, 'gxpBp');
       if (gxpGain > 0n) {
         gm.addGxp(hub, uid, gxpGain);
       }
@@ -151,11 +152,10 @@ function registerEarn(client) {
       const grpBp = skillTree.guildGrpMultBp(uid);
       const focus = grpFocusMultForUser(hub, uid);
       const loyalBp = loyalCampGrpMultBp(hub, uid);
-      gm.addGrp(
-        hub,
-        uid,
-        (baseGrp * BigInt(grpBp) * focus * BigInt(loyalBp)) / 10_000_000_000n,
-      );
+      let grpGain = (baseGrp * BigInt(grpBp) * focus * BigInt(loyalBp)) / 10_000_000_000n;
+      grpGain = indexBonuses.applyBp(uid, grpGain, 'grpBp');
+      gm.addGrp(hub, uid, grpGain);
+      streak.updateStreak(client, uid);
       const after = gm.getMemberRow(hub, uid);
       grpSeason.recordGrpPeaksIfNeeded(hub, uid, after.grp);
       playerGuilds.addGxpFromMemberActivity(hub, uid, gxpGain);

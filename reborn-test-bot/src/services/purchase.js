@@ -156,8 +156,7 @@ async function handlePurchase(interaction, parts) {
     }
     // Bonus arbre boutique palier 2 : ×2 contenu coffres (starss + XP + qty items).
     // Les items « uniques » (diamant) et les jetons d'accès (hacker_token) restent en qty 1.
-    const lootMult = skillTree.chestLootMult(uid);
-    const lootMultN = Number(lootMult);
+    const lootMultN = indexBonuses.chestLootMultN(uid, Number(skillTree.chestLootMult(uid)));
     const NON_STACKABLE = new Set(['diamant', 'hacker_token']);
     if (lootMult > 1n) {
       loot.stars *= lootMult;
