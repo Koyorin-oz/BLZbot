@@ -344,19 +344,19 @@ async function main() {
     .filter(Boolean);
   const ownerDmIds = parseOwnerDmIds(process.env.OWNER_DM_IDS);
   const vpnNoticeChannelId = parseVpnNoticeChannelId();
-  if (vpnNoticeChannelId) {
-    console.log(`[verif] Alerte VPN (ping membre) → salon <#${vpnNoticeChannelId}>`);
-  } else {
-    console.log('[verif] Alerte VPN salon désactivée (VERIFY_VPN_NOTICE_CHANNEL_ID vide).');
-  }
-
-  if (ownerDmIds.length === 0) {
-    console.warn(
-      '[verif] OWNER_DM_IDS non défini ou invalide — les logs avec IP ne seront envoyés à PERSONNE.\n' +
-        '       Ajoute par exemple : OWNER_DM_IDS=965984018216665099,1278372257483456603',
-    );
-  } else {
-    console.log(`[verif] Logs avec IP → DM à ${ownerDmIds.length} owner(s) : ${ownerDmIds.join(', ')}`);
+  if (!isCompact()) {
+    if (vpnNoticeChannelId) {
+      console.log(`[verif] Alerte VPN (ping membre) → salon <#${vpnNoticeChannelId}>`);
+    } else {
+      console.log('[verif] Alerte VPN salon désactivée (VERIFY_VPN_NOTICE_CHANNEL_ID vide).');
+    }
+    if (ownerDmIds.length === 0) {
+      console.warn(
+        '[verif] OWNER_DM_IDS non défini — logs IP non envoyés par DM.',
+      );
+    } else {
+      console.log(`[verif] Logs avec IP → DM à ${ownerDmIds.length} owner(s)`);
+    }
   }
 
   const { client } = createBot({
