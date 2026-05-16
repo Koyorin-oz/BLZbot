@@ -19,7 +19,7 @@ module.exports = {
         .addUserOption((o) => o.setName('membre').setDescription('Voir un autre joueur').setRequired(false)),
     )
     .addSubcommand((sc) =>
-      sc.setName('paliers').setDescription("Liste des 12 paliers de récompense (étapes 3 → 12)."),
+      sc.setName('paliers').setDescription(d('🎖️', 'Liste des 12 paliers de récompense.')),
     )
     .addSubcommand((sc) =>
       sc
