@@ -246,7 +246,17 @@ module.exports = async function deployCommands(client) {
         let commandsToDeployFinal = capCommandsToDiscordLimit(commandsToDeploy, localCommands);
 
         const forceRefreshNames = new Set(
-            ['profil', 'admin-roles', 'salon-hacker']
+            [
+                'profil',
+                'admin-roles',
+                'salon-hacker',
+                'daily',
+                'boutique',
+                'guilde',
+                'itemindex',
+                'arbre',
+                'quetes',
+            ]
                 .concat(
                     String(process.env.BLZ_FORCE_SLASH_REFRESH_NAMES || '')
                         .split(/[,;]/)
