@@ -10,6 +10,22 @@ const fs = require('node:fs');
 const { execSync } = require('node:child_process');
 
 const REPO_ROOT = path.join(__dirname, '..');
+
+/** Si le loader Pebble plante sans .gitignore, on remet le fichier minimal avant le reset. */
+const DEFAULT_GITIGNORE = `node_modules/
+.env
+.env.*
+!.env.example
+credentials.json
+token.json
+*.db
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.log
+.DS_Store
+`;
+
 const REQUIRED = [
     'niveau/src/generated/reborn-slash-bodies.json',
     'reborn-test-bot/src/rebornRuntime.js',
