@@ -6,6 +6,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const { INDEX_BONUSES } = require('../services/itemMatrix');
+const catalog = require('../reborn/catalog');
 
 const BLZ_BG = path.join(__dirname, '..', '..', '..', 'niveau', 'src', 'assets', 'blz_bg.png');
 
