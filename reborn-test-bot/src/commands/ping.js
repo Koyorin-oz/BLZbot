@@ -1,7 +1,8 @@
 const { SlashCommandBuilder } = require('discord.js');
+const { d } = require('../lib/slashDesc');
 
 module.exports = {
-  data: new SlashCommandBuilder().setName('ping').setDescription('Latence WebSocket + REST (aucun cooldown).'),
+  data: new SlashCommandBuilder().setName('ping').setDescription(d('🏓', 'Latence WebSocket + REST.')),
   /**
    * @param {import('discord.js').ChatInputCommandInteraction} interaction
    */

@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const pg = require('../services/playerGuilds');
+const { d } = require('../lib/slashDesc');
 
 module.exports = {
   data: new SlashCommandBuilder()
