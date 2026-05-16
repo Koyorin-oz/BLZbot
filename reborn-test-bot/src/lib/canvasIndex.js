@@ -116,7 +116,7 @@ function truncateText(ctx, text, maxW) {
 /** Libellé coffre pour le canvas (nom catalogue, pas l’id abrégé). */
 function chestDisplayName(chestId) {
   const item = catalog.getItem(chestId);
-  if (item?.name) return item.name;
+  if (item?.name) return item.name.replace(/\s*\([^)]+\)\s*$/, '').trim();
   return String(chestId).replace(/_/g, ' ');
 }
 
