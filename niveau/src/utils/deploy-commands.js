@@ -441,7 +441,13 @@ module.exports = async function deployCommands(client) {
             } catch (_) { /* noop */ }
         }
 
-        // 5. Nettoyage par guilde : supprimer les doublons guild-spécifiques d'anciennes versions.
+        // 5. REBORN sur guilde(s) — visible immédiatement sur le serveur principal (défaut scope=guild).
+        let rebornGuildStats = { created: 0, updated: 0, errors: 0, guildIds: [] };
+        if (rebornForGuild.size > 0 && rebornSlashScope !== 'global') {
+            rebornGuildStats = await deployRebornSlashToGuilds(client, rebornForGuild, { compact });
+        }
+
+        // 6. Nettoyage guilde : supprimer uniquement les doublons déjà présents en GLOBAL (ne pas toucher aux slash REBORN guilde-only).
         let guildCleanupTotal = 0;
         let guildsVisited = 0;
         let guildsInError = 0;
@@ -450,10 +456,14 @@ module.exports = async function deployCommands(client) {
             try {
                 const existing = await guild.commands.fetch();
                 for (const cmd of existing.values()) {
+                    const isRebornGuildOnly =
+                        rebornForGuild.has(cmd.name) && rebornSlashScope === 'guild';
+                    if (isRebornGuildOnly) continue;
                     const shouldDelete =
-                        commandsToDeployFinal.has(cmd.name) ||
-                        localCommands.has(cmd.name) ||
-                        OBSOLETE_SLASH_NAMES.has(cmd.name);
+                        appMap.has(cmd.name) &&
+                        (commandsToDeployFinal.has(cmd.name) ||
+                            OBSOLETE_SLASH_NAMES.has(cmd.name) ||
+                            (localCommands.has(cmd.name) && localCommands.get(cmd.name)?.source !== 'reborn'));
                     if (!shouldDelete) continue;
                     try {
                         await cmd.delete();
@@ -473,7 +483,7 @@ module.exports = async function deployCommands(client) {
 
         if (compact) {
             console.log(
-                `[niveau] Slash GLOBAL : +${createdCount} ~${updatedCount} skip ${skippedCount} err ${errorCount} · purgeGlobal ${deletedGlobal} · cleanGuilds ${guildCleanupTotal}/${guildsVisited}${guildsInError ? ` (err ${guildsInError})` : ''} · /panel-voc:${hasPanelVoc} · /stats-voc-panel:${hasStatsVocPanel}`
+                `[niveau] Slash GLOBAL : +${createdCount} ~${updatedCount} skip ${skippedCount} err ${errorCount} · purgeGlobal ${deletedGlobal} · REBORN guild +${rebornGuildStats.created} ~${rebornGuildStats.updated} · cleanGuilds ${guildCleanupTotal}/${guildsVisited}${guildsInError ? ` (err ${guildsInError})` : ''} · salon-hacker:${rebornForGuild.has('salon-hacker') ? 'oui' : 'NON'}`
             );
         } else {
             console.log('\n═══════════════════════════════════════════════════════════════');
