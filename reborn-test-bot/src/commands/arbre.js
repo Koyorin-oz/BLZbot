@@ -52,7 +52,7 @@ module.exports = {
             ),
         ),
     )
-    .addSubcommand((sc) => sc.setName('classe').setDescription('Affiche ta ou tes classes débloquées via l’arbre.'))
+    .addSubcommand((sc) => sc.setName('classe').setDescription(d('🎓', 'Affiche tes classes débloquées.')))
     .addSubcommand((sc) =>
       sc
         .setName('separatiste')
