@@ -13,6 +13,12 @@ const {
   ApplicationCommandOptionType
 } = require('discord.js');
 const derankUrgence = require('./derank-urgence.js');
+const { applyGlobalLogPolicy, isCompact, blzLine, blzError, emitChildLine } = require(path.join(
+  __dirname,
+  '..',
+  'blz-log.js'
+));
+applyGlobalLogPolicy();
 const { resolveDotenvPath, PEBBLE_HOST_ENV_PATH, applyTestGuildOverride } = require(path.join(
   __dirname,
   '..',
