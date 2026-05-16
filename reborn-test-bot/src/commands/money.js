@@ -17,7 +17,7 @@ function canMod(interaction) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('money')
-    .setDescription('Gère les starss et points d’un membre (administrateurs ou propriétaire du bot).')
+    .setDescription(d('💎', 'Gère les starss et points d’un membre (admin / owner).'))
     .addSubcommand((sc) =>
       sc
         .setName('give')
