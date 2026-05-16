@@ -107,7 +107,25 @@ function checkModelAvailability(modelName) {
   return !blacklistedModels.has(modelName);
 }
 
-const log = (message) => { const timestamp = new Date().toISOString(); console.log(`[${timestamp}] ${message}`); };
+const { isCompact, blzLine, blzWarn } = require('../blz-log');
+const log = (message) => {
+  const msg = String(message ?? '');
+  if (isCompact()) {
+    const verbose = ['1', 'true', 'yes', 'on'].includes(
+      String(process.env.BLZ_IA_VERBOSE || '').toLowerCase(),
+    );
+    if (verbose) {
+      blzLine('ia', msg.replace(/^\[[\d-]+T[^\]]+\]\s*/, ''));
+      return;
+    }
+    if (/❌|ERREUR|Error|Crash|est prêt|inconnu \(10003\)|Tous les modèles Groq ont échoué/i.test(msg)) {
+      blzLine('ia', msg.replace(/^\[[\d-]+T[^\]]+\]\s*/, ''));
+    }
+    return;
+  }
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${msg}`);
+};
 
 let lastGroqApiCallAt = 0;
 
