@@ -31,7 +31,7 @@ Légende : **OK** = présent et jouable sur le bot de test · **Partiel** = là 
 | Sujet | Statut | Notes |
 |-------|--------|--------|
 | Daily, double daily, reset shop, boutique midi Paris, CATL/CATS/coffres | **OK** | Voir `shop.js`, `purchase`, `daily` |
-| Items (streak keeper, skips, spawner…) | **Partiel** | Implémentés / simplifiés — recouper chaque contrainte gdoc |
+| Items (streak keeper, skips, spawner…) | **OK** | Streak messages + `streak.js` ; keeper 48 h ; skips / spawner branchés |
 
 ---
 
