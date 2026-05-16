@@ -30,9 +30,9 @@ module.exports = {
         .setDescription(d('🤝', 'Rejoindre une guilde par ID'))
         .addStringOption((o) => o.setName('guild_id').setDescription('ID guilde').setRequired(true)),
     )
-    .addSubcommand((sc) => sc.setName('quitter').setDescription('Quitter ta guilde (pas le chef).'))
-    .addSubcommand((sc) => sc.setName('info').setDescription('Infos sur ta guilde'))
-    .addSubcommand((sc) => sc.setName('liste').setDescription('Liste des guildes sur ce serveur'))
+    .addSubcommand((sc) => sc.setName('quitter').setDescription(d('🚪', 'Quitter ta guilde (pas le chef).')))
+    .addSubcommand((sc) => sc.setName('info').setDescription(d('ℹ️', 'Infos sur ta guilde')))
+    .addSubcommand((sc) => sc.setName('liste').setDescription(d('📜', 'Liste des guildes sur ce serveur')))
     .addSubcommand((sc) =>
       sc
         .setName('inviter')
