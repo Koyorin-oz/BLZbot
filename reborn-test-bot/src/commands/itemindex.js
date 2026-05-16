@@ -142,7 +142,7 @@ module.exports = {
           : '_Aucune classe — progresse dans `/arbre`._';
 
       const matriceEmbed = new EmbedBuilder()
-        .setAuthor({ name: 'Matrice REBORN', iconURL: thumb })
+        .setAuthor({ name: 'Matrice de bonus', iconURL: thumb })
         .setTitle('🧭 Index × Ranked × Guilde')
         .setColor(0x8e44ad)
         .setDescription(
