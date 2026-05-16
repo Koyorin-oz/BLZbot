@@ -11,7 +11,7 @@ const rankedMilestones = require('../services/rankedMilestones');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('ranked')
-    .setDescription('Ranked RP : tier, RP courant, paliers et récompenses.')
+    .setDescription(d('🏆', 'Ranked RP — tier, paliers et récompenses.'))
     .addSubcommand((sc) =>
       sc
         .setName('voir')

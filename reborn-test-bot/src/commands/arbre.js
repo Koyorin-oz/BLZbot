@@ -56,7 +56,7 @@ module.exports = {
     .addSubcommand((sc) =>
       sc
         .setName('separatiste')
-        .setDescription('Branche séparatiste : 5 paliers, 1 point par séparation remportée.')
+        .setDescription(d('⚔️', 'Branche séparatiste — paliers et séparations.'))
         .addStringOption((o) =>
           o
             .setName('action')
