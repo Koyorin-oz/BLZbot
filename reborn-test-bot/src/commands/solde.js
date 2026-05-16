@@ -36,7 +36,7 @@ function fmtMs(ms) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('solde')
-    .setDescription('Voir ton solde starss / points / XP et progression guilde (test).'),
+    .setDescription('Consulte ton solde starss, points, XP et ta progression de guilde.')
   async execute(interaction) {
     const uid = interaction.user.id;
     users.getOrCreate(uid, interaction.user.username);

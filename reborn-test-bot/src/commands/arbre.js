@@ -36,7 +36,7 @@ module.exports = {
     .addSubcommand((sc) =>
       sc
         .setName('acheter')
-        .setDescription('Acheter le prochain palier d’une branche')
+        .setDescription('Achète le prochain palier d’une branche.')
         .addStringOption((o) =>
           o
             .setName('branche')

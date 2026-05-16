@@ -67,7 +67,7 @@ function buildSanctionDmEmbed({ guildName, minsTxt, durSaisie, reason }) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('mute')
-    .setDescription('Time out temporaire d’un membre (REBORN — logé sur son passeport).')
+    .setDescription('Applique un time-out temporaire à un membre (trace sur son passeport).')
     .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
     .setDMPermission(false)
     .addUserOption((o) =>

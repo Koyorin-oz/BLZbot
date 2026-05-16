@@ -18,7 +18,7 @@ const TIER_EMOJI = {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('trophees')
-    .setDescription('Trophées REBORN (déblocage auto + liste + tirage 24 h).')
+    .setDescription('Trophées : déblocage automatique, collection et tirage quotidien.')
     .addSubcommand((sc) => sc.setName('voir').setDescription('Tes trophées et critères'))
     .addSubcommand((sc) => sc.setName('verifier').setDescription('Revérifier les critères maintenant'))
     .addSubcommand((sc) =>
