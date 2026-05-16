@@ -279,7 +279,7 @@ module.exports = async function deployCommands(client) {
         let errorCount = 0;
         let deletedGlobal = 0;
 
-        for (const [name, commandData] of commandsToDeploy.entries()) {
+        for (const [name, commandData] of commandsToDeployFinal.entries()) {
             const existing = appMap.get(name);
             const forceRefresh = forceRefreshNames.has(name);
 
