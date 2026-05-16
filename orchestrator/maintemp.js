@@ -221,11 +221,15 @@ function runScript(scriptObj) {
 
   proc.stdout.on('data', (data) => {
     const out = clipChildLog(data.toString());
-    if (out) console.log(`[${scriptName}] ${out}`);
+    if (!out) return;
+    if (isCompact()) emitChildLine(scriptName, out);
+    else console.log(`[${scriptName}] ${out}`);
   });
   proc.stderr.on('data', (data) => {
     const text = data.toString();
-    console.error(`[${scriptName}] ${clipChildLog(text)}`);
+    const clipped = clipChildLog(text);
+    if (isCompact()) emitChildLine(scriptName, clipped);
+    else console.error(`[${scriptName}] ${clipped}`);
     const current = stderrBuffers.get(scriptName) || '';
     const updated = current + text;
     stderrBuffers.set(scriptName, updated.length > 4000 ? updated.slice(-4000) : updated);
