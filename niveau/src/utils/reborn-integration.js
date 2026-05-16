@@ -175,9 +175,13 @@ async function handleComponentInteraction(interaction) {
 module.exports = {
   isEnabled,
   rebornAvailable,
+  rebornSlashJsonAvailable,
+  getRebornSlashScope,
+  REBORN_SLASH_JSON_PATH,
   initEnvironment,
   loadRebornCommands,
   collectRebornSlashMap,
+  loadRebornSlashFromGeneratedJson,
   bootstrap,
   handleComponentInteraction,
 };
