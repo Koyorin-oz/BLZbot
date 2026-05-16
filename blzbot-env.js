@@ -7,6 +7,9 @@
  */
 const fs = require('node:fs');
 const path = require('node:path');
+const { applyGlobalLogPolicy, isCompact, logTestModeBanner, blzWarn } = require('./blz-log');
+
+applyGlobalLogPolicy();
 
 const PEBBLE_HOST_ENV_PATH = '/home/container/.env';
 
