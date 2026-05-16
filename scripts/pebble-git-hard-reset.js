@@ -47,7 +47,10 @@ function main() {
 
     const branch = (process.env.BLZ_GITHUB_BRANCH || 'main').trim() || 'main';
     const gi = path.join(REPO_ROOT, '.gitignore');
-    if (fs.existsSync(gi) && fs.statSync(gi).size > 50_000) {
+    if (!fs.existsSync(gi)) {
+        console.warn('[pebble-git] .gitignore absent — création minimale (loader Pebble).');
+        fs.writeFileSync(gi, DEFAULT_GITIGNORE, 'utf8');
+    } else if (fs.statSync(gi).size > 50_000) {
         console.warn('[pebble-git] .gitignore anormal (>50Ko) — suppression puis reset GitHub.');
         fs.unlinkSync(gi);
     }
