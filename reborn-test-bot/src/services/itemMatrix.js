@@ -6,8 +6,7 @@
  * Le **grade de guilde** (Bronze → Star) ouvre les options de séparation
  * (Star = anti-séparation) et débloque l'icône.
  *
- * Cette matrice se contente de **lister** les bonus actifs pour qu'on les
- * affiche en `/itemindex matrice` côté commande.
+ * Les bonus index sont **appliqués en jeu** via `indexBonuses.js` (earn, XP, coffres).
  */
 
 const indexProgress = require('./indexProgress');
