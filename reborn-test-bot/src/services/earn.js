@@ -102,17 +102,16 @@ function grantVoiceMinutes(guildId, userId, minutes) {
   const gr = C.gxpRatesForPlayerLevel(row?.level || 1);
   const mult = gxpMultForUser(userId);
   const gxpBp = skillTree.guildGxpMultBp(userId);
-  const gxpGain = (gr.vocMin * minutes * mult * BigInt(gxpBp)) / 10000n;
+  let gxpGain = (gr.vocMin * minutes * mult * BigInt(gxpBp)) / 10000n;
+  gxpGain = indexBonuses.applyBp(userId, gxpGain, 'gxpBp');
   gm.addGxp(guildId, userId, gxpGain);
   const baseGrp = C.grpRatesForMessage().vocMin * minutes;
   const grpBp = skillTree.guildGrpMultBp(userId);
   const focus = grpFocusMultForUser(guildId, userId);
   const loyalBp = loyalCampGrpMultBp(guildId, userId);
-  gm.addGrp(
-    guildId,
-    userId,
-    (baseGrp * BigInt(grpBp) * focus * BigInt(loyalBp)) / 10_000_000_000n,
-  );
+  let grpGain = (baseGrp * BigInt(grpBp) * focus * BigInt(loyalBp)) / 10_000_000_000n;
+  grpGain = indexBonuses.applyBp(userId, grpGain, 'grpBp');
+  gm.addGrp(guildId, userId, grpGain);
   grpSeason.maybeResetMonthlyGrp(guildId);
   const after = gm.getMemberRow(guildId, userId);
   grpSeason.recordGrpPeaksIfNeeded(guildId, userId, after.grp);

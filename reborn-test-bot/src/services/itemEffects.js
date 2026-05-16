@@ -131,13 +131,15 @@ async function useItem(userId, itemId) {
     return { ok: true, message: `💵 **Remboursement** : +${refund.toLocaleString('fr-FR')} starss crédités.` };
   }
 
-  // Streak Keeper : prolonge le streak daily de +24 h (cosmétique pour l'instant).
   if (id === 'streak_keeper') {
     if (!users.takeInventory(userId, id, 1)) return { ok: false, error: 'Indisponible.' };
-    const u = users.getUser(userId);
-    const cur = u?.daily_last_ms || 0;
-    users.setDailyLastMs(userId, Math.max(0, cur - 24 * 60 * 60 * 1000));
-    return { ok: true, message: '🔥 **Streak protégé** — ton compteur daily est sauvé pour le prochain.' };
+    const streak = require('./streak');
+    const r = streak.restoreLostStreak(userId);
+    if (!r.ok) {
+      users.addInventory(userId, id, 1);
+      return { ok: false, error: r.error };
+    }
+    return { ok: true, message: `🔥 **Streak restaurée** — tu es de nouveau à **${r.streak}** jour(s).` };
   }
 
   // Double Daily : la prochaine récompense daily est doublée (flag stocké via meta).

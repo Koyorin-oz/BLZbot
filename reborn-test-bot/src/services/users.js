@@ -131,6 +131,11 @@ function addInventory(userId, itemId, qty = 1) {
     `INSERT INTO inventory (user_id, item_id, qty) VALUES (?, ?, ?)
      ON CONFLICT(user_id, item_id) DO UPDATE SET qty = qty + excluded.qty`,
   ).run(userId, itemId, qty);
+  try {
+    require('./indexCollection').markDiscovered(userId, itemId);
+  } catch {
+    /* ignore */
+  }
 }
 
 function getInventory(userId) {
