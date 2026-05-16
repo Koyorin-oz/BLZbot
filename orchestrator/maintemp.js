@@ -516,20 +516,33 @@ function scheduleSlashSyncFromOrchestrator() {
 
   const delay = Math.max(2000, parseInt(process.env.BLZ_AUTO_DEPLOY_SLASH_DELAY_MS || '15000', 10));
   const deployScript = path.join(REPO_ROOT, 'scripts', 'run-deploy-all.js');
-  console.log(
-    `[maintemp] Dans ${Math.round(delay / 1000)}s → node scripts/run-deploy-all.js (niveau + modération, sans npm). Couper : BLZ_AUTO_DEPLOY_SLASH=0`
+  blzLine(
+    'maintemp',
+    `Deploy slash dans ${Math.round(delay / 1000)}s (BLZ_AUTO_DEPLOY_SLASH=0 pour couper)`,
   );
 
   setTimeout(() => {
+    const deployEnv = {
+      ...process.env,
+      BLZ_COMPACT_LOG: '1',
+      DOTENV_CONFIG_QUIET: 'true',
+      LOG_LEVEL: process.env.BLZ_CHILD_LOG_LEVEL || 'ERROR',
+    };
     execFile(
       process.execPath,
       [deployScript],
-      { cwd: REPO_ROOT, env: process.env, maxBuffer: 4 * 1024 * 1024 },
+      { cwd: REPO_ROOT, env: deployEnv, maxBuffer: 4 * 1024 * 1024 },
       (err, stdout, stderr) => {
-        if (stdout) process.stdout.write(stdout);
-        if (stderr) process.stderr.write(stderr);
-        if (err) console.error('[maintemp] run-deploy-all.js —', err.message);
-        else console.log('[maintemp] run-deploy-all.js terminé.');
+        if (stdout) {
+          if (isCompact()) emitChildLine('deploy-all', stdout);
+          else process.stdout.write(stdout);
+        }
+        if (stderr) {
+          if (isCompact()) emitChildLine('deploy-all', stderr);
+          else process.stderr.write(stderr);
+        }
+        if (err) blzError('maintemp', 'run-deploy-all.js', err);
+        else blzLine('maintemp', 'Deploy slash terminé');
       }
     );
   }, delay);
