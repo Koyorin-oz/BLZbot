@@ -554,8 +554,9 @@ client.once('clientReady', async () => {
   derankUrgence.initialize(client);
   runScriptsWithDelay(scriptsToRun, FORK_DELAY_MS);
   scheduleSlashSyncFromOrchestrator();
-  console.log(
-    `[maintemp] ${client.user.tag} · orchestrateur prêt · forks ${FORK_DELAY_MS}ms — ${scriptsToRun.map((s) => s.key).join(', ')}`
+  blzLine(
+    'maintemp',
+    `${client.user.tag} · prêt · fork ${FORK_DELAY_MS}ms · ${scriptsToRun.map((s) => s.key).join(', ')}`,
   );
 });
 
