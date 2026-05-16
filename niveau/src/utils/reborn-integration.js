@@ -18,6 +18,32 @@ function rebornAvailable() {
   return fs.existsSync(REBORN_RUNTIME_PATH);
 }
 
+function rebornSlashJsonAvailable() {
+  return fs.existsSync(REBORN_SLASH_JSON_PATH);
+}
+
+/** @returns {'guild'|'global'|'both'} */
+function getRebornSlashScope() {
+  const v = String(process.env.BLZ_REBORN_SLASH_SCOPE || 'guild').trim().toLowerCase();
+  if (v === 'global' || v === 'both') return v;
+  return 'guild';
+}
+
+function loadRebornSlashFromGeneratedJson() {
+  const map = new Map();
+  if (!fs.existsSync(REBORN_SLASH_JSON_PATH)) return map;
+  try {
+    const arr = JSON.parse(fs.readFileSync(REBORN_SLASH_JSON_PATH, 'utf8'));
+    if (!Array.isArray(arr)) return map;
+    for (const body of arr) {
+      if (body?.name) map.set(body.name, { ...body });
+    }
+  } catch (e) {
+    logger.warn('[reborn] Lecture reborn-slash-bodies.json:', e?.message || e);
+  }
+  return map;
+}
+
 function getRuntime() {
   if (!isEnabled() || !rebornAvailable()) return null;
   if (rebornRuntime) return rebornRuntime;
