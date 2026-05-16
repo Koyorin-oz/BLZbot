@@ -6,6 +6,8 @@
  *         (racine du dépôt, même .env que le bot : /home/container/.env sur Pebble)
  */
 const path = require('node:path');
+const { applyGlobalLogPolicy, isCompact, blzLine, blzError } = require(path.join(__dirname, '..', 'blz-log.js'));
+applyGlobalLogPolicy();
 const { resolveDotenvPath, PEBBLE_HOST_ENV_PATH, applyTestGuildOverride } = require(path.join(
     __dirname,
     '..',
@@ -23,12 +25,16 @@ require('dotenv').config({
 require('dotenv').config({ path: path.join(__dirname, '..', 'modération', '.env'), quiet: true, override: true });
 applyTestGuildOverride();
 
-console.log(
-    '[deploy-all] Démarrage — si rien ne s’affiche pendant ~10s, c’est normal (chargement SQLite / modules).'
-);
-console.log(
-    '[deploy-all] Déploiement : modération (src/utils/deploy-slash-commands) + niveau (src/utils/deploy-commands).'
-);
+if (!isCompact()) {
+    console.log(
+        '[deploy-all] Démarrage — si rien ne s’affiche pendant ~10s, c’est normal (chargement SQLite / modules).'
+    );
+    console.log(
+        '[deploy-all] Déploiement : modération (src/utils/deploy-slash-commands) + niveau (src/utils/deploy-commands).'
+    );
+} else {
+    blzLine('deploy', 'Slash niveau + modération…');
+}
 
 const { Client, GatewayIntentBits } = require('discord.js');
 const deployNiveau = require(path.join(__dirname, '..', 'niveau', 'src', 'utils', 'deploy-commands'));
@@ -38,11 +44,11 @@ const { deployModerationSlashCommands } = require(path.join(__dirname, '..', 'mo
 async function main() {
     const token = process.env.BOT_TOKEN || config.BOT_TOKEN;
     if (!token) {
-        console.error('❌ BOT_TOKEN manquant dans le .env (racine ou modération/.env).');
+        blzError('deploy', 'BOT_TOKEN manquant dans le .env');
         process.exit(1);
     }
     if (!process.env.GUILD_ID) {
-        console.error('❌ GUILD_ID manquant — même ID que ton serveur Discord.');
+        blzError('deploy', 'GUILD_ID manquant');
         process.exit(1);
     }
 
@@ -54,21 +60,23 @@ async function main() {
         client.login(token);
     });
 
-    console.log(`[deploy-all] Connecté : ${client.user.tag} (GUILD_ID=${process.env.GUILD_ID})\n`);
+    if (!isCompact()) {
+        console.log(`[deploy-all] Connecté : ${client.user.tag} (GUILD_ID=${process.env.GUILD_ID})\n`);
+    }
 
     try {
-        console.log('[deploy-all] 1/2 — bot niveau…');
+        if (!isCompact()) console.log('[deploy-all] 1/2 — bot niveau…');
         await deployNiveau(client);
-        console.log('[deploy-all] 2/2 — bot modération…');
-        await deployModerationSlashCommands(client, config, { compact: false });
+        if (!isCompact()) console.log('[deploy-all] 2/2 — bot modération…');
+        await deployModerationSlashCommands(client, config, { compact: isCompact() });
     } finally {
         client.destroy();
     }
 
-    console.log('\n[deploy-all] Terminé — vérifie les slash dans Discord (parfois quelques secondes de délai).');
+    blzLine('deploy', 'Terminé — slash à jour sur Discord');
 }
 
 main().catch((err) => {
-    console.error(err);
+    blzError('deploy', 'Échec', err);
     process.exit(1);
 });
