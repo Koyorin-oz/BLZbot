@@ -16,7 +16,7 @@ function parseBig(s) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('guilde')
-    .setDescription('Guildes REBORN (guilde « joueur », trésorerie, grades, focus).')
+    .setDescription('Guildes joueur : création, membres, trésorerie, grades et focus.')
     .addSubcommand((sc) =>
       sc
         .setName('creer')
