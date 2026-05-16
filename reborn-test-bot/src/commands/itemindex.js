@@ -26,7 +26,7 @@ function formatStepLine(step) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('itemindex')
-    .setDescription('Catalogue d’items : progression et paliers validés automatiquement.')
+    .setDescription(d('📚', 'Catalogue d’items — progression et paliers auto.'))
     .addUserOption((o) =>
       o.setName('membre').setDescription('Voir le catalogue d’un autre joueur (modération)').setRequired(false),
     ),
