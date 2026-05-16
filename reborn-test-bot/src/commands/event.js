@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const events = require('../services/events');
+const { d } = require('../lib/slashDesc');
 const { isOwner } = require('../lib/owners');
 
 module.exports = {
