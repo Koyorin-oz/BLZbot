@@ -79,6 +79,25 @@ function isTestBotProfile() {
 }
 
 /**
+ * Prod : beaucoup de `.env` n’ont que `BLZ_MAIN_GUILD_ID` sans `GUILD_ID`.
+ * L’orchestrateur et modération exigent `GUILD_ID` → repli automatique.
+ */
+function applyProductionGuildDefaults() {
+    if (isTestBotProfile()) return;
+    const guild = String(process.env.GUILD_ID || '').trim();
+    const main = String(process.env.BLZ_MAIN_GUILD_ID || '').trim();
+    if (!/^\d{17,22}$/.test(guild) && /^\d{17,22}$/.test(main)) {
+        process.env.GUILD_ID = main;
+        if (!isCompact()) {
+            blzWarn('BLZ', 'GUILD_ID absent — repli depuis BLZ_MAIN_GUILD_ID pour le démarrage.');
+        }
+    }
+    if (!String(process.env.PANEL_GUILD_ID || '').trim() && /^\d{17,22}$/.test(process.env.GUILD_ID || '')) {
+        process.env.PANEL_GUILD_ID = process.env.GUILD_ID;
+    }
+}
+
+/**
  * Après chargement du `.env` : si mode test, force `GUILD_ID` (et par défaut `PANEL_GUILD_ID`)
  * pour que déploiement slash, modération, niveau, orchestrateur ciblent le serveur de test.
  *
