@@ -53,7 +53,7 @@ function applyTestGuildOverride() {
 
     const id = String(process.env.TEST_GUILD_ID || BLZ_DEFAULT_TEST_GUILD_ID).trim();
     if (!/^\d{17,22}$/.test(id)) {
-        console.warn('[BLZ] Mode TEST actif mais TEST_GUILD_ID invalide — override ignoré.');
+        blzWarn('BLZ', 'Mode TEST actif mais TEST_GUILD_ID invalide — override ignoré.');
         return;
     }
 
