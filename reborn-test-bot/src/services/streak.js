@@ -1,7 +1,6 @@
 /**
  * Série de jours (streak) — même logique que le bot `niveau` (message du jour).
  */
-const schedule = require('node-schedule');
 const db = require('../db');
 const users = require('./users');
 const catalog = require('../reborn/catalog');
