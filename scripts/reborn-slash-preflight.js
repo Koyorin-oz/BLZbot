@@ -52,7 +52,7 @@ function assertRebornSlashReady(opts = {}) {
     if (!map || map.size === 0) {
         return fail(
             `[REBORN] 0 commande slash chargée (erreur SQLite ou require).\n` +
-                `  → npm install à la racine, vérifie BLZ_REBORN_INTEGRATION=1, relance npm run deploy:commands:all`,
+                `  → redémarre le serveur Pebble (install auto) · BLZ_REBORN_INTEGRATION=1 dans le .env`,
         );
     }
 
