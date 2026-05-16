@@ -155,7 +155,7 @@ async function handleHackerSalonButton(interaction) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('salon-hacker')
-    .setDescription('Publie le panneau Salon Hacker avec bouton de récompense (12 h).')
+    .setDescription(d('🔒', 'Publie le panneau Salon Hacker (loot toutes les 12 h).'))
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
   HACKER_SALON_BUTTON_ID,
   handleHackerSalonButton,

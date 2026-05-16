@@ -79,12 +79,12 @@ module.exports = {
         ),
     )
     .addSubcommand((sc) =>
-      sc.setName('voir').setDescription('Voir la configuration actuelle des rôles.'),
+      sc.setName('voir').setDescription(d('📋', 'Voir la configuration actuelle des rôles.')),
     )
     .addSubcommand((sc) =>
       sc
         .setName('resync')
-        .setDescription("Forcer la resynchronisation des rôles d'un membre.")
+        .setDescription(d('🔄', "Resynchroniser les rôles d'un membre."))
         .addUserOption((o) =>
           o.setName('membre').setDescription('Membre à resync').setRequired(true),
         ),
