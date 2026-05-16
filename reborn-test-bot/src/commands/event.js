@@ -5,7 +5,7 @@ const { isOwner } = require('../lib/owners');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('event')
-    .setDescription('Événements serveur (REBORN). Bonus arbre Événement actifs : currency, défense, coffres.')
+    .setDescription('Événements serveur : lancement, scores, classement et récompenses.')
     .addSubcommand((sc) =>
       sc
         .setName('lancer')
