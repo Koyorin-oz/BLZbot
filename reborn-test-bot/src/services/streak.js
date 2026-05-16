@@ -99,26 +99,26 @@ async function sendStreakAnnouncement(client, userId, newStreak, reward) {
   await channel.send({ content: message.slice(0, 1900) });
 }
 
-function scheduleStreakReset() {
-  const rule = new schedule.RecurrenceRule();
-  rule.hour = 0;
-  rule.minute = 0;
-  rule.tz = 'Europe/Paris';
-
-  schedule.scheduleJob(rule, () => {
-    try {
-      const yesterdayTs = todayStartMs() - 24 * 60 * 60 * 1000;
-      const result = db
-        .prepare('UPDATE users SET streak = 0 WHERE last_streak_timestamp < ? AND streak > 0')
-        .run(yesterdayTs);
-      if (result.changes > 0) {
-        console.log(`[streak] Reset minuit : ${result.changes} joueur(s).`);
-      }
-    } catch (e) {
-      console.error('[streak reset]', e?.message || e);
+/** Tick périodique : remet streak à 0 si pas de message « hier » (comme le bot principal). */
+function tickStreakReset() {
+  try {
+    const yesterdayTs = todayStartMs() - 24 * 60 * 60 * 1000;
+    const result = db
+      .prepare(
+        'UPDATE users SET streak = 0 WHERE streak > 0 AND last_streak_timestamp > 0 AND last_streak_timestamp < ?',
+      )
+      .run(yesterdayTs);
+    if (result.changes > 0) {
+      console.log(`[streak] Reset : ${result.changes} joueur(s) sans activité hier.`);
     }
-  });
-  console.log('[streak] Reset quotidien 00:00 Europe/Paris actif.');
+  } catch (e) {
+    console.error('[streak reset]', e?.message || e);
+  }
+}
+
+function scheduleStreakReset() {
+  setInterval(tickStreakReset, 60_000);
+  console.log('[streak] Vérification reset streak toutes les 60 s.');
 }
 
 /** Streak Keeper : restaure la streak perdue si < 48 h (bot principal). */
