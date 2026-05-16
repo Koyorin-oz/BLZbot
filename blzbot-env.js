@@ -79,20 +79,20 @@ function applyTestGuildOverride() {
     if (mainRef === id) {
         delete process.env.BLZ_MAIN_GUILD_ID;
         mainRef = '';
-        console.warn(
-            '[BLZ] BLZ_MAIN_GUILD_ID ne peut pas être la même guilde que le test — ignoré. ' +
-                'Pour enregistrer les slash sur le serveur principal, mets BLZ_MAIN_GUILD_ID=<id du main> dans le .env.'
+        if (!isCompact()) {
+            blzWarn(
+                'BLZ',
+                'BLZ_MAIN_GUILD_ID = guilde de test — ignoré. Pour le main : BLZ_MAIN_GUILD_ID=<id serveur principal>.',
+            );
+        }
+    }
+    if (!isCompact() && !mainRef && fromEnvGuild === id) {
+        blzWarn(
+            'BLZ',
+            'GUILD_ID = guilde de test : slash main absents tant que BLZ_MAIN_GUILD_ID n’est pas défini.',
         );
     }
-    if (!mainRef && fromEnvGuild === id) {
-        console.warn(
-            '[BLZ] Ton GUILD_ID dans le .env est déjà la guilde de test : les slash ne partiront pas sur le main tant que tu ne définis pas ' +
-                'BLZ_MAIN_GUILD_ID=<id du serveur principal> (invite le bot sur ce serveur aussi).'
-        );
-    }
-    console.warn(
-        `[BLZ] ——— Mode TEST ———  GUILD_ID=${id} (runtime + slash) · serveur principal slash aussi : BLZ_MAIN_GUILD_ID=${mainRef || '—'}`
-    );
+    logTestModeBanner(id, mainRef || '');
 }
 
 /**
