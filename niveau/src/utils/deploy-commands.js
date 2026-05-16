@@ -243,14 +243,24 @@ module.exports = async function deployCommands(client) {
             commandsToDeploy.set(name, cleanCmd);
         }
 
+        let commandsToDeployFinal = capCommandsToDiscordLimit(commandsToDeploy, localCommands);
+
         const forceRefreshNames = new Set(
-            ['profil']
+            ['profil', 'admin-roles', 'salon-hacker']
                 .concat(
                     String(process.env.BLZ_FORCE_SLASH_REFRESH_NAMES || '')
                         .split(/[,;]/)
                         .map((s) => s.trim())
                         .filter(Boolean)
                 )
+        );
+
+        const rebornKeys = ['admin-roles', 'salon-hacker', 'itemindex'];
+        const rebornPresent = rebornKeys
+            .map((n) => `${n}:${commandsToDeployFinal.has(n) ? 'oui' : 'NON'}`)
+            .join(' · ');
+        console.log(
+            `[niveau/deploy] Paquet slash (${commandsToDeployFinal.size}) — REBORN : ${rebornPresent}`,
         );
 
         // 3. Déploiement GLOBAL
