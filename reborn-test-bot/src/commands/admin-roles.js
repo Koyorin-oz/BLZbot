@@ -6,6 +6,7 @@ const {
 const rankedRoles = require('../services/rankedRoles');
 const indexRoles = require('../services/indexRoles');
 const templeDiscordRoles = require('../services/templeDiscordRoles');
+const { d } = require('../lib/slashDesc');
 
 /**
  * Commande staff `/admin-roles` :
