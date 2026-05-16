@@ -8,6 +8,7 @@ const {
 const pg = require('../services/playerGuilds');
 const { label, NEXT_REQUIREMENTS, ORDER, nextGrade } = require('../reborn/grades');
 const ladder = require('../services/guildLadder');
+const { d } = require('../lib/slashDesc');
 
 function parseBig(s) {
   return BigInt(String(s || '').replace(/\s/g, ''));
