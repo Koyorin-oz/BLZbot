@@ -67,7 +67,8 @@ if (!envCheck.ok) {
   console.error('  Minimum à mettre dans ce fichier :');
   console.error('    BOT_TOKEN=<token_du_bot_Discord>');
   console.error('    GUILD_ID=<id_du_serveur_principal>');
-  console.error('    CLIENT_ID=1487192923350237244');
+  console.error('    (ou BLZ_MAIN_GUILD_ID seul — repli auto si le code est à jour)');
+  console.error('    CLIENT_ID=<id_application_discord>');
   console.error('');
   console.error('  Tu peux aussi définir BOT_TOKEN et GUILD_ID dans le panneau');
   console.error('  « Variables d’environnement » de Pebble (sans fichier .env).');
