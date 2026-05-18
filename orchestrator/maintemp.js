@@ -1,5 +1,28 @@
 // main.js
 
+// Pebble : si le git pull du loader n’a pas mis à jour le disque, sync GitHub puis redémarre.
+(function pebbleBootstrapBeforeLoad() {
+  const fs = require('fs');
+  const path = require('path');
+  const repoRoot = path.join(__dirname, '..');
+  const syncPath = path.join(repoRoot, 'scripts', 'pebble-git-sync.js');
+  if (!fs.existsSync(syncPath)) {
+    const mark = path.join(repoRoot, 'niveau/src/generated/reborn-slash-bodies.json');
+    if (!fs.existsSync(mark)) {
+      console.error(
+        '[pebble-bootstrap] Code trop ancien et scripts/pebble-git-sync.js absent.\n' +
+          '  → File Manager : colle le bloc BOOTSTRAP en tête de orchestrator/maintemp.js (voir message support)\n' +
+          '  → ou active GitHub Actions → Deploy PebbleHost (SFTP) puis restart.',
+      );
+    }
+    return;
+  }
+  const { runPebbleGitSync, needsSync } = require(syncPath);
+  if (needsSync(repoRoot)) {
+    runPebbleGitSync({ repoRoot, exitAfterSync: true, exitOnFail: false });
+  }
+})();
+
 // --- Modules et configuration de l'environnement ---
 const { fork, execFile } = require('child_process');
 const path = require('path');
