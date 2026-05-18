@@ -360,7 +360,8 @@ module.exports = async function deployCommands(client) {
             const { source, ...cleanCmd } = command;
             if (command.source === 'reborn') {
                 rebornForGuild.set(name, cleanCmd);
-                if (rebornSlashScope === 'guild') continue;
+                // REBORN = guilde uniquement (limite Discord 100 commandes globales déjà pleine).
+                continue;
             }
             commandsToDeploy.set(name, cleanCmd);
         }
