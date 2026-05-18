@@ -1,4 +1,5 @@
 const { ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType, EmbedBuilder } = require('discord.js');
+const { isInteractionGone } = require('./interaction-ack');
 
 /**
  * Gère les erreurs de commandes avec un système de rapport de bug
