@@ -11,6 +11,39 @@ module.exports = {
     name: 'loggingEvents',
     logger: null,
 
+    // Fonction pour extraire le contenu du message de log supprimé
+    extractMessageContent(message) {
+        let content = null;
+
+        if (message.embeds.length > 0) {
+            const embed = message.embeds[0];
+            
+            // Chercher un field avec le name "Contenu (partiel)"
+            const contentField = embed.fields?.find(field => field.name === 'Contenu (partiel)');
+            
+            if (contentField) {
+                content = contentField.value;
+            } else {
+                if (embed.title) {
+                    content = embed.title;
+                } else if (embed.description) {
+                    content = embed.description;
+                } else if (embed.fields && embed.fields.length > 0) {
+                    content = embed.fields
+                        .map(f => `${f.name}: ${f.value}`)
+                        .join('\n')
+                        .substring(0, 200);
+                } else {
+                    content = '[Embed sans contenu textuel]';
+                }
+            }
+        } else {
+            content = message.content || '[Pas de contenu textuel]';
+        }
+
+        return content?.substring(0, 200) || '[Contenu indisponible]';
+    },
+
     init(client) {
         this.logger = new Logger(client);
 
@@ -266,6 +299,8 @@ module.exports = {
 
         // Relogger la suppression du log (seulement si c'était un message de log)
         if (isOwnMessage) {
+            const content = this.extractMessageContent(message);
+
             await this.logger.log(
                 message.guild,
                 '🚨 SÉCURITÉ : Log Supprimé',
@@ -274,7 +309,7 @@ module.exports = {
                 [
                     { name: 'Supprimé par', value: executorName },
                     { name: 'ID de l\'exécuteur', value: executorId },
-                    { name: 'Contenu (partiel)', value: (message.embeds[0]?.title || message.content || '[Embed sans titre]').substring(0, 200) }
+                    { name: 'Contenu (partiel)', value: content }
                 ]
             );
         }
