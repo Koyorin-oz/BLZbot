@@ -122,11 +122,7 @@ async function registerCommands() {
         ['1', 'true', 'yes'].includes(String(process.env.BLZ_SKIP_CHILD_SLASH_DEPLOY || '').toLowerCase()) ||
         isOrchestratorSlashDeployEnabled()
     ) {
-        if (!BLZ_COMPACT) {
-            console.log(
-                '[modération] Déploiement slash laissé à l’orchestrateur (run-deploy-all.js) — évite les conflits avec niveau.',
-            );
-        }
+        console.log('[modération] Slash : orchestrateur (run-deploy-all) — pas de deploy ici.');
         return;
     }
     try {

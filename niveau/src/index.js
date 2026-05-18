@@ -123,11 +123,9 @@ if (skipSlashDeployEnv) {
             ['1', 'true', 'yes'].includes(String(process.env.BLZ_SKIP_CHILD_SLASH_DEPLOY || '').toLowerCase()) ||
             isOrchestratorSlashDeployEnabled()
         ) {
-            if (!BLZ_COMPACT) {
-                console.log(
-                    '[niveau] Déploiement slash laissé à l’orchestrateur (run-deploy-all.js) — évite les conflits avec modération.',
-                );
-            }
+            console.log(
+                '[niveau] Slash : orchestrateur (run-deploy-all) — pas de deploy ici (évite conflit modération).',
+            );
             return;
         }
         if (skipSlashDeployEnv) {
