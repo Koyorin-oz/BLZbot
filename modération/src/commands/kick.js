@@ -161,16 +161,21 @@ module.exports = {
                 }
             );
 
-            await interaction.reply({
-                content: `✅ ${utilisateur.tag} a été expulsé.`,
-                ephemeral: true
+            await interaction.editReply({
+                content: `✅ ${utilisateur.tag} a été expulsé.\n${dmStatus}`,
             });
         } catch (erreur) {
             console.error('Erreur lors de l\'expulsion :', erreur);
-            await interaction.reply({
-                content: '❌ Une erreur est survenue lors de l\'expulsion.',
-                ephemeral: true
-            });
+            if (interaction.deferred) {
+                await interaction.editReply({
+                    content: '❌ Une erreur est survenue lors de l\'expulsion.',
+                }).catch(() => {});
+            } else {
+                await interaction.reply({
+                    content: '❌ Une erreur est survenue lors de l\'expulsion.',
+                    ephemeral: true,
+                }).catch(() => {});
+            }
         }
     }
 };
