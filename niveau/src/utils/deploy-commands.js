@@ -380,6 +380,8 @@ module.exports = async function deployCommands(client) {
                 'itemindex',
                 'arbre',
                 'quetes',
+                'temple',
+                'ranked',
             ]
                 .concat(
                     String(process.env.BLZ_FORCE_SLASH_REFRESH_NAMES || '')

@@ -131,16 +131,30 @@ function collectRebornSlashMap() {
   for (const name of MODERATION_RESERVED_SLASH) {
     map.delete(name);
   }
-  if (map.size === 0 && isEnabled()) {
+  if (isEnabled()) {
     const cached = loadRebornSlashFromGeneratedJson();
-    for (const [name, body] of cached) {
-      if (!MODERATION_RESERVED_SLASH.has(name)) map.set(name, body);
-    }
-    if (map.size > 0) {
-      logger.warn(
-        `[reborn] ${map.size} slash depuis generated/reborn-slash-bodies.json` +
-          (rebornAvailable() ? ' (runtime vide).' : ' (reborn-test-bot absent sur le serveur).'),
-      );
+    if (map.size === 0) {
+      for (const [name, body] of cached) {
+        if (!MODERATION_RESERVED_SLASH.has(name)) map.set(name, body);
+      }
+      if (map.size > 0) {
+        logger.warn(
+          `[reborn] ${map.size} slash depuis generated/reborn-slash-bodies.json` +
+            (rebornAvailable() ? ' (runtime vide).' : ' (reborn-test-bot absent sur le serveur).'),
+        );
+      }
+    } else if (cached.size > 0) {
+      let filled = 0;
+      for (const [name, body] of cached) {
+        if (MODERATION_RESERVED_SLASH.has(name) || map.has(name)) continue;
+        map.set(name, body);
+        filled++;
+      }
+      if (filled > 0) {
+        logger.warn(
+          `[reborn] ${filled} slash complétée(s) depuis reborn-slash-bodies.json (absentes du runtime).`,
+        );
+      }
     }
   }
   return map;

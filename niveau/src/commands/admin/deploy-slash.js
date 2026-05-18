@@ -7,7 +7,7 @@ const deployCommands = require('../../utils/deploy-commands');
 const { collectRebornSlashMap, isEnabled, rebornAvailable } = require('../../utils/reborn-integration');
 const { isBotOwner } = require('../../utils/bot-owner');
 
-const REBORN_CHECK = ['salon-hacker', 'admin-roles', 'itemindex', 'daily', 'boutique'];
+const REBORN_CHECK = ['salon-hacker', 'admin-roles', 'itemindex', 'arbre', 'quetes', 'temple', 'ranked', 'daily', 'boutique'];
 
 module.exports = {
     data: new SlashCommandBuilder()

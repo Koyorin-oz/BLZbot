@@ -7,7 +7,17 @@ const fs = require('node:fs');
 
 const REPO_ROOT = path.join(__dirname, '..');
 const RUNTIME_PATH = path.join(REPO_ROOT, 'reborn-test-bot', 'src', 'rebornRuntime.js');
-const REQUIRED_NAMES = ['salon-hacker', 'admin-roles', 'itemindex', 'daily', 'boutique', 'arbre', 'quetes'];
+const REQUIRED_NAMES = [
+    'salon-hacker',
+    'admin-roles',
+    'itemindex',
+    'daily',
+    'boutique',
+    'arbre',
+    'quetes',
+    'temple',
+    'ranked',
+];
 
 /**
  * @param {{ exitOnFail?: boolean }} [opts]
