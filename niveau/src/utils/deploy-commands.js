@@ -472,15 +472,15 @@ module.exports = async function deployCommands(client) {
             } catch (_) { /* noop */ }
         }
 
-        // 5. REBORN sur guilde(s) — visible immédiatement sur le serveur principal (défaut scope=guild).
+        // 5. REBORN sur chaque guilde du bot (visible tout de suite dans le / du serveur).
         let rebornGuildStats = { created: 0, updated: 0, errors: 0, guildIds: [] };
-        if (rebornForGuild.size > 0 && rebornSlashScope !== 'global') {
+        if (rebornForGuild.size > 0) {
             rebornGuildStats = await deployRebornSlashToGuilds(client, rebornForGuild, { compact });
-        }
-        if (rebornSlashScope !== 'guild' && rebornGlobalCount > 0 && !compact) {
-            console.log(
-                `[niveau/deploy] REBORN global : ${rebornGlobalCount} cmd — visibles sur chaque serveur du bot (Ctrl+Maj+R, sync ~1–5 min).`,
-            );
+            if (!compact) {
+                console.log(
+                    `[niveau/deploy] REBORN : ${rebornForGuild.size} cmd en guilde — tape / dans un salon du serveur (Ctrl+Maj+R).`,
+                );
+            }
         }
 
         // 6. Nettoyage guilde : supprimer uniquement les doublons déjà présents en GLOBAL (ne pas toucher aux slash REBORN guilde-only).

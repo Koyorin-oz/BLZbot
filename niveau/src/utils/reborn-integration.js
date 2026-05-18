@@ -22,11 +22,11 @@ function rebornSlashJsonAvailable() {
   return fs.existsSync(REBORN_SLASH_JSON_PATH);
 }
 
-/** @returns {'guild'|'global'|'both'} — défaut both : global (tous les serveurs) + guilde (sync rapide). */
+/** @returns {'guild'|'global'|'both'} — défaut guild (global Discord limité à 100 cmd / app). */
 function getRebornSlashScope() {
-  const v = String(process.env.BLZ_REBORN_SLASH_SCOPE || 'both').trim().toLowerCase();
-  if (v === 'global' || v === 'guild') return v;
-  return 'both';
+  const v = String(process.env.BLZ_REBORN_SLASH_SCOPE || 'guild').trim().toLowerCase();
+  if (v === 'global' || v === 'both') return v;
+  return 'guild';
 }
 
 function loadRebornSlashFromGeneratedJson() {
