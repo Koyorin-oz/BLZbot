@@ -519,7 +519,7 @@ module.exports = async function deployCommands(client) {
 
         if (compact) {
             console.log(
-                `[niveau] Slash GLOBAL : +${createdCount} ~${updatedCount} skip ${skippedCount} err ${errorCount} · purgeGlobal ${deletedGlobal} · REBORN guild +${rebornGuildStats.created} ~${rebornGuildStats.updated} · cleanGuilds ${guildCleanupTotal}/${guildsVisited}${guildsInError ? ` (err ${guildsInError})` : ''} · salon-hacker:${rebornForGuild.has('salon-hacker') ? 'oui' : 'NON'}`
+                `[niveau] Slash GLOBAL : +${createdCount} ~${updatedCount} skip ${skippedCount} err ${errorCount} · purgeGlobal ${deletedGlobal} · REBORN guild +${rebornGuildStats.created} ~${rebornGuildStats.updated} · cleanGuilds ${guildCleanupTotal}/${guildsVisited}${guildsInError ? ` (err ${guildsInError})` : ''} · temple:${rebornForGuild.has('temple') ? 'oui' : 'NON'} · salon-hacker:${rebornForGuild.has('salon-hacker') ? 'oui' : 'NON'}`
             );
         } else {
             console.log('\n═══════════════════════════════════════════════════════════════');
