@@ -147,37 +147,35 @@ module.exports = {
                     content: '❌ Vous ne pouvez pas bannir ce membre car il est au même niveau ou au-dessus de vous.',
                 });
             }
-
-            const guildName = interaction.guild.name;
-            const durationLabel = dureeTexte
-                ? `Temporaire — ${dureeTexte}`
-                : 'Définitif';
-            const preBanEmbed = buildPreBanDmEmbed({
-                guildName,
-                reason: finalReason,
-                byLabel: moderatorLabelForDm(interaction),
-                durationLabel,
-            });
-
-            let dmOk = await trySendSanctionDm(utilisateur, preBanEmbed);
-            let linkOk = false;
-            let fallback = { ok: false };
-
-            if (dmOk) {
-                linkOk = await sendDebanInviteDm(utilisateur);
-            } else {
-                fallback = await sendSanctionChannelFallback({
-                    guild: interaction.guild,
-                    user: utilisateur,
-                    embed: preBanEmbed,
-                });
-                if (fallback.ok) {
-                    linkOk = await sendDebanInviteDm(utilisateur);
-                }
-            }
-
-            var banDmStatus = formatDmStatusForModReply({ dmOk, linkOk, fallback });
         }
+
+        const guildName = interaction.guild.name;
+        const durationLabel = dureeTexte ? `Temporaire — ${dureeTexte}` : 'Définitif';
+        const preBanEmbed = buildPreBanDmEmbed({
+            guildName,
+            reason: finalReason,
+            byLabel: moderatorLabelForDm(interaction),
+            durationLabel,
+        });
+
+        let dmOk = await trySendSanctionDm(utilisateur, preBanEmbed);
+        let linkOk = false;
+        let fallback = { ok: false };
+
+        if (dmOk) {
+            linkOk = await sendDebanInviteDm(utilisateur);
+        } else if (membreCible) {
+            fallback = await sendSanctionChannelFallback({
+                guild: interaction.guild,
+                user: utilisateur,
+                embed: preBanEmbed,
+            });
+            if (fallback.ok) {
+                linkOk = await sendDebanInviteDm(utilisateur);
+            }
+        }
+
+        const banDmStatus = formatDmStatusForModReply({ dmOk, linkOk, fallback });
 
         try {
             await interaction.guild.members.ban(utilisateur.id, { reason: finalReason });

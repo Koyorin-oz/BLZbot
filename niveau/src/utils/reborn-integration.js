@@ -125,7 +125,7 @@ function collectRebornSlashMap() {
   if (rt) {
     initEnvironment();
     for (const body of rt.collectSlashBodies()) {
-      if (body?.name) map.set(body.name, body);
+      if (body?.name && !MODERATION_RESERVED_SLASH.has(body.name)) map.set(body.name, body);
     }
   }
   for (const name of MODERATION_RESERVED_SLASH) {
