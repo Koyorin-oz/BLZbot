@@ -22,11 +22,11 @@ function rebornSlashJsonAvailable() {
   return fs.existsSync(REBORN_SLASH_JSON_PATH);
 }
 
-/** @returns {'guild'|'global'|'both'} */
+/** @returns {'guild'|'global'|'both'} — défaut both : global (tous les serveurs) + guilde (sync rapide). */
 function getRebornSlashScope() {
-  const v = String(process.env.BLZ_REBORN_SLASH_SCOPE || 'guild').trim().toLowerCase();
-  if (v === 'global' || v === 'both') return v;
-  return 'guild';
+  const v = String(process.env.BLZ_REBORN_SLASH_SCOPE || 'both').trim().toLowerCase();
+  if (v === 'global' || v === 'guild') return v;
+  return 'both';
 }
 
 function loadRebornSlashFromGeneratedJson() {
