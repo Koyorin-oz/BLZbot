@@ -1,5 +1,36 @@
 // main.js
 
+// Pebble : git pull du loader souvent incomplet → fetch + reset FETCH_HEAD (pas origin/main).
+(function pebbleSyncIfRebornMissing() {
+  const fs = require('fs');
+  const path = require('path');
+  const { execSync } = require('child_process');
+  const root = path.join(__dirname, '..');
+  if (['0', 'false', 'no', 'off'].includes(String(process.env.BLZ_PEBBLE_SYNC || '').trim().toLowerCase())) {
+    return;
+  }
+  const marker = path.join(root, 'niveau', 'src', 'generated', 'reborn-slash-bodies.json');
+  if (fs.existsSync(marker)) return;
+  if (!fs.existsSync(path.join(root, '.git'))) {
+    console.error('[pebble-sync] Pas de .git — réinstalle le repo Git sur Pebble.');
+    return;
+  }
+  const branch = (process.env.BLZ_GITHUB_BRANCH || 'main').trim() || 'main';
+  try {
+    console.log(`[pebble-sync] REBORN absent — git fetch origin ${branch} + reset FETCH_HEAD…`);
+    execSync(`git fetch origin ${branch}`, { cwd: root, stdio: 'inherit' });
+    execSync('git reset --hard FETCH_HEAD', { cwd: root, stdio: 'inherit' });
+    execSync('git clean -fd', { cwd: root, stdio: 'inherit' });
+    if (fs.existsSync(marker)) {
+      console.log('[pebble-sync] Fichiers GitHub OK — redémarrage…');
+      process.exit(0);
+    }
+    console.error('[pebble-sync] reborn-slash-bodies.json toujours absent après reset.');
+  } catch (e) {
+    console.error('[pebble-sync] Échec :', e?.message || e);
+  }
+})();
+
 // --- Modules et configuration de l'environnement ---
 const { fork, execFile } = require('child_process');
 const path = require('path');
