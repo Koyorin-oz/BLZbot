@@ -141,7 +141,11 @@ function getRebornDeployGuildIds(client) {
     return [...ids];
 }
 
-async function deployRebornSlashToGuilds(client, rebornCommands, { compact = false } = {}) {
+async function deployRebornSlashToGuilds(
+    client,
+    rebornCommands,
+    { compact = false, globalSlashNames = new Set() } = {},
+) {
     const guildIds = getRebornDeployGuildIds(client);
     if (!rebornCommands.size || !guildIds.length) {
         console.warn('[niveau/deploy] REBORN guilde : rien à pousser (0 cmd ou 0 GUILD_ID).');
@@ -169,26 +173,29 @@ async function deployRebornSlashToGuilds(client, rebornCommands, { compact = fal
             console.warn(`[niveau/deploy] REBORN guilde ${guild.name} fetch:`, e?.message || e);
             continue;
         }
-        const existingMap = new Map();
-        existing.forEach((c) => existingMap.set(c.name, c));
 
-        for (const [name, commandData] of rebornCommands.entries()) {
-            const ex = existingMap.get(name);
-            try {
-                if (ex) {
-                    await guild.commands.edit(ex.id, commandData);
-                    updated++;
-                } else {
-                    await guild.commands.create(commandData);
-                    created++;
-                }
-                if (!compact) console.log(`  [REBORN guild ${guild.id}] /${name} OK`);
-            } catch (e) {
-                errors++;
-                console.error(`[niveau/deploy] REBORN guilde /${name}:`, e?.message || e);
-            }
+        const keep = [];
+        for (const cmd of existing.values()) {
+            if (rebornCommands.has(cmd.name)) continue;
+            if (globalSlashNames.has(cmd.name)) continue;
+            keep.push(typeof cmd.toJSON === 'function' ? cmd.toJSON() : cmd);
         }
-
+        const payload = [...keep, ...rebornCommands.values()];
+        const prevReborn = existing.filter((c) => rebornCommands.has(c.name)).size;
+        try {
+            const setResult = await guild.commands.set(payload);
+            const newReborn = setResult.filter((c) => rebornCommands.has(c.name)).length;
+            created += Math.max(0, newReborn - prevReborn);
+            updated += Math.min(prevReborn, newReborn);
+            if (!compact) {
+                console.log(
+                    `  [REBORN guild ${guild.id}] ${rebornCommands.size} cmd (set atomique, ${setResult.length} total guilde)`,
+                );
+            }
+        } catch (e) {
+            errors += rebornCommands.size;
+            console.error(`[niveau/deploy] REBORN guilde ${guild.name} set:`, e?.message || e);
+        }
     }
 
     console.log(
