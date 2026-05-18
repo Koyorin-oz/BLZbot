@@ -2,6 +2,13 @@ const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('disc
 const { parseDuration, msToReadableTime, getModeratorTitleWithArticle } = require('../utils/helpers');
 const { deferEphemeral } = require('../utils/interaction-ack');
 const CONFIG = require('../config.js');
+const {
+    buildPostSanctionDmEmbed,
+    moderatorLabelForDm,
+    trySendSanctionDm,
+    sendSanctionChannelFallback,
+    formatDmStatusForModReply,
+} = require('../utils/sanction-dm.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
