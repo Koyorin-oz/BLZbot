@@ -300,7 +300,13 @@ module.exports = async function deployCommands(client) {
     let rebornSlashScope = 'guild';
     try {
         const { collectRebornSlashMap, isEnabled, getRebornSlashScope } = require('./reborn-integration');
-        rebornSlashScope = getRebornSlashScope();
+        const envScope = getRebornSlashScope();
+        if (envScope === 'both' || envScope === 'global') {
+            console.warn(
+                `[niveau/deploy] BLZ_REBORN_SLASH_SCOPE=${envScope} ignoré — REBORN est toujours en guilde uniquement (limite 100 global). Mets BLZ_REBORN_SLASH_SCOPE=guild dans .env.`,
+            );
+        }
+        rebornSlashScope = 'guild';
         if (isEnabled()) {
             const rebornMap = collectRebornSlashMap();
             let rebornOverwrites = 0;
