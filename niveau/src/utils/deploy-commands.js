@@ -132,8 +132,17 @@ function commandsAreEqual(remote, local) {
  * @param {import('discord.js').Client} client
  * @param {Map<string, object>} rebornCommands
  */
+/** Guildes où pousser les slash REBORN : .env + chaque serveur où le bot est membre. */
+function getRebornDeployGuildIds(client) {
+    const ids = new Set(getSlashDeployGuildIds());
+    if (client?.guilds?.cache) {
+        for (const gid of client.guilds.cache.keys()) ids.add(gid);
+    }
+    return [...ids];
+}
+
 async function deployRebornSlashToGuilds(client, rebornCommands, { compact = false } = {}) {
-    const guildIds = getSlashDeployGuildIds();
+    const guildIds = getRebornDeployGuildIds(client);
     if (!rebornCommands.size || !guildIds.length) {
         console.warn('[niveau/deploy] REBORN guilde : rien à pousser (0 cmd ou 0 GUILD_ID).');
         return { created: 0, updated: 0, errors: 0, guildIds: [] };
