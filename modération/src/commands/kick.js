@@ -110,14 +110,26 @@ module.exports = {
             });
         }
 
-        try {
-            await membreCible.send(`Vous avez été expulsé du serveur pour la raison : "${finalReason}".`);
-        } catch {
-            console.warn('Impossible d\'envoyer un message privé avant l\'expulsion.');
-        }
+        await interaction.deferReply({ ephemeral: true });
 
         try {
             await membreCible.kick(finalReason);
+
+            const postEmbed = buildPostSanctionDmEmbed({
+                guildName: interaction.guild.name,
+                type: 'KICK',
+                reason: finalReason,
+                byLabel: moderatorLabelForDm(interaction),
+            });
+            const dmOk = await trySendSanctionDm(utilisateur, postEmbed);
+            const fallback = dmOk
+                ? { ok: false }
+                : await sendSanctionChannelFallback({
+                    guild: interaction.guild,
+                    user: utilisateur,
+                    embed: postEmbed,
+                });
+            const dmStatus = formatDmStatusForModReply({ dmOk, fallback });
 
             const dbSanctions = dbManager.getSanctionsDb();
             dbSanctions.run(
