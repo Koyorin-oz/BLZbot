@@ -472,6 +472,11 @@ module.exports = async function deployCommands(client) {
         if (rebornForGuild.size > 0 && rebornSlashScope !== 'global') {
             rebornGuildStats = await deployRebornSlashToGuilds(client, rebornForGuild, { compact });
         }
+        if (rebornSlashScope !== 'guild' && rebornGlobalCount > 0 && !compact) {
+            console.log(
+                `[niveau/deploy] REBORN global : ${rebornGlobalCount} cmd — visibles sur chaque serveur du bot (Ctrl+Maj+R, sync ~1–5 min).`,
+            );
+        }
 
         // 6. Nettoyage guilde : supprimer uniquement les doublons déjà présents en GLOBAL (ne pas toucher aux slash REBORN guilde-only).
         let guildCleanupTotal = 0;
