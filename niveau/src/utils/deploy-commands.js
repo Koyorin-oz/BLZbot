@@ -391,7 +391,7 @@ module.exports = async function deployCommands(client) {
                 )
         );
 
-        const rebornKeys = ['admin-roles', 'salon-hacker', 'itemindex', 'arbre', 'daily', 'boutique'];
+        const rebornKeys = ['admin-roles', 'salon-hacker', 'itemindex', 'arbre', 'quetes', 'temple', 'ranked', 'daily', 'boutique'];
         const rebornPresent = rebornKeys
             .map((n) => `${n}:${rebornForGuild.has(n) ? 'guilde' : 'NON'}`)
             .join(' · ');
