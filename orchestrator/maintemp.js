@@ -89,10 +89,16 @@ try {
   } else if (rebornPre.ok) {
     blzLine('maintemp', `REBORN OK — ${rebornPre.count} slash · deploy guilde auto (~15s)`);
   } else {
-    blzError(
-      'maintemp',
-      rebornPre.message || 'REBORN indisponible — git pull (fichier generated/reborn-slash-bodies.json)',
-    );
+    blzError('maintemp', rebornPre.message || 'REBORN indisponible sur le disque.');
+    const fs = require('fs');
+    const json = path.join(REPO_ROOT, 'niveau/src/generated/reborn-slash-bodies.json');
+    const rt = path.join(REPO_ROOT, 'reborn-test-bot/src/rebornRuntime.js');
+    if (!fs.existsSync(json) || !fs.existsSync(rt)) {
+      blzError(
+        'maintemp',
+        `Disque : json=${fs.existsSync(json) ? 'oui' : 'NON'} · reborn-test-bot=${fs.existsSync(rt) ? 'oui' : 'NON'} — panel Git « réinstaller » ou SFTP (doc/DEPLOY-PEBBLE.md).`,
+      );
+    }
   }
 } catch (rebornCheckErr) {
   blzError('maintemp', 'Contrôle REBORN:', rebornCheckErr?.message || rebornCheckErr);
