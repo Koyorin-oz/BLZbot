@@ -492,9 +492,7 @@ module.exports = async function deployCommands(client) {
             try {
                 const existing = await guild.commands.fetch();
                 for (const cmd of existing.values()) {
-                    const isRebornGuildOnly =
-                        rebornForGuild.has(cmd.name) && rebornSlashScope === 'guild';
-                    if (isRebornGuildOnly) continue;
+                    if (rebornForGuild.has(cmd.name)) continue;
                     const shouldDelete =
                         appMap.has(cmd.name) &&
                         (commandsToDeployFinal.has(cmd.name) ||
