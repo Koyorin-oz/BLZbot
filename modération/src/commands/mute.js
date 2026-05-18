@@ -79,13 +79,19 @@ module.exports = {
     },
 
     async execute(interaction, { dbManager, config }) {
-        await interaction.deferReply({ ephemeral: true });
-
         if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
+            if (!interaction.deferred && !interaction.replied) {
+                return interaction.reply({
+                    content: '❌ Vous n\'avez pas l\'autorisation d\'utiliser cette commande.',
+                    flags: 64,
+                });
+            }
             return interaction.editReply({
-                content: '❌ Vous n\'avez pas l\'autorisation d\'utiliser cette commande.'
+                content: '❌ Vous n\'avez pas l\'autorisation d\'utiliser cette commande.',
             });
         }
+
+        if (!(await deferEphemeral(interaction))) return;
 
         const utilisateur = interaction.options.getUser('utilisateur');
         const temps = interaction.options.getString('temps');

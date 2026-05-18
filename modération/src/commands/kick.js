@@ -1,6 +1,13 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const CONFIG = require('../config.js');
 const { getModeratorTitleWithArticle } = require('../utils/helpers.js');
+const {
+    buildPostSanctionDmEmbed,
+    moderatorLabelForDm,
+    trySendSanctionDm,
+    sendSanctionChannelFallback,
+    formatDmStatusForModReply,
+} = require('../utils/sanction-dm.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
