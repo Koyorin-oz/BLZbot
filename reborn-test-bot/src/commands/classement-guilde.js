@@ -125,9 +125,9 @@ function buildSelect(currentType) {
       .setCustomId('rb_classement_guilde_type')
       .setPlaceholder('Changer de classement guilde')
       .addOptions(
-        Object.entries(TYPES).map(([key, d]) => ({
-          label: d.label,
-          description: d.description.slice(0, 100),
+        Object.entries(TYPES).map(([key, typeDef]) => ({
+          label: typeDef.label,
+          description: typeDef.description.slice(0, 100),
           value: key,
           default: key === currentType,
         })),
