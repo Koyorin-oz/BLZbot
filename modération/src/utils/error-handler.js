@@ -24,7 +24,7 @@ async function handleCommandError(interaction, error, client = null) {
         content: `❌ Oups ! Une erreur est survenue. Si le problème persiste, vous pouvez le signaler au développeur. (ID Erreur: ${bugId})`,
         embeds: [],
         components: [row],
-        ephemeral: true
+        flags: 64,
     };
 
     try {
@@ -34,8 +34,7 @@ async function handleCommandError(interaction, error, client = null) {
             await interaction.reply(replyOptions);
         }
     } catch (e) {
-        // Ignorer silencieusement si l'interaction a expiré (10062)
-        if (e.code !== 10062) {
+        if (!isInteractionGone(e)) {
             console.error(`[ERREUR ${bugId}] Impossible de répondre à l'interaction pour signaler l'erreur:`, e);
         }
     }
