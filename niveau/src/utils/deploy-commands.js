@@ -388,17 +388,21 @@ module.exports = async function deployCommands(client) {
                 )
         );
 
-        const rebornKeys = ['admin-roles', 'salon-hacker', 'itemindex'];
+        const rebornKeys = ['admin-roles', 'salon-hacker', 'itemindex', 'arbre', 'daily', 'boutique'];
         const rebornPresent = rebornKeys
             .map((n) => {
                 const onGlobal = commandsToDeployFinal.has(n);
                 const onGuild = rebornForGuild.has(n);
                 if (rebornSlashScope === 'guild') return `${n}:${onGuild ? 'guilde' : 'NON'}`;
-                return `${n}:${onGlobal || onGuild ? 'oui' : 'NON'}`;
+                if (rebornSlashScope === 'global') return `${n}:${onGlobal ? 'global' : 'NON'}`;
+                return `${n}:${onGlobal ? 'global' : '—'}/${onGuild ? 'guilde' : '—'}`;
             })
             .join(' · ');
+        const rebornGlobalCount = [...commandsToDeployFinal.keys()].filter((n) =>
+            localCommands.get(n)?.source === 'reborn',
+        ).length;
         console.log(
-            `[niveau/deploy] Paquet slash (${commandsToDeployFinal.size}) — REBORN : ${rebornPresent}`,
+            `[niveau/deploy] Paquet slash global (${commandsToDeployFinal.size}, dont ${rebornGlobalCount} REBORN) · scope=${rebornSlashScope} — ${rebornPresent}`,
         );
 
         // 3. Déploiement GLOBAL
