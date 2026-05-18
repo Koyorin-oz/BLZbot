@@ -148,19 +148,35 @@ module.exports = {
                 });
             }
 
-            try {
-                let dmMessage = `Vous avez été BANNI définitivement du serveur pour la raison : "${finalReason}".\n` +
-                    `Si vous souhaitez vous faire debannir, vous pouvez rejoindre le serveur support : https://discord.gg/UJNZxzmmPV`;
+            const guildName = interaction.guild.name;
+            const durationLabel = dureeTexte
+                ? `Temporaire — ${dureeTexte}`
+                : 'Définitif';
+            const preBanEmbed = buildPreBanDmEmbed({
+                guildName,
+                reason: finalReason,
+                byLabel: moderatorLabelForDm(interaction),
+                durationLabel,
+            });
 
-                if (dureeTexte) {
-                    dmMessage = `Vous avez été BANNI temporairement du serveur pour une durée de ${dureeTexte}. Raison : "${finalReason}".\n` +
-                        `Vous serez automatiquement débanni à la fin de cette période.`;
+            let dmOk = await trySendSanctionDm(utilisateur, preBanEmbed);
+            let linkOk = false;
+            let fallback = { ok: false };
+
+            if (dmOk) {
+                linkOk = await sendDebanInviteDm(utilisateur);
+            } else {
+                fallback = await sendSanctionChannelFallback({
+                    guild: interaction.guild,
+                    user: utilisateur,
+                    embed: preBanEmbed,
+                });
+                if (fallback.ok) {
+                    linkOk = await sendDebanInviteDm(utilisateur);
                 }
-
-                await utilisateur.send(dmMessage);
-            } catch {
-                console.warn('Impossible d\'envoyer un message privé avant le bannissement.');
             }
+
+            var banDmStatus = formatDmStatusForModReply({ dmOk, linkOk, fallback });
         }
 
         try {
