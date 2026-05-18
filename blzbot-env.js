@@ -203,4 +203,5 @@ module.exports = {
     getSlashDeployGuildIds,
     getTestGuildId,
     isBlzTestGuild,
+    isOrchestratorSlashDeployEnabled,
 };

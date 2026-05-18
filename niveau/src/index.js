@@ -119,6 +119,17 @@ if (skipSlashDeployEnv) {
     if (!Number.isFinite(slashDeferMs) || slashDeferMs < 0) slashDeferMs = 0;
 
     const runSlashDeploy = async () => {
+        if (
+            ['1', 'true', 'yes'].includes(String(process.env.BLZ_SKIP_CHILD_SLASH_DEPLOY || '').toLowerCase()) ||
+            isOrchestratorSlashDeployEnabled()
+        ) {
+            if (!BLZ_COMPACT) {
+                console.log(
+                    '[niveau] Déploiement slash laissé à l’orchestrateur (run-deploy-all.js) — évite les conflits avec modération.',
+                );
+            }
+            return;
+        }
         if (skipSlashDeployEnv) {
             const skipMsg =
                 'Déploiement slash DÉSACTIVÉ (SKIP_SLASH_DEPLOY_ON_START). Mets SKIP_SLASH_DEPLOY_ON_START=0 dans le .env et redémarre Pebble, ou utilise /deploy-slash (admin) une fois disponible.';

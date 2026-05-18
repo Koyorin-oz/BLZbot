@@ -592,7 +592,7 @@ function scheduleSlashSyncFromOrchestrator() {
   const disabled = ['0', 'false', 'no', 'off'].includes(String(raw || '').toLowerCase());
   if (disabled) return;
 
-  const delay = Math.max(2000, parseInt(process.env.BLZ_AUTO_DEPLOY_SLASH_DELAY_MS || '15000', 10));
+  const delay = Math.max(5000, parseInt(process.env.BLZ_AUTO_DEPLOY_SLASH_DELAY_MS || '25000', 10));
   const deployScript = path.join(REPO_ROOT, 'scripts', 'run-deploy-all.js');
   blzLine(
     'maintemp',
