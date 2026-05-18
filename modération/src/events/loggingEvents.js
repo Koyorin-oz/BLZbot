@@ -266,21 +266,38 @@ module.exports = {
 
         // Relogger la suppression du log (seulement si c'était un message de log)
         if (isOwnMessage) {
-
             const deletedEmbed = message.embeds[0];
+            let contentDisplay = '';
+            let isSecurityLog = false;
 
-            let partialContent = '**\`Embed sans contenu\`**';
-
-            if (deletedEmbed) {
-                partialContent = [
+            if (deletedEmbed?.title?.includes('SÉCURITÉ')) {
+                isSecurityLog = true;
+                contentDisplay = `**Log de sécurité supprimé** (récursion détectée)`;
+            } else if (deletedEmbed) {
+                const embedParts = [
                     deletedEmbed.title,
                     deletedEmbed.description,
-                    ...(deletedEmbed.fields?.map(f => `${f.name}: ${f.value}`) || [])
-                ]
-                    .filter(Boolean)
-                    .join('\n');
+                    ...(deletedEmbed.fields
+                        ?.filter(f => f.name !== 'ID de l\'exécuteur')
+                        ?.map(f => `**${f.name}:** ${f.value}`) || [])
+                ].filter(Boolean);
+
+                contentDisplay = embedParts.join('\n').substring(0, 1024) || '*(Embed vide)*';
             } else if (message.content) {
-                partialContent = message.content.substring(0, 1000);
+                contentDisplay = message.content.substring(0, 1024);
+            } else {
+                contentDisplay = '*(Aucun contenu récupérable)*';
+            }
+
+            const fields = [
+                { name: 'Supprimé par', value: executorName },
+                { name: 'ID de l\'exécuteur', value: executorId }
+            ];
+
+            if (contentDisplay && !isSecurityLog) {
+                fields.push({ name: 'Log supprimé', value: contentDisplay });
+            } else if (isSecurityLog) {
+                fields.push({ name: 'Type', value: contentDisplay });
             }
 
             await logger.log(
@@ -288,11 +305,7 @@ module.exports = {
                 '🚨 SÉCURITÉ : Log Supprimé',
                 `Un message de log a été supprimé !`,
                 '#FF0000',
-                [
-                    { name: 'Supprimé par', value: executorName },
-                    { name: 'ID de l\'exécuteur', value: executorId },
-                    { name: 'Contenu (partiel)', value: partialContent }
-                ]
+                fields
             );
         }
     },
