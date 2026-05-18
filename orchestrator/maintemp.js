@@ -1,49 +1,5 @@
 // main.js
 
-// Pebble : le loader « git pull » reste souvent sur un vieux commit → reset GitHub puis redémarrage auto.
-(function pebbleBootstrapBeforeLoad() {
-  const fs = require('fs');
-  const path = require('path');
-  const { execSync } = require('child_process');
-  const repoRoot = path.join(__dirname, '..');
-  if (['0', 'false', 'no', 'off'].includes(String(process.env.BLZ_PEBBLE_GIT_RESET || '').toLowerCase())) {
-    return;
-  }
-  const marker = path.join(repoRoot, 'niveau/src/generated/reborn-slash-bodies.json');
-  const pkgPath = path.join(repoRoot, 'package.json');
-  const outdatedPkg =
-    fs.existsSync(pkgPath) && !fs.readFileSync(pkgPath, 'utf8').includes('pebble-git-hard-reset');
-  if (fs.existsSync(marker) && !outdatedPkg) return;
-
-  const syncPath = path.join(repoRoot, 'scripts', 'pebble-git-sync.js');
-  if (fs.existsSync(syncPath)) {
-    const { runPebbleGitSync } = require(syncPath);
-    runPebbleGitSync({ repoRoot, exitAfterSync: true, exitOnFail: false });
-    return;
-  }
-
-  const gitDir = path.join(repoRoot, '.git');
-  if (!fs.existsSync(gitDir)) {
-    console.error('[pebble-bootstrap] Pas de .git — active Git Management ou SFTP GitHub Actions.');
-    return;
-  }
-  const gi = path.join(repoRoot, '.gitignore');
-  if (fs.existsSync(gi) && fs.statSync(gi).size > 50_000) fs.unlinkSync(gi);
-  if (!fs.existsSync(gi)) fs.writeFileSync(gi, 'node_modules/\n.env\n*.sqlite\n', 'utf8');
-  try {
-    const branch = (process.env.BLZ_GITHUB_BRANCH || 'main').trim() || 'main';
-    console.log(`[pebble-bootstrap] Code obsolète — git reset origin/${branch}…`);
-    execSync(`git fetch origin ${branch}`, { cwd: repoRoot, stdio: 'inherit' });
-    execSync(`git reset --hard origin/${branch}`, { cwd: repoRoot, stdio: 'inherit' });
-    execSync('git clean -fd', { cwd: repoRoot, stdio: 'inherit' });
-    console.log('[pebble-bootstrap] OK — redémarrage…');
-    process.exit(0);
-  } catch (e) {
-    console.error('[pebble-bootstrap] git échoué :', e?.message || e);
-    console.error('[pebble-bootstrap] → GitHub Actions SFTP ou colle ce bloc en tête de maintemp.js.');
-  }
-})();
-
 // --- Modules et configuration de l'environnement ---
 const { fork, execFile } = require('child_process');
 const path = require('path');

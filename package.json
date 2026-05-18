@@ -25,7 +25,7 @@
     "verification:install": "npm install --prefix verification --no-audit --no-fund",
     "verification:start": "npm start --prefix verification",
     "verification:deploy": "npm run deploy-commands --prefix verification",
-    "postinstall": "node scripts/pebble-git-hard-reset.js && npm run verification:install",
+    "postinstall": "npm run verification:install",
     "git:hooks": "git config core.hooksPath .githooks",
     "git:push": "git push origin HEAD"
   },
