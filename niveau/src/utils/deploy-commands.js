@@ -407,6 +407,12 @@ module.exports = async function deployCommands(client) {
         const appMap = new Map();
         appCommands.forEach((cmd) => appMap.set(cmd.name, cmd));
 
+        let createdCount = 0;
+        let updatedCount = 0;
+        let skippedCount = 0;
+        let errorCount = 0;
+        let deletedGlobal = 0;
+
         // Retirer d’anciennes slash REBORN du global (tentatives scope=both) pour libérer la limite 100.
         for (const cmd of [...appCommands.values()]) {
             if (!rebornForGuild.has(cmd.name)) continue;
@@ -419,12 +425,6 @@ module.exports = async function deployCommands(client) {
                 /* noop */
             }
         }
-
-        let createdCount = 0;
-        let updatedCount = 0;
-        let skippedCount = 0;
-        let errorCount = 0;
-        let deletedGlobal = 0;
 
         for (const [name, commandData] of commandsToDeployFinal.entries()) {
             const existing = appMap.get(name);
