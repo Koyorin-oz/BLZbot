@@ -227,9 +227,8 @@ module.exports = {
                 }
             );
 
-            const dmNote = typeof banDmStatus === 'string' ? `\n${banDmStatus}` : '';
             await interaction.editReply({
-                content: `✅ ${utilisateur.tag} a été banni ${dureeTexte ? 'temporairement (' + dureeTexte + ')' : 'définitivement'}.${dmNote}`,
+                content: `✅ ${utilisateur.tag} a été banni ${dureeTexte ? 'temporairement (' + dureeTexte + ')' : 'définitivement'}.\n${banDmStatus}`,
             });
         } catch (erreur) {
             console.error('Erreur lors du bannissement :', erreur);

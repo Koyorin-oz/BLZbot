@@ -297,15 +297,26 @@ module.exports = {
                 }
             );
 
-            // Message privé au membre
-            try {
-                await membreCible.send(`Vous avez été rendu muet pour la raison : "${finalReason}" pendant une durée de ${duréeTexte}.`);
-            } catch {
-                console.warn('Impossible d\'envoyer un message privé au membre ciblé.');
-            }
+            const endsAt = new Date(Date.now() + finalDurationMs);
+            const postEmbed = buildPostSanctionDmEmbed({
+                guildName: interaction.guild.name,
+                type: 'MUTE',
+                reason: finalReason,
+                byLabel: moderatorLabelForDm(interaction),
+                endsAt,
+            });
+            const dmOk = await trySendSanctionDm(membreCible.user, postEmbed);
+            const fallback = dmOk
+                ? { ok: false }
+                : await sendSanctionChannelFallback({
+                    guild: interaction.guild,
+                    user: membreCible.user,
+                    embed: postEmbed,
+                });
+            const dmStatus = formatDmStatusForModReply({ dmOk, fallback });
 
             await interaction.editReply({
-                content: `✅ Le mute a été appliqué avec succès à ${membreCible.user.tag}.`
+                content: `✅ Le mute a été appliqué avec succès à ${membreCible.user.tag}.\n${dmStatus}`,
             });
         } catch (erreur) {
             console.error('Erreur lors de l\'application du mute :', erreur);
