@@ -185,6 +185,12 @@ function isBlzTestGuild(guildId) {
     return String(guildId) === getTestGuildId();
 }
 
+/** L’orchestrateur lance `run-deploy-all.js` (évite 3 deploys concurrents qui font disparaître les slash). */
+function isOrchestratorSlashDeployEnabled() {
+    const raw = process.env.BLZ_AUTO_DEPLOY_SLASH;
+    return !['0', 'false', 'no', 'off'].includes(String(raw ?? '1').toLowerCase());
+}
+
 module.exports = {
     PEBBLE_HOST_ENV_PATH,
     resolveDotenvPath,

@@ -276,11 +276,15 @@ function runScript(scriptObj) {
   // Ne plus désactiver le déploiement slash via BLZ_FAST_START : les nouvelles commandes (/panel-voc, etc.)
   // n’apparaissaient jamais sur Discord. Pour sauter le deploy au boot : SKIP_SLASH_DEPLOY_ON_START=1 explicitement.
   // Démarrage plus fluide : déploiement slash après le READY (défaut côté bot si non défini).
-  if (
-    (scriptName === 'niveau/src/index.js' || scriptName === 'modération/index.js') &&
-    (env.BLZ_DEFER_SLASH_DEPLOY_MS === undefined || env.BLZ_DEFER_SLASH_DEPLOY_MS === '')
-  ) {
-    env.BLZ_DEFER_SLASH_DEPLOY_MS = '5000';
+  const orchestratorDeploysSlash = !['0', 'false', 'no', 'off'].includes(
+    String(env.BLZ_AUTO_DEPLOY_SLASH ?? '1').toLowerCase(),
+  );
+  if (scriptName === 'niveau/src/index.js' || scriptName === 'modération/index.js') {
+    if (orchestratorDeploysSlash) {
+      env.BLZ_SKIP_CHILD_SLASH_DEPLOY = '1';
+    } else if (env.BLZ_DEFER_SLASH_DEPLOY_MS === undefined || env.BLZ_DEFER_SLASH_DEPLOY_MS === '') {
+      env.BLZ_DEFER_SLASH_DEPLOY_MS = '5000';
+    }
   }
 
   const proc = fork(path.join(REPO_ROOT, scriptName), [], {

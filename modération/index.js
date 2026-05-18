@@ -117,6 +117,18 @@ function loadEvents() {
  * Enregistrement des commandes slash
  */
 async function registerCommands() {
+    const { isOrchestratorSlashDeployEnabled } = require(path.join(__dirname, '..', 'blzbot-env.js'));
+    if (
+        ['1', 'true', 'yes'].includes(String(process.env.BLZ_SKIP_CHILD_SLASH_DEPLOY || '').toLowerCase()) ||
+        isOrchestratorSlashDeployEnabled()
+    ) {
+        if (!BLZ_COMPACT) {
+            console.log(
+                '[modération] Déploiement slash laissé à l’orchestrateur (run-deploy-all.js) — évite les conflits avec niveau.',
+            );
+        }
+        return;
+    }
     try {
         await deployModerationSlashCommands(client, config, { compact: BLZ_COMPACT });
     } catch (error) {
