@@ -490,7 +490,10 @@ module.exports = async function deployCommands(client) {
         // 5. REBORN sur chaque guilde du bot (visible tout de suite dans le / du serveur).
         let rebornGuildStats = { created: 0, updated: 0, errors: 0, guildIds: [] };
         if (rebornForGuild.size > 0) {
-            rebornGuildStats = await deployRebornSlashToGuilds(client, rebornForGuild, { compact });
+            rebornGuildStats = await deployRebornSlashToGuilds(client, rebornForGuild, {
+                compact,
+                globalSlashNames: new Set(commandsToDeployFinal.keys()),
+            });
             if (!compact) {
                 console.log(
                     `[niveau/deploy] REBORN : ${rebornForGuild.size} cmd en guilde — tape / dans un salon du serveur (Ctrl+Maj+R).`,
