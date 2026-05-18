@@ -171,6 +171,23 @@ async function handleLogChannelSecurity(client, logger, message) {
 
     // Relogger la suppression du log (seulement si c'était un message de log)
     if (isOwnMessage) {
+
+        const deletedEmbed = message.embeds[0];
+
+        let partialContent = '**\`Embed sans contenu\`**';
+
+        if (deletedEmbed) {
+            partialContent = [
+                deletedEmbed.title,
+                deletedEmbed.description,
+                ...(deletedEmbed.fields?.map(f => `${f.name}: ${f.value}`) || [])
+            ]
+                .filter(Boolean)
+                .join('\n');
+        } else if (message.content) {
+            partialContent = message.content.substring(0, 1000);
+        }
+
         await logger.log(
             message.guild,
             '🚨 SÉCURITÉ : Log Supprimé',
@@ -179,7 +196,7 @@ async function handleLogChannelSecurity(client, logger, message) {
             [
                 { name: 'Supprimé par', value: executorName },
                 { name: 'ID de l\'exécuteur', value: executorId },
-                { name: 'Contenu (partiel)', value: (message.embeds[0]?.title || message.content || '[Embed sans titre]').substring(0, 200) }
+                { name: 'Contenu (partiel)', value: partialContent }
             ]
         );
     }
