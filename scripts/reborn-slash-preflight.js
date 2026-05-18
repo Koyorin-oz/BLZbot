@@ -39,8 +39,12 @@ function assertRebornSlashReady(opts = {}) {
 
     if (!fs.existsSync(RUNTIME_PATH) && !hasJson) {
         return fail(
-            `[REBORN] reborn-test-bot ET reborn-slash-bodies.json absents.\n` +
-                `  → git pull (fichier niveau/src/generated/reborn-slash-bodies.json requis)`,
+            `[REBORN] Fichiers absents sur le disque Pebble (le « git pull » du loader n’a pas mis à jour le repo).\n` +
+                `  Vérifie dans File Manager :\n` +
+                `    • niveau/src/generated/reborn-slash-bodies.json\n` +
+                `    • reborn-test-bot/src/rebornRuntime.js\n` +
+                `  Panel Pebble → Git → réinstalle le dépôt (main), .gitignore ~800 o, puis Restart.\n` +
+                `  Si le git reste bloqué : GitHub Actions → Deploy PebbleHost (SFTP) — voir doc/DEPLOY-PEBBLE.md`,
         );
     }
 
