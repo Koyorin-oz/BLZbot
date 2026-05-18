@@ -128,9 +128,14 @@ function collectRebornSlashMap() {
       if (body?.name) map.set(body.name, body);
     }
   }
+  for (const name of MODERATION_RESERVED_SLASH) {
+    map.delete(name);
+  }
   if (map.size === 0 && isEnabled()) {
     const cached = loadRebornSlashFromGeneratedJson();
-    for (const [name, body] of cached) map.set(name, body);
+    for (const [name, body] of cached) {
+      if (!MODERATION_RESERVED_SLASH.has(name)) map.set(name, body);
+    }
     if (map.size > 0) {
       logger.warn(
         `[reborn] ${map.size} slash depuis generated/reborn-slash-bodies.json` +
