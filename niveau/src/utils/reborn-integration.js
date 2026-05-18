@@ -102,10 +102,17 @@ function loadRebornCommands(client) {
   if (!rt) return 0;
   initEnvironment();
   const n = rt.loadCommands(client, { isOwner: resolveIsOwner() });
-  if (n > 0) {
-    logger.info(`[reborn] ${n} commande(s) REBORN chargée(s) (écrasent les homonymes niveau).`);
+  let skipped = 0;
+  for (const name of MODERATION_RESERVED_SLASH) {
+    if (client.commands.delete(name)) skipped++;
   }
-  return n;
+  if (n > 0) {
+    logger.info(
+      `[reborn] ${n - skipped} commande(s) REBORN chargée(s) (écrasent les homonymes niveau).` +
+        (skipped ? ` Réservées modération : ${[...MODERATION_RESERVED_SLASH].join(', ')}.` : ''),
+    );
+  }
+  return Math.max(0, n - skipped);
 }
 
 /**
