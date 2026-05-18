@@ -407,6 +407,19 @@ module.exports = async function deployCommands(client) {
         const appMap = new Map();
         appCommands.forEach((cmd) => appMap.set(cmd.name, cmd));
 
+        // Retirer d’anciennes slash REBORN du global (tentatives scope=both) pour libérer la limite 100.
+        for (const cmd of [...appCommands.values()]) {
+            if (!rebornForGuild.has(cmd.name)) continue;
+            try {
+                await cmd.delete();
+                deletedGlobal++;
+                appMap.delete(cmd.name);
+                if (!compact) console.log(`🗑️ [GLOBAL] REBORN retirée du global : /${cmd.name}`);
+            } catch (_) {
+                /* noop */
+            }
+        }
+
         let createdCount = 0;
         let updatedCount = 0;
         let skippedCount = 0;
