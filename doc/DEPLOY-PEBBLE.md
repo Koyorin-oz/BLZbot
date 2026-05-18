@@ -55,3 +55,35 @@ Le workflow envoie les fichiers en **SFTP avec Python (paramiko)** : pas de shel
 ## 5. Déclencher à la main
 
 GitHub → **Actions** → **Deploy PebbleHost (SFTP)** → **Run workflow**.
+
+## 6. Le loader dit « Updating from Git » mais REBORN reste absent
+
+Symptômes dans les logs : `reborn-slash-bodies.json absents`, `salon-hacker:NON`, parfois encore `profil-v2-factory` en avertissement — le **disque** n’est pas sur le même commit que GitHub `main` (dépôt git Pebble bloqué ou vieux `.gitignore` local).
+
+### Vérifier dans le File Manager (sans console)
+
+| Fichier | Rôle |
+|---------|------|
+| `niveau/src/generated/reborn-slash-bodies.json` | Déploiement des 32 slash REBORN |
+| `reborn-test-bot/src/rebornRuntime.js` | Exécution des commandes (/salon-hacker, etc.) |
+| `.gitignore` | ~**800 octets** (pas des dizaines de Ko) |
+
+### Réparer (ordre recommandé)
+
+1. **Panel Pebble → Git Management** : URL `https://github.com/okoyorin-cell/BLZbot`, branche **`main`**, puis **réinstaller / reset** le dépôt si l’option existe.
+2. **Restart** le serveur.
+3. Logs attendus : `[maintemp] REBORN OK — 32 slash · deploy guilde auto (~15s)` puis `salon-hacker:guilde`.
+
+### Si le git Pebble ne se met toujours pas à jour
+
+Active le workflow SFTP (sections 1–2 ci-dessus), lance **Deploy PebbleHost (SFTP)** une fois, puis **Restart**. Le `.env` sur le serveur n’est pas écrasé.
+
+### Secours minimal (File Manager uniquement)
+
+- **Slash visibles sur Discord** : tu peux copier **un seul** fichier depuis GitHub (Raw) vers  
+  `niveau/src/generated/reborn-slash-bodies.json`  
+  puis Restart (les commandes ne **répondront** pas tant que `reborn-test-bot/` est absent).
+
+### Token Discord
+
+Si les logs affichent **`BLZbot-Backup#0739`**, le `BOT_TOKEN` dans `.env` ne correspond pas à `CLIENT_ID=1487192923350237244` — remets le token de la bonne application dans `.env`.
