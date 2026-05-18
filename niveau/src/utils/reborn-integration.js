@@ -6,6 +6,9 @@ const REPO_ROOT = path.join(__dirname, '..', '..', '..');
 const REBORN_RUNTIME_PATH = path.join(REPO_ROOT, 'reborn-test-bot', 'src', 'rebornRuntime.js');
 const REBORN_SLASH_JSON_PATH = path.join(__dirname, '..', 'generated', 'reborn-slash-bodies.json');
 
+/** Même token que modération : ne pas charger / déployer ces noms côté niveau. */
+const MODERATION_RESERVED_SLASH = new Set(['mute']);
+
 let rebornRuntime = null;
 let loadError = null;
 
