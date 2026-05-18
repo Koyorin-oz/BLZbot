@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { parseDuration, msToReadableTime, getModeratorTitleWithArticle } = require('../utils/helpers');
+const { deferEphemeral } = require('../utils/interaction-ack');
 const CONFIG = require('../config.js');
 
 module.exports = {
