@@ -599,7 +599,8 @@ function scheduleSlashSyncFromOrchestrator() {
     `Deploy slash dans ${Math.round(delay / 1000)}s (BLZ_AUTO_DEPLOY_SLASH=0 pour couper)`,
   );
 
-  setTimeout(() => {
+  const runDeployOnce = (attemptLabel) => {
+    blzLine('maintemp', `Deploy slash démarré (${attemptLabel})…`);
     const deployEnv = {
       ...process.env,
       BLZ_COMPACT_LOG: '1',
@@ -609,7 +610,7 @@ function scheduleSlashSyncFromOrchestrator() {
     execFile(
       process.execPath,
       [deployScript],
-      { cwd: REPO_ROOT, env: deployEnv, maxBuffer: 4 * 1024 * 1024 },
+      { cwd: REPO_ROOT, env: deployEnv, maxBuffer: 8 * 1024 * 1024, timeout: 300000 },
       (err, stdout, stderr) => {
         if (stdout) {
           if (isCompact()) emitChildLine('deploy-all', stdout);
@@ -619,10 +620,20 @@ function scheduleSlashSyncFromOrchestrator() {
           if (isCompact()) emitChildLine('deploy-all', stderr);
           else process.stderr.write(stderr);
         }
-        if (err) blzError('maintemp', 'run-deploy-all.js', err);
-        else blzLine('maintemp', 'Deploy slash terminé');
-      }
+        if (err) {
+          blzError('maintemp', `Deploy slash échec (${attemptLabel})`, err);
+          return false;
+        }
+        blzLine('maintemp', `Deploy slash terminé (${attemptLabel}) — cherche temple:guilde dans les lignes deploy`);
+        return true;
+      },
     );
+  };
+
+  setTimeout(() => {
+    runDeployOnce('1');
+    const retryMs = Math.max(60000, parseInt(process.env.BLZ_AUTO_DEPLOY_SLASH_RETRY_MS || '180000', 10));
+    setTimeout(() => runDeployOnce('2 (secours)'), retryMs);
   }, delay);
 }
 
