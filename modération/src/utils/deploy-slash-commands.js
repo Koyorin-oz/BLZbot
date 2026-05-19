@@ -248,6 +248,8 @@ async function deployModerationSlashCommands(client, _config, opts = {}) {
         } catch (_) { /* noop */ }
     }
 
+    const rebornPreserve = getRebornSlashNamesToPreserve();
+
     // ==================== MIROIR GUILD (ex. support sans scope applications.commands) ====================
     let mirrorGuildSetOk = 0;
     for (const gid of mirrorGuildIds) {
@@ -266,6 +268,12 @@ async function deployModerationSlashCommands(client, _config, opts = {}) {
                 guildOnlyCommandNames,
                 guild.id
             );
+            const existing = await guild.commands.fetch();
+            for (const cmd of existing.values()) {
+                if (!rebornPreserve.has(cmd.name)) continue;
+                const json = typeof cmd.toJSON === 'function' ? cmd.toJSON() : cmd;
+                if (!payload.some((p) => p.name === json.name)) payload.push(json);
+            }
             await guild.commands.set(payload);
             mirrorGuildSetOk++;
             if (!compact) {

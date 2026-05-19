@@ -158,4 +158,22 @@ if (skipSlashDeployEnv) {
     } else {
         await runSlashDeploy();
     }
+
+    /** Secours REBORN guilde : l’orchestrateur peut échouer silencieusement (OOM) ou la modération effaçait les slash. */
+    if (isOrchestratorSlashDeployEnabled()) {
+        const rebornBackupMs = Math.max(
+            45000,
+            parseInt(process.env.BLZ_REBORN_GUILD_BACKUP_MS || '120000', 10),
+        );
+        setTimeout(() => {
+            deployCommands
+                .deployRebornGuildSlashOnly(client, { compact: BLZ_COMPACT })
+                .catch((e) => console.error('[niveau] REBORN secours guilde:', e?.message || e));
+        }, rebornBackupMs);
+        if (!BLZ_COMPACT) {
+            console.log(
+                `[niveau] REBORN secours guilde dans ${Math.round(rebornBackupMs / 1000)}s (BLZ_REBORN_GUILD_BACKUP_MS).`,
+            );
+        }
+    }
 })();

@@ -212,7 +212,44 @@ async function deployRebornSlashToGuilds(
  * Les commandes d'événements (Halloween / Noël / Saint-Valentin) sont publiées seulement
  * quand l'événement est actif ; sinon elles sont retirées du global.
  */
-module.exports = async function deployCommands(client) {
+/**
+ * Repousse uniquement les slash REBORN en guilde (léger, secours si deploy-all a échoué).
+ */
+async function deployRebornGuildSlashOnly(client, opts = {}) {
+    const compact = Boolean(opts.compact);
+    const { collectRebornSlashMap, isEnabled } = require('./reborn-integration');
+    if (!isEnabled()) return { skipped: true };
+    const rebornMap = collectRebornSlashMap();
+    if (!rebornMap.size) {
+        console.warn('[niveau/deploy] REBORN secours : 0 commande à pousser.');
+        return { skipped: true };
+    }
+    const rebornForGuild = new Map();
+    for (const [name, body] of rebornMap.entries()) {
+        rebornForGuild.set(name, { ...body });
+    }
+    if (!client.isReady()) {
+        await new Promise((resolve) => client.once('clientReady', resolve));
+    }
+    let globalNames = new Set();
+    try {
+        const app = await client.application.commands.fetch();
+        app.forEach((c) => globalNames.add(c.name));
+    } catch {
+        /* noop */
+    }
+    const stats = await deployRebornSlashToGuilds(client, rebornForGuild, {
+        compact,
+        globalSlashNames: globalNames,
+    });
+    const hasTemple = rebornForGuild.has('temple');
+    console.log(
+        `[niveau] REBORN secours guilde : +${stats.created} ~${stats.updated} err ${stats.errors} · temple:${hasTemple ? 'oui' : 'NON'}`,
+    );
+    return stats;
+}
+
+const deployCommands = async function deployCommands(client) {
     const strictReborn =
         String(process.env.BLZ_REBORN_DEPLOY_STRICT ?? '1').trim().toLowerCase() !== '0';
     try {
