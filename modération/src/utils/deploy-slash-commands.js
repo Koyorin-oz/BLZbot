@@ -335,6 +335,7 @@ async function deployModerationSlashCommands(client, _config, opts = {}) {
         try {
             const existing = await guild.commands.fetch();
             for (const cmd of existing.values()) {
+                if (rebornPreserve.has(cmd.name)) continue;
                 let shouldDelete = false;
                 if (LEGACY_COMMAND_NAMES_TO_REMOVE.has(cmd.name) || OBSOLETE_COMMAND_NAMES.has(cmd.name)) {
                     shouldDelete = true;

@@ -603,3 +603,6 @@ const deployCommands = async function deployCommands(client) {
         throw error;
     }
 };
+
+module.exports = deployCommands;
+module.exports.deployRebornGuildSlashOnly = deployRebornGuildSlashOnly;
