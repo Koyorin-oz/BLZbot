@@ -1238,45 +1238,28 @@ async function checkQuestProgress(client, trigger, user, data = {}) {
                         logger.error(`Erreur attribution trophée pour quête ${quest.id}:`, trophyError);
                     }
 
-                    // Envoyer la notification
-                    const questChannel = await client.channels.fetch(process.env.QUEST_CHANNEL).catch(() => null);
-                    if (questChannel) {
-                        // Récupérer le vrai User Discord pour l'embed
+                    // Notification salon quêtes (embed « Succès Déverrouillé »)
+                    const { sendQuestUnlockNotification, resolveQuestLogChannelId } = require('./quest-unlock-notify');
+                    if (resolveQuestLogChannelId()) {
                         let fullUser = null;
                         try {
                             fullUser = await client.users.fetch(user.id);
-                        } catch (e) {
+                        } catch {
                             fullUser = null;
                         }
-
                         const displayName = fullUser?.username || user.username || `Utilisateur ${user.id}`;
-                        const avatarURL = (typeof fullUser?.displayAvatarURL === 'function') ? fullUser.displayAvatarURL() : '';
-
                         const { getOrCreateUser } = require('./db-users');
                         const dbUser = getOrCreateUser(user.id, displayName);
                         const shouldPing = dbUser.notify_quest_complete !== 0;
-
-                        const rarityColors = {
-                            'Commune': 'Grey',
-                            'Rare': 'Blue',
-                            'Épique': 'Purple',
-                            'Légendaire': 'Gold',
-                            'Mythique': 'Red',
-                            'Goatesque': '#00FFFF',
-                            'Halloween': 'Orange',
-                        };
-                        const embed = new EmbedBuilder()
-                            .setAuthor({ name: displayName, iconURL: avatarURL || undefined })
-                            .setTitle('Succès Déverrouillé !')
-                            .setDescription(`**${quest.name}** - ${quest.description}`)
-                            .setColor(rarityColors[quest.rarity] || 'Default')
-                            .setFooter({ text: `Rareté: ${quest.rarity} | Récompense : ${rewardText}` })
-                            .setTimestamp();
-                        questChannel.send({
-                            content: fullUser ? `${fullUser}` : `<@${user.id}>`,
-                            embeds: [embed],
-                            allowedMentions: shouldPing ? undefined : { parse: [] }
-                        }).catch(err => logger.error(`Erreur envoi notification quête ${quest.id}:`, err));
+                        await sendQuestUnlockNotification(
+                            client,
+                            fullUser || user,
+                            quest,
+                            rewardText,
+                            { shouldPing },
+                        ).catch((err) =>
+                            logger.error(`Erreur envoi notification quête ${quest.id}:`, err),
+                        );
                     }
                 } catch (rewardError) {
                     logger.error(`Erreur récompense/notification pour quête ${quest.id} (user ${user.id}):`, rewardError);
