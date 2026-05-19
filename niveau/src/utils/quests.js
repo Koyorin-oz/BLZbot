@@ -1,4 +1,3 @@
-const { EmbedBuilder } = require('discord.js');
 const dbQuests = require('./db-quests');
 const logger = require('./logger');
 const { grantEventCurrency } = require('./db-halloween'); // Ajout pour les récompenses en bonbons
