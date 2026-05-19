@@ -249,7 +249,7 @@ async function deployRebornGuildSlashOnly(client, opts = {}) {
     return stats;
 }
 
-const deployCommands = async function deployCommands(client) {
+async function deployCommands(client) {
     const strictReborn =
         String(process.env.BLZ_REBORN_DEPLOY_STRICT ?? '1').trim().toLowerCase() !== '0';
     try {
