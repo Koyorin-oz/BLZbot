@@ -101,6 +101,19 @@ function toCmdJson(data) {
     return typeof data.toJSON === 'function' ? data.toJSON() : data;
 }
 
+/** Noms slash REBORN (guilde) — ne jamais écraser via guild.commands.set miroir modération. */
+function getRebornSlashNamesToPreserve() {
+    const names = new Set();
+    try {
+        const reborn = require(path.join(__dirname, '..', '..', '..', 'niveau', 'src', 'utils', 'reborn-integration'));
+        if (!reborn.isEnabled()) return names;
+        for (const n of reborn.collectRebornSlashMap().keys()) names.add(n);
+    } catch {
+        /* reborn absent */
+    }
+    return names;
+}
+
 function permsComparable(p) {
     if (p == null || p === undefined) return '';
     return String(p);
