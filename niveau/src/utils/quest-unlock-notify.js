@@ -60,7 +60,7 @@ function buildQuestUnlockEmbed(user, quest, rewardText) {
  * @param {{ shouldPing?: boolean }} [opts]
  */
 async function sendQuestUnlockNotification(client, user, quest, rewardText, opts = {}) {
-    const channelId = resolveQuestLogChannelId();
+    const channelId = String(opts.channelId || resolveQuestLogChannelId()).trim();
     if (!channelId) return false;
 
     const ch = await client.channels.fetch(channelId).catch(() => null);

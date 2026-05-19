@@ -62,7 +62,10 @@ async function notifyQuestUnlocks(client, userId, unlocked) {
         for (const { quest, rewardText } of entries) {
             if (helper?.sendQuestUnlockNotification) {
                 process.env.QUEST_CHANNEL = QUESTS_LOG_CHANNEL_ID;
-                await helper.sendQuestUnlockNotification(client, user, quest, rewardText, { shouldPing: true });
+                await helper.sendQuestUnlockNotification(client, user, quest, rewardText, {
+                    shouldPing: true,
+                    channelId: QUESTS_LOG_CHANNEL_ID,
+                });
             } else {
                 const ch = await client.channels.fetch(QUESTS_LOG_CHANNEL_ID).catch(() => null);
                 if (!ch?.send) continue;
