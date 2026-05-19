@@ -76,10 +76,10 @@ async function main() {
     }
 
     try {
-        if (!isCompact()) console.log('[deploy-all] 1/2 — bot niveau…');
-        await deployNiveau(client);
-        if (!isCompact()) console.log('[deploy-all] 2/2 — bot modération…');
+        if (!isCompact()) console.log('[deploy-all] 1/2 — modération (global + miroir, préserve REBORN)…');
         await deployModerationSlashCommands(client, config, { compact: isCompact() });
+        if (!isCompact()) console.log('[deploy-all] 2/2 — niveau (global + REBORN guilde)…');
+        await deployNiveau(client);
     } finally {
         client.destroy();
     }
