@@ -75,6 +75,13 @@ function registerClientReady(client, { isHalloweenActive }) {
         checkOverdueLoans(client).catch(err => logger.error('Erreur lors de la vérification des dettes:', err));
     }, 3600000); // Every hour
 
+    try {
+        const { startCountdownScheduler } = require('../utils/countdown-scheduler');
+        startCountdownScheduler(client);
+    } catch (e) {
+        logger.warn('[countdown] Scheduler non démarré:', e?.message || e);
+    }
+
     const _deferRaw = parseInt(process.env.BLZ_DEFER_STARTUP_MS || '1500', 10);
     const startupBase = Number.isFinite(_deferRaw) && _deferRaw >= 0 ? _deferRaw : 1500;
     logger.info(`Connecté en tant que ${client.user.tag} !`);
