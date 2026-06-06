@@ -1123,6 +1123,26 @@ function initializeDatabase(db) {
         /* ignore */
     }
 
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS countdowns (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            guild_id TEXT NOT NULL,
+            channel_id TEXT,
+            message_id TEXT,
+            title TEXT NOT NULL,
+            subtitle TEXT,
+            target_ms INTEGER NOT NULL,
+            created_by TEXT NOT NULL,
+            created_at INTEGER NOT NULL,
+            active INTEGER NOT NULL DEFAULT 1
+        );
+    `);
+    try {
+        db.exec('CREATE INDEX IF NOT EXISTS idx_countdowns_guild ON countdowns(guild_id, active)');
+    } catch (_) {
+        /* ignore */
+    }
+
     logger.debug('Base de données initialisée avec succès.');
 }
 
