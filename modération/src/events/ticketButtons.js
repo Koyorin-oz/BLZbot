@@ -85,13 +85,17 @@ async function createBridgedTicketFromSupport(interaction, config, client, tier)
     }
     const mainChannel = await mainGuild.channels.create(mainCreateOpts);
 
-    const ticketId = ticketManager.createTicket(userId, mainChannel.id, { supportChannelId: supportChannel.id });
+    const ticketId = ticketManager.createTicket(userId, mainChannel.id, {
+        supportChannelId: supportChannel.id,
+        ticketType: tier,
+    });
 
-    const topicSupport = `Ticket créé par ${interaction.user.tag} (ID:${userId}) - TICKET_ID:${ticketId}`;
-    const topicMain = `Ticket bridge — demandeur: ${interaction.user.tag} (${userId}) - TICKET_ID:${ticketId}`;
+    const channelSlug = `ticket-${tierPrefix(tier)}-${ticketId}`;
+    const topicSupport = `Ticket ${tierLabel(tier)} — ${interaction.user.tag} (ID:${userId}) - TICKET_ID:${ticketId}`;
+    const topicMain = `Ticket ${tierLabel(tier)} bridge — demandeur: ${interaction.user.tag} (${userId}) - TICKET_ID:${ticketId}`;
 
-    await supportChannel.edit({ name: `ticket-${ticketId}`, topic: topicSupport });
-    await mainChannel.edit({ name: `ticket-${ticketId}`, topic: topicMain });
+    await supportChannel.edit({ name: channelSlug, topic: topicSupport });
+    await mainChannel.edit({ name: channelSlug, topic: topicMain });
 
     const supportUrl = `https://discord.com/channels/${interaction.guildId}/${supportChannel.id}`;
 
