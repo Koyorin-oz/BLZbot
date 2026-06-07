@@ -403,9 +403,9 @@ async function handleCreateTicket(interaction) {
         );
 
         const welcomeMsg = await ticketChannel.send({
-            content: config.PING_ROLE_ID ? `<@&${config.PING_ROLE_ID}>` : undefined,
+            content: staffPing,
             embeds: [ticketEmbed],
-            components: [row]
+            components: [row],
         });
 
         await welcomeMsg.pin().catch(() => { });
