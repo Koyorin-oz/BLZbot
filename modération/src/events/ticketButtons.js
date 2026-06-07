@@ -54,40 +54,7 @@ async function createBridgedTicketFromSupport(interaction, config, client, tier)
         },
     ];
 
-    const mainOverwrites = [
-        { id: mainEveryone, deny: [PermissionsBitField.Flags.ViewChannel] },
-    ];
-    if (config.PING_ROLE_ID) {
-        const pingRole = mainGuild.roles.cache.get(config.PING_ROLE_ID);
-        if (pingRole) {
-            mainOverwrites.push({
-                id: pingRole,
-                allow: [
-                    PermissionsBitField.Flags.ViewChannel,
-                    PermissionsBitField.Flags.SendMessages,
-                    PermissionsBitField.Flags.ReadMessageHistory,
-                ],
-            });
-        } else {
-            console.warn(`[Tickets/bridge] Rôle ping ${config.PING_ROLE_ID} absent sur le serveur principal.`);
-        }
-    }
-    if (config.STAFF_ACCESS_ROLE_ID) {
-        const staffRole = mainGuild.roles.cache.get(config.STAFF_ACCESS_ROLE_ID);
-        if (staffRole) {
-            mainOverwrites.push({
-                id: staffRole,
-                allow: [
-                    PermissionsBitField.Flags.ViewChannel,
-                    PermissionsBitField.Flags.SendMessages,
-                    PermissionsBitField.Flags.ReadMessageHistory,
-                    PermissionsBitField.Flags.AttachFiles,
-                ],
-            });
-        } else {
-            console.warn(`[Tickets/bridge] Rôle staff ${config.STAFF_ACCESS_ROLE_ID} absent sur le serveur principal.`);
-        }
-    }
+    const mainOverwrites = buildMainStaffOverwrites(mainGuild, config, tier);
 
     const supportCreateOpts = {
         name: 'ticket-temp',
