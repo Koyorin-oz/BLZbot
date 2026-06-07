@@ -117,19 +117,11 @@ function diffUntil(targetMs) {
     return { days, hours, minutes, totalMs, past: false };
 }
 
+/** Une ligne titre + timestamp Discord (fuseau auto du lecteur). */
 function formatDiscordCountdownBlock(targetMs, title) {
     const unix = Math.floor(targetMs / 1000);
-    const head = title ? `## ${title}\n\n` : '';
-    return (
-        `${head}` +
-        `**Ouverture (ton fuseau horaire)**\n` +
-        `<t:${unix}:F>\n\n` +
-        `**Date & heure courtes**\n` +
-        `<t:${unix}:d> · <t:${unix}:t>\n\n` +
-        `**Temps restant**\n` +
-        `<t:${unix}:R>\n\n` +
-        `_Compte à rebours BLZ — l’horaire s’adapte automatiquement à ton fuseau._`
-    );
+    const head = String(title || 'Réouverture').trim();
+    return `## ${head}\n\n<t:${unix}:F>`;
 }
 
 module.exports = {
