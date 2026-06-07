@@ -185,6 +185,8 @@ async function handleTicketButton(interaction, client) {
 
     switch (customId) {
         case 'ticket_create':
+        case 'ticket_create_admin':
+        case 'ticket_create_moderation':
             await handleCreateTicket(interaction);
             break;
         case 'ticket_close':
