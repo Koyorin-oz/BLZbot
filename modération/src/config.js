@@ -245,8 +245,20 @@ module.exports = {
         /** Salon support : panneau auto au boot + cible doc /setup-ticket. */
         PANEL_CHANNEL_ID: '1496896791465955338',
         CATEGORY_ID: '1454508411122221139',                            // Catégorie pour les tickets (null = pas de catégorie)
-        PING_ROLE_ID: '1461142125801639988',         // Rôle à ping lors de la création
-        STAFF_ACCESS_ROLE_ID: '1172237685763608579',  // Rôle staff qui peut voir tous les tickets
+        PING_ROLE_ID: '1461142125801639988',         // Rôle à ping (tickets modération classiques, hors pont)
+        STAFF_ACCESS_ROLE_ID: '1172237685763608579',  // Legacy : tickets sans pont sur le même serveur
+        /** Ticket admin (pont main) : ces rôles seuls voient le salon staff. */
+        ADMIN_ROLE_IDS: [
+            '1452608223634001940',
+            '1433460248789778524',
+            '1433460236470980608',
+        ],
+        /** Ticket modération (pont main) : admins + modérateurs. */
+        MODERATOR_ROLE_IDS: [
+            '1452608118998433864',
+            '1452608041454407711',
+            '1433460304041218150',
+        ],
         LOG_CHANNEL_ID: null,                         // Salon de logs tickets (null = pas de logs)
         MAX_OPEN_TICKETS: 1,                          // Max tickets ouverts par utilisateur
         COOLDOWN_MS: 300000,                          // Cooldown entre tickets (5 minutes)

@@ -95,6 +95,9 @@ function createTicket(userId, channelId, opts = {}) {
         entry.supportChannelId = opts.supportChannelId;
         entry.bridge = true;
     }
+    if (opts.ticketType) {
+        entry.ticketType = opts.ticketType;
+    }
 
     ticketsData.mapping[ticketId] = entry;
 
