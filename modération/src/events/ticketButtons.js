@@ -140,8 +140,9 @@ async function createBridgedTicketFromSupport(interaction, config, client, tier)
         new ButtonBuilder().setCustomId('ticket_close').setLabel('🔒 Fermer').setStyle(ButtonStyle.Danger)
     );
 
+    const staffPing = buildRolePingContent(getStaffRoleIdsForTier(config, tier));
     const welcomeMain = await mainChannel.send({
-        content: config.PING_ROLE_ID ? `<@&${config.PING_ROLE_ID}>` : undefined,
+        content: staffPing,
         embeds: [embedMain],
         components: [rowMain],
     });
