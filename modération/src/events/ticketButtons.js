@@ -366,25 +366,24 @@ async function handleCreateTicket(interaction) {
         const ticketChannel = await interaction.guild.channels.create(createOptions);
 
         // Créer le ticket dans le manager et obtenir l'ID
-        const ticketId = ticketManager.createTicket(userId, ticketChannel.id);
+        const ticketId = ticketManager.createTicket(userId, ticketChannel.id, { ticketType: tier });
 
-        // Mettre à jour le nom et le topic avec l'ID
         await ticketChannel.edit({
-            name: `ticket-${ticketId}`,
-            topic: `Ticket créé par ${interaction.user.tag} (ID:${userId}) - TICKET_ID:${ticketId}`
+            name: `ticket-${tierPrefix(tier)}-${ticketId}`,
+            topic: `Ticket ${tierLabel(tier)} — ${interaction.user.tag} (ID:${userId}) - TICKET_ID:${ticketId}`,
         });
 
-        // Créer l'embed de bienvenue
+        const staffPing = buildRolePingContent(getStaffRoleIdsForTier(config, tier));
         const ticketEmbed = new EmbedBuilder()
-            .setTitle(`🎫 Ticket #${ticketId}`)
+            .setTitle(`🎫 Ticket ${tierLabel(tier)} #${ticketId}`)
             .setDescription(
                 `Bonjour <@${userId}> 👋\n\n` +
-                `Merci d'avoir ouvert un ticket.\n` +
-                `L'équipe ${config.PING_ROLE_ID ? `<@&${config.PING_ROLE_ID}>` : 'staff'} va bientôt venir t'aider.\n\n` +
+                `Merci d'avoir ouvert un ticket **${tierLabel(tier)}**.\n` +
+                `L'équipe ${staffPing || 'staff'} va bientôt venir t'aider.\n\n` +
                 `**Décris ton problème en détail** pour qu'on puisse t'aider au mieux.`
             )
             .setColor(config.EMBED_COLOR || BLZ_EMBED_STRIP_HEX)
-            .setFooter({ text: `ID: ${ticketId}` })
+            .setFooter({ text: `ID: ${ticketId} · ${tierLabel(tier)}` })
             .setTimestamp();
 
         // Boutons de gestion (sans Transcript - il apparaîtra à la fermeture)
