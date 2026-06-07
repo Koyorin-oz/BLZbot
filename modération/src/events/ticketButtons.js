@@ -17,6 +17,14 @@ const CONFIG = require('../config.js');
 const { BLZ_EMBED_STRIP_HEX } = require(path.join(__dirname, '..', '..', '..', 'blz-embed-theme'));
 const ticketManager = require('../modules/tickets.js');
 const { syncTicketBridgeOnClose, deleteBridgeSibling } = require('./ticketBridge');
+const {
+    buildMainStaffOverwrites,
+    getStaffRoleIdsForTier,
+    tierLabel,
+    tierPrefix,
+    buildRolePingContent,
+    tierFromCreateButton,
+} = require('../utils/ticket-access.js');
 
 /**
  * Ticket « pont » : salon miroir sur le support (membre + bot) + salon staff sur le serveur principal.

@@ -54,9 +54,27 @@ function tierPrefix(tier) {
     return tier === 'admin' ? 'admin' : 'mod';
 }
 
+/**
+ * @param {string[]} roleIds
+ * @returns {string|undefined}
+ */
+function buildRolePingContent(roleIds) {
+    const unique = [...new Set((roleIds || []).filter(Boolean))];
+    if (!unique.length) return undefined;
+    return unique.map((id) => `<@&${id}>`).join(' ');
+}
+
+/** @param {string} customId */
+function tierFromCreateButton(customId) {
+    if (customId === 'ticket_create_admin') return 'admin';
+    return 'moderation';
+}
+
 module.exports = {
     getStaffRoleIdsForTier,
     buildMainStaffOverwrites,
     tierLabel,
     tierPrefix,
+    buildRolePingContent,
+    tierFromCreateButton,
 };
