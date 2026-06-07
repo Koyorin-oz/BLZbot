@@ -317,6 +317,8 @@ async function handleCreateTicket(interaction) {
 
     await interaction.deferReply({ ephemeral: true });
 
+    const tier = tierFromCreateButton(interaction.customId);
+
     try {
         const useBridge =
             config.BRIDGE?.ENABLED &&
@@ -324,15 +326,14 @@ async function handleCreateTicket(interaction) {
             CONFIG.MAIN_GUILD_ID;
 
         if (useBridge) {
-            await createBridgedTicketFromSupport(interaction, config, interaction.client);
+            await createBridgedTicketFromSupport(interaction, config, interaction.client, tier);
             return;
         }
 
-        // Permissions du ticket (serveur classique = même serveur que le panneau)
         const overwrites = [
             {
                 id: interaction.guild.roles.everyone,
-                deny: [PermissionsBitField.Flags.ViewChannel]
+                deny: [PermissionsBitField.Flags.ViewChannel],
             },
             {
                 id: interaction.member,
@@ -340,45 +341,11 @@ async function handleCreateTicket(interaction) {
                     PermissionsBitField.Flags.ViewChannel,
                     PermissionsBitField.Flags.SendMessages,
                     PermissionsBitField.Flags.ReadMessageHistory,
-                    PermissionsBitField.Flags.AttachFiles
-                ]
-            }
+                    PermissionsBitField.Flags.AttachFiles,
+                ],
+            },
+            ...buildMainStaffOverwrites(interaction.guild, config, tier).slice(1),
         ];
-
-        // Ajouter le rôle de ping si configuré et en cache
-        if (config.PING_ROLE_ID) {
-            const pingRole = interaction.guild.roles.cache.get(config.PING_ROLE_ID);
-            if (pingRole) {
-                overwrites.push({
-                    id: pingRole,
-                    allow: [
-                        PermissionsBitField.Flags.ViewChannel,
-                        PermissionsBitField.Flags.SendMessages,
-                        PermissionsBitField.Flags.ReadMessageHistory
-                    ]
-                });
-            } else {
-                console.warn(`[Tickets] Rôle de ping ${config.PING_ROLE_ID} non trouvé dans le cache`);
-            }
-        }
-
-        // Ajouter le rôle staff qui peut voir tous les tickets
-        if (config.STAFF_ACCESS_ROLE_ID) {
-            const staffRole = interaction.guild.roles.cache.get(config.STAFF_ACCESS_ROLE_ID);
-            if (staffRole) {
-                overwrites.push({
-                    id: staffRole,
-                    allow: [
-                        PermissionsBitField.Flags.ViewChannel,
-                        PermissionsBitField.Flags.SendMessages,
-                        PermissionsBitField.Flags.ReadMessageHistory,
-                        PermissionsBitField.Flags.AttachFiles
-                    ]
-                });
-            } else {
-                console.warn(`[Tickets] Rôle staff ${config.STAFF_ACCESS_ROLE_ID} non trouvé dans le cache`);
-            }
-        }
 
         // Préparer les options de création
         const createOptions = {
