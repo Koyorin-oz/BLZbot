@@ -29,7 +29,7 @@ const {
 /**
  * Ticket « pont » : salon miroir sur le support (membre + bot) + salon staff sur le serveur principal.
  */
-async function createBridgedTicketFromSupport(interaction, config, client) {
+async function createBridgedTicketFromSupport(interaction, config, client, tier) {
     const userId = interaction.user.id;
     const mainGuild = await client.guilds.fetch(CONFIG.MAIN_GUILD_ID).catch(() => null);
     if (!mainGuild) {
