@@ -168,7 +168,11 @@ module.exports = {
 
         if (sub === 'apercu') {
             await interaction.deferReply({ flags: 64 });
-            const buffer = await buildCountdownCard({ targetMs: parsed.ms });
+            const buffer = await buildCountdownCard({
+                targetMs: parsed.ms,
+                title: titre,
+                subtitle: sousTitre,
+            });
             const file = new AttachmentBuilder(buffer, { name: 'apercu-countdown.png' });
             return interaction.editReply({
                 content: formatDiscordCountdownBlock(parsed.ms, titre),
