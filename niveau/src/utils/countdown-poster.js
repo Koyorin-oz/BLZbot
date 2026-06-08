@@ -13,7 +13,11 @@ async function postOrRefreshCountdown(client, row) {
         throw new Error('Salon introuvable ou non textuel.');
     }
 
-    const buffer = await buildCountdownCard({ targetMs: row.targetMs });
+    const buffer = await buildCountdownCard({
+        targetMs: row.targetMs,
+        title: row.title,
+        subtitle: row.subtitle,
+    });
     const file = new AttachmentBuilder(buffer, { name: `countdown-${row.id || 'preview'}.png` });
     const content = formatDiscordCountdownBlock(row.targetMs, row.title);
 
