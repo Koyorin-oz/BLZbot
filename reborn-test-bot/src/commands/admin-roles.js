@@ -240,11 +240,17 @@ module.exports = {
     }
 
     if (sub === 'definir-ranked') {
-      const tier = interaction.options.getString('tier', true);
+      const tier = interaction.options.getString('tier', true).trim();
       const role = interaction.options.getRole('role', true);
+      const def = rankedRoles.RANKS_ASC.find((t) => t.key === tier);
+      if (!def) {
+        return interaction.reply({
+          content: `❌ Rang inconnu : \`${tier}\`. Clés valides : ${rankedRoles.RANKS_ASC.map((t) => `\`${t.key}\``).join(', ')}`,
+        });
+      }
       rankedRoles.setRoleIdForTier(hub, tier, role.id);
       return interaction.reply({
-        content: `✅ Tier **${tier}** → ${role}`,
+        content: `✅ Rang **${def.label}** (\`${tier}\`) → ${role}`,
       });
     }
 
