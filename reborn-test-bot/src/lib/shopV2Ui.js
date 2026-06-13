@@ -60,7 +60,7 @@ async function buildBoutiquePayload(uid, username) {
         discountPct > 0 ? `· remise **−${discountPct}%**` : ''
       } ${shopTier >= 2 ? '· ×2 contenu coffres' : ''} ${
         shopTier >= 3 ? '· rotation midi Paris' : ''
-      } ${shopTier >= 5 ? '· **CATL gratuit / 3h**' : ''}`.replace(/\s+/g, ' ').trim(),
+      } ${shopTier >= 5 ? '· **Coffre légendaire gratuit / 3h**' : ''}`.replace(/\s+/g, ' ').trim(),
     );
     lines.push(
       `Reset boutique : ${free ? '**gratuit dispo cette semaine**' : 'consomme 1× *Reset boutique*'}.`,
