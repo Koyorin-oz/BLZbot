@@ -156,7 +156,7 @@ async function createBridgedTicketFromSupport(interaction, config, client, tier)
             if (logChannel?.isTextBased?.()) {
                 const logEmbed = new EmbedBuilder()
                     .setColor('#00FF00')
-                    .setTitle(`🎫 Nouveau ticket ${tierLabel(tier)} (pont support → main)`)
+                    .setTitle(`Nouveau ticket ${tierLabel(tier)}`)
                     .addFields(
                         { name: 'Ticket', value: `#${ticketId}`, inline: true },
                         { name: 'Type', value: tierLabel(tier), inline: true },
