@@ -214,7 +214,13 @@ class RecruitmentManager {
 
         const embed = new EmbedBuilder()
             .setTitle('Recrutement Staff')
-            .setDescription(`**Nous recherchons de nouveaux talents pour rejoindre l'équipe !** 🌟\n\nConsultez les postes ouverts ci-dessous et postulez si vous pensez avoir le profil !\n\n� **Avant de postuler :**\n• Vous devez être sur le serveur depuis au moins **1 mois**.\n• Vous avez **2 chances** de candidature (réinitialisation tous les 6 mois).\n• Soyez sérieux et honnête dans vos réponses.`)
+            .setDescription(
+                'Postes ouverts ci-dessous.\n\n' +
+                    '**Avant de postuler :**\n' +
+                    '• Sur le serveur depuis au moins **1 mois**.\n' +
+                    '• **2 candidatures** max (reset tous les 6 mois).\n' +
+                    '• Réponses sérieuses et honnêtes.'
+            )
             .setColor('#2B2D31')
             .setTimestamp();
 
