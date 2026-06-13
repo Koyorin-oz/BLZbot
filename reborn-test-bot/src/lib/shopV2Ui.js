@@ -94,22 +94,22 @@ async function buildBoutiquePayload(uid, username) {
   const priceLine = (n) => `${fmt(n)} ⭐`;
   options.push(
     {
-      label: 'Coffre Au Trésor Classique',
+      label: 'Coffre classique',
       value: 'c:classic',
       description: `${priceLine(CHEST_CLASSIC)} — ${summaryChest('classic')}`.slice(0, 100),
     },
     {
-      label: 'Coffre Au Trésor Mieux (CATM)',
+      label: 'Coffre meilleur',
       value: 'c:catm',
       description: `Lim. jour — ${priceLine(CHEST_CATM)} — ${summaryChest('catm')}`.slice(0, 100),
     },
     {
-      label: 'Coffre Au Trésor Légendaire (CATL)',
+      label: 'Coffre légendaire',
       value: 'c:catl',
       description: `${priceLine(CHEST_CATL)} — ${summaryChest('catl')}`.slice(0, 100),
     },
     {
-      label: 'Coffre Au Trésor Starss (CATS)',
+      label: 'Coffre starss',
       value: 'c:cats',
       description: `${priceLine(CHEST_CATS)} — ${summaryChest('cats')}`.slice(0, 100),
     },
