@@ -77,10 +77,27 @@ Sur un **serveur** (pas en MP bot économie complète), en **message** et en **v
 | **Starss** | **15** / message, **40** / minute en vocal (×2 si boost starss actif) |
 | **XP joueur** | **10** / message, **25** × nombre de **minutes** complètes en vocal ; courbe de niveau type doc (stockée en `xp_total`) |
 | **RP (ranked)** | Gains **selon ton palier** de RP (moins tu es haut, plus tu gagnes par msg/voc) ; **décroissance** si **24 h** sans message **ni** 1 min vocale ; entre **50k et 100k** RP, **pool zéro-sum** (300k « excès » partagé — le bot peut retirer du RP à d’autres dans la bande si le pool dépasse) |
-| **GXP** (membre → guilde joueur sur ce hub) | Selon **ton niveau** ; plafonné comme le doc (**6 GXP / msg**, **12 / min voc** au-delà du niveau 60) ; ×2 si boost GXP |
+| **GXP** (membre → guilde joueur sur ce hub) | Selon **ton niveau**, table **gdoc** : 0 avant le niveau 10, puis **niveau ÷ 10** par message et **×2** par minute vocale, jusqu'à **10 / msg** et **20 / min voc** à partir du niveau 100 ; ×2 si boost GXP |
 | **GRP** (membre sur ce serveur) | **1** / message, **3** / minute vocale ; **×1,1** si branche **Guilde** arbre ≥ étape 4 ; **÷2** si ta guilde joueur est sous **focus mode 3** (malus 2 h) |
+| **Monnaie d'event** (météorites / litres d'eau) | **3** / message, **10** / minute vocale, **uniquement** pendant qu'un event **Espace** ou **Océan** est actif (voir § 22) |
 
-Les **quêtes** comptent aussi des messages (`/quete`). Les **trophées** peuvent se débloquer en fond (`/trophees verifier`).
+Les **quêtes** comptent aussi des messages (`/quetes`). Les **trophées** peuvent se débloquer en fond (`/trophees`).
+
+### Table GXP par niveau (gdoc)
+
+| Niveau joueur | GXP / msg | GXP / min voc |
+|---------------|-----------|----------------|
+| 0–9   | 0 | 0 |
+| 10–19 | 1 | 2 |
+| 20–29 | 2 | 4 |
+| 30–39 | 3 | 6 |
+| 40–49 | 4 | 8 |
+| 50–59 | 5 | 10 |
+| 60–69 | 6 | 12 |
+| 70–79 | 7 | 14 |
+| 80–89 | 8 | 16 |
+| 90–99 | 9 | 18 |
+| 100+  | 10 | 20 |
 
 ---
 
