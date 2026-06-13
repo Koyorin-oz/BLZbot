@@ -30,7 +30,7 @@ const SELECTIONS = {
     reward: 100_000n,
   },
   defi_catl: {
-    label: 'Défi CATL : ouvrir 1× Coffre Au Trésor Légendaire',
+    label: 'Défi : ouvrir 1× Coffre légendaire',
     kind: 'catl_open',
     target: 1,
     reward: 250_000n,
