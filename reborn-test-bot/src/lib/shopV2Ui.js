@@ -202,7 +202,8 @@ async function buildInventairePayload(uid, username) {
       return {
         label: `${name} (×${r.qty})`.slice(0, 100),
         value: `i:${r.item_id}`,
-        description: `×${r.qty} · ${blurb}`.slice(0, 100),
+        description: blurb.slice(0, 100),
+        emoji: { name: emojiForItemId(r.item_id) },
       };
     });
     const select = new StringSelectMenuBuilder()
