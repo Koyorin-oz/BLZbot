@@ -55,13 +55,10 @@ module.exports = {
     const sub = interaction.options.getSubcommand();
 
     if (sub === 'creer-roles') {
-      await interaction.deferReply();
-      const r = await eventRoles.createRoles(interaction.guild);
-      const lines = [];
-      if (r.created.length) lines.push(`Créés : ${r.created.join(' · ')}`);
-      if (r.skipped.length) lines.push(`Déjà présents : ${r.skipped.join(' · ')}`);
-      if (r.failed.length) lines.push(`Échecs : ${r.failed.join('\n')}`);
-      return interaction.editReply({ content: lines.join('\n') || 'Rien à faire.' });
+      return interaction.reply({
+        content:
+          'La création automatique de rôles est désactivée. Crée tes rôles d\'event toi-même sur Discord, puis colle leurs IDs en dur dans `src/services/eventRoles.js` (objet `EVENT_ROLE_IDS`).',
+      });
     }
 
     if (sub === 'salon') {
