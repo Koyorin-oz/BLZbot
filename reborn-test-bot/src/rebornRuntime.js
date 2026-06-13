@@ -320,6 +320,17 @@ async function handleComponentInteraction(interaction, client) {
     return false;
   }
 
+  if (interaction.isButton() && interaction.customId.startsWith('evso:')) {
+    try {
+      await handleEventButton(interaction, client);
+    } catch (e) {
+      if (e?.code !== 10062 && e?.code !== 40060) {
+        console.error('[reborn evso bouton]', e?.message || e);
+      }
+    }
+    return true;
+  }
+
   if (interaction.isButton() && interaction.customId === 'rb:hacker:claim') {
     try {
       const { handleHackerSalonButton } = require('./commands/hacker');
