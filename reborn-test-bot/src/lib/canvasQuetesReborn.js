@@ -57,6 +57,12 @@ function rr(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
+function formatTwoDigits(v) {
+  if (typeof v !== "number" || !isFinite(v)) return String(v ?? "");
+  const n = Math.round(v);
+  return n < 10 ? `0${n}` : String(n);
+}
+
 function drawImageCover(ctx, img, x, y, w, h) {
   const iw = img.width;
   const ih = img.height;
@@ -173,7 +179,7 @@ function drawProgressBar(ctx, x, y, w, h, ratio, accent, accentRgb) {
   ctx.stroke();
 
   // Ensure the visual fill is clamped to 0..1 even if data.progress > target.
-  const ratioNum = typeof ratio === 'number' && isFinite(ratio) ? ratio : 0;
+  const ratioNum = typeof ratio === "number" && isFinite(ratio) ? ratio : 0;
   const r = Math.max(0, Math.min(1, ratioNum));
   const fw = Math.max(h, Math.max(0, Math.min(w, w * r)));
   if (r > 0) {
@@ -281,7 +287,15 @@ function drawCard(ctx, x, y, w, h, theme, data) {
     ctx.font = "700 16px InterBold, Arial";
     ctx.fillStyle = "#f4eeff";
     ctx.textAlign = "right";
-    ctx.fillText(`${data.progress} / ${data.target}`, barX + barW, barY - 10);
+    const pText =
+      typeof data.progress === "number"
+        ? formatTwoDigits(data.progress)
+        : String(data.progress ?? "");
+    const tText =
+      typeof data.target === "number"
+        ? formatTwoDigits(data.target)
+        : String(data.target ?? "");
+    ctx.fillText(`${pText} / ${tText}`, barX + barW, barY - 10);
     ctx.textAlign = "left";
   }
 
@@ -360,8 +374,14 @@ async function renderQuetesRebornPng(opts) {
           statusOk: true,
           rewardText: `+ ${Number(summary.daily_reward).toLocaleString("fr-FR")} starss`,
           // Afficher la barre même validée si les valeurs existent
-          progress: typeof summary.msgs_today === 'number' ? summary.msgs_today : undefined,
-          target: typeof summary.daily_target === 'number' ? summary.daily_target : undefined,
+          progress:
+            typeof summary.msgs_today === "number"
+              ? summary.msgs_today
+              : undefined,
+          target:
+            typeof summary.daily_target === "number"
+              ? summary.daily_target
+              : undefined,
         }
       : {
           title: `${summary.msgs_today} / ${summary.daily_target} messages aujourd’hui`,
@@ -387,8 +407,14 @@ async function renderQuetesRebornPng(opts) {
           statusOk: true,
           rewardText: `+ ${Number(summary.weekly_reward).toLocaleString("fr-FR")} starss`,
           // Afficher la barre même validée si les valeurs existent
-          progress: typeof summary.week_points === 'number' ? summary.week_points : undefined,
-          target: typeof summary.weekly_target === 'number' ? summary.weekly_target : undefined,
+          progress:
+            typeof summary.week_points === "number"
+              ? summary.week_points
+              : undefined,
+          target:
+            typeof summary.weekly_target === "number"
+              ? summary.weekly_target
+              : undefined,
         }
       : {
           title: `${summary.week_points} / ${summary.weekly_target} messages cette semaine`,
