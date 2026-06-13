@@ -390,7 +390,7 @@ async function handleCreateTicket(interaction) {
         const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setCustomId('ticket_add')
-                .setLabel('➕ Ajouter')
+                .setLabel('Ajouter')
                 .setStyle(ButtonStyle.Success),
             new ButtonBuilder()
                 .setCustomId('ticket_remove')
