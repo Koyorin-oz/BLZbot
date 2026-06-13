@@ -7,18 +7,7 @@
  */
 
 const meta = require('./meta');
-const { EVENTS, allRoleEntries } = require('../reborn/eventConfig');
-
-const ROLE_COLORS = {
-  meteore: 0x9b59b6,
-  galaxien: 0x5865f2,
-  lumineux: 0xf1c40f,
-  egocentrique: 0xe91e63,
-  eau: 0x3498db,
-  perdu: 0x1abc9c,
-  marin: 0x16a085,
-  roi: 0x0e6655,
-};
+const { allRoleEntries } = require('../reborn/eventConfig');
 
 /**
  * IDs de rôles Discord fournis manuellement (le bot ne crée plus de rôle).
