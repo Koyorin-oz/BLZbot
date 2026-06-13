@@ -936,7 +936,7 @@ async function handleRecruitmentVote(interaction, voteManager, recruitmentManage
                         new EmbedBuilder()
                             .setColor('#00FF00')
                             .setTitle('✅ Candidature acceptée !')
-                            .setDescription(`Félicitations ! Votre candidature pour rejoindre l'équipe de modération a été **acceptée** !\n\nBienvenue dans l'équipe ! 🎉`)
+                            .setDescription('Candidature modération **acceptée**.')
                             .setTimestamp()
                     ]
                 }).catch(err => console.error('Impossible d\'envoyer le MP au candidat:', err));

@@ -519,7 +519,7 @@ async function handleCloseConfirm(interaction, client) {
 
         // Message de fermeture avec boutons Transcript + Supprimer
         const closedEmbed = new EmbedBuilder()
-            .setTitle('🔒 Ticket fermé')
+            .setTitle('Ticket fermé')
             .setDescription(
                 `Ce ticket a été fermé par ${interaction.user.tag}.\n` +
                 `L'utilisateur <@${ticket.owner}> ne peut plus voir ce canal.`
@@ -550,7 +550,7 @@ async function handleCloseConfirm(interaction, client) {
                 if (logChannel) {
                     const logEmbed = new EmbedBuilder()
                         .setColor('#FFA500')
-                        .setTitle('🔒 Ticket fermé')
+                        .setTitle('Ticket fermé')
                         .addFields(
                             { name: 'Ticket', value: `#${ticketId}`, inline: true },
                             { name: 'Fermé par', value: `<@${interaction.user.id}>`, inline: true },

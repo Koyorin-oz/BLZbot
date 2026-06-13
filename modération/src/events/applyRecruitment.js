@@ -358,7 +358,9 @@ module.exports = {
                             new EmbedBuilder()
                                 .setColor('#FF0000')
                                 .setTitle('❌ Candidature refusée')
-                                .setDescription(`Malheureusement, votre candidature pour rejoindre l'équipe de modération a été **refusée**.\n\n💡 **Ne vous découragez pas !**\nVous pourrez retenter votre chance plus tard. Continuez à être actif et respectueux sur le serveur. \n\n📅 Vous pourrez soumettre une nouvelle candidature après la période de cooldown.`)
+                                .setDescription(
+                                    'Candidature modération **refusée**.\n\nTu pourras repostuler après la période de cooldown.'
+                                )
                                 .setTimestamp()
                         ]
                     });
