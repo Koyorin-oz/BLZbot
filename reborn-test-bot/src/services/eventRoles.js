@@ -57,42 +57,13 @@ function listConfigured(hubId) {
 }
 
 /**
- * Crée (ou rattache par nom) les 8 rôles d'event sur la guilde.
+ * Création automatique désactivée : le bot ne crée plus de rôle.
+ * Configure les IDs en dur dans `EVENT_ROLE_IDS` (ou en base).
  * @param {import('discord.js').Guild} guild
  */
 async function createRoles(guild) {
-  const hubId = guild.id;
-  const created = [];
-  const skipped = [];
-  const failed = [];
-  for (const ev of Object.values(EVENTS)) {
-    for (const [roleKey, label] of Object.entries(ev.roles)) {
-      const existing = getRoleId(hubId, roleKey);
-      if (existing && guild.roles.cache.get(existing)) {
-        skipped.push(`${label} → <@&${existing}>`);
-        continue;
-      }
-      const byName = guild.roles.cache.find((r) => r.name.toLowerCase() === label.toLowerCase());
-      if (byName) {
-        setRoleId(hubId, roleKey, byName.id);
-        skipped.push(`${label} → <@&${byName.id}>`);
-        continue;
-      }
-      try {
-        const role = await guild.roles.create({
-          name: label,
-          color: ROLE_COLORS[roleKey] || 0x95a5a6,
-          mentionable: false,
-          reason: `Rôle d'event ${ev.name}`,
-        });
-        setRoleId(hubId, roleKey, role.id);
-        created.push(`${label} → <@&${role.id}>`);
-      } catch (e) {
-        failed.push(`${label} : \`${e?.message || e}\``);
-      }
-    }
-  }
-  return { created, skipped, failed };
+  void guild;
+  return { created: [], skipped: [], failed: [], disabled: true };
 }
 
 const lastApplied = new Map(); // `${hubId}:${userId}` -> "set of role keys" signature
