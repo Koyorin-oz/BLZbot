@@ -113,7 +113,7 @@ async function createBridgedTicketFromSupport(interaction, config, client, tier)
         .setTimestamp();
 
     const rowSupport = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('ticket_close').setLabel('🔒 Fermer').setStyle(ButtonStyle.Danger)
+        new ButtonBuilder().setCustomId('ticket_close').setLabel('Fermer').setStyle(ButtonStyle.Danger)
     );
 
     await supportChannel.send({ embeds: [embedSupport], components: [rowSupport] });
@@ -137,7 +137,7 @@ async function createBridgedTicketFromSupport(interaction, config, client, tier)
     const rowMain = new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('ticket_add').setLabel('➕ Ajouter').setStyle(ButtonStyle.Success),
         new ButtonBuilder().setCustomId('ticket_remove').setLabel('➖ Retirer').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('ticket_close').setLabel('🔒 Fermer').setStyle(ButtonStyle.Danger)
+        new ButtonBuilder().setCustomId('ticket_close').setLabel('Fermer').setStyle(ButtonStyle.Danger)
     );
 
     const staffPing = buildRolePingContent(getStaffRoleIdsForTier(config, tier));
