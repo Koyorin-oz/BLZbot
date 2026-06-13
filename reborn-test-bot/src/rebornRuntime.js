@@ -146,6 +146,14 @@ function registerReadyTasks(client) {
     }
   }, 30_000);
 
+  setInterval(() => {
+    try {
+      require('./services/eventsSO').tick(client).catch(() => {});
+    } catch (e) {
+      console.error('[reborn events spawn tick]', e);
+    }
+  }, 60_000);
+
   try {
     const { scheduleStreakReset } = require('./services/streak');
     scheduleStreakReset();
