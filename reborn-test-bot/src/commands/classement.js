@@ -85,7 +85,7 @@ function buildEmbed(type, requesterId) {
     if (type === 'niveau') {
       myRank = db.prepare(countSql).get(requesterId, requesterId, requesterId).c;
       const m = db.prepare(myValSql).get(requesterId);
-      myVal = `${m?.v || 0} (XP ${Number(m?.xptot || 0).toLocaleString('fr-FR')})`;
+      myVal = `${m?.v || 0} (${Number(m?.xptot || 0).toLocaleString('fr-FR')} XP)`;
     } else {
       myRank = db.prepare(countSql).get(requesterId).c;
       const m = db.prepare(myValSql).get(requesterId);
