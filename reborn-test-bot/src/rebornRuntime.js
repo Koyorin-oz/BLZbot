@@ -272,7 +272,7 @@ async function handleComponentInteraction(interaction, client) {
         const PERKS = {
           aventurier: 'Plus de quêtes (+slot), skips, double claim — *pour explorer le serveur*.',
           suzerain: '+1/+2 membres guilde, +10 % GXP, +10 % GRP, +20 % GRP loyaliste — *pour bâtir une dynastie*.',
-          marchand: 'Reset boutique, ×2 contenu coffres, rotation midi, CATL gratuit, -30 % prix — *pour briser la banque*.',
+          marchand: 'Reset boutique, ×2 contenu coffres, rotation midi, Coffre légendaire gratuit, -30 % prix — *pour briser la banque*.',
           duelliste: '+RP %, +RP/msg, +RP/min voc — *pour grimper le ladder ranked*.',
           conquerant: "+10 % monnaie d'event, +30 % défense, -20 % coffres event, spawner gratuit — *pour dominer les événements*.",
           maitre: 'Toutes les voies maîtrisées — accès au **Temple** + statut **Maître**.',
