@@ -39,6 +39,9 @@ const ITEMS = [
   { id: 'coffre_catl', name: 'Coffre Au Trésor Légendaire (CATL)', rarity: 'Mythique', price: 1_000_000n, kind: 'consumable' },
   { id: 'coffre_cats', name: 'Coffre Au Trésor Starss (CATS)', rarity: 'Goatesque', price: 3_000_000n, kind: 'consumable' },
   { id: 'hacker_token', name: 'Jeton d’accès Hacker', rarity: 'Mythique', kind: 'consumable' },
+  // Coffres d'event (achetés avec la monnaie d'event, pas en starss).
+  { id: 'coffre_stellaire', name: 'Coffre stellaire', rarity: 'Epique', kind: 'consumable' },
+  { id: 'coffre_submerge', name: 'Coffre submergé', rarity: 'Epique', kind: 'consumable' },
 ];
 
 const byId = new Map(ITEMS.map((i) => [i.id, i]));
