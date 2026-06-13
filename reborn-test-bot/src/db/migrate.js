@@ -286,6 +286,18 @@ function migrate(db) {
   addColumnIfMissing(db, 'users', 'previous_streak', 'INTEGER NOT NULL DEFAULT 0');
   addColumnIfMissing(db, 'user_item_index', 'owned_json', "TEXT NOT NULL DEFAULT '[]'");
 
+  // Events Espace / Océan : monnaies dédiées + quêtes réclamées.
+  addColumnIfMissing(db, 'users', 'meteorites', "TEXT NOT NULL DEFAULT '0'");
+  addColumnIfMissing(db, 'users', 'litres_eau', "TEXT NOT NULL DEFAULT '0'");
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS event_quests_claimed (
+      user_id TEXT NOT NULL,
+      quest_key TEXT NOT NULL,
+      claimed_ms INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (user_id, quest_key)
+    );
+  `);
+
   /** Recaler xp_total si colonne ajoutée à une base existante (approx. depuis level + ancien xp). */
   try {
     function minTotalForLevel(targetLevel) {
