@@ -533,7 +533,7 @@ async function handleCloseConfirm(interaction, client) {
         const closedRow = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setCustomId('ticket_transcript')
-                .setLabel('📜 Transcript')
+                .setLabel('Transcript')
                 .setStyle(ButtonStyle.Primary),
             new ButtonBuilder()
                 .setCustomId('ticket_delete')
