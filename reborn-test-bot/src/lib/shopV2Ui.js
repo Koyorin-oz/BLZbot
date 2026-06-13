@@ -51,7 +51,7 @@ async function buildBoutiquePayload(uid, username) {
     '',
     `Tu possèdes actuellement **${fmt(bal)}** Starss — clé du jour : \`${dayKey}\` · *${time}*`,
     '',
-    `**Coffres** — limite **CATM** aujourd’hui : **${catmCount}/${CATM_DAILY_LIMIT}**.`,
+    `**Coffres** — limite **Coffre meilleur** aujourd’hui : **${catmCount}/${CATM_DAILY_LIMIT}**.`,
   ];
   if (shopTier >= 1) {
     const free = shopExtras.freeResetAvailable(uid);
