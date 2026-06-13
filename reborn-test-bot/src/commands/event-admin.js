@@ -13,7 +13,7 @@ module.exports = {
     .setDescription('Gestion des events Espace / Océan (rôles, salon, spawn).')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand((sc) =>
-      sc.setName('creer-roles').setDescription('Crée les 8 rôles de quête des events.'),
+      sc.setName('creer-roles').setDescription('Désactivé : crée tes rôles toi-même puis configure les IDs.'),
     )
     .addSubcommand((sc) =>
       sc
