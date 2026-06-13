@@ -203,7 +203,7 @@ async function handlePanelInteraction(interaction) {
     const p = await buildBoutiquePayload(interaction.user.id, interaction.user.username);
     await interaction.editReply({ files: p.files, components: p.components, flags: p.flags });
     return interaction.followUp({
-      content: '🎁 **CATL gratuit ajouté à ton inventaire** — ouvre-le via `/inventaire` ou rachètes-en plus tard.',
+      content: '🎁 **Coffre légendaire gratuit ajouté à ton inventaire** — ouvre-le via `/inventaire` ou rachètes-en plus tard.',
     });
   }
 
