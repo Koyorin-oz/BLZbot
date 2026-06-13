@@ -1,4 +1,4 @@
-const path = require('node:path');
+const path = require("node:path");
 const {
   AttachmentBuilder,
   ContainerBuilder,
@@ -9,11 +9,11 @@ const {
   ButtonStyle,
   StringSelectMenuBuilder,
   MessageFlags,
-} = require('discord.js');
-const quests = require('../services/quests');
-const skillTree = require('../services/skillTree');
-const users = require('../services/users');
-const { renderQuetesRebornPng } = require('./canvasQuetesReborn');
+} = require("discord.js");
+const quests = require("../services/quests");
+const skillTree = require("../services/skillTree");
+const users = require("../services/users");
+const { renderQuetesRebornPng } = require("./canvasQuetesReborn");
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const NIVEAU_QUESTS_PER_PAGE = 5;
@@ -21,13 +21,27 @@ const NIVEAU_QUESTS_PER_PAGE = 5;
 /** Chargement « tolérant » des modules niveau pour la page archives. */
 function loadNiveauQuests() {
   try {
-    const utilsBase = path.join(__dirname, '..', '..', '..', 'niveau', 'src', 'utils');
-    const dbQuests = require(path.join(utilsBase, 'db-quests'));
-    const { QUESTS } = require(path.join(utilsBase, 'quests'));
-    const { renderQuestsCardFiche2 } = require(path.join(utilsBase, 'canvas-fiche2-quests-trophies'));
-    return { getAllUserQuests: dbQuests.getAllUserQuests, QUESTS, renderQuestsCardFiche2 };
+    const utilsBase = path.join(
+      __dirname,
+      "..",
+      "..",
+      "..",
+      "niveau",
+      "src",
+      "utils",
+    );
+    const dbQuests = require(path.join(utilsBase, "db-quests"));
+    const { QUESTS } = require(path.join(utilsBase, "quests"));
+    const { renderQuestsCardFiche2 } = require(
+      path.join(utilsBase, "canvas-fiche2-quests-trophies"),
+    );
+    return {
+      getAllUserQuests: dbQuests.getAllUserQuests,
+      QUESTS,
+      renderQuestsCardFiche2,
+    };
   } catch (e) {
-    console.warn('[quetesPanel] niveau quests indisponibles:', e?.message || e);
+    console.warn("[quetesPanel] niveau quests indisponibles:", e?.message || e);
     return null;
   }
 }
@@ -35,7 +49,7 @@ function loadNiveauQuests() {
 function bar(cur, target) {
   const c = Math.max(0, Math.min(target, cur));
   const filled = Math.round((c / Math.max(1, target)) * 10);
-  return '█'.repeat(filled) + '░'.repeat(10 - filled);
+  return "█".repeat(filled) + "░".repeat(10 - filled);
 }
 
 function spawnerStatus(userId) {
@@ -49,10 +63,10 @@ function spawnerStatus(userId) {
 }
 
 function fmtTimeLeft(ms) {
-  if (ms <= 0) return 'maintenant';
+  if (ms <= 0) return "maintenant";
   const h = Math.floor(ms / 3_600_000);
   const m = Math.floor((ms % 3_600_000) / 60_000);
-  if (h > 0) return `${h}h${String(m).padStart(2, '0')}`;
+  if (h > 0) return `${h}h${String(m).padStart(2, "0")}`;
   return `${m} min`;
 }
 
@@ -88,25 +102,28 @@ function getNiveauPageQuests(userId, page) {
       const userProgress = userQuestsData.find((q) => q.quest_id === questId);
       if (!userProgress || !userProgress.completed) {
         pending.push({
-          name: qInfo.name || 'Quête',
-          description: qInfo.description || '',
+          name: qInfo.name || "Quête",
+          description: qInfo.description || "",
           progress: userProgress?.progress || 0,
           goal: qInfo.goal,
-          rarity: qInfo.rarity || 'Commune',
-          isNumeric: typeof qInfo.goal === 'number',
+          rarity: qInfo.rarity || "Commune",
+          isNumeric: typeof qInfo.goal === "number",
         });
       }
     }
     const totalPages = Math.ceil(pending.length / NIVEAU_QUESTS_PER_PAGE) || 1;
     const p = Math.max(0, Math.min(page, totalPages - 1));
     return {
-      quests: pending.slice(p * NIVEAU_QUESTS_PER_PAGE, (p + 1) * NIVEAU_QUESTS_PER_PAGE),
+      quests: pending.slice(
+        p * NIVEAU_QUESTS_PER_PAGE,
+        (p + 1) * NIVEAU_QUESTS_PER_PAGE,
+      ),
       totalPages,
       page: p,
       renderQuestsCardFiche2: niveau.renderQuestsCardFiche2,
     };
   } catch (e) {
-    console.warn('[quetesPanel] niveau page KO:', e?.message || e);
+    console.warn("[quetesPanel] niveau page KO:", e?.message || e);
     return null;
   }
 }
@@ -124,42 +141,44 @@ async function buildRebornPage(userId, niveauPages, ctx = {}) {
   let canvasFile = null;
   try {
     const buf = await renderQuetesRebornPng({
-      displayName: ctx.displayName || 'Joueur',
+      displayName: ctx.displayName || "Joueur",
       avatarUrl: ctx.avatarUrl || null,
       summary: s,
       spawner: sp,
     });
-    canvasFile = new AttachmentBuilder(buf, { name: 'quetes_reborn.png' });
+    canvasFile = new AttachmentBuilder(buf, { name: "quetes_reborn.png" });
     c.addMediaGalleryComponents(
-      new MediaGalleryBuilder().addItems({ media: { url: 'attachment://quetes_reborn.png' } }),
+      new MediaGalleryBuilder().addItems({
+        media: { url: "attachment://quetes_reborn.png" },
+      }),
     );
   } catch (e) {
-    console.warn('[quetesPanel] canvas REBORN KO:', e?.message || e);
+    console.warn("[quetesPanel] canvas REBORN KO:", e?.message || e);
     // Fallback texte si le canvas ne tourne pas
     const dailyLine = dailyDone
-      ? `🌅 **Quête quotidienne** — ✅ Validée · **+${s.daily_reward.toLocaleString('fr-FR')}** starss`
-      : `🌅 **Quête quotidienne** — \`${bar(s.msgs_today, s.daily_target)}\` **${s.msgs_today}/${s.daily_target}** msg · récompense **${s.daily_reward.toLocaleString('fr-FR')}** starss *(auto)*`;
+      ? `🌅 **Quête quotidienne** — ✅ Validée · **+${s.daily_reward.toLocaleString("fr-FR")}** starss`
+      : `🌅 **Quête quotidienne** — \`${bar(s.msgs_today, s.daily_target)}\` **${s.msgs_today}/${s.daily_target}** msg · récompense **${s.daily_reward.toLocaleString("fr-FR")}** starss *(auto)*`;
     const weeklyLine = weeklyDone
-      ? `📅 **Quête hebdo** — ✅ Validée · **+${s.weekly_reward.toLocaleString('fr-FR')}** starss`
-      : `📅 **Quête hebdo** — \`${bar(s.week_points, s.weekly_target)}\` **${s.week_points}/${s.weekly_target}** msg · récompense **${s.weekly_reward.toLocaleString('fr-FR')}** starss *(auto)*`;
+      ? `📅 **Quête hebdo** — ✅ Validée · **+${s.weekly_reward.toLocaleString("fr-FR")}** starss`
+      : `📅 **Quête hebdo** — \`${bar(s.week_points, s.weekly_target)}\` **${s.week_points}/${s.weekly_target}** msg · récompense **${s.weekly_reward.toLocaleString("fr-FR")}** starss *(auto)*`;
     const selLine = `🎲 **Quête à choix** — ${s.selection_line}`;
     c.addTextDisplayComponents(
       new TextDisplayBuilder().setContent(
-        ['# 🎯 Quêtes', '', dailyLine, weeklyLine, selLine].join('\n'),
+        ["# 🎯 Quêtes", "", dailyLine, weeklyLine, selLine].join("\n"),
       ),
     );
   }
 
   // Ladder lifetime — résumé texte sous le canvas
   const ladderLine = (() => {
-    if (!s.ladder?.length) return '';
+    if (!s.ladder?.length) return "";
     const next = s.ladder.find((m) => !m.claimed);
     const claimed = s.ladder.filter((m) => m.claimed).length;
     if (!next) {
       return `🪜 **Ladder lifetime** — **${claimed}/${s.ladder.length}** paliers claim · *complet* 🏁`;
     }
     const left = Math.max(0, next.target - s.lifetime_msgs);
-    return `🪜 **Ladder lifetime** — *prochain* **${next.label}** · ${s.lifetime_msgs}/${next.target} (-${left}) · +${next.reward.toLocaleString('fr-FR')} ⭐ *(auto)*`;
+    return `🪜 **Ladder lifetime** — *prochain* **${next.label}** · ${s.lifetime_msgs}/${next.target} (-${left}) · +${next.reward.toLocaleString("fr-FR")} ⭐ *(auto)*`;
   })();
   if (ladderLine) {
     c.addTextDisplayComponents(new TextDisplayBuilder().setContent(ladderLine));
@@ -168,19 +187,41 @@ async function buildRebornPage(userId, niveauPages, ctx = {}) {
   const rows = [];
 
   if (!s.selection_id || /terminée/i.test(s.selection_line)) {
-    rows.push(
-      new ActionRowBuilder().addComponents(
-        new StringSelectMenuBuilder()
-          .setCustomId('rb:q:pick')
-          .setPlaceholder('Choisir une quête à choix (semaine)')
-          .addOptions([
-            { label: 'Chasse — 20 messages cette semaine', value: 'chasse_messages', description: 'Auto à 20 msg · +40 000 ⭐' },
-            { label: 'Offrir 1× corail', value: 'offre_corail', description: 'Réclamation manuelle · +80 000 ⭐' },
-            { label: 'Défi 400k starss', value: 'defi_400k', description: 'Auto-suivi des gains · +100 000 ⭐' },
-            { label: 'Défi CATL — ouvrir 1 coffre légendaire', value: 'defi_catl', description: 'Auto à l’ouverture · +250 000 ⭐' },
-          ]),
-      ),
+    const selectOptions = [
+      {
+        label: "Chasse — 20 messages cette semaine",
+        value: "chasse_messages",
+        description: "Auto à 20 msg · +40 000 ⭐",
+      },
+      {
+        label: "Offrir 1× corail",
+        value: "offre_corail",
+        description: "Réclamation manuelle · +80 000 ⭐",
+      },
+      {
+        label: "Défi 400k starss",
+        value: "defi_400k",
+        description: "Auto-suivi des gains · +100 000 ⭐",
+      },
+      {
+        label: "Défi CATL — ouvrir 1 coffre légendaire",
+        value: "defi_catl",
+        description: "Auto à l’ouverture · +250 000 ⭐",
+      },
+    ];
+    const filtered = selectOptions.filter(
+      (opt) => opt.value !== s.selection_id,
     );
+    if (filtered.length > 0) {
+      rows.push(
+        new ActionRowBuilder().addComponents(
+          new StringSelectMenuBuilder()
+            .setCustomId("rb:q:pick")
+            .setPlaceholder("Choisir une quête à choix (semaine)")
+            .addOptions(filtered),
+        ),
+      );
+    }
   }
 
   // Boutons d'action (skip / claim corail / spawner) + Rafraîchir
@@ -188,31 +229,54 @@ async function buildRebornPage(userId, niveauPages, ctx = {}) {
   let actionCount = 0;
   if (s.skips_left > 0 && !dailyDone) {
     actionRow.addComponents(
-      new ButtonBuilder().setCustomId('rb:q:skip:d').setLabel('Skip daily (-1)').setStyle(ButtonStyle.Secondary).setEmoji('⏭️'),
+      new ButtonBuilder()
+        .setCustomId("rb:q:skip:d")
+        .setLabel("Skip daily (-1)")
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji("⏭️"),
     );
     actionCount += 1;
   }
   if (s.skips_left > 0 && !weeklyDone) {
     actionRow.addComponents(
-      new ButtonBuilder().setCustomId('rb:q:skip:w').setLabel('Skip hebdo (-1)').setStyle(ButtonStyle.Secondary).setEmoji('⏭️'),
+      new ButtonBuilder()
+        .setCustomId("rb:q:skip:w")
+        .setLabel("Skip hebdo (-1)")
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji("⏭️"),
     );
     actionCount += 1;
   }
-  if (s.selection_id === 'offre_corail' && !/terminée/i.test(s.selection_line)) {
+  if (
+    s.selection_id === "offre_corail" &&
+    !/terminée/i.test(s.selection_line)
+  ) {
     actionRow.addComponents(
-      new ButtonBuilder().setCustomId('rb:q:sel_claim').setLabel('Réclamer (-1× corail)').setStyle(ButtonStyle.Success).setEmoji('📜'),
+      new ButtonBuilder()
+        .setCustomId("rb:q:sel_claim")
+        .setLabel("Réclamer (-1× corail)")
+        .setStyle(ButtonStyle.Success)
+        .setEmoji("📜"),
     );
     actionCount += 1;
   }
   if (sp.available) {
     actionRow.addComponents(
-      new ButtonBuilder().setCustomId('rb:q:spawner').setLabel('Event Spawner').setStyle(ButtonStyle.Success).setEmoji('🎁'),
+      new ButtonBuilder()
+        .setCustomId("rb:q:spawner")
+        .setLabel("Event Spawner")
+        .setStyle(ButtonStyle.Success)
+        .setEmoji("🎁"),
     );
     actionCount += 1;
   }
   // « Retour » → bouton du collector niveau qui ramène au /profil principal.
   actionRow.addComponents(
-    new ButtonBuilder().setCustomId(`pv2_back_${userId}`).setLabel('Retour').setStyle(ButtonStyle.Secondary).setEmoji('⬅️'),
+    new ButtonBuilder()
+      .setCustomId(`pv2_back_${userId}`)
+      .setLabel("Retour")
+      .setStyle(ButtonStyle.Secondary)
+      .setEmoji("⬅️"),
   );
   actionCount += 1;
   if (actionCount > 0) rows.push(actionRow);
@@ -222,14 +286,23 @@ async function buildRebornPage(userId, niveauPages, ctx = {}) {
   if (niveauPages > 0) {
     rows.push(
       new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('rb:q:page:1').setLabel(`Anciennes quêtes (1/${niveauPages})`).setStyle(ButtonStyle.Primary).setEmoji('📜'),
+        new ButtonBuilder()
+          .setCustomId("rb:q:page:1")
+          .setLabel(`Anciennes quêtes (1/${niveauPages})`)
+          .setStyle(ButtonStyle.Primary)
+          .setEmoji("📜"),
       ),
     );
   }
 
   if (rows.length) c.addActionRowComponents(...rows);
   const files = canvasFile ? [canvasFile] : [];
-  return { components: [c], flags: MessageFlags.IsComponentsV2, files, totalPages };
+  return {
+    components: [c],
+    flags: MessageFlags.IsComponentsV2,
+    files,
+    totalPages,
+  };
 }
 
 // ─── Pages 1+ : Archives niveau (canvas) ────────────────────────────────────
@@ -240,32 +313,44 @@ async function buildNiveauPage(userId, niveauPageIdx) {
   try {
     buf = await data.renderQuestsCardFiche2({ quests: data.quests });
   } catch (e) {
-    console.warn('[quetesPanel] canvas archives KO:', e?.message || e);
+    console.warn("[quetesPanel] canvas archives KO:", e?.message || e);
   }
   const c = new ContainerBuilder();
   if (buf) {
     c.addMediaGalleryComponents(
-      new MediaGalleryBuilder().addItems({ media: { url: 'attachment://quetes_archives.png' } }),
+      new MediaGalleryBuilder().addItems({
+        media: { url: "attachment://quetes_archives.png" },
+      }),
     );
   } else {
     const lines = data.quests.length
       ? data.quests.map((q) => `• **${q.name}** — ${q.progress}/${q.goal}`)
-      : ['*Aucune quête archive en attente.*'];
-    c.addTextDisplayComponents(new TextDisplayBuilder().setContent(['## 📜 Anciennes quêtes', ...lines].join('\n')));
+      : ["*Aucune quête archive en attente.*"];
+    c.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        ["## 📜 Anciennes quêtes", ...lines].join("\n"),
+      ),
+    );
   }
   c.addTextDisplayComponents(
-    new TextDisplayBuilder().setContent(`📜 *Anciennes quêtes — page **${niveauPageIdx}** / **${data.totalPages}***`),
+    new TextDisplayBuilder().setContent(
+      `📜 *Anciennes quêtes — page **${niveauPageIdx}** / **${data.totalPages}***`,
+    ),
   );
 
   const navRow = new ActionRowBuilder();
   navRow.addComponents(
-    new ButtonBuilder().setCustomId('rb:q:page:0').setLabel('Quêtes').setStyle(ButtonStyle.Secondary).setEmoji('🎯'),
+    new ButtonBuilder()
+      .setCustomId("rb:q:page:0")
+      .setLabel("Quêtes")
+      .setStyle(ButtonStyle.Secondary)
+      .setEmoji("🎯"),
   );
   if (niveauPageIdx > 1) {
     navRow.addComponents(
       new ButtonBuilder()
         .setCustomId(`rb:q:page:${niveauPageIdx - 1}`)
-        .setLabel('← Préc.')
+        .setLabel("← Préc.")
         .setStyle(ButtonStyle.Secondary),
     );
   }
@@ -273,16 +358,22 @@ async function buildNiveauPage(userId, niveauPageIdx) {
     navRow.addComponents(
       new ButtonBuilder()
         .setCustomId(`rb:q:page:${niveauPageIdx + 1}`)
-        .setLabel('Suiv. →')
+        .setLabel("Suiv. →")
         .setStyle(ButtonStyle.Secondary),
     );
   }
   navRow.addComponents(
-    new ButtonBuilder().setCustomId(`pv2_back_${userId}`).setLabel('Retour').setStyle(ButtonStyle.Secondary).setEmoji('⬅️'),
+    new ButtonBuilder()
+      .setCustomId(`pv2_back_${userId}`)
+      .setLabel("Retour")
+      .setStyle(ButtonStyle.Secondary)
+      .setEmoji("⬅️"),
   );
   c.addActionRowComponents(navRow);
 
-  const files = buf ? [new AttachmentBuilder(buf, { name: 'quetes_archives.png' })] : [];
+  const files = buf
+    ? [new AttachmentBuilder(buf, { name: "quetes_archives.png" })]
+    : [];
   return { components: [c], flags: MessageFlags.IsComponentsV2, files };
 }
 
