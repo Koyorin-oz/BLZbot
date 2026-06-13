@@ -74,7 +74,7 @@ function rollCats(meta, userId) {
   ]);
   if (roll === 'leg_bundle') {
     const inner = rollCatl();
-    inner.lines.unshift('(bundle type CATL)');
+    inner.lines.unshift('(bundle type Coffre légendaire)');
     return inner;
   }
   if (roll === 'xp10k') return { lines: ['+10 000 XP (appliqué au profil)'], stars: 50_000n, xp: 10_000, items: [] };
