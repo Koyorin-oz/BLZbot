@@ -100,13 +100,11 @@ async function createBridgedTicketFromSupport(interaction, config, client, tier)
     const supportUrl = `https://discord.com/channels/${interaction.guildId}/${supportChannel.id}`;
 
     const embedSupport = new EmbedBuilder()
-        .setTitle(`🎫 Ticket ${tierLabel(tier)} #${ticketId}`)
+        .setTitle(`Ticket ${tierLabel(tier)} #${ticketId}`)
         .setDescription(
-            `Salut <@${userId}> 👋\n\n` +
-                `Tu as ouvert un ticket **${tierLabel(tier)}**.\n\n` +
-                'Tu écris **ici** : chaque message est envoyé **via le bot** à l’équipe sur le serveur principal.\n\n' +
-                'Les réponses du staff te reviennent **ici**, toujours via ce bot.\n\n' +
-                '**Décris ton problème en détail.**'
+            `Ticket **${tierLabel(tier)}** ouvert.\n\n` +
+                'Écris ici : les messages partent vers le staff sur le serveur principal.\n' +
+                'Les réponses du staff reviennent ici via le bot.'
         )
         .setColor(config.EMBED_COLOR || BLZ_EMBED_STRIP_HEX)
         .setFooter({ text: `ID: ${ticketId} · ${tierLabel(tier)} · support` })
