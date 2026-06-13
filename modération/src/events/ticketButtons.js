@@ -464,7 +464,7 @@ async function handleCloseRequest(interaction) {
     );
 
     await interaction.reply({
-        content: '⚠️ **Es-tu sûr de vouloir fermer ce ticket ?**\nL\'utilisateur ne pourra plus voir ce canal mais le ticket ne sera pas supprimé.',
+        content: 'Confirmer la fermeture du ticket ? Le demandeur ne pourra plus voir le salon.',
         components: [confirmRow],
         ephemeral: true
     });
