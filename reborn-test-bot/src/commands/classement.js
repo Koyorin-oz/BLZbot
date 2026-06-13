@@ -34,7 +34,7 @@ const TYPES = {
     emoji: '⚔️',
     color: 0xe74c3c,
     unit: 'RP',
-    description: 'Classement par Ranked Points (tier Bronze → Apex).',
+    description: 'Classement par Ranked Points (rangs Vide → Star).',
   },
 };
 
