@@ -242,8 +242,8 @@ class RecruitmentManager {
         // Communiquant
         if (this.recruitmentState.communiquant && this.recruitmentState.communiquant.open && this.recruitmentState.communiquant.places > 0) {
             embed.addFields({
-                name: '📢 Communiquant',
-                value: `✅ **Ouvert** (${this.recruitmentState.communiquant.places} places)\nGérez l'animation et la communication du serveur.`,
+                name: 'Communiquant',
+                value: `Ouvert (${this.recruitmentState.communiquant.places} places)\nAnimation et communication du serveur.`,
                 inline: true
             });
             row.addComponents(
