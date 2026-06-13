@@ -80,6 +80,70 @@ module.exports = {
       return interaction.reply({ content: '❌ Réservé aux administrateurs.' });
     }
     const sub = interaction.options.getSubcommand();
+
+    if (sub === 'pause') {
+      economyState.setPaused(true);
+      return interaction.reply({
+        content: '⏸️ **Économie mise en pause.** Plus de starss/XP/RP passifs, ni daily, ni boutique, ni rôles automatiques. Les actions admin (`/money`, etc.) restent possibles.',
+      });
+    }
+
+    if (sub === 'reprendre') {
+      economyState.setPaused(false);
+      return interaction.reply({ content: '▶️ **Économie relancée.** Les gains et la boutique reprennent normalement.' });
+    }
+
+    if (sub === 'statut') {
+      const paused = economyState.isPaused();
+      return interaction.reply({
+        content: paused
+          ? '⏸️ L’économie est actuellement **en pause**.'
+          : '▶️ L’économie est actuellement **active**.',
+      });
+    }
+
+    if (sub === 'reset') {
+      const portee = interaction.options.getString('portee', true);
+      const confirm = interaction.options.getString('confirmation', true);
+      if (confirm.trim().toUpperCase() !== 'CONFIRMER') {
+        return interaction.reply({ content: '❌ Confirmation invalide. Tape exactement `CONFIRMER` pour valider.' });
+      }
+      await interaction.deferReply();
+      try {
+        const reset = db.transaction((scope) => {
+          if (scope === 'starss') {
+            db.prepare("UPDATE users SET stars = '0'").run();
+            return;
+          }
+          // Complet : remet à zéro l'essentiel de l'économie joueur.
+          db.prepare(`UPDATE users SET
+            stars = '0', points = '0', xp = 0, xp_total = 0, level = 1,
+            xp_boost_ms = 0, gxp_boost_ms = 0, starss_boost_ms = 0,
+            meteorites = '0', litres_eau = '0', event_currency = '0',
+            temple_points = 0, temple_sources_json = '[]', temple_unlocked = 0,
+            skill_points = 0, skill_tree_json = '{}',
+            separatist_pts = 0, separatist_skill_step = 0,
+            streak = 0, previous_streak = 0
+          `).run();
+          db.prepare('DELETE FROM inventory').run();
+          db.prepare('DELETE FROM user_shop').run();
+          db.prepare("UPDATE guild_member_gxp SET gxp = '0', grp = '0'").run();
+          db.prepare("UPDATE user_item_index SET completion_pct = 0, claimed_json = '[]', owned_json = '[]'").run();
+          db.prepare('DELETE FROM quest_milestones').run();
+          db.prepare('DELETE FROM event_quests_claimed').run();
+        });
+        reset(portee);
+      } catch (e) {
+        return interaction.editReply({ content: `❌ Échec du reset : \`${e?.message || e}\`` });
+      }
+      return interaction.editReply({
+        content:
+          portee === 'starss'
+            ? '🧹 **Reset effectué** : tous les soldes de starss sont remis à **0**.'
+            : '🧹 **Reset complet effectué** : starss, RP, XP/niveau, inventaire, boutique, GXP/GRP et progressions associées remis à zéro.',
+      });
+    }
+
     if (sub === 'audit') {
       const total = db.prepare("SELECT COALESCE(SUM(CAST(stars AS INTEGER)), 0) AS s FROM users").get();
       const totalRp = db.prepare("SELECT COALESCE(SUM(CAST(points AS INTEGER)), 0) AS s FROM users").get();
