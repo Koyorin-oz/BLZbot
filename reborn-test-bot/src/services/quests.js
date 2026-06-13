@@ -371,7 +371,7 @@ function summary(userId) {
       const cur = BigInt(row.selection_progress || 0);
       selLine = `**${def.label}** — **${cur.toLocaleString('fr-FR')}** / **${def.target.toLocaleString('fr-FR')}** *(auto)*`;
     } else if (def.kind === 'catl_open') {
-      selLine = `**${def.label}** — **${row.selection_progress || 0}** / **${def.target}** *(auto en ouvrant un CATL)*`;
+      selLine = `**${def.label}** — **${row.selection_progress || 0}** / **${def.target}** *(auto en ouvrant un Coffre légendaire)*`;
     } else if (def.kind === 'minijeu_wins') {
       selLine = `**${def.label}** — **${row.selection_progress || 0}** / **${def.target}** *(auto à chaque victoire)*`;
     } else if (def.kind === 'rank_reached') {
