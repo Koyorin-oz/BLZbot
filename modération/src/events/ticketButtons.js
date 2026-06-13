@@ -537,7 +537,7 @@ async function handleCloseConfirm(interaction, client) {
                 .setStyle(ButtonStyle.Primary),
             new ButtonBuilder()
                 .setCustomId('ticket_delete')
-                .setLabel('🗑️ Supprimer le ticket')
+                .setLabel('Supprimer')
                 .setStyle(ButtonStyle.Danger)
         );
 
