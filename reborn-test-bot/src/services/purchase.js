@@ -38,6 +38,10 @@ function extendBoost(userId, field) {
  * @param {string[]} parts ['rb','s','0'] or ['rb','c','classic'] ...
  */
 async function handlePurchase(interaction, parts) {
+  if (require('./economyState').isPaused()) {
+    await interaction.reply({ content: 'L’économie du serveur est en pause. La boutique est temporairement gelée.' });
+    return;
+  }
   const uid = interaction.user.id;
   users.getOrCreate(uid, interaction.user.username);
   const kind = parts[1];
