@@ -1082,7 +1082,7 @@ function generateTicketHtml(channel, messages, guild, userCache) {
 </head>
 <body>
     <div class="header">
-        <h1>🎫 #${escapeHtml(channel.name)}</h1>
+        <h1>#${escapeHtml(channel.name)}</h1>
         <div class="meta">
             <span>📋 Serveur: ${escapeHtml(guild.name)}</span>
             <span>👤 Créé par: ${escapeHtml(ownerName)}</span>
