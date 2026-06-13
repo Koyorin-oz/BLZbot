@@ -49,9 +49,7 @@ async function buildBoutiquePayload(uid, username) {
     'Bienvenue ! Ici tu peux acheter des items du **jour**, des **coffres** et des **boosts 1h** avec tes **Starss**.',
     '➜ **Choisis un article** dans le menu déroulant, puis clique sur **Acheter**.',
     '',
-    `Tu possèdes actuellement **${fmt(bal)}** Starss — clé du jour : \`${dayKey}\` · *${time}*`,
-    '',
-    `**Coffres** — limite **Coffre meilleur** aujourd’hui : **${catmCount}/${CATM_DAILY_LIMIT}**.`,
+    `**Starss = ${fmt(bal)}**`,
   ];
   if (shopTier >= 1) {
     const free = shopExtras.freeResetAvailable(uid);
