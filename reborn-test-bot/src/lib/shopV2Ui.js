@@ -14,7 +14,7 @@ const skillTree = require('../services/skillTree');
 const shopExtras = require('../services/shopExtras');
 const { getItem } = require('../reborn/catalog');
 const { summaryForItemId, summaryChest, summaryBoost, emojiForItemId } = require('../reborn/shopSummaries');
-const { BOOST_ROW_PRICE, CHEST_CLASSIC, CHEST_CATM, CHEST_CATL, CHEST_CATS, CATM_DAILY_LIMIT } = require('../reborn/constants');
+const { BOOST_ROW_PRICE, CHEST_CLASSIC, CHEST_CATM, CHEST_CATL, CHEST_CATS } = require('../reborn/constants');
 const { getBlzAttachment, getBoutiqueAttachment } = require('./blzBackground');
 
 function fmt(n) {
