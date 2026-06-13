@@ -20,21 +20,21 @@ const TYPES = {
     emoji: '💸',
     color: 0xf1c40f,
     unit: 'starss',
-    description: 'Classement par solde de starss courant.',
+    description: 'Classement par solde de starss courant',
   },
   niveau: {
     label: '⭐ Niveau (XP)',
     emoji: '⭐',
     color: 0x3498db,
     unit: 'niveau',
-    description: 'Classement par niveau XP joueur (XP total en départage).',
+    description: 'Classement par niveau XP joueur (XP total en départage)',
   },
   rp: {
     label: '⚔️ Ranked RP',
     emoji: '⚔️',
     color: 0xe74c3c,
     unit: 'RP',
-    description: 'Classement par Ranked Points (rangs Vide → Star).',
+    description: 'Classement par Ranked Points (rangs Vide → Star)',
   },
 };
 
@@ -85,7 +85,7 @@ function buildEmbed(type, requesterId) {
     if (type === 'niveau') {
       myRank = db.prepare(countSql).get(requesterId, requesterId, requesterId).c;
       const m = db.prepare(myValSql).get(requesterId);
-      myVal = `${m?.v || 0} (XP ${Number(m?.xptot || 0).toLocaleString('fr-FR')})`;
+      myVal = `${m?.v || 0} (${Number(m?.xptot || 0).toLocaleString('fr-FR')} XP)`;
     } else {
       myRank = db.prepare(countSql).get(requesterId).c;
       const m = db.prepare(myValSql).get(requesterId);

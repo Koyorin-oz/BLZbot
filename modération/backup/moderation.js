@@ -719,8 +719,17 @@ client.on('interactionCreate', async interaction => {
                         .setDisabled(pages.length <= 1)
                 );
 
-            // La réponse n'est plus éphémère ici
-            await interaction.reply({ embeds: [pages[pageActuelle]], components: [row] });
+            // Réponse éphémère avec bouton pour envoyer publiquement
+            const publicButton = new ButtonBuilder()
+                .setCustomId('send_public')
+                .setLabel("Envoyer publiquement")
+                .setStyle(ButtonStyle.Secondary)
+                .setDisabled(false);
+
+            const rowWithPublic = new ActionRowBuilder()
+                .addComponents(row.components[0], row.components[1], publicButton);
+
+            await interaction.reply({ embeds: [pages[pageActuelle]], components: [rowWithPublic], ephemeral: true });
             const messageEmbed = await interaction.fetchReply();
 
             const collector = messageEmbed.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
@@ -734,12 +743,26 @@ client.on('interactionCreate', async interaction => {
                     pageActuelle--;
                 } else if (i.customId === 'next') {
                     pageActuelle++;
+                } else if (i.customId === 'send_public') {
+                    // Envoi public : envoyer une copie de l'embed sans boutons dans le canal courant
+                    try {
+                        const publicChannel = interaction.channel;
+                        if (publicChannel && publicChannel.isTextBased()) {
+                            await publicChannel.send({ embeds: [pages[pageActuelle]] });
+                            await i.reply({ content: 'Embed envoyé publiquement.', ephemeral: true });
+                        } else {
+                            await i.reply({ content: 'Impossible d\'envoyer publiquement dans ce canal.', ephemeral: true });
+                        }
+                    } catch (err) {
+                        console.error('Erreur en envoyant publiquement :', err);
+                        await i.reply({ content: 'Erreur lors de l\'envoi public.', ephemeral: true });
+                    }
                 }
 
                 row.components[0].setDisabled(pageActuelle === 0);
                 row.components[1].setDisabled(pageActuelle === pages.length - 1);
 
-                await i.update({ embeds: [pages[pageActuelle]], components: [row] });
+                await i.update({ embeds: [pages[pageActuelle]], components: [rowWithPublic] });
             });
 
             collector.on('end', async () => {
@@ -747,7 +770,8 @@ client.on('interactionCreate', async interaction => {
                 try {
                     // Réactiver la désactivation des boutons car le message n'est plus éphémère
                     row.components.forEach(button => button.setDisabled(true));
-                    await messageEmbed.edit({ components: [row] });
+                    publicButton.setDisabled(true);
+                    await messageEmbed.edit({ components: [rowWithPublic] });
                 } catch (err) {
                     console.error('Impossible d\'éditer le message car il a probablement été supprimé:', err.message);
                 }
