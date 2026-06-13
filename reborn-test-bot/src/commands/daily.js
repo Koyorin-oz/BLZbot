@@ -205,6 +205,12 @@ module.exports = {
   async execute(interaction) {
     await interaction.deferReply();
 
+    if (require('../services/economyState').isPaused()) {
+      return interaction.editReply({
+        content: 'L’économie du serveur est en pause. Le daily est temporairement indisponible.',
+      });
+    }
+
     const userId = interaction.user.id;
     users.getOrCreate(userId, interaction.user.username);
 
