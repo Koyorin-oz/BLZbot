@@ -39,7 +39,6 @@ async function buildBoutiquePayload(uid, username) {
     container.addMediaGalleryComponents(gallery);
   }
 
-  const time = new Date().toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   const shopTier = skillTree.step(uid, 'shop');
   const discountPct = Math.round(skillTree.shopDiscountFrac(uid) * 100);
   const lines = [
