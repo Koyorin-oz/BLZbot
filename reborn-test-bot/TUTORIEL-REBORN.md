@@ -430,6 +430,8 @@ Le rôle est attribué automatiquement dès que la condition est remplie.
 - Earn : `src/services/earn.js`
 - Arbre : `src/services/skillTree.js` + `src/commands/arbre.js`
 - Temple : `src/services/temple.js` + `src/commands/temple.js`
+- Ranked : `src/services/rankedRoles.js` (échelle 32 rangs) + `rankedRp.js` + `rankedMilestones.js`
+- Events Espace/Océan : `src/reborn/eventConfig.js` + `src/services/eventsSO.js` + `src/services/eventRoles.js` + `src/lib/eventPanel.js`
 - Schéma SQLite : `src/db/migrate.js`
 
 Ce tutoriel décrit **ce dépôt** ; la doc produit « officielle » REBORN peut aller plus loin que ce qui est codé ici.
