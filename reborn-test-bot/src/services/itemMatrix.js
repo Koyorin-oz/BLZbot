@@ -33,17 +33,24 @@ const INDEX_BONUSES = [
 ];
 
 /**
- * Bonus ranked par palier de RP courant (lecture rapide).
+ * Bonus ranked pour le RP courant (lecture rapide).
+ * Le rang affiché suit l'échelle complète du gdoc (`rankedRoles`).
+ * Les « perks » décrivent le gain RP et la décrépitude de la bande de RP.
  */
 function rankedTier(rp) {
+  const rankedRoles = require('./rankedRoles');
   const r = typeof rp === 'bigint' ? rp : BigInt(rp || 0);
-  if (r >= 100_000n) return { tier: 'Apex', label: 'Apex (≥ 100k)', perks: ['Décrépitude max -5k/j', 'Visibilité top RP', 'Bonus arbre actifs'] };
-  if (r >= 90_000n) return { tier: 'Master', label: 'Master (≥ 90k)', perks: ['Pool ranked actif', 'Bonus arbre 90+'] };
-  if (r >= 80_000n) return { tier: 'Diamond', label: 'Diamond (≥ 80k)', perks: ['Décrépitude 2k/j', '+Pool stable'] };
-  if (r >= 70_000n) return { tier: 'Platine', label: 'Platine (≥ 70k)', perks: ['Décrépitude 1k/j'] };
-  if (r >= 60_000n) return { tier: 'Or', label: 'Or (≥ 60k)', perks: ['Gain msg 8/8'] };
-  if (r >= 50_000n) return { tier: 'Argent', label: 'Argent (≥ 50k)', perks: ['Gain msg 10/10'] };
-  return { tier: 'Bronze', label: 'Bronze (< 50k)', perks: ['Gain msg max'] };
+  const rank = rankedRoles.rankForRp(r);
+  // Bande de RP -> gain message/vocal et décrépitude journalière (cf. rankedRp.js).
+  let perks;
+  if (r >= 100_000n) perks = ['Gain 2/2', 'Décrépitude 5k/j'];
+  else if (r >= 90_000n) perks = ['Gain 3/4', 'Décrépitude 4k/j'];
+  else if (r >= 80_000n) perks = ['Gain 4/7', 'Décrépitude 3k/j'];
+  else if (r >= 70_000n) perks = ['Gain 5/10', 'Décrépitude 2k/j'];
+  else if (r >= 60_000n) perks = ['Gain 6/15', 'Décrépitude 1k/j'];
+  else if (r >= 50_000n) perks = ['Gain 8/20', 'Décrépitude 500/j'];
+  else perks = ['Gain 10/30', 'Pas de décrépitude'];
+  return { tier: rank.key, label: rank.label, perks };
 }
 
 /**
