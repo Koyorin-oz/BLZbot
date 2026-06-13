@@ -121,4 +121,4 @@ function summaryBoost(k) {
   return (BOOST[k] || 'Boost 1h.').slice(0, 100);
 }
 
-module.exports = { summaryForItemId, summaryChest, summaryBoost };
+module.exports = { summaryForItemId, summaryChest, summaryBoost, emojiForItemId };
