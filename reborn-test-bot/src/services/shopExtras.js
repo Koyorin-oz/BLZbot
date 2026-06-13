@@ -20,7 +20,7 @@ function claimGuaranteedCatl(userId) {
   const now = Date.now();
   if (now - last < CATL_CLAIM_MS) {
     const left = Math.ceil((CATL_CLAIM_MS - (now - last)) / 60000);
-    return { ok: false, error: `Prochain CATL gratuit dans **${left} min**.` };
+    return { ok: false, error: `Prochain Coffre légendaire gratuit dans **${left} min**.` };
   }
   db.prepare('UPDATE users SET shop_catl_last_claim_ms = ? WHERE id = ?').run(now, userId);
   users.addInventory(userId, 'coffre_catl', 1);
