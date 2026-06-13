@@ -50,7 +50,7 @@ const ITEM_BLURBS = {
 
 const CHEST = {
   classic: 'Coffre entrée de gamme — mix starss/XP/items.',
-  catm: 'Coffre amélioré ; respecte la limite journalière CATM.',
+  catm: 'Coffre amélioré ; respecte la limite journalière du Coffre meilleur.',
   catl: 'Coffre légendaire — gros lots + règles 3h (doc).',
   cats: 'Coffre « star » — top tier, cher.',
 };
