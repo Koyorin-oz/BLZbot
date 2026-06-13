@@ -56,7 +56,7 @@ function getItem(id) {
 }
 
 function randomItemOfRarity(rarity) {
-  const pool = ITEMS.filter((i) => i.rarity === rarity && !['coffre_classique', 'coffre_catm', 'coffre_catl', 'coffre_cats'].includes(i.id));
+  const pool = ITEMS.filter((i) => i.rarity === rarity && !i.id.startsWith('coffre_'));
   if (pool.length === 0) return ITEMS.find((i) => i.rarity === 'Commun') || ITEMS[0];
   return pool[Math.floor(Math.random() * pool.length)];
 }
