@@ -20,11 +20,30 @@ const ROLE_COLORS = {
   roi: 0x0e6655,
 };
 
+/**
+ * IDs de rôles Discord fournis manuellement (le bot ne crée plus de rôle).
+ * Colle ici l'ID du rôle Discord que TU as créé pour chaque quête d'event.
+ * Prioritaire sur la config en base.
+ * @type {Record<string, string>}
+ */
+const EVENT_ROLE_IDS = {
+  meteore: '',
+  galaxien: '',
+  lumineux: '',
+  egocentrique: '',
+  eau: '',
+  perdu: '',
+  marin: '',
+  roi: '',
+};
+
 function metaKey(hubId, roleKey) {
   return `event_role_${roleKey}:${hubId}`;
 }
 
 function getRoleId(hubId, roleKey) {
+  const hard = EVENT_ROLE_IDS[roleKey];
+  if (hard) return hard;
   return meta.get(metaKey(hubId, roleKey));
 }
 
