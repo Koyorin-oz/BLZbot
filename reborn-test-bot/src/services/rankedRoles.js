@@ -127,11 +127,54 @@ function isAtLeast(key, targetKey) {
   return a >= b;
 }
 
+/**
+ * IDs de rôles Discord fournis manuellement (le bot ne crée plus aucun rôle).
+ * Colle ici l'ID du rôle Discord que TU as créé pour chaque rang.
+ * Laisse la chaîne vide ('') pour un rang sans rôle dédié.
+ *
+ * Ces IDs sont prioritaires sur ce qui est éventuellement défini via
+ * `/admin-roles definir-ranked` (stocké en base).
+ *
+ * @type {Record<string, string>}
+ */
+const RANK_ROLE_IDS = {
+  vide: '',
+  plastique_1: '',
+  plastique_2: '',
+  plastique_3: '',
+  bronze_1: '',
+  bronze_2: '',
+  bronze_3: '',
+  argent_1: '',
+  argent_2: '',
+  argent_3: '',
+  or_1: '',
+  or_2: '',
+  or_3: '',
+  diamant_1: '',
+  diamant_2: '',
+  diamant_3: '',
+  emeraude_1: '',
+  emeraude_2: '',
+  emeraude_3: '',
+  rubis_1: '',
+  rubis_2: '',
+  rubis_3: '',
+  legendaire: '',
+  mythique: '',
+  master: '',
+  goat: '',
+  star: '',
+};
+
 function metaKey(hubId, tier) {
   return `ranked_role_${tier}:${hubId}`;
 }
 
 function getRoleIdForTier(hubId, tier) {
+  // Les IDs codés en dur priment, sinon fallback sur la config en base.
+  const hard = RANK_ROLE_IDS[tier];
+  if (hard) return hard;
   return meta.get(metaKey(hubId, tier));
 }
 
