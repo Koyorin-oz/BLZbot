@@ -136,6 +136,7 @@ function registerEarn(client) {
       users.addXp(uid, C.XP_PER_MESSAGE);
       rankedRp.decayForUserIfIdle(uid);
       rankedRp.grantFromActivity(uid, 'msg');
+      try { require('./eventsSO').grantActivity(uid, 'msg'); } catch { /* ignore */ }
       rankedRoles.syncRankRoleForUser(client, hub, uid).catch(() => { /* best-effort */ });
       indexRoles.syncIndexFullRole(client, hub, uid).catch(() => { /* best-effort */ });
       maybeSyncTempleFromEarn(client, hub, uid);
