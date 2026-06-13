@@ -25,17 +25,17 @@ module.exports = {
     .setDescription(d('⚙️', 'Gestion des rôles Discord (Ranked, Index 100 %, Temple).'))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand((sc) =>
-      sc.setName('creer-ranked').setDescription(d('🏅', 'Crée les rôles Vide → Star (échelle gdoc) sur ce serveur.')),
+      sc.setName('creer-ranked').setDescription(d('', 'Désactivé : crée tes rôles toi-même puis configure les IDs.')),
     )
     .addSubcommand((sc) =>
       sc
         .setName('creer-index-full')
-        .setDescription(d('📦', "Crée le rôle « Pipelette ultime » (index 100 %).")),
+        .setDescription(d('', 'Désactivé : crée le rôle toi-même puis utilise definir-index-full.')),
     )
     .addSubcommand((sc) =>
       sc
         .setName('creer-temple')
-        .setDescription(d('🏛️', 'Crée les rôles Temple — Roi et Légende.')),
+        .setDescription(d('', 'Désactivé : crée les rôles toi-même puis utilise definir-temple-*.')),
     )
     .addSubcommand((sc) =>
       sc
