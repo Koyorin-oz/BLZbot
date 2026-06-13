@@ -293,7 +293,136 @@ Dans **`src/config.js`**, `TEST_NO_LIMITS` peut désactiver certaines limites (e
 
 ---
 
-## 21. Où lire le code
+## 21. Ranked RP — rangs & étapes (échelle gdoc)
+
+Le **Ranked RP** est un classement **personnel** alimenté par ton activité (messages + vocal). Le RP **ne se dépense pas** : il te place sur une **échelle de 32 rangs** et débloque des **étapes de récompense**.
+
+### Commandes
+
+| Commande | Rôle |
+|----------|------|
+| **`/ranked voir`** | Ton rang actuel, ton RP, le **rang suivant** et le RP restant |
+| **`/ranked paliers`** | Les **12 étapes** ranked et leur statut (atteint / réclamé) |
+| **`/ranked reclamer`** | Réclame les étapes débloquées (starss + coffres) |
+| **`/classement`** (vue **Ranked RP**) | Top 10 RP du serveur |
+| **`/admin-roles creer-ranked`** | *(admin)* crée les 32 rôles Discord Vide → Star |
+
+### Les rangs (seuils RP)
+
+Vide (0) · **Plastique** I/II/III (50 / 100 / 200) · **Bronze** I/II/III (300 / 500 / 800) · **Argent** I/II/III (1 000 / 1 500 / 2 000) · **Or** I/II/III (3 000 / 4 000 / 5 000) · **Diamant** I/II/III (6 000 / 7 000 / 8 000) · **Émeraude** I/II/III (10 000 / 15 000 / 20 000) · **Rubis** I/II/III (25 000 / 30 000 / 40 000) · **Légendaire** (50 000) · **Mythique** (60 000) · **Master** (70 000) · **Goat** (80 000) · **Star** (100 000).
+
+Le rôle Discord correspondant est attribué automatiquement (et l'ancien retiré) dès que tu changes de rang, si les rôles ont été créés par un admin.
+
+### Gain de RP par bande (et décrépitude)
+
+| RP | Gain msg / min voc | Décrépitude (24 h sans activité) |
+|----|--------------------|-----------------------------------|
+| 0 – 50k | 10 / 30 | aucune |
+| 50k – 60k | 8 / 20 | 500 / jour |
+| 60k – 70k | 6 / 15 | 1 000 / jour |
+| 70k – 80k | 5 / 10 | 2 000 / jour |
+| 80k – 90k | 4 / 7 | 3 000 / jour |
+| 90k – 100k | 3 / 4 | 4 000 / jour |
+| 100k+ | 2 / 2 | 5 000 / jour |
+
+Entre **50k et 100k**, un **pool zéro-somme** (300k d'excès partagé) peut retirer du RP aux joueurs de la bande quand le pool déborde.
+
+### Les 12 étapes (one-shot, `/ranked reclamer`)
+
+| Étape | Seuil | Récompense |
+|-------|-------|------------|
+| Passer Plastique | 50 | 10 000 starss |
+| Passer Bronze | 300 | 50 000 + 1 coffre classique |
+| Passer Argent | 1 000 | 100 000 + 1 coffre classique |
+| Passer Or | 3 000 | 200 000 + 1 CATM |
+| Passer Diamant | 6 000 | 300 000 + 1 CATM |
+| Passer Émeraude | 10 000 | 500 000 + 1 CATL |
+| Passer Rubis | 25 000 | 750 000 + 1 CATL |
+| Passer Légendaire | 50 000 | 1 000 000 + 2 CATL |
+| Passer Mythique | 60 000 | 1 500 000 + 1 CATS |
+| Passer Master | 70 000 | 2 000 000 + 1 CATS |
+| Passer Goat | 80 000 | 3 000 000 + 2 CATS |
+| Passer Star | 100 000 | 5 000 000 + 3 CATS |
+
+---
+
+## 22. Events Espace & Océan
+
+Petits événements **temporaires** qui spawnent **aléatoirement** et donnent du vivant au serveur. Pas obligatoires.
+
+| Event | Chance de spawn | Durée | Monnaie | Gains | Conversion |
+|-------|-----------------|-------|---------|-------|------------|
+| **Espace** | 1/2 toutes les **2 h** | 30 min | **météorites** | 3 / msg · 10 / min voc | 1 météorite = **30 starss** |
+| **Océan** | 1/2 toutes les **6 h** | 30 min | **litres d'eau** | 3 / msg · 10 / min voc | 1 litre = **60 starss** |
+
+La monnaie se gagne **uniquement** pendant que l'event est actif.
+
+### Commandes joueur
+
+| Commande | Rôle |
+|----------|------|
+| **`/space`** | Panneau Espace — 3 onglets (Profil / Index / Boutique) |
+| **`/ocean`** | Panneau Océan — 3 onglets (Profil / Index / Boutique) |
+
+- **Profil** : ta monnaie, tes coffres en stock, tes rôles d'event, statut de l'event.
+- **Index** : les 6 items du thème (possédés / manquants) + l'état des 4 quêtes.
+- **Boutique** : acheter un coffre (**3 000** monnaie), ouvrir un coffre, convertir toute ta monnaie en starss, acheter le rôle d'entrée (**30 000** monnaie).
+
+### Coffres d'event (taux de drop)
+
+| Coffre stellaire (Espace) | Coffre submergé (Océan) |
+|---------------------------|--------------------------|
+| Planète 50 % | Poisson 50 % |
+| Étoile 20 % | Corail 20 % |
+| Trou noir 15 % | Requin 15 % |
+| Quasar 9 % | Baleine 9 % |
+| Galaxie 5 % | Épave du Titanic 5 % |
+| The Universe 1 % | Megalodon 1 % |
+
+### Quêtes → rôles
+
+**Espace** : acheter le rôle **Météore** (Épique) · 10 étoiles + 5 trous noirs + 3 quasars + 1 galaxie → **Galaxien** (Mythique) · 20 étoiles OU 3 quasars → **Lumineux** (Légendaire) · avoir *The Universe* → **Égocentrique** (Staresque).
+
+**Océan** : acheter le rôle **J'adore l'eau, faut en boire** (Épique) · 10 coraux + 5 requins + 3 baleines + 1 épave du Titanic → **Perdu de l'océan** (Mythique) · 20 requins OU 10 baleines → **Animal marin** (Légendaire) · avoir *Megalodon* → **Roi de l'océan** (Staresque).
+
+Le rôle est attribué automatiquement dès que la condition est remplie.
+
+### Commande admin — `/event-admin`
+
+| Sous-commande | Rôle |
+|---------------|------|
+| `creer-roles` | Crée les 8 rôles de quête d'event |
+| `salon` | Définit le salon d'annonce des spawns |
+| `spawn` | Force le spawn immédiat d'un event (test) |
+| `voir` | État des events + config des rôles |
+
+**Mise en route** : `creer-roles`, puis `salon #salon`, puis `spawn Espace` pour tester.
+
+---
+
+## 23. Index complet des commandes
+
+### Joueur — économie & profil
+`/solde` · `/payer` · `/daily` · `/boutique` · `/inventaire` · `/echange`
+
+### Joueur — progression
+`/ranked` · `/classement` · `/classement-guilde` · `/quetes` · `/arbre` · `/temple` · `/trophees` · `/itemindex` · `/grp` · `/hacker`
+
+### Joueur — guildes
+`/guilde` · `/profil-guilde` · `/separation`
+
+### Joueur — events
+`/space` · `/ocean`
+
+### Staff / modération
+`/passeport` · `/warn` · `/mute` · `/purge` · `/ping` · `/server` · `/reborn-ref`
+
+### Admin / owner
+`/money` · `/admin-economie` · `/admin-roles` · `/admin-creer-guilde` · `/admin-focus` · `/skill-points` · `/event` · `/event-admin`
+
+---
+
+## 24. Où lire le code
 
 - Constantes doc : `src/reborn/constants.js`
 - XP : `src/reborn/xpCurve.js` + `src/services/users.js`
