@@ -64,7 +64,7 @@ npm run deploy
 5. **`/daily`** une fois par jour calendaire (minuit **heure locale du serveur Node** pour le reset « jour ») ; bonus **Double Daily** le même jour si tu as l’item (voir § 5).
 6. **`/boutique`** : acheter avec les **boutons** sous le message.
 7. Quand tu es **niveau 15+** : **`/guilde creer`** ou **`/guilde rejoindre`** (après **`/guilde liste`** pour l’ID).
-8. Plus tard : **`/arbre`**, **`/temple`**, **`/itemindex`**, **`/quete`**, **`/echange`**, **`/separation`**, etc.
+8. Plus tard : **`/arbre`**, **`/temple`**, **`/itemindex`**, **`/quetes`**, **`/echange`**, **`/separation`**, **`/ranked`**, **`/space`**, **`/ocean`**, etc.
 
 ---
 
