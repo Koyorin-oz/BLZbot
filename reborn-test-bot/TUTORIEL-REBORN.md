@@ -103,7 +103,7 @@ Les **quêtes** comptent aussi des messages (`/quetes`). Les **trophées** peuve
 
 ## 5. Daily & Double Daily
 
-- **`/daily`** : une fois par **jour calendaire** (minuit local machine). Réponse **Components V2** (carte + bouton Fermer), loot aligné sur l’idée du daily principal (starss, XP, RP, coffres catalogue).
+- **`/daily`** : une fois par **jour calendaire** (minuit local machine). Réponse **Components V2** (carte + bouton Fermer). *Note : la table de loot du daily n'est **pas** définie dans le gdoc — les récompenses actuelles (starss, XP, boost, coffres) sont un choix par défaut, à ajuster si une spec arrive.*
 - **Double Daily** (item **`double_daily`** dans l’inventaire) : si tu as **déjà** pris ton daily **aujourd’hui**, tu peux **rejouer** en consommant **1** item, **jusqu’à 3 fois / 24 h glissantes** (sauf si `TEST_NO_LIMITS` désactive la limite dans la config).
 - Le daily ne met **pas** à jour la date « dernier daily » quand c’est un **bonus** Double Daily (tu restes sur le même jour pour le reset naturel).
 
