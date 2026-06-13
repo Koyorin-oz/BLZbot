@@ -103,8 +103,8 @@ async function handlePurchase(interaction, parts) {
   }
 
   if (kind === 'c') {
-    const meta = CHEST_META[sub];
-    if (!meta) {
+    const chest = CHEST_META[sub];
+    if (!chest) {
       await interaction.reply({ content: 'Coffre inconnu.' });
       return;
     }
@@ -117,16 +117,16 @@ async function handlePurchase(interaction, parts) {
         return;
       }
     }
-    const pay = discountedPrice(uid, meta.price);
+    const pay = discountedPrice(uid, chest.price);
     if (users.getStars(uid) < pay) {
       await interaction.reply({ content: 'Pas assez de starss.' });
       return;
     }
     users.addStars(uid, -pay);
     if (sub === 'catm') users.bumpCatm(uid, shop.utcDateKey());
-    users.addInventory(uid, meta.itemId, 1);
+    users.addInventory(uid, chest.itemId, 1);
     await interaction.reply({
-      content: `**${meta.label}** acheté et ajouté à ton inventaire. Ouvre-le depuis \`/inventaire\` (sélectionne-le puis **Utiliser**).`,
+      content: `**${chest.label}** acheté et ajouté à ton inventaire. Ouvre-le depuis \`/inventaire\` (sélectionne-le puis **Utiliser**).`,
     });
   }
 }
