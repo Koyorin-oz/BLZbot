@@ -103,14 +103,12 @@ async function handlePurchase(interaction, parts) {
   }
 
   if (kind === 'c') {
-    let price = 0n;
-    let label = '';
-    if (sub === 'classic') {
-      price = CHEST_CLASSIC;
-      label = 'Coffre classique';
-    } else if (sub === 'catm') {
-      price = CHEST_CATM;
-      label = 'Coffre meilleur';
+    const meta = CHEST_META[sub];
+    if (!meta) {
+      await interaction.reply({ content: 'Coffre inconnu.' });
+      return;
+    }
+    if (sub === 'catm') {
       const day = shop.utcDateKey();
       users.resetCatmIfNewDay(uid, day);
       const { count } = users.getCatmState(uid);
@@ -118,99 +116,121 @@ async function handlePurchase(interaction, parts) {
         await interaction.reply({ content: `Limite journalière Coffre meilleur (**${CATM_DAILY_LIMIT}**/jour).` });
         return;
       }
-    } else if (sub === 'catl') {
-      price = CHEST_CATL;
-      label = 'Coffre légendaire';
-    } else if (sub === 'cats') {
-      price = CHEST_CATS;
-      label = 'Coffre starss';
-    } else {
-      await interaction.reply({ content: 'Coffre inconnu.' });
-      return;
     }
-    const pay = discountedPrice(uid, price);
+    const pay = discountedPrice(uid, meta.price);
     if (users.getStars(uid) < pay) {
       await interaction.reply({ content: 'Pas assez de starss.' });
       return;
     }
     users.addStars(uid, -pay);
     if (sub === 'catm') users.bumpCatm(uid, shop.utcDateKey());
-
-    const lines = [];
-    let totalStars = 0n;
-    let totalXp = 0;
-    const allItems = [];
-    let loot = rollChest(sub, meta, uid);
-    const maxRollAgain = 2;
-    let depth = 0;
-    while (loot.rollAgain && depth < maxRollAgain) {
-      depth += 1;
-      const extra = rollChest(sub, meta, uid);
-      loot = {
-        lines: [...loot.lines, ...extra.lines],
-        stars: loot.stars + extra.stars,
-        xp: loot.xp + extra.xp,
-        items: [...loot.items, ...extra.items],
-        rollAgain: extra.rollAgain,
-      };
-    }
-    // Bonus arbre boutique palier 2 : ×2 contenu coffres (starss + XP + qty items).
-    // Les items « uniques » (diamant) et les jetons d'accès (hacker_token) restent en qty 1.
-    const lootMultN = indexBonuses.chestLootMultN(uid, Number(skillTree.chestLootMult(uid)));
-    const NON_STACKABLE = new Set(['diamant', 'hacker_token']);
-    if (lootMultN > 1) {
-      loot.stars *= BigInt(lootMultN);
-      loot.xp *= lootMultN;
-      loot.items = loot.items.map((it) =>
-        NON_STACKABLE.has(it.id) ? it : { ...it, qty: it.qty * lootMultN },
-      );
-      loot.lines.push(`*(×${lootMultN} contenu — arbre + index)*`);
-    }
-    totalStars += loot.stars;
-    totalXp += loot.xp;
-    for (const it of loot.items) allItems.push(it);
-    lines.push(...loot.lines);
-    if (totalStars > 0n) users.addStars(uid, totalStars);
-    if (totalXp > 0) users.addXp(uid, totalXp);
-    for (const { id, qty } of allItems) {
-      if (id === 'diamant') {
-        const h = meta.diamondHolder();
-        if (h && h !== uid) {
-          users.addStars(uid, 5_000_000n);
-          lines.push('*(Diamant déjà pris — 5M starss)*');
-          continue;
-        }
-        meta.setDiamondHolder(uid);
-      }
-      users.addInventory(uid, id, qty);
-    }
-
-    // Tracking quêtes : ouverture CATL + gain de starss.
-    const followUps = [];
-    if (sub === 'catl') {
-      try {
-        const r = quests.trackCatlOpen(uid);
-        if (r) followUps.push(`🎯 **Quête validée** — ${r.label} (+${r.reward.toLocaleString('fr-FR')} starss)`);
-      } catch (e) { console.error('[catl quest]', e?.message || e); }
-    }
-    if (totalStars > 0n) {
-      try {
-        const r = quests.trackStarssGain(uid, totalStars);
-        if (r) followUps.push(`🎯 **Quête validée** — ${r.label} (+${r.reward.toLocaleString('fr-FR')} starss)`);
-      } catch (e) { console.error('[starss quest]', e?.message || e); }
-    }
-    try { trophies.evaluate(uid, interaction.guildId || null); } catch { /* ignore */ }
-
-    const starLine =
-      totalStars > 0n ? `+**${totalStars.toLocaleString('fr-FR')}** starss` : '';
-    const xpLine = totalXp > 0 ? `+**${totalXp}** XP` : '';
-    const head = [starLine, xpLine].filter(Boolean).join(' · ');
-    const body = lines.length ? `\n${lines.map((l) => `• ${l}`).join('\n')}` : '';
-    const tail = followUps.length ? `\n${followUps.join('\n')}` : '';
+    users.addInventory(uid, meta.itemId, 1);
     await interaction.reply({
-      content: `**${label}** ouvert${head ? ` — ${head}` : ''}.${body}${tail}`.slice(0, 1900),
+      content: `**${meta.label}** acheté et ajouté à ton inventaire. Ouvre-le depuis \`/inventaire\` (sélectionne-le puis **Utiliser**).`,
     });
   }
 }
 
-module.exports = { handlePurchase };
+/** Coffres starss : prix, item d'inventaire et libellé par sous-type. */
+const CHEST_META = {
+  classic: { price: CHEST_CLASSIC, itemId: 'coffre_classique', label: 'Coffre classique' },
+  catm: { price: CHEST_CATM, itemId: 'coffre_catm', label: 'Coffre meilleur' },
+  catl: { price: CHEST_CATL, itemId: 'coffre_catl', label: 'Coffre légendaire' },
+  cats: { price: CHEST_CATS, itemId: 'coffre_cats', label: 'Coffre starss' },
+};
+
+const ITEM_TO_CHEST_SUB = {
+  coffre_classique: 'classic',
+  coffre_catm: 'catm',
+  coffre_catl: 'catl',
+  coffre_cats: 'cats',
+};
+
+/**
+ * Ouvre un coffre déjà possédé (déclenché depuis l'inventaire). Tire le loot,
+ * crédite starss/XP/items, suit les quêtes et renvoie un message récap.
+ * @param {string} uid
+ * @param {'classic'|'catm'|'catl'|'cats'} sub
+ * @param {string|null} [guildId]
+ * @returns {{ message: string }}
+ */
+function openChest(uid, sub, guildId = null) {
+  const def = CHEST_META[sub];
+  const label = def ? def.label : 'Coffre';
+
+  const lines = [];
+  let totalStars = 0n;
+  let totalXp = 0;
+  const allItems = [];
+  let loot = rollChest(sub, meta, uid);
+  const maxRollAgain = 2;
+  let depth = 0;
+  while (loot.rollAgain && depth < maxRollAgain) {
+    depth += 1;
+    const extra = rollChest(sub, meta, uid);
+    loot = {
+      lines: [...loot.lines, ...extra.lines],
+      stars: loot.stars + extra.stars,
+      xp: loot.xp + extra.xp,
+      items: [...loot.items, ...extra.items],
+      rollAgain: extra.rollAgain,
+    };
+  }
+  // Bonus arbre boutique palier 2 : ×2 contenu coffres (starss + XP + qty items).
+  // Les items « uniques » (diamant) et les jetons d'accès (hacker_token) restent en qty 1.
+  const lootMultN = indexBonuses.chestLootMultN(uid, Number(skillTree.chestLootMult(uid)));
+  const NON_STACKABLE = new Set(['diamant', 'hacker_token']);
+  if (lootMultN > 1) {
+    loot.stars *= BigInt(lootMultN);
+    loot.xp *= lootMultN;
+    loot.items = loot.items.map((it) =>
+      NON_STACKABLE.has(it.id) ? it : { ...it, qty: it.qty * lootMultN },
+    );
+    loot.lines.push(`*(×${lootMultN} contenu — arbre + index)*`);
+  }
+  totalStars += loot.stars;
+  totalXp += loot.xp;
+  for (const it of loot.items) allItems.push(it);
+  lines.push(...loot.lines);
+  if (totalStars > 0n) users.addStars(uid, totalStars);
+  if (totalXp > 0) users.addXp(uid, totalXp);
+  for (const { id, qty } of allItems) {
+    if (id === 'diamant') {
+      const h = meta.diamondHolder();
+      if (h && h !== uid) {
+        users.addStars(uid, 5_000_000n);
+        lines.push('*(Diamant déjà pris — 5M starss)*');
+        continue;
+      }
+      meta.setDiamondHolder(uid);
+    }
+    users.addInventory(uid, id, qty);
+  }
+
+  // Tracking quêtes : ouverture coffre légendaire + gain de starss.
+  const followUps = [];
+  if (sub === 'catl') {
+    try {
+      const r = quests.trackCatlOpen(uid);
+      if (r) followUps.push(`🎯 **Quête validée** — ${r.label} (+${r.reward.toLocaleString('fr-FR')} starss)`);
+    } catch (e) { console.error('[catl quest]', e?.message || e); }
+  }
+  if (totalStars > 0n) {
+    try {
+      const r = quests.trackStarssGain(uid, totalStars);
+      if (r) followUps.push(`🎯 **Quête validée** — ${r.label} (+${r.reward.toLocaleString('fr-FR')} starss)`);
+    } catch (e) { console.error('[starss quest]', e?.message || e); }
+  }
+  try { trophies.evaluate(uid, guildId || null); } catch { /* ignore */ }
+
+  const starLine = totalStars > 0n ? `+**${totalStars.toLocaleString('fr-FR')}** starss` : '';
+  const xpLine = totalXp > 0 ? `+**${totalXp}** XP` : '';
+  const head = [starLine, xpLine].filter(Boolean).join(' · ');
+  const body = lines.length ? `\n${lines.map((l) => `• ${l}`).join('\n')}` : '';
+  const tail = followUps.length ? `\n${followUps.join('\n')}` : '';
+  return {
+    message: `**${label}** ouvert${head ? ` — ${head}` : ''}.${body}${tail}`.slice(0, 1900),
+  };
+}
+
+module.exports = { handlePurchase, openChest, ITEM_TO_CHEST_SUB };
