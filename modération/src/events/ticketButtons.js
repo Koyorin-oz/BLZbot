@@ -117,11 +117,11 @@ async function createBridgedTicketFromSupport(interaction, config, client, tier)
     await supportChannel.send({ embeds: [embedSupport], components: [rowSupport] });
 
     const embedMain = new EmbedBuilder()
-        .setTitle(`🎫 Ticket ${tierLabel(tier)} #${ticketId} (depuis le support)`)
+        .setTitle(`Ticket ${tierLabel(tier)} #${ticketId}`)
         .setDescription(
-            `Demande **${tierLabel(tier)}** ouverte depuis le **serveur support**.\n\n` +
-                `**Salon côté membre (miroir) :** ${supportUrl}\n\n` +
-                'Le membre ne voit **pas** ce salon : réponds **ici** pour lui répondre sur le support.'
+            `Ticket **${tierLabel(tier)}** ouvert depuis le serveur support.\n\n` +
+                `Salon membre : ${supportUrl}\n\n` +
+                'Le membre ne voit pas ce salon. Réponds ici pour lui répondre sur le support.'
         )
         .setColor(config.EMBED_COLOR || BLZ_EMBED_STRIP_HEX)
         .addFields(
