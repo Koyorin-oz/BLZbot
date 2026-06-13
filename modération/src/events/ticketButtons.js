@@ -462,7 +462,7 @@ async function handleCloseRequest(interaction) {
             .setStyle(ButtonStyle.Danger),
         new ButtonBuilder()
             .setCustomId('ticket_close_cancel')
-            .setLabel('❌ Annuler')
+            .setLabel('Annuler')
             .setStyle(ButtonStyle.Secondary)
     );
 
@@ -604,7 +604,7 @@ async function handleDeleteRequest(interaction) {
             .setStyle(ButtonStyle.Danger),
         new ButtonBuilder()
             .setCustomId('ticket_delete_cancel')
-            .setLabel('❌ Annuler')
+            .setLabel('Annuler')
             .setStyle(ButtonStyle.Secondary)
     );
 
