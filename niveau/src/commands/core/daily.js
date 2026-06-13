@@ -73,7 +73,7 @@ async function sendDailyCanvasReply(interaction, pngBuffer) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('daily')
-        .setDescription('Réclamez votre récompense journalière aléatoire !'),
+        .setDescription('Réclamer la récompense journalière.'),
 
     async execute(interaction) {
         try {

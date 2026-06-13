@@ -12,7 +12,7 @@ function pickLovePhrase(percent, nameA, nameB) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('calcul-amour')
-        .setDescription('Calcule un pourcentage de compatibilité (fun) entre deux membres.')
+        .setDescription('Compatibilité entre deux membres.')
         .addUserOption((o) =>
             o.setName('membre1').setDescription('Premier membre').setRequired(true)
         )

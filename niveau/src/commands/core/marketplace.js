@@ -39,7 +39,7 @@ function getSellableItems() {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('marketplace')
-        .setDescription('Marketplace - Achetez et vendez des items entre joueurs !')
+        .setDescription('Marketplace : acheter et vendre des items entre joueurs.')
         .addSubcommand(sub =>
             sub.setName('parcourir')
                 .setDescription('Voir les annonces actives du marketplace.'))
