@@ -187,20 +187,6 @@ async function buildRebornPage(userId, niveauPages, ctx = {}) {
   const rows = [];
 
   if (!s.selection_id || /terminée/i.test(s.selection_line)) {
-<<<<<<< HEAD
-    rows.push(
-      new ActionRowBuilder().addComponents(
-        new StringSelectMenuBuilder()
-          .setCustomId('rb:q:pick')
-          .setPlaceholder('Choisir une quête à choix (semaine)')
-          .addOptions([
-            { label: 'Chasse — 20 messages cette semaine', value: 'chasse_messages', description: 'Auto à 20 msg · +40 000 ⭐' },
-            { label: 'Offrir 1× corail', value: 'offre_corail', description: 'Réclamation manuelle · +80 000 ⭐' },
-            { label: 'Défi 400k starss', value: 'defi_400k', description: 'Auto-suivi des gains · +100 000 ⭐' },
-            { label: 'Défi — ouvrir 1 Coffre légendaire', value: 'defi_catl', description: 'Auto à l’ouverture · +250 000 ⭐' },
-          ]),
-      ),
-=======
     const selectOptions = [
       {
         label: "Chasse — 20 messages cette semaine",
@@ -218,14 +204,13 @@ async function buildRebornPage(userId, niveauPages, ctx = {}) {
         description: "Auto-suivi des gains · +100 000 ⭐",
       },
       {
-        label: "Défi CATL — ouvrir 1 coffre légendaire",
+        label: "Défi — ouvrir 1 Coffre légendaire",
         value: "defi_catl",
         description: "Auto à l’ouverture · +250 000 ⭐",
       },
     ];
     const filtered = selectOptions.filter(
       (opt) => opt.value !== s.selection_id,
->>>>>>> origin/main
     );
     if (filtered.length > 0) {
       rows.push(
