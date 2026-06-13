@@ -1,9 +1,12 @@
 /**
- * Récompenses one-shot par palier de RP atteint (étapes 3-12 du doc REBORN).
- * Chaque palier ne se réclame qu'une fois : tracé dans `ranked_milestones_claimed`.
+ * Récompenses one-shot « étapes ranked » 1-12 du gdoc.
+ * Chaque palier correspond au passage d'une famille de rang (Plastique → Star)
+ * et ne se réclame qu'une fois : tracé dans `ranked_milestones_claimed`.
  *
  * Quand `checkAndClaim(userId)` est appelé, on vérifie le RP courant et on
  * accorde toutes les récompenses débloquées non encore prises.
+ *
+ * Coffres : CAT = coffre_classique · CATM = coffre_catm · CATL = coffre_catl · CATS = coffre_cats.
  */
 
 const db = require('../db');
@@ -13,18 +16,18 @@ const users = require('./users');
 
 /** @type {Milestone[]} */
 const MILESTONES = [
-  { key: 'rp_50k', rp: 50_000n, label: 'Palier Argent', stars: 25_000n, items: [{ id: 'starss_boost', qty: 1 }] },
-  { key: 'rp_60k', rp: 60_000n, label: 'Palier Or', stars: 50_000n, items: [{ id: 'planete', qty: 1 }] },
-  { key: 'rp_70k', rp: 70_000n, label: 'Palier Platine', stars: 100_000n, items: [{ id: 'corail', qty: 1 }] },
-  { key: 'rp_80k', rp: 80_000n, label: 'Palier Diamond', stars: 200_000n, items: [{ id: 'requin', qty: 1 }] },
-  { key: 'rp_90k', rp: 90_000n, label: 'Palier Master', stars: 400_000n, items: [{ id: 'baleine', qty: 1 }] },
-  { key: 'rp_100k', rp: 100_000n, label: 'Palier Apex', stars: 750_000n, items: [{ id: 'quasar', qty: 1 }] },
-  { key: 'rp_110k', rp: 110_000n, label: 'Apex +10k', stars: 1_000_000n, items: [{ id: 'coffre_catl', qty: 1 }] },
-  { key: 'rp_125k', rp: 125_000n, label: 'Apex +25k', stars: 1_500_000n, items: [{ id: 'galaxie', qty: 1 }] },
-  { key: 'rp_150k', rp: 150_000n, label: 'Apex +50k', stars: 2_000_000n, items: [{ id: 'crystal', qty: 1 }] },
-  { key: 'rp_175k', rp: 175_000n, label: 'Apex +75k', stars: 3_000_000n, items: [{ id: 'coffre_catl', qty: 2 }] },
-  { key: 'rp_200k', rp: 200_000n, label: 'Apex +100k', stars: 5_000_000n, items: [{ id: 'coffre_cats', qty: 1 }] },
-  { key: 'rp_250k', rp: 250_000n, label: 'Légende', stars: 10_000_000n, items: [{ id: 'coffre_cats', qty: 1 }] },
+  { key: 'rk_plastique', rp: 50n, label: 'Passer Plastique', stars: 10_000n },
+  { key: 'rk_bronze', rp: 300n, label: 'Passer Bronze', stars: 50_000n, items: [{ id: 'coffre_classique', qty: 1 }] },
+  { key: 'rk_argent', rp: 1_000n, label: 'Passer Argent', stars: 100_000n, items: [{ id: 'coffre_classique', qty: 1 }] },
+  { key: 'rk_or', rp: 3_000n, label: 'Passer Or', stars: 200_000n, items: [{ id: 'coffre_catm', qty: 1 }] },
+  { key: 'rk_diamant', rp: 6_000n, label: 'Passer Diamant', stars: 300_000n, items: [{ id: 'coffre_catm', qty: 1 }] },
+  { key: 'rk_emeraude', rp: 10_000n, label: 'Passer Émeraude', stars: 500_000n, items: [{ id: 'coffre_catl', qty: 1 }] },
+  { key: 'rk_rubis', rp: 25_000n, label: 'Passer Rubis', stars: 750_000n, items: [{ id: 'coffre_catl', qty: 1 }] },
+  { key: 'rk_legendaire', rp: 50_000n, label: 'Passer Légendaire', stars: 1_000_000n, items: [{ id: 'coffre_catl', qty: 2 }] },
+  { key: 'rk_mythique', rp: 60_000n, label: 'Passer Mythique', stars: 1_500_000n, items: [{ id: 'coffre_cats', qty: 1 }] },
+  { key: 'rk_master', rp: 70_000n, label: 'Passer Master', stars: 2_000_000n, items: [{ id: 'coffre_cats', qty: 1 }] },
+  { key: 'rk_goat', rp: 80_000n, label: 'Passer Goat', stars: 3_000_000n, items: [{ id: 'coffre_cats', qty: 2 }] },
+  { key: 'rk_star', rp: 100_000n, label: 'Passer Star', stars: 5_000_000n, items: [{ id: 'coffre_cats', qty: 3 }] },
 ];
 
 function ensureTable() {
