@@ -138,7 +138,7 @@ function drawHeader(ctx, displayName, avatarImg) {
 
   ctx.font = '500 18px Inter, Arial, sans-serif';
   ctx.fillStyle = 'rgba(232,222,250,0.78)';
-  ctx.fillText('récompenses automatiques dès le seuil atteint', tx, ty + 30);
+  ctx.fillText('Récompenses automatiques dès que le seuil est atteint.', tx, ty + 30);
 
   drawAvatarRound(ctx, avatarImg, W - 80, 65, 48);
   ctx.restore();
