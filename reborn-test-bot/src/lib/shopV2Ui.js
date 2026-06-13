@@ -29,9 +29,7 @@ async function buildBoutiquePayload(uid, username) {
   shop.ensureShopSlots(uid);
   const slots = shop.getTodaySlots(uid);
   const bal = users.getStars(uid);
-  const dayKey = shop.effectiveShopDateKey(uid);
   users.resetCatmIfNewDay(uid, shop.utcDateKey());
-  const { count: catmCount } = users.getCatmState(uid);
 
   // Bannière dédiée boutique (BLZSTARSS rouge).
   const blz = getBoutiqueAttachment();
