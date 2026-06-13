@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Retire les emojis des .setDescription() / .setName() dans les fichiers de commandes slash.
+ * Retire les emojis des chaînes passées à .setDescription() / .setName() (commandes slash).
+ * Ne modifie pas l'indentation du fichier.
  */
 const fs = require('fs');
 const path = require('path');
@@ -24,6 +25,22 @@ function walk(d, out = []) {
     return out;
 }
 
+function cleanQuotedContent(content) {
+    return content
+        .replace(emojiRe, '')
+        .replace(/[ \t]{2,}/g, ' ')
+        .replace(/^[ \t]+|[ \t]+$/g, '');
+}
+
+function cleanLine(line) {
+    if (!/\.set(Description|Name)\(/.test(line)) return line;
+    return line.replace(/(['"`])((?:\\.|(?!\1).)*)\1/g, (full, quote, inner) => {
+        const cleaned = cleanQuotedContent(inner);
+        if (cleaned === inner) return full;
+        return quote + cleaned + quote;
+    });
+}
+
 let filesChanged = 0;
 let linesChanged = 0;
 
@@ -35,16 +52,12 @@ for (const root of roots) {
         const lines = raw.split('\n');
         let changed = false;
         const next = lines.map((line) => {
-            if (!/\.set(Description|Name)\(/.test(line)) return line;
-            let stripped = line.replace(emojiRe, '');
-            stripped = stripped.replace(/(['"`])\s+/g, '$1');
-            stripped = stripped.replace(/  +/g, ' ');
-            if (stripped !== line) {
+            const cleaned = cleanLine(line);
+            if (cleaned !== line) {
                 changed = true;
                 linesChanged++;
-                return stripped;
             }
-            return line;
+            return cleaned;
         });
 
         if (changed) {
