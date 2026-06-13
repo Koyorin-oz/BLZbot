@@ -66,7 +66,7 @@ module.exports = {
         `• **Voc** : +${C.STARSS_PER_VOICE_MINUTE} starss / min`,
         `• **Daily** : 10k–25k starss + boost (1× / jour)`,
         `• **Quêtes** : daily 25k · hebdo 150k · choix (40k–250k)`,
-        `• **Coffres** : Classique (25k–120k) · CATM (200k+) · CATL (400k+) · CATS (jusqu'à 5M + Diamant)`,
+        `• **Coffres** : Classique (25k–120k) · Meilleur (200k+) · Légendaire (400k+) · Starss (jusqu'à 5M + Diamant)`,
         `• **Séparation gagnée** : +25 % starss du joueur (cap 1M, +bonus séparatiste)`,
         `• **Paliers Index** : 10k → 2M starss + coffres`,
         `• **Paliers Ranked** : 25k → 10M starss + items (12 paliers)`,
