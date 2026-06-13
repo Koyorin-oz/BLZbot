@@ -55,15 +55,25 @@ function _applyBoost(uid, field, durationMs) {
 /**
  * @param {string} userId
  * @param {string} itemId
+ * @param {{ guildId?: string|null }} [ctx]
  * @returns {Promise<{ ok: boolean, error?: string, message?: string, lines?: string[] }>}
  */
-async function useItem(userId, itemId) {
+async function useItem(userId, itemId, ctx = {}) {
   users.getOrCreate(userId, '');
   const inv = users.getInventory(userId);
   const have = inv.find((r) => r.item_id === itemId)?.qty || 0;
   if (have <= 0) return { ok: false, error: 'Item absent de ton inventaire.' };
 
   const id = String(itemId);
+
+  // Coffres starss : ouverts depuis l'inventaire (achat → inventaire → ouverture).
+  const purchase = require('./purchase');
+  const chestSub = purchase.ITEM_TO_CHEST_SUB[id];
+  if (chestSub) {
+    if (!users.takeInventory(userId, id, 1)) return { ok: false, error: 'Indisponible.' };
+    const r = purchase.openChest(userId, chestSub, ctx?.guildId || null);
+    return { ok: true, message: r.message };
+  }
 
   // Boosts d'1 h
   if (id === 'xp_boost') {
