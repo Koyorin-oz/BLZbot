@@ -163,6 +163,72 @@ function registerReadyTasks(client) {
 }
 
 /**
+ * Boutons des events Espace / Océan (`evso:<event>:tab:<x>` et `evso:<event>:act:<x>`).
+ * Réponses éphémères : on opère toujours sur `interaction.user.id`.
+ */
+async function handleEventButton(interaction, client) {
+  const eventsSO = require('./services/eventsSO');
+  const eventRoles = require('./services/eventRoles');
+  const { buildEventPanel } = require('./lib/eventPanel');
+  const parts = interaction.customId.split(':'); // evso : event : kind : value
+  const eventKey = parts[1];
+  const kind = parts[2];
+  const value = parts[3];
+  const uid = interaction.user.id;
+  const hub = interaction.guildId;
+
+  async function syncRoles() {
+    if (!hub) return;
+    try {
+      await eventRoles.syncEventRolesForUser(client, hub, uid, eventsSO.claimedRoleKeys(uid));
+    } catch {
+      /* ignore */
+    }
+  }
+
+  if (kind === 'tab') {
+    eventsSO.checkAndClaim(uid);
+    await interaction.update(buildEventPanel(eventKey, uid, value));
+    syncRoles();
+    return;
+  }
+
+  // Actions boutique.
+  await interaction.deferUpdate();
+  let note = '';
+  if (value === 'buychest') {
+    const r = eventsSO.buyChest(uid, eventKey);
+    note = r.ok ? `${r.chestName} acheté (stock : ${r.count}).` : r.error;
+  } else if (value === 'openchest') {
+    const r = eventsSO.openChest(uid, eventKey);
+    if (r.ok) {
+      const claim = eventsSO.checkAndClaim(uid);
+      await syncRoles();
+      note = `Coffre ouvert : **${r.itemName}** *(${r.rarity})*.`;
+      if (claim.newly.length) {
+        note += ` Quête validée : ${claim.newly.map((n) => n.roleLabel).join(', ')}.`;
+      }
+    } else {
+      note = r.error;
+    }
+  } else if (value === 'convert') {
+    const r = eventsSO.convertAll(uid, eventKey);
+    note = r.ok
+      ? `Converti **${r.converted.toLocaleString('fr-FR')}** → **${r.starss.toLocaleString('fr-FR')}** starss.`
+      : r.error;
+  } else if (value === 'buyrole') {
+    const r = eventsSO.buyRole(uid, eventKey);
+    if (r.ok) {
+      await syncRoles();
+      note = `Rôle **${r.roleLabel}** obtenu.`;
+    } else {
+      note = r.error;
+    }
+  }
+  await interaction.editReply(buildEventPanel(eventKey, uid, 'shop', note));
+}
+
+/**
  * Boutons / menus / achats REBORN (pas les slash — gérés via `client.commands`).
  * @returns {Promise<boolean>} true si l’interaction a été consommée
  */
