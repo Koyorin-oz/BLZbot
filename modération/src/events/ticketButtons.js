@@ -606,7 +606,7 @@ async function handleDeleteRequest(interaction) {
     );
 
     await interaction.reply({
-        content: '⚠️ **ATTENTION**: Cette action est **irréversible**.\nLe ticket sera supprimé définitivement.',
+        content: 'Suppression définitive du ticket. Action irréversible.',
         components: [confirmRow],
         ephemeral: true
     });
