@@ -92,6 +92,7 @@ function grantVoiceMinutes(guildId, userId, minutes) {
   }
   rankedRp.decayForUserIfIdle(userId);
   rankedRp.grantFromActivity(userId, 'voc', minutes);
+  try { require('./eventsSO').grantActivity(userId, 'voc', minutes); } catch { /* ignore */ }
   if (_earnClient) {
     rankedRoles
       .syncRankRoleForUser(_earnClient, guildId, userId)
