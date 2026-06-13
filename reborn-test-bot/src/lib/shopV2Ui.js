@@ -159,7 +159,7 @@ async function buildBoutiquePayload(uid, username) {
     const row2 = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId('rb:shop:claim_catl')
-        .setLabel(ready ? 'Réclamer CATL gratuit' : 'CATL — en cooldown')
+        .setLabel(ready ? 'Réclamer Coffre légendaire gratuit' : 'Coffre légendaire — en cooldown')
         .setStyle(ready ? ButtonStyle.Success : ButtonStyle.Secondary)
         .setEmoji('🎁')
         .setDisabled(!ready),
