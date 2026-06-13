@@ -164,7 +164,7 @@ class RecruitmentManager {
         await this.updateRecruitmentMessage(interaction.client);
         
         const closeEmbed = new EmbedBuilder()
-            .setTitle('🔒 Recrutement Fermé')
+            .setTitle('Recrutement fermé')
             .setDescription(`Le recrutement pour **${specialite}** a été fermé avec succès.`)
             .setColor('#FF0000')
             .setTimestamp();
