@@ -129,6 +129,7 @@ function registerEarn(client) {
   client.on('messageCreate', async (msg) => {
     try {
       if (!msg.guild || msg.author.bot) return;
+      if (economyState.isPaused()) return;
       const uid = msg.author.id;
       const hub = msg.guild.id;
       users.getOrCreate(uid, msg.author.username);
