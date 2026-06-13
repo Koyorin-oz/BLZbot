@@ -373,12 +373,11 @@ async function handleCreateTicket(interaction) {
 
         const staffPing = buildRolePingContent(getStaffRoleIdsForTier(config, tier));
         const ticketEmbed = new EmbedBuilder()
-            .setTitle(`🎫 Ticket ${tierLabel(tier)} #${ticketId}`)
+            .setTitle(`Ticket ${tierLabel(tier)} #${ticketId}`)
             .setDescription(
-                `Bonjour <@${userId}> 👋\n\n` +
-                `Merci d'avoir ouvert un ticket **${tierLabel(tier)}**.\n` +
-                `L'équipe ${staffPing || 'staff'} va bientôt venir t'aider.\n\n` +
-                `**Décris ton problème en détail** pour qu'on puisse t'aider au mieux.`
+                `Ticket **${tierLabel(tier)}** ouvert.\n` +
+                `Staff pingé : ${staffPing || '—'}\n\n` +
+                'Explique ta demande dans ce salon.'
             )
             .setColor(config.EMBED_COLOR || BLZ_EMBED_STRIP_HEX)
             .setFooter({ text: `ID: ${ticketId} · ${tierLabel(tier)}` })
