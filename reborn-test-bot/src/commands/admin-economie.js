@@ -5,6 +5,7 @@ const {
 } = require('discord.js');
 const db = require('../db');
 const C = require('../reborn/constants');
+const economyState = require('../services/economyState');
 const { d } = require('../lib/slashDesc');
 
 /**
