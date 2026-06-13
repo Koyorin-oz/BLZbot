@@ -36,17 +36,21 @@ module.exports = {
 
     if (sub === 'voir') {
       const rp = users.getPoints(uid);
-      const tier = rankedRoles.tierForRp(rp);
-      const def = rankedRoles.TIER_DEFS.find((t) => t.key === tier);
+      const rank = rankedRoles.rankForRp(rp);
+      const next = rankedRoles.nextRank(rp);
+      const nextLine = next
+        ? `**Rang suivant** : **${next.label}** à **${next.threshold.toLocaleString('fr-FR')} RP** (encore ${(next.threshold - rp).toLocaleString('fr-FR')} RP).`
+        : '**Rang max atteint** — tu es **Star**.';
       const body = new TextDisplayBuilder().setContent(
         [
           `# Ranked RP — ${target.username}`,
           '',
-          `**Tier** : **${def?.label || tier}**`,
+          `**Rang** : **${rank.label}**`,
           `**RP** : **${rp.toLocaleString('fr-FR')}**`,
+          nextLine,
           '',
           '**Comment progresser ?** Messages texte et **vocal** font monter le RP.',
-          '**Inactivité** : après **24 h** sans activité, une **décrépitude** retire du RP chaque jour.',
+          '**Inactivité** : après **24 h** sans activité, une **décrépitude** retire du RP chaque jour (à partir de 50k RP).',
         ].join('\n'),
       );
       const c = new ContainerBuilder().addTextDisplayComponents(body);
