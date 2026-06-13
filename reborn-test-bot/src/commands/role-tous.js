@@ -91,8 +91,8 @@ module.exports = {
     let failed = 0;
     for (const member of targets.values()) {
       try {
-        if (give) await member.roles.add(role, 'role-tous donner');
-        else await member.roles.remove(role, 'role-tous retirer');
+        if (give) await member.roles.add(role, 'give-role donner');
+        else await member.roles.remove(role, 'give-role retirer');
         done += 1;
       } catch {
         failed += 1;
