@@ -172,8 +172,10 @@ function drawProgressBar(ctx, x, y, w, h, ratio, accent, accentRgb) {
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
-  const r = Math.max(0, Math.min(1, ratio));
-  const fw = Math.max(h, w * r);
+  // Ensure the visual fill is clamped to 0..1 even if data.progress > target.
+  const ratioNum = typeof ratio === 'number' && isFinite(ratio) ? ratio : 0;
+  const r = Math.max(0, Math.min(1, ratioNum));
+  const fw = Math.max(h, Math.max(0, Math.min(w, w * r)));
   if (r > 0) {
     rr(ctx, x, y, fw, h, h / 2);
     const g = ctx.createLinearGradient(x, y, x + fw, y);
@@ -357,6 +359,9 @@ async function renderQuetesRebornPng(opts) {
           statusText: "✅ VALIDÉE",
           statusOk: true,
           rewardText: `+ ${Number(summary.daily_reward).toLocaleString("fr-FR")} starss`,
+          // Afficher la barre même validée si les valeurs existent
+          progress: typeof summary.msgs_today === 'number' ? summary.msgs_today : undefined,
+          target: typeof summary.daily_target === 'number' ? summary.daily_target : undefined,
         }
       : {
           title: `${summary.msgs_today} / ${summary.daily_target} messages aujourd’hui`,
@@ -381,6 +386,9 @@ async function renderQuetesRebornPng(opts) {
           statusText: "✅ VALIDÉE",
           statusOk: true,
           rewardText: `+ ${Number(summary.weekly_reward).toLocaleString("fr-FR")} starss`,
+          // Afficher la barre même validée si les valeurs existent
+          progress: typeof summary.week_points === 'number' ? summary.week_points : undefined,
+          target: typeof summary.weekly_target === 'number' ? summary.weekly_target : undefined,
         }
       : {
           title: `${summary.week_points} / ${summary.weekly_target} messages cette semaine`,
