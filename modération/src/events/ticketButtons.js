@@ -418,7 +418,7 @@ async function handleCreateTicket(interaction) {
                 if (logChannel) {
                     const logEmbed = new EmbedBuilder()
                         .setColor('#00FF00')
-                        .setTitle(`🎫 Nouveau ticket ${tierLabel(tier)} créé`)
+                        .setTitle(`Nouveau ticket ${tierLabel(tier)}`)
                         .addFields(
                             { name: 'Ticket', value: `#${ticketId}`, inline: true },
                             { name: 'Type', value: tierLabel(tier), inline: true },
