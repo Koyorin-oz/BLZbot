@@ -394,7 +394,7 @@ async function handleCreateTicket(interaction) {
                 .setStyle(ButtonStyle.Success),
             new ButtonBuilder()
                 .setCustomId('ticket_remove')
-                .setLabel('➖ Retirer')
+                .setLabel('Retirer')
                 .setStyle(ButtonStyle.Secondary),
             new ButtonBuilder()
                 .setCustomId('ticket_close')
