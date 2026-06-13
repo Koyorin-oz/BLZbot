@@ -254,7 +254,7 @@ class RecruitmentManager {
             );
             hasOpenRecruitment = true;
         } else {
-            embed.addFields({ name: '📢 Communiquant', value: '🔒 Fermé', inline: true });
+            embed.addFields({ name: 'Communiquant', value: 'Fermé', inline: true });
         }
 
         // Développeur
