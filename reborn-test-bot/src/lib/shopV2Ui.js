@@ -71,9 +71,9 @@ async function buildBoutiquePayload(uid, username) {
     const left = ready - Date.now();
     if (left > 0) {
       const mins = Math.ceil(left / 60000);
-      lines.push(`*Prochain CATL gratuit dans ~**${mins} min**.*`);
+      lines.push(`*Prochain Coffre légendaire gratuit dans ~**${mins} min**.*`);
     } else {
-      lines.push('*✨ **CATL gratuit prêt à réclamer** (bouton ci-dessous).*');
+      lines.push('*✨ **Coffre légendaire gratuit prêt à réclamer** (bouton ci-dessous).*');
     }
   }
   const text = new TextDisplayBuilder().setContent(lines.join('\n'));
