@@ -40,15 +40,13 @@ module.exports = {
     .addSubcommand((sc) =>
       sc
         .setName('definir-ranked')
-        .setDescription(d('🔗', 'Associe un rôle existant à un tier ranked.'))
+        .setDescription(d('🔗', 'Associe un rôle existant à un rang ranked (clé : ex. bronze_1, star).'))
         .addStringOption((o) =>
           o
             .setName('tier')
-            .setDescription('Tier ranked')
+            .setDescription('Clé du rang (voir /admin-roles voir). Ex : plastique_1, or_2, legendaire, star.')
             .setRequired(true)
-            .addChoices(
-              ...rankedRoles.TIER_DEFS.map((t) => ({ name: t.label, value: t.key })),
-            ),
+            .setAutocomplete(true),
         )
         .addRoleOption((o) =>
           o.setName('role').setDescription('Rôle Discord à utiliser').setRequired(true),
