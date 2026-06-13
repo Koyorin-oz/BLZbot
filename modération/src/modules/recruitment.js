@@ -131,8 +131,8 @@ class RecruitmentManager {
         await this.updateRecruitmentMessage(interaction.client);
         
         const successEmbed = new EmbedBuilder()
-            .setTitle(`✅ Recrutement ${specialite.charAt(0).toUpperCase() + specialite.slice(1)} Ouvert`)
-            .setDescription(`Le recrutement pour **${specialite}** a été ouvert avec succès !\n\n📊 **Places disponibles :** ${places}`)
+            .setTitle(`Recrutement ${specialite.charAt(0).toUpperCase() + specialite.slice(1)} ouvert`)
+            .setDescription(`Recrutement **${specialite}** ouvert. Places : **${places}**`)
             .setColor('#00FF00')
             .setTimestamp();
         
