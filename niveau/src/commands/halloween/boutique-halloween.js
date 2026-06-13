@@ -47,7 +47,7 @@ module.exports = {
 
         const embed = new EmbedBuilder()
             .setTitle('🎃 Boutique d\'Halloween 🎃')
-            .setDescription(`Votre solde : **${eventUser.bonbons.toLocaleString('fr-FR')}** Bonbons 🍬`)
+            .setDescription(`Votre solde : **${eventUser.bonbons.toLocaleString('fr-FR')}** Bonbons`)
             .setColor('Orange');
 
         const menuOptions = HALLOWEEN_SHOP_ITEMS.map(item => {

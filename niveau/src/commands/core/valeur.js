@@ -22,7 +22,7 @@ function formatValue(value) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('valeur')
-        .setDescription('💎 Voir sa valeur.')
+        .setDescription('Voir sa valeur.')
         .addSubcommand(sub =>
             sub.setName('profil')
                 .setDescription('Voir le détail de votre valeur ou celle d\'un autre joueur.')

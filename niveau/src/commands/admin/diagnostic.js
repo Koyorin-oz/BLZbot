@@ -10,7 +10,7 @@ const roleConfig = require('../../config/role.config.json');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('diagnostic')
-        .setDescription('⚙️ [ADMIN] Affiche les informations de diagnostic d\'un utilisateur.')
+        .setDescription('[ADMIN] Affiche les informations de diagnostic d\'un utilisateur.')
         .addUserOption(option =>
             option.setName('utilisateur')
                 .setDescription('L\'utilisateur à diagnostiquer')
@@ -162,7 +162,7 @@ module.exports = {
         const boostsEmbed = new EmbedBuilder()
             .setTitle('⚡ Multiplicateurs Actifs')
             .setColor(activeBoosts.length > 0 ? 0x00FF00 : 0xFF0000)
-            .setDescription(activeBoosts.length > 0 ? activeBoosts.join('\n') : '❌ Aucun boost actif');
+            .setDescription(activeBoosts.length > 0 ? activeBoosts.join('\n') : 'Aucun boost actif');
 
         // Historique par source
         let sourceText = '';

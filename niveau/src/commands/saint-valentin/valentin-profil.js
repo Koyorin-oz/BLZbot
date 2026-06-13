@@ -6,7 +6,7 @@ const logger = require('../../utils/logger');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('valentin-profil')
-        .setDescription('Affiche ton profil de l\'événement Saint-Valentin 💘')
+        .setDescription('Affiche ton profil de l\'événement Saint-Valentin')
         .addUserOption(option =>
             option.setName('utilisateur')
                 .setDescription('Utilisateur dont afficher le profil (par défaut: toi)')

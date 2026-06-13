@@ -5,7 +5,7 @@ const { buildTicketPanelPayload } = require('../utils/ticket-panel-payload');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('setup-ticket')
-        .setDescription('🎫 Configurer le panneau de tickets')
+        .setDescription('Configurer le panneau de tickets')
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
         .addChannelOption(option =>
             option.setName('salon')

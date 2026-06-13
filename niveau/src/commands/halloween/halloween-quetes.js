@@ -75,7 +75,7 @@ module.exports = {
                             embed.setFooter({ text: `Page ${currentPage + 1} / ${totalPages}` });
                         }
                     } else {
-                        embed.setDescription('Vous avez terminé toutes les quêtes d\'Halloween ! Félicitations ! 🍬');
+                        embed.setDescription('Vous avez terminé toutes les quêtes d\'Halloween ! Félicitations !');
                     }
                 } else { // completed view
                     embed.setTitle('🏆 Succès d\'Halloween Déverrouillés 🏆').setColor('Gold');

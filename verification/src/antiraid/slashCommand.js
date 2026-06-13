@@ -15,17 +15,17 @@ const { BLZ_EMBED_STRIP_INT } = require(path.join(__dirname, '..', '..', '..', '
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('antiraid')
-        .setDescription('🛡️ Gestion du système anti-raid')
+        .setDescription('Gestion du système anti-raid')
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
         .addSubcommand(subcommand =>
             subcommand
                 .setName('status')
-                .setDescription('📊 Voir le statut actuel du système anti-raid')
+                .setDescription('Voir le statut actuel du système anti-raid')
         )
         .addSubcommand(subcommand =>
             subcommand
                 .setName('lockdown')
-                .setDescription('🔒 Activer/désactiver le lockdown manuellement')
+                .setDescription('Activer/désactiver le lockdown manuellement')
                 .addBooleanOption(option =>
                     option
                         .setName('activer')
@@ -36,12 +36,12 @@ module.exports = {
         .addSubcommand(subcommand =>
             subcommand
                 .setName('clear')
-                .setDescription('🧹 Retirer le rôle RAID de tous les membres et réinitialiser le système')
+                .setDescription('Retirer le rôle RAID de tous les membres et réinitialiser le système')
         )
         .addSubcommand(subcommand =>
             subcommand
                 .setName('history')
-                .setDescription('📜 Voir l\'historique des incidents de raid')
+                .setDescription('Voir l\'historique des incidents de raid')
                 .addIntegerOption(option =>
                     option
                         .setName('limite')
@@ -53,7 +53,7 @@ module.exports = {
         .addSubcommand(subcommand =>
             subcommand
                 .setName('score')
-                .setDescription('📈 Modifier manuellement le score anti-raid')
+                .setDescription('Modifier manuellement le score anti-raid')
                 .addIntegerOption(option =>
                     option
                         .setName('valeur')
@@ -66,7 +66,7 @@ module.exports = {
         .addSubcommand(subcommand =>
             subcommand
                 .setName('invites')
-                .setDescription('🔗 Réactiver les invitations après un lockdown')
+                .setDescription('Réactiver les invitations après un lockdown')
         ),
 
     async execute(interaction, { antiRaidManager, config }) {
@@ -519,7 +519,7 @@ module.exports = {
                 .setTimestamp();
 
             if (valeur === 0) {
-                embed.setDescription('⚠️ Le score a été réinitialisé à 0. Le mode raid a été désactivé.');
+                embed.setDescription('Le score a été réinitialisé à 0. Le mode raid a été désactivé.');
             }
 
             await interaction.reply({ embeds: [embed] });

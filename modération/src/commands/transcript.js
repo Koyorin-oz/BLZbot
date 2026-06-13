@@ -3,12 +3,12 @@ const { SlashCommandBuilder, PermissionFlagsBits, AttachmentBuilder } = require(
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('transcript')
-        .setDescription('📜 Générer un transcript de messages')
+        .setDescription('Générer un transcript de messages')
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addSubcommand(subcommand =>
             subcommand
                 .setName('salon')
-                .setDescription('📄 Transcript d\'un salon entier')
+                .setDescription('Transcript d\'un salon entier')
                 .addChannelOption(option =>
                     option.setName('salon')
                         .setDescription('Salon à transcrire (défaut: salon actuel)')
@@ -22,7 +22,7 @@ module.exports = {
         .addSubcommand(subcommand =>
             subcommand
                 .setName('message')
-                .setDescription('📝 Transcript d\'un message spécifique')
+                .setDescription('Transcript d\'un message spécifique')
                 .addStringOption(option =>
                     option.setName('message_id')
                         .setDescription('ID du message à transcrire')

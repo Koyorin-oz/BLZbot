@@ -118,7 +118,7 @@ module.exports = {
                 .setTitle('🎄 Calendrier de l\'Avent Noël 🎄')
                 .setImage('attachment://calendrier.png')
                 .setColor('#DC143C')
-                .setDescription(`Vous avez déjà réclamé votre récompense du jour pour le **${todayDay} décembre** ! Revenez demain ! 🎅`);
+                .setDescription(`Vous avez déjà réclamé votre récompense du jour pour le **${todayDay} décembre** ! Revenez demain !`);
             return interaction.editReply({ embeds: [embed], files: [attachment] });
         }
 
@@ -149,7 +149,7 @@ module.exports = {
                 .setTitle('🎄 Calendrier de l\'Avent Noël 🎄')
                 .setImage('attachment://calendrier.png')
                 .setColor('Green')
-                .setDescription(`✅ **Récompense du ${todayDay} décembre réclamée !**\n\n🎁 Vous avez reçu : **${reward.name}**`);
+                .setDescription(`**Récompense du ${todayDay} décembre réclamée !**\n\n Vous avez reçu : **${reward.name}**`);
 
             await interaction.editReply({ embeds: [embed], files: [attachment] });
             logger.info(`${interaction.user.username} a réclamé sa récompense du calendrier pour le ${todayDay} décembre: ${reward.name}`);
@@ -169,7 +169,7 @@ module.exports = {
                 .setTitle('🎄 Calendrier de l\'Avent Noël 🎄')
                 .setImage('attachment://calendrier.png')
                 .setColor('Red')
-                .setDescription('❌ Une erreur est survenue lors de la réclamation de votre récompense. Veuillez réessayer.');
+                .setDescription('Une erreur est survenue lors de la réclamation de votre récompense. Veuillez réessayer.');
             await interaction.editReply({ embeds: [embed], files: [attachment] });
         }
     },

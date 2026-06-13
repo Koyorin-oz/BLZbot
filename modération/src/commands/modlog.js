@@ -3,7 +3,7 @@ const { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilde
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('modlog')
-        .setDescription('📋 Afficher l\'historique des sanctions et des notes d\'un membre.')
+        .setDescription('Afficher l\'historique des sanctions et des notes d\'un membre.')
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addUserOption(option =>
             option.setName('utilisateur')

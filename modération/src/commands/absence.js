@@ -48,12 +48,12 @@ function formatDuration(ms) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('absence')
-        .setDescription('🕐 Gérer les absences du staff')
+        .setDescription('Gérer les absences du staff')
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addSubcommand(subcommand =>
             subcommand
                 .setName('définir')
-                .setDescription('📅 Déclarer une absence')
+                .setDescription('Déclarer une absence')
                 .addStringOption(option =>
                     option.setName('durée')
                         .setDescription('Durée de l\'absence (ex: 2j, 1s, 12h)')
@@ -65,15 +65,15 @@ module.exports = {
         .addSubcommand(subcommand =>
             subcommand
                 .setName('fin')
-                .setDescription('✅ Terminer son absence'))
+                .setDescription('Terminer son absence'))
         .addSubcommand(subcommand =>
             subcommand
                 .setName('liste')
-                .setDescription('📋 Voir les absences actives'))
+                .setDescription('Voir les absences actives'))
         .addSubcommand(subcommand =>
             subcommand
                 .setName('supprimer')
-                .setDescription('🗑️ Supprimer une absence (Admin)')
+                .setDescription('Supprimer une absence (Admin)')
                 .addIntegerOption(option =>
                     option.setName('id')
                         .setDescription('ID de l\'absence à supprimer')

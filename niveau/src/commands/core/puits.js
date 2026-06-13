@@ -29,7 +29,7 @@ function formatTierCosts(isVip) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('puits')
-        .setDescription('🏆 Puits de Combat - Tirez des récompenses aléatoires !')
+        .setDescription('Puits de Combat - Tirez des récompenses aléatoires !')
         .addSubcommand(sub =>
             sub.setName('afficher')
                 .setDescription('Voir votre progression dans le puits de combat.'))
