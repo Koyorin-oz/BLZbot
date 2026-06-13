@@ -458,7 +458,7 @@ async function handleCloseRequest(interaction) {
     const confirmRow = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId('ticket_close_confirm')
-            .setLabel('✅ Confirmer la fermeture')
+            .setLabel('Confirmer')
             .setStyle(ButtonStyle.Danger),
         new ButtonBuilder()
             .setCustomId('ticket_close_cancel')
