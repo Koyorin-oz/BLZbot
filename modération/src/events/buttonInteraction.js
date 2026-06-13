@@ -810,7 +810,7 @@ async function handleRecruitmentVote(interaction, voteManager, recruitmentManage
             recruitmentVote[actionType][voterId] = voterRolePoints;
 
             const voteEmbed = new EmbedBuilder()
-                .setDescription(`✅ Vous avez voté **${actionType.toUpperCase()}**`)
+                .setDescription(`Vote **${actionType.toUpperCase()}** enregistré.`)
                 .addFields({ name: '⚖️ Poids de votre vote', value: `${voterRolePoints} points`, inline: true })
                 .setColor(actionType === 'oui' ? '#00FF00' : '#FF0000')
                 .setTimestamp();
