@@ -260,8 +260,8 @@ class RecruitmentManager {
         // Développeur
         if (this.recruitmentState.developpeur && this.recruitmentState.developpeur.open && this.recruitmentState.developpeur.places > 0) {
             embed.addFields({
-                name: '💻 Développeur',
-                value: `✅ **Ouvert** (${this.recruitmentState.developpeur.places} places)\nParticipez au développement des bots et outils du serveur.`,
+                name: 'Développeur',
+                value: `Ouvert (${this.recruitmentState.developpeur.places} places)\nBots et outils du serveur.`,
                 inline: true
             });
             row.addComponents(
