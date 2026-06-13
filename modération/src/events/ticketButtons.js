@@ -135,8 +135,8 @@ async function createBridgedTicketFromSupport(interaction, config, client, tier)
         .setTimestamp();
 
     const rowMain = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('ticket_add').setLabel('➕ Ajouter').setStyle(ButtonStyle.Success),
-        new ButtonBuilder().setCustomId('ticket_remove').setLabel('➖ Retirer').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('ticket_add').setLabel('Ajouter').setStyle(ButtonStyle.Success),
+        new ButtonBuilder().setCustomId('ticket_remove').setLabel('Retirer').setStyle(ButtonStyle.Secondary),
         new ButtonBuilder().setCustomId('ticket_close').setLabel('Fermer').setStyle(ButtonStyle.Danger)
     );
 
