@@ -236,7 +236,7 @@ class RecruitmentManager {
             );
             hasOpenRecruitment = true;
         } else {
-            embed.addFields({ name: '🛡️ Modérateur', value: '🔒 Fermé', inline: true });
+            embed.addFields({ name: 'Modérateur', value: 'Fermé', inline: true });
         }
 
         // Communiquant
