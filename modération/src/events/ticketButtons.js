@@ -600,7 +600,7 @@ async function handleDeleteRequest(interaction) {
     const confirmRow = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId('ticket_delete_confirm')
-            .setLabel('✅ Supprimer définitivement')
+            .setLabel('Supprimer définitivement')
             .setStyle(ButtonStyle.Danger),
         new ButtonBuilder()
             .setCustomId('ticket_delete_cancel')
