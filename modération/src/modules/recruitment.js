@@ -277,7 +277,7 @@ class RecruitmentManager {
 
         if (!hasOpenRecruitment) {
             embed.setColor('#FF0000');
-            embed.setDescription('**Le recrutement est actuellement fermé pour tous les postes.**\nRevenez plus tard !');
+            embed.setDescription('Recrutement fermé pour tous les postes.');
         }
 
         const components = hasOpenRecruitment ? [row] : [];
