@@ -40,6 +40,36 @@ module.exports = {
         .addIntegerOption((o) =>
           o.setName('voc_par_jour').setDescription('Minutes de voc / joueur / jour (def 30)').setRequired(false).setMinValue(0).setMaxValue(1440),
         ),
+    )
+    .addSubcommand((sc) =>
+      sc.setName('pause').setDescription('Geler l’économie : plus de gains, daily, boutique, rôles auto.'),
+    )
+    .addSubcommand((sc) =>
+      sc.setName('reprendre').setDescription('Relancer l’économie après une pause.'),
+    )
+    .addSubcommand((sc) =>
+      sc.setName('statut').setDescription('Voir si l’économie est en pause ou active.'),
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('reset')
+        .setDescription('Réinitialiser l’économie (action irréversible).')
+        .addStringOption((o) =>
+          o
+            .setName('portee')
+            .setDescription('Ce qui est remis à zéro')
+            .setRequired(true)
+            .addChoices(
+              { name: 'Starss uniquement', value: 'starss' },
+              { name: 'Complet (starss, RP, XP, inventaire, boutique, GXP/GRP)', value: 'complet' },
+            ),
+        )
+        .addStringOption((o) =>
+          o
+            .setName('confirmation')
+            .setDescription('Tape CONFIRMER pour valider')
+            .setRequired(true),
+        ),
     ),
 
   async execute(interaction, ctx) {
