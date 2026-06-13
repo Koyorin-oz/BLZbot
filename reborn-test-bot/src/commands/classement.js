@@ -20,21 +20,21 @@ const TYPES = {
     emoji: '💸',
     color: 0xf1c40f,
     unit: 'starss',
-    description: 'Classement par solde de starss courant.',
+    description: 'Classement par solde de starss courant',
   },
   niveau: {
     label: '⭐ Niveau (XP)',
     emoji: '⭐',
     color: 0x3498db,
     unit: 'niveau',
-    description: 'Classement par niveau XP joueur (XP total en départage).',
+    description: 'Classement par niveau XP joueur (XP total en départage)',
   },
   rp: {
     label: '⚔️ Ranked RP',
     emoji: '⚔️',
     color: 0xe74c3c,
     unit: 'RP',
-    description: 'Classement par Ranked Points (tier Bronze → Apex).',
+    description: 'Classement par Ranked Points (tier Bronze → Apex)',
   },
 };
 
