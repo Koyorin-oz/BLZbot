@@ -120,10 +120,10 @@ function trackMinijeuWin(userId) {
 function trackRankReached(userId, tierKey) {
   let row = syncDayWeek(getState(userId));
   if (row.selection_id !== 'defi_master' || row.selection_claimed) return null;
-  // Pour la quête actuelle, on ne valide qu'à partir de Master.
+  // Pour la quête actuelle, on ne valide qu'à partir de Master (70k RP).
   const target = SELECTIONS.defi_master.tier || 'master';
-  const order = ['bronze', 'argent', 'or', 'platine', 'diamond', 'master', 'apex'];
-  if (order.indexOf(tierKey) < order.indexOf(target)) return null;
+  const rankedRoles = require('./rankedRoles');
+  if (!rankedRoles.isAtLeast(tierKey, target)) return null;
   db.prepare('UPDATE user_quest_state SET selection_claimed = 1, selection_progress = 1 WHERE user_id = ?').run(userId);
   const reward = SELECTIONS.defi_master.reward * skillTree.questRewardMult(userId);
   users.addStars(userId, reward);
