@@ -157,7 +157,18 @@ async function endVoteProgrammatically(message, guild, voteManager, forceVoteKey
                         const member = await guild.members.fetch(voteKey).catch(() => null);
                         if (member) {
                             await member.roles.remove(CONFIG.MODO_TEST_ROLE_ID).catch(() => null);
-                            await member.send('❌ Malheureusement, votre période de test n\'a pas été concluante pour le passage en modérateur permanent.').catch(() => null);
+                            const serverName = guild?.name || 'BLZ starss';
+                            const serverIcon = guild?.iconURL?.({ size: 1024, extension: 'png' });
+                            const inviteUrl = 'https://discord.gg/qJ4kgDb4Dg';
+                            const failureEmbed = new EmbedBuilder()
+                                .setTitle('Merci pour votre implication 💛')
+                                .setAuthor({ name: serverName, iconURL: serverIcon, url: inviteUrl })
+                                .setDescription('Votre période de test s\'arrête malheureusement ici, mais votre engagement nous a énormément apporté ! Merci à vous de nous avoir aidé !\n\n**Nous espérons vous revoir bientôt !**')
+                                .setThumbnail(member.user.displayAvatarURL?.({ size: 512, extension: 'png' }))
+                                .setFooter({ text: 'BLZ starss • L\'Equipe de modération' })
+                                .setTimestamp()
+                                .setColor('#FFA500');
+                            await member.send({ embeds: [failureEmbed] }).catch(() => null);
                         }
                     }
                 }
