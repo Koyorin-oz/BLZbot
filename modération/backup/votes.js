@@ -337,34 +337,134 @@ async function checkVotesPeriod() {
         }
 
         if (member) {
+          const serverName = 'BLZstarss';
+          const serverIcon = guild?.iconURL?.({ size: 1024, extension: 'png' });
+          const inviteUrl = 'https://discord.gg/qJ4kgDb4Dg';
+
           if (promoteUser) {
-            switch (vote.type) {
-              case 'candidature':
-                await member.roles.add('1323240945235529748').catch(() => null);
-                await member.send('GG vous êtes passé modérateur test !').catch(() => null);
-                const endDate = new Date();
-                endDate.setDate(endDate.getDate() + 14);
-                modoTestData[sujet] = endDate.toISOString();
-                break;
-              case 'modo_test_to_modo':
-                await member.roles.remove('1323240945235529748').catch(() => null);
-                await member.roles.add('1323241032770654289').catch(() => null);
-                await member.send('GG vous êtes maintenant modérateur permanent !').catch(() => null);
-                break;
-              case 'superviseur_to_admin_test':
-                await member.roles.add('1404222782891495424').catch(() => null);
-                await member.send('GG vous êtes maintenant administrateur test !').catch(() => null);
-                break;
-              case 'admin_test_to_admin':
-                await member.roles.remove('1404222782891495424').catch(() => null);
-                await member.roles.add('1323241037392642129').catch(() => null);
-                await member.send('GG vous êtes maintenant administrateur permanent !').catch(() => null);
-                break;
-              default:
-                break;
-            }
+              switch (vote.type) {
+
+                  case 'candidature': {
+                      await member.roles.add('1323240945235529748').catch(() => null);
+
+                      const endDate = new Date();
+                      endDate.setDate(endDate.getDate() + 14);
+                      modoTestData[sujet] = endDate.toISOString();
+
+                      const embed = new EmbedBuilder()
+                          .setTitle('🎉 Félicitations !')
+                          .setAuthor({
+                              name: serverName,
+                              iconURL: serverIcon,
+                              url: inviteUrl
+                          })
+                          .setDescription(
+                              'Votre candidature a été acceptée !\n\n' +
+                              'Vous êtes désormais **Modérateur Test** pour une période de **14 jours**.\n\n' +
+                              '**Bonne chance dans vos nouvelles fonctions !**'
+                          )
+                          .setThumbnail(member.user.displayAvatarURL({ size: 512, extension: 'png' }))
+                          .setColor('#00FF7F')
+                          .setFooter({ text: `${serverName} • Équipe de modération` })
+                          .setTimestamp();
+
+                      await member.send({ embeds: [embed] }).catch(() => null);
+                      break;
+                  }
+
+                  case 'modo_test_to_modo': {
+                      await member.roles.remove('1323240945235529748').catch(() => null);
+                      await member.roles.add('1323241032770654289').catch(() => null);
+
+                      const embed = new EmbedBuilder()
+                          .setTitle('🏆 Promotion obtenue !')
+                          .setAuthor({
+                              name: serverName,
+                              iconURL: serverIcon,
+                              url: inviteUrl
+                          })
+                          .setDescription(
+                              'Après votre période de test, vous avez été promu au grade de **Modérateur Permanent**.\n\n' +
+                              'Merci pour votre investissement et votre sérieux.'
+                          )
+                          .setThumbnail(member.user.displayAvatarURL({ size: 512, extension: 'png' }))
+                          .setColor('#0099FF')
+                          .setFooter({ text: `${serverName} • Équipe de modération` })
+                          .setTimestamp();
+
+                      await member.send({ embeds: [embed] }).catch(() => null);
+                      break;
+                  }
+
+                  case 'superviseur_to_admin_test': {
+                      await member.roles.add('1404222782891495424').catch(() => null);
+
+                      const embed = new EmbedBuilder()
+                          .setTitle('🚀 Nouvelle responsabilité')
+                          .setAuthor({
+                              name: serverName,
+                              iconURL: serverIcon,
+                              url: inviteUrl
+                          })
+                          .setDescription(
+                              'Vous avez été sélectionné pour devenir **Administrateur Test**.\n\n' +
+                              'Cette promotion récompense votre implication au sein du serveur.'
+                          )
+                          .setThumbnail(member.user.displayAvatarURL({ size: 512, extension: 'png' }))
+                          .setColor('#5865F2')
+                          .setFooter({ text: `${serverName} • Équipe de modération` })
+                          .setTimestamp();
+
+                      await member.send({ embeds: [embed] }).catch(() => null);
+                      break;
+                  }
+
+                  case 'admin_test_to_admin': {
+                      await member.roles.remove('1404222782891495424').catch(() => null);
+                      await member.roles.add('1323241037392642129').catch(() => null);
+
+                      const embed = new EmbedBuilder()
+                          .setTitle('👑 Promotion validée')
+                          .setAuthor({
+                              name: serverName,
+                              iconURL: serverIcon,
+                              url: inviteUrl
+                          })
+                          .setDescription(
+                              'Votre période de test est terminée avec succès !\n\n' +
+                              'Vous êtes désormais **Administrateur Permanent**.'
+                          )
+                          .setThumbnail(member.user.displayAvatarURL({ size: 512, extension: 'png' }))
+                          .setColor('#FFD700')
+                          .setFooter({ text: `${serverName} • Équipe de modération` })
+                          .setTimestamp();
+
+                      await member.send({ embeds: [embed] }).catch(() => null);
+                      break;
+                  }
+
+                  default:
+                      break;
+              }
           } else if (rejectUser && vote.type === 'candidature') {
-            await member.send('Vous avez malheureusement été refusé.').catch(() => null);
+
+              const embed = new EmbedBuilder()
+                  .setTitle('💛 Merci pour votre candidature')
+                  .setAuthor({
+                      name: serverName,
+                      iconURL: serverIcon,
+                      url: inviteUrl
+                  })
+                  .setDescription(
+                      'Après délibération, votre candidature n\'a malheureusement pas été retenue cette fois-ci.\n\n' +
+                      'Nous vous remercions sincèrement pour l\'intérêt que vous portez au serveur et vous encourageons à retenter votre chance plus tard.'
+                  )
+                  .setThumbnail(member.user.displayAvatarURL({ size: 512, extension: 'png' }))
+                  .setColor('#FFA500')
+                  .setFooter({ text: `${serverName} • Équipe de modération` })
+                  .setTimestamp();
+
+              await member.send({ embeds: [embed] }).catch(() => null);
           }
         }
         if (vote.channelId && vote.messageId) {
@@ -684,34 +784,134 @@ client.on('interactionCreate', async interaction => {
         await channel.send(finalMessage);
 
         if (member) {
+          const serverName = 'BLZstarss';
+          const serverIcon = guild?.iconURL?.({ size: 1024, extension: 'png' });
+          const inviteUrl = 'https://discord.gg/qJ4kgDb4Dg';
+
           if (promoteUser) {
-            switch (totalVotes.type) {
-              case 'candidature':
-                await member.roles.add('1323240945235529748');
-                await member.send('GG vous êtes passé modérateur test !');
-                const endDate = new Date();
-                endDate.setDate(endDate.getDate() + 14);
-                modoTestData[sujet] = endDate.toISOString();
-                break;
-              case 'modo_test_to_modo':
-                await member.roles.remove('1323240945235529748');
-                await member.roles.add('1323241032770654289');
-                await member.send('GG vous êtes maintenant modérateur permanent !');
-                break;
-              case 'superviseur_to_admin_test':
-                await member.roles.add('1404222782891495424');
-                await member.send('GG vous êtes maintenant administrateur test !');
-                break;
-              case 'admin_test_to_admin':
-                await member.roles.remove('1404222782891495424');
-                await member.roles.add('1323241037392642129');
-                await member.send('GG vous êtes maintenant administrateur permanent !');
-                break;
-              default:
-                break;
-            }
+              switch (totalVotes.type) {
+
+                  case 'candidature': {
+                      await member.roles.add('1323240945235529748');
+
+                      const endDate = new Date();
+                      endDate.setDate(endDate.getDate() + 14);
+                      modoTestData[sujet] = endDate.toISOString();
+
+                      const embed = new EmbedBuilder()
+                          .setTitle('🎉 Félicitations !')
+                          .setAuthor({
+                              name: serverName,
+                              iconURL: serverIcon,
+                              url: inviteUrl
+                          })
+                          .setDescription(
+                              'Votre candidature a été acceptée !\n\n' +
+                              'Vous êtes désormais **Modérateur Test** pour une période de **14 jours**.\n\n' +
+                              '**Bonne chance dans vos nouvelles fonctions !**'
+                          )
+                          .setThumbnail(member.user.displayAvatarURL({ size: 512, extension: 'png' }))
+                          .setColor('#00FF7F')
+                          .setFooter({ text: `${serverName} • Équipe de modération` })
+                          .setTimestamp();
+
+                      await member.send({ embeds: [embed] });
+                      break;
+                  }
+
+                  case 'modo_test_to_modo': {
+                      await member.roles.remove('1323240945235529748');
+                      await member.roles.add('1323241032770654289');
+
+                      const embed = new EmbedBuilder()
+                          .setTitle('🏆 Promotion obtenue !')
+                          .setAuthor({
+                              name: serverName,
+                              iconURL: serverIcon,
+                              url: inviteUrl
+                          })
+                          .setDescription(
+                              'Après votre période de test, vous avez été promu au grade de **Modérateur Permanent**.\n\n' +
+                              'Merci pour votre investissement et votre sérieux.'
+                          )
+                          .setThumbnail(member.user.displayAvatarURL({ size: 512, extension: 'png' }))
+                          .setColor('#0099FF')
+                          .setFooter({ text: `${serverName} • Équipe de modération` })
+                          .setTimestamp();
+
+                      await member.send({ embeds: [embed] });
+                      break;
+                  }
+
+                  case 'superviseur_to_admin_test': {
+                      await member.roles.add('1404222782891495424');
+
+                      const embed = new EmbedBuilder()
+                          .setTitle('🚀 Nouvelle responsabilité')
+                          .setAuthor({
+                              name: serverName,
+                              iconURL: serverIcon,
+                              url: inviteUrl
+                          })
+                          .setDescription(
+                              'Vous avez été sélectionné pour devenir **Administrateur Test**.\n\n' +
+                              'Cette promotion récompense votre implication au sein du serveur.'
+                          )
+                          .setThumbnail(member.user.displayAvatarURL({ size: 512, extension: 'png' }))
+                          .setColor('#5865F2')
+                          .setFooter({ text: `${serverName} • Équipe de modération` })
+                          .setTimestamp();
+
+                      await member.send({ embeds: [embed] });
+                      break;
+                  }
+
+                  case 'admin_test_to_admin': {
+                      await member.roles.remove('1404222782891495424');
+                      await member.roles.add('1323241037392642129');
+
+                      const embed = new EmbedBuilder()
+                          .setTitle('👑 Promotion validée')
+                          .setAuthor({
+                              name: serverName,
+                              iconURL: serverIcon,
+                              url: inviteUrl
+                          })
+                          .setDescription(
+                              'Votre période de test est terminée avec succès !\n\n' +
+                              'Vous êtes désormais **Administrateur Permanent**.'
+                          )
+                          .setThumbnail(member.user.displayAvatarURL({ size: 512, extension: 'png' }))
+                          .setColor('#FFD700')
+                          .setFooter({ text: `${serverName} • Équipe de modération` })
+                          .setTimestamp();
+
+                      await member.send({ embeds: [embed] });
+                      break;
+                  }
+
+                  default:
+                      break;
+              }
           } else if (rejectUser && totalVotes.type === 'candidature') {
-            await member.send('Vous avez malheureusement été refusé.');
+
+              const embed = new EmbedBuilder()
+                  .setTitle('💛 Merci pour votre candidature')
+                  .setAuthor({
+                      name: serverName,
+                      iconURL: serverIcon,
+                      url: inviteUrl
+                  })
+                  .setDescription(
+                      'Après délibération, votre candidature n\'a malheureusement pas été retenue cette fois-ci.\n\n' +
+                      'Nous vous remercions sincèrement pour l\'intérêt que vous portez au serveur et vous encourageons à retenter votre chance ultérieurement.'
+                  )
+                  .setThumbnail(member.user.displayAvatarURL({ size: 512, extension: 'png' }))
+                  .setColor('#FFA500')
+                  .setFooter({ text: `${serverName} • Équipe de modération` })
+                  .setTimestamp();
+
+              await member.send({ embeds: [embed] });
           }
         }
         
