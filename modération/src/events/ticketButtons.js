@@ -395,7 +395,7 @@ async function handleCreateTicket(interaction) {
                 .setStyle(ButtonStyle.Secondary),
             new ButtonBuilder()
                 .setCustomId('ticket_close')
-                .setLabel('🔒 Fermer')
+                .setLabel('Fermer')
                 .setStyle(ButtonStyle.Danger)
         );
 
