@@ -36,7 +36,9 @@ for (const root of roots) {
         let changed = false;
         const next = lines.map((line) => {
             if (!/\.set(Description|Name)\(/.test(line)) return line;
-            const stripped = line.replace(emojiRe, '').replace(/  +/g, ' ');
+            let stripped = line.replace(emojiRe, '');
+            stripped = stripped.replace(/(['"`])\s+/g, '$1');
+            stripped = stripped.replace(/  +/g, ' ');
             if (stripped !== line) {
                 changed = true;
                 linesChanged++;
