@@ -5,7 +5,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('role-tous')
+    .setName('give-role')
     .setDescription(d('', 'Donner ou retirer un rôle à tous les membres (admin).'))
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
     .addSubcommand((sc) =>
