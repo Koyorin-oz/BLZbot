@@ -25,7 +25,7 @@ module.exports = {
     .setDescription(d('⚙️', 'Gestion des rôles Discord (Ranked, Index 100 %, Temple).'))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand((sc) =>
-      sc.setName('creer-ranked').setDescription(d('🏅', 'Crée les rôles Bronze → Apex sur ce serveur.')),
+      sc.setName('creer-ranked').setDescription(d('🏅', 'Crée les rôles Vide → Star (échelle gdoc) sur ce serveur.')),
     )
     .addSubcommand((sc) =>
       sc
