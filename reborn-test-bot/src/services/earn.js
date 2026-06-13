@@ -14,6 +14,7 @@ const indexRoles = require('./indexRoles');
 const indexBonuses = require('./indexBonuses');
 const streak = require('./streak');
 const templeDiscordRoles = require('./templeDiscordRoles');
+const economyState = require('./economyState');
 const { notifyQuestUnlocks } = require('../lib/questNotify');
 
 /** @type {Map<string, { guildId: string, since: number }>} */
