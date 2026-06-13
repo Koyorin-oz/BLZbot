@@ -107,23 +107,23 @@ async function handlePurchase(interaction, parts) {
     let label = '';
     if (sub === 'classic') {
       price = CHEST_CLASSIC;
-      label = 'Coffre Au Trésor Classique';
+      label = 'Coffre classique';
     } else if (sub === 'catm') {
       price = CHEST_CATM;
-      label = 'Coffre Au Trésor Mieux (CATM)';
+      label = 'Coffre meilleur';
       const day = shop.utcDateKey();
       users.resetCatmIfNewDay(uid, day);
       const { count } = users.getCatmState(uid);
       if (count >= CATM_DAILY_LIMIT) {
-        await interaction.reply({ content: `Limite journalière CATM (**${CATM_DAILY_LIMIT}**/jour).` });
+        await interaction.reply({ content: `Limite journalière Coffre meilleur (**${CATM_DAILY_LIMIT}**/jour).` });
         return;
       }
     } else if (sub === 'catl') {
       price = CHEST_CATL;
-      label = 'Coffre Au Trésor Légendaire (CATL)';
+      label = 'Coffre légendaire';
     } else if (sub === 'cats') {
       price = CHEST_CATS;
-      label = 'Coffre Au Trésor Starss (CATS)';
+      label = 'Coffre starss';
     } else {
       await interaction.reply({ content: 'Coffre inconnu.' });
       return;
