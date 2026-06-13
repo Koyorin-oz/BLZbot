@@ -794,7 +794,7 @@ async function handleRecruitmentVote(interaction, voteManager, recruitmentManage
             delete recruitmentVote[actionType][voterId];
 
             const removeEmbed = new EmbedBuilder()
-                .setDescription(`🗑️ Votre vote **${actionType.toUpperCase()}** a été retiré.`)
+                .setDescription(`Vote **${actionType.toUpperCase()}** retiré.`)
                 .setColor('#FFA500')
                 .setTimestamp();
 
