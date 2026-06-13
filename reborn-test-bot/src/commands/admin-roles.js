@@ -308,4 +308,19 @@ module.exports = {
       });
     }
   },
+
+  async autocomplete(interaction) {
+    try {
+      const focused = interaction.options.getFocused(true);
+      if (focused.name !== 'tier') return interaction.respond([]);
+      const q = String(focused.value || '').toLowerCase();
+      const choices = rankedRoles.RANKS_ASC
+        .filter((t) => t.key.includes(q) || t.label.toLowerCase().includes(q))
+        .slice(0, 25)
+        .map((t) => ({ name: `${t.label} (${t.key})`, value: t.key }));
+      return interaction.respond(choices);
+    } catch {
+      return interaction.respond([]);
+    }
+  },
 };
