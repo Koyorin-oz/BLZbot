@@ -77,6 +77,7 @@ function loyalCampGrpMultBp(hubDiscordId, userId) {
 
 function grantVoiceMinutes(guildId, userId, minutes) {
   if (minutes <= 0n) return;
+  if (economyState.isPaused()) return;
   users.getOrCreate(userId, '');
   const row = users.getUser(userId);
   const baseStars = BigInt(C.STARSS_PER_VOICE_MINUTE) * minutes;
