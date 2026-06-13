@@ -224,8 +224,8 @@ class RecruitmentManager {
         // Modérateur
         if (this.recruitmentState.moderateur && this.recruitmentState.moderateur.open && this.recruitmentState.moderateur.places > 0) {
             embed.addFields({
-                name: '🛡️ Modérateur',
-                value: `✅ **Ouvert** (${this.recruitmentState.moderateur.places} places)\nAssurez la sécurité et la bonne ambiance du serveur.`,
+                name: 'Modérateur',
+                value: `Ouvert (${this.recruitmentState.moderateur.places} places)\nSécurité et ambiance du serveur.`,
                 inline: true
             });
             row.addComponents(
