@@ -272,7 +272,7 @@ class RecruitmentManager {
             );
             hasOpenRecruitment = true;
         } else {
-            embed.addFields({ name: '💻 Développeur', value: '🔒 Fermé', inline: true });
+            embed.addFields({ name: 'Développeur', value: 'Fermé', inline: true });
         }
 
         if (!hasOpenRecruitment) {
