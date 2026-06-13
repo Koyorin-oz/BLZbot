@@ -117,6 +117,32 @@ function addEventCurrency(userId, delta) {
   return n;
 }
 
+/** Monnaies d'event (colonnes whitelistées). */
+const EVENT_CUR_FIELDS = new Set(['meteorites', 'litres_eau']);
+
+function getEventBal(userId, field) {
+  if (!EVENT_CUR_FIELDS.has(field)) return 0n;
+  const u = getStmt.get(userId);
+  return u ? B(u[field]) : 0n;
+}
+
+function addEventBal(userId, field, delta) {
+  if (!EVENT_CUR_FIELDS.has(field)) return 0n;
+  getOrCreate(userId, '');
+  const n = getEventBal(userId, field) + (typeof delta === 'bigint' ? delta : B(delta));
+  db.prepare(`UPDATE users SET ${field} = ? WHERE id = ?`).run(n.toString(), userId);
+  return n;
+}
+
+function takeEventBal(userId, field, amount) {
+  if (!EVENT_CUR_FIELDS.has(field)) return false;
+  const cur = getEventBal(userId, field);
+  const a = typeof amount === 'bigint' ? amount : B(amount);
+  if (cur < a) return false;
+  db.prepare(`UPDATE users SET ${field} = ? WHERE id = ?`).run((cur - a).toString(), userId);
+  return true;
+}
+
 function setBoostField(userId, field, untilMs) {
   getOrCreate(userId, '');
   const row = getStmt.get(userId);
