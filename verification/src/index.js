@@ -389,6 +389,16 @@ async function main() {
   process.on('SIGTERM', shutdown);
 }
 
+// Gardes anti-crash : ce bot est exposé sur Internet (serveur OAuth public).
+// On log mais on NE tue PAS le process, pour qu'une requête/interaction malformée
+// d'un attaquant ne puisse pas faire tomber la vérification.
+process.on('unhandledRejection', (reason) => {
+  console.error('[verif] unhandledRejection:', reason?.stack || reason?.message || reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[verif] uncaughtException:', err?.stack || err?.message || err);
+});
+
 main().catch((e) => {
   console.error(e);
   process.exit(1);

@@ -15,6 +15,27 @@ require('dotenv').config({
 });
 applyTestGuildOverride();
 
+// Gardes anti-crash : on log sans tuer le process pour qu'une interaction/donnée
+// malformée (ex. abus depuis Discord) ne fasse pas tomber le bot principal.
+process.on('unhandledRejection', (reason) => {
+    try {
+        require('./utils/logger').error(
+            '[niveau] unhandledRejection: ' + (reason?.stack || reason?.message || reason),
+        );
+    } catch {
+        console.error('[niveau] unhandledRejection:', reason);
+    }
+});
+process.on('uncaughtException', (err) => {
+    try {
+        require('./utils/logger').error(
+            '[niveau] uncaughtException: ' + (err?.stack || err?.message || err),
+        );
+    } catch {
+        console.error('[niveau] uncaughtException:', err);
+    }
+});
+
 const logger = require('./utils/logger');
 const fs = require('node:fs');
 const { Client, Collection, GatewayIntentBits } = require('discord.js');
