@@ -31,6 +31,49 @@
   }
 })();
 
+// Pebble : force la récupération du dernier code à CHAQUE démarrage.
+// Le pull auto du panel Pebble peut échouer (ex. dépôt déplacé) ; on le fait donc nous-mêmes.
+// SÛR pour les données : `reset --hard` ne touche que les fichiers SUIVIS par git.
+// Les bases (*.db/*.sqlite), le .env, credentials.json… sont gitignore → intacts.
+// On n'utilise JAMAIS `git clean` ici (il supprimerait ces fichiers non suivis).
+// Désactive avec BLZ_PEBBLE_PULL=0.
+(function pebbleForcePullOnStart() {
+  if (['0', 'false', 'no', 'off'].includes(String(process.env.BLZ_PEBBLE_PULL || '').trim().toLowerCase())) {
+    return;
+  }
+  const fs = require('fs');
+  const path = require('path');
+  const { execSync } = require('child_process');
+  const root = path.join(__dirname, '..');
+  if (!fs.existsSync(path.join(root, '.git'))) {
+    console.error('[pebble-pull] Pas de .git — pull auto ignoré.');
+    return;
+  }
+  const branch = (process.env.BLZ_GITHUB_BRANCH || 'main').trim() || 'main';
+  // Le dépôt a été déplacé vers Koyorin-oz/BLZbot : on réaligne l'origine par défaut.
+  const repoUrl = (process.env.BLZ_GITHUB_URL || 'https://github.com/Koyorin-oz/BLZbot.git').trim();
+  const git = (args) => execSync(`git ${args}`, { cwd: root, stdio: 'pipe' }).toString().trim();
+  try {
+    try {
+      git(`remote set-url origin ${repoUrl}`);
+    } catch (e) {
+      console.error('[pebble-pull] remote set-url ignoré :', e?.message || e);
+    }
+    const before = git('rev-parse HEAD');
+    console.log(`[pebble-pull] git fetch origin ${branch} + reset --hard (données préservées)…`);
+    git(`fetch origin ${branch}`);
+    git(`reset --hard origin/${branch}`);
+    const after = git('rev-parse HEAD');
+    if (before !== after) {
+      console.log(`[pebble-pull] Code mis à jour (${before.slice(0, 7)} → ${after.slice(0, 7)}) — redémarrage pour charger le nouveau code…`);
+      process.exit(0);
+    }
+    console.log('[pebble-pull] Déjà à jour.');
+  } catch (e) {
+    console.error('[pebble-pull] Échec du pull auto (on continue avec le code actuel) :', e?.message || e);
+  }
+})();
+
 // --- Modules et configuration de l'environnement ---
 const { fork, execFile } = require('child_process');
 const path = require('path');
