@@ -314,6 +314,7 @@ async function handleComponentInteraction(interaction, client) {
           interaction.member?.displayName || interaction.user.username,
           interaction.user.displayAvatarURL({ extension: 'png', size: 128 }),
           'demi',
+          { backUserId: interaction.user.id },
         );
         if (b) {
           await interaction.editReply({

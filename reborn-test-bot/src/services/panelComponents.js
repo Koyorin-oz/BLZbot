@@ -91,8 +91,13 @@ async function tryRenderTreePng(userId, displayName, avatarUrl, layout = 'star')
  * @param {string} avatarUrl
  * @param {'star' | 'demi'} [layout]
  */
-async function buildArbreContainer(userId, displayName, avatarUrl, layout = 'star') {
+async function buildArbreContainer(userId, displayName, avatarUrl, layout = 'star', opts = {}) {
   const lay = normalizeLayout(layout);
+  // Quand l'arbre est ouvert depuis /profil, on ajoute un bouton "Retour" (géré par le
+  // collector du bot niveau via `pv2_back_<userId>`) et on marque les boutons Débloquer/
+  // Rafraîchir avec `:p` pour que le retour survive à un rebuild.
+  const backUserId = opts.backUserId || null;
+  const proSuffix = backUserId ? ':p' : '';
   const buf = await tryRenderTreePng(userId, displayName, avatarUrl, lay);
   if (!buf) return null;
   const file = new AttachmentBuilder(buf, { name: 'arbre_reborn.png' });
@@ -125,16 +130,25 @@ async function buildArbreContainer(userId, displayName, avatarUrl, layout = 'sta
   const row0 = new ActionRowBuilder().addComponents(select);
   const row1 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
-      .setCustomId(`rb:tree:go:${lay}`)
+      .setCustomId(`rb:tree:go:${lay}${proSuffix}`)
       .setLabel('Débloquer')
       .setStyle(ButtonStyle.Success)
       .setEmoji('✨'),
     new ButtonBuilder()
-      .setCustomId(`rb:tree:re:${lay}`)
+      .setCustomId(`rb:tree:re:${lay}${proSuffix}`)
       .setLabel('Rafraîchir')
       .setStyle(ButtonStyle.Secondary)
       .setEmoji('🔄'),
   );
+  if (backUserId) {
+    row1.addComponents(
+      new ButtonBuilder()
+        .setCustomId(`pv2_back_${backUserId}`)
+        .setLabel('Retour')
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji('⬅️'),
+    );
+  }
   c.addActionRowComponents(row0, row1);
   return { file, container: c, flags: MessageFlags.IsComponentsV2 };
 }
@@ -280,9 +294,10 @@ async function handlePanelInteraction(interaction) {
     return interaction.editReply(p);
   }
 
-  const goMatch = interaction.customId.match(/^rb:tree:go(?::(\w+))?$/);
+  const goMatch = interaction.customId.match(/^rb:tree:go(?::(\w+))?(?::(p))?$/);
   if (goMatch) {
     const lay = normalizeLayout(goMatch[1]);
+    const fromProfil = goMatch[2] === 'p';
     const br = pick.get(interaction.user.id, interaction.message.id);
     if (!br || !skillTree.BRANCHES.includes(br)) {
       return interaction.reply({ content: 'Sélectionne une **branche** dans le menu déroulant.' });
@@ -297,6 +312,7 @@ async function handlePanelInteraction(interaction) {
       interaction.member?.displayName || interaction.user.username,
       interaction.user.displayAvatarURL({ extension: 'png', size: 128 }),
       lay,
+      { backUserId: fromProfil ? uid : null },
     );
     if (!b) {
       return interaction.followUp({
@@ -310,15 +326,17 @@ async function handlePanelInteraction(interaction) {
     });
   }
 
-  const reMatch = interaction.customId.match(/^rb:tree:re(?::(\w+))?$/);
+  const reMatch = interaction.customId.match(/^rb:tree:re(?::(\w+))?(?::(p))?$/);
   if (reMatch) {
     const lay = normalizeLayout(reMatch[1]);
+    const fromProfil = reMatch[2] === 'p';
     await interaction.deferUpdate();
     const b = await buildArbreContainer(
       interaction.user.id,
       interaction.member?.displayName || interaction.user.username,
       interaction.user.displayAvatarURL({ extension: 'png', size: 128 }),
       lay,
+      { backUserId: fromProfil ? interaction.user.id : null },
     );
     if (!b) {
       return interaction.followUp({ content: 'Génération image indisponible (canvas).' });
