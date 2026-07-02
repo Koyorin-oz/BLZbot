@@ -159,11 +159,7 @@ async function replyVerifyLinkEphemeral(interaction, url) {
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
   try {
     await interaction.editReply({
-      content:
-        '**Étape 2 — Vérification**\n' +
-        'Clique sur le bouton **🔐 Vérifier** ci-dessous (même **compte Discord** dans le navigateur).\n' +
-        '_Aucun lien à copier : tout passe par le bouton._\n' +
-        `\n\`${VERIF_BUILD_ID}\``,
+      content: '',
       components: [buildVerifyLinkRow(url)],
     });
   } catch (e) {

@@ -50,6 +50,23 @@ const { applyGlobalLogPolicy, isCompact, blzLine, blzError, emitChildLine } = re
   'blz-log.js'
 ));
 applyGlobalLogPolicy();
+
+// Surface les erreurs qui seraient sinon avalées par la politique de log compacte.
+process.on('unhandledRejection', (reason) => {
+  try {
+    blzError('maintemp', 'unhandledRejection:', reason?.stack || reason?.message || reason);
+  } catch {
+    console.error('[maintemp] unhandledRejection:', reason);
+  }
+});
+process.on('uncaughtException', (err) => {
+  try {
+    blzError('maintemp', 'uncaughtException:', err?.stack || err?.message || err);
+  } catch {
+    console.error('[maintemp] uncaughtException:', err);
+  }
+});
+
 /** Racine du dépôt (parent de orchestrator/) */
 const REPO_ROOT = path.join(__dirname, '..');
 
@@ -637,11 +654,32 @@ function scheduleSlashSyncFromOrchestrator() {
   }, delay);
 }
 
+// Démarrage des services enfants : idempotent, appelé au plus tôt.
+// Les bots enfants (niveau, modération, vérification…) sont des process autonomes ;
+// on NE doit PAS bloquer leur lancement sur la connexion Gateway de l'orchestrateur,
+// sinon un login lent/échoué de l'orchestrateur fait que « les commandes ne répondent pas ».
+let _childrenStarted = false;
+function startChildrenOnce(reason) {
+  if (_childrenStarted) return;
+  _childrenStarted = true;
+  blzLine('maintemp', `Lancement des services (${reason}) : ${scriptsToRun.map((s) => s.key).join(', ')}`);
+  runScriptsWithDelay(scriptsToRun, FORK_DELAY_MS);
+}
+
 // Au démarrage du bot
 client.once('clientReady', async () => {
-  await registerCommands();
-  derankUrgence.initialize(client);
-  runScriptsWithDelay(scriptsToRun, FORK_DELAY_MS);
+  // On lance les services AVANT tout appel réseau susceptible de bloquer (registerCommands).
+  startChildrenOnce('gateway orchestrateur prêt');
+  try {
+    await registerCommands();
+  } catch (e) {
+    blzError('maintemp', 'registerCommands a échoué :', e?.message || e);
+  }
+  try {
+    derankUrgence.initialize(client);
+  } catch (e) {
+    blzError('maintemp', 'derankUrgence.initialize a échoué :', e?.message || e);
+  }
   scheduleSlashSyncFromOrchestrator();
   blzLine(
     'maintemp',
@@ -649,4 +687,16 @@ client.once('clientReady', async () => {
   );
 });
 
-client.login(BOT_TOKEN);
+// Filet de sécurité : si le Gateway de l'orchestrateur ne devient jamais prêt
+// (réseau, intents privilégiés désactivés, etc.), on démarre quand même les services.
+const LOGIN_FALLBACK_MS = Math.max(8000, parseInt(process.env.BLZ_LOGIN_FALLBACK_MS || '30000', 10));
+setTimeout(() => startChildrenOnce('secours — gateway orchestrateur lent'), LOGIN_FALLBACK_MS);
+
+client.login(BOT_TOKEN).catch((e) => {
+  blzError(
+    'maintemp',
+    'client.login orchestrateur a échoué (les services enfants démarrent quand même) :',
+    e?.message || e,
+  );
+  startChildrenOnce('login orchestrateur échoué');
+});

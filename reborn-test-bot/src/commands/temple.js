@@ -129,20 +129,19 @@ module.exports = {
       const file = new AttachmentBuilder(buf, { name: 'temple_reborn.png' });
       const TOTAL_KEYS = temple.SOURCE_DEFS.length;
       const have = r.keys.length;
-      const sourcesView = temple.publicLines(uid, hub);
-      const t = new TextDisplayBuilder().setContent(
-        [
-          '# ⛩️ Temple',
-          'Le **Temple** est le **sanctuaire des élus** — il rassemble les **plus grandes réussites** du serveur.',
-          `Quand tu décroches **les ${TOTAL_KEYS} clés**, le temple **s’ouvre pour toi** et tu rejoins le cercle très fermé de ceux qui ont **tout maxé**.`,
-          '',
-          u.temple_unlocked
-            ? `**Statut** : 🔥 **Temple ouvert** — toutes les voies maîtrisées (${have}/${TOTAL_KEYS}).`
-            : `**Statut** : 🔒 *Temple scellé* — **${have}/${TOTAL_KEYS}** clés réunies. *Détails masqués jusqu’à l’ouverture.*`,
-          '',
-          ...sourcesView.lines,
-        ].join('\n'),
-      );
+      const st = temple.statusFor(uid, hub);
+      const contentLines = ['# ⛩️ Temple'];
+      if (u.temple_unlocked) {
+        contentLines.push(`🔥 **Temple ouvert** — ${have}/${TOTAL_KEYS} clés.`);
+        for (const s of st.sources) {
+          contentLines.push(`${st.keys.has(s.id) ? '🟢' : '⬜'} ${s.name}`);
+        }
+      } else {
+        const bar = st.sources.map((s) => (st.keys.has(s.id) ? '🟢' : '🔒')).join(' ');
+        contentLines.push(`🔒 **Temple scellé** — ${have}/${TOTAL_KEYS} clés.`);
+        contentLines.push(bar);
+      }
+      const t = new TextDisplayBuilder().setContent(contentLines.join('\n'));
       const c = new ContainerBuilder();
       c.addMediaGalleryComponents(
         new MediaGalleryBuilder().addItems({ media: { url: 'attachment://temple_reborn.png' } }),

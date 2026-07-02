@@ -104,8 +104,7 @@ async function buildArbreContainer(userId, displayName, avatarUrl, layout = 'sta
   c.addTextDisplayComponents(
     new TextDisplayBuilder().setContent(
       [
-        '# Arbre de compétences',
-        `**Points** : **${u?.skill_points ?? 0}** — chaque palier coûte **n** points (n = n° de palier).`,
+        `**Points** : **${u?.skill_points ?? 0}**`,
         'Choisis une **branche** puis **Débloquer** (ou utilise \`/arbre acheter\`).',
       ].join('\n'),
     ),

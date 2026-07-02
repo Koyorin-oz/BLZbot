@@ -29,16 +29,16 @@ const ORDER = ['quest', 'guild', 'shop', 'ranked', 'event'];
  */
 const BRANCH_ANGLES = {
   star: { quest: -162, guild: -90, shop: -18, ranked: 54, event: 126 },
-  demi: { quest: -170, guild: -130, shop: -90, ranked: -50, event: -10 },
+  demi: { quest: -163, guild: -128, shop: -90, ranked: -52, event: -17 },
 };
 const CENTERS = {
   star: { x: W / 2, y: H / 2 + 80 },
-  demi: { x: W / 2, y: H - 140 },
+  demi: { x: W / 2, y: H - 118 },
 };
 // Paramètres organiques par layout : amplitude de la courbure latérale, écart des nœuds, taille.
 const LAYOUT_TUNING = {
   star: { bulge: 22, sideMin: 38, sideJitter: 14, alongJitter: 22, firstDist: 112, gap: 58, mainR: 28, capR: 33, sideR: 9 },
-  demi: { bulge: 14, sideMin: 40, sideJitter: 14, alongJitter: 20, firstDist: 160, gap: 92, mainR: 32, capR: 38, sideR: 11 },
+  demi: { bulge: 15, sideMin: 44, sideJitter: 16, alongJitter: 22, firstDist: 180, gap: 106, mainR: 37, capR: 44, sideR: 12 },
 };
 const FIRST_NODE_DIST = 112;
 const NODE_GAP = 58;
