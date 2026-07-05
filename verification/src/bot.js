@@ -247,7 +247,7 @@ function createBot(opts) {
     const row = findVerifiedInGuild(member.guild.id, member.id);
     if (!row) return;
     try {
-      await addGuildMemberRole(client.token, member.guild.id, member.id, cfg.verified_role_id);
+      await grantVerifiedRole(client.token, member.guild.id, member.id, cfg.verified_role_id);
     } catch (e) {
       console.error('[GuildMemberAdd] Rôle vérifié impossible :', e.message || e);
     }
