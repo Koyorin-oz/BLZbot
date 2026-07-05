@@ -39,6 +39,7 @@ const SECTIONS = [
             '> * **Humour Noir :** Autorisé, mais attention à la limite. Pas de haine déguisée, pas de N-word ou autres dérapages. <:_bruh:1254070952703168543>',
             '> * **Contenus Interdits :** Le contenu **gore / sang** et le contenu **sexuel** (messages, images, vidéos, PFP, etc.) sont strictement **interdits**.',
             '> * **Harcèlement & Discrimination :** Tolérance zéro. **Ban définitif direct**.',
+            '> * **Dox & Menaces de dox :** Strictement **interdit**. À la moindre menace ou insinuation, c\'est **ban définitif instantané**.',
             '> * **Drague :** **interdit** (pour des raisons logiques).',
             '> * **Identité & Pseudos :** Interdiction des pseudos/profils de protestation type "BOYCOTT [Membre]" ou "Libérez [Membre]".',
             '',
