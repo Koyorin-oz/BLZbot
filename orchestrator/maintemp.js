@@ -61,8 +61,10 @@
     }
     const before = git('rev-parse HEAD');
     console.log(`[pebble-pull] git fetch origin ${branch} + reset --hard (données préservées)…`);
+    // On reset sur FETCH_HEAD (et non origin/main) : `git fetch origin <branch>` ne met pas
+    // forcément à jour la réf de suivi `origin/main` sur Pebble → "unknown revision".
     git(`fetch origin ${branch}`);
-    git(`reset --hard origin/${branch}`);
+    git('reset --hard FETCH_HEAD');
     const after = git('rev-parse HEAD');
     if (before !== after) {
       console.log(`[pebble-pull] Code mis à jour (${before.slice(0, 7)} → ${after.slice(0, 7)}) — redémarrage pour charger le nouveau code…`);
