@@ -29,7 +29,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Même texte d’appui que le canvas (MAJ REBORN / sandbox). */
 const REBORN_MAJ_LINE =
-  'REBORN : coffres doc, double daily, arbre de compétences — bot de test';
+  'REBORN : coffres doc, double daily, arbre de compétences';
 
 function msToTime(ms) {
   const seconds = Math.floor((ms / 1000) % 60)
@@ -263,7 +263,7 @@ module.exports = {
               remainingTime,
               doubleDailyCount: invQty(userId, 'double_daily'),
               isSuccess: false,
-              footerBrand: 'REBORN test',
+              footerBrand: 'BLZstarss',
             });
           } catch {
             return interaction.editReply({
@@ -295,7 +295,7 @@ module.exports = {
             rewardAmount,
             rewardEmoji,
             isSuccess: true,
-            footerBrand: 'REBORN test',
+            footerBrand: 'BLZZstarss',
             rebornMajLine: REBORN_MAJ_LINE,
           }),
           new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000)),
@@ -330,7 +330,7 @@ module.exports = {
           remainingTime,
           doubleDailyCount: ddc,
           isSuccess: false,
-          footerBrand: 'REBORN test',
+          footerBrand: 'BLZZstarss',
         }),
         new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000)),
       ]);
