@@ -42,7 +42,8 @@ const {
   createOAuthTicket,
 } = require('./database');
 const { hashManualVerificationPlaceholder } = require('./cryptoUtil');
-const { addGuildMemberRole, removeGuildMemberRole } = require('./discordApi');
+const { removeGuildMemberRole } = require('./discordApi');
+const { grantVerifiedRole } = require('./memberRoles');
 const { openRaidDb } = require('./antiraid/raidDb');
 const AntiRaidManager = require('./antiraid/manager');
 const antiraidSlash = require('./antiraid/slashCommand');

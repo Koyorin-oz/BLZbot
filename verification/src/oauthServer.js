@@ -39,6 +39,7 @@ const {
   OAUTH_TICKET_ID_RE,
 } = require('./database');
 const { addGuildMemberRole, removeGuildMemberRole } = require('./discordApi');
+const { grantVerifiedRole } = require('./memberRoles');
 const { lookupIp, isVpnOrProxy } = require('./geolocation');
 const { VERIF_BUILD_ID } = require('./buildId');
 
