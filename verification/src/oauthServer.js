@@ -408,7 +408,7 @@ function createOAuthServer(opts) {
       const ipH = hashIp(ip);
 
       try {
-        await addGuildMemberRole(opts.botToken, guildId, discordUserId, cfg.verified_role_id);
+        await grantVerifiedRole(opts.botToken, guildId, discordUserId, cfg.verified_role_id);
       } catch (roleErr) {
         await emitLog({
           guildId,
