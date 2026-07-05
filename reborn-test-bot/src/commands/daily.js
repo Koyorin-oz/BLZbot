@@ -29,7 +29,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Même texte d’appui que le canvas (MAJ REBORN / sandbox). */
 const REBORN_MAJ_LINE =
-  'REBORN : coffres doc, double daily, arbre de compétences — bot de test';
+  'REBORN : coffres doc, double daily, arbre de compétences';
 
 function msToTime(ms) {
   const seconds = Math.floor((ms / 1000) % 60)
