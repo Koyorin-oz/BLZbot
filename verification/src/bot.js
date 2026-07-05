@@ -369,7 +369,7 @@ async function handleVerifyButton(interaction, buildVerifyUrl, client) {
   const existing = findVerifiedInGuild(interaction.guild.id, interaction.user.id);
   if (existing) {
     try {
-      await addGuildMemberRole(
+      await grantVerifiedRole(
         client.token,
         interaction.guild.id,
         interaction.user.id,
@@ -426,7 +426,7 @@ async function handleVerifyCommand(interaction, buildVerifyUrl, client) {
   const row = findVerifiedInGuild(interaction.guild.id, interaction.user.id);
   if (row) {
     try {
-      await addGuildMemberRole(
+      await grantVerifiedRole(
         client.token,
         interaction.guild.id,
         interaction.user.id,
