@@ -626,7 +626,7 @@ async function handleManVerifyCommand(interaction, client) {
   const emailHash = hashManualVerificationPlaceholder(interaction.guild.id, target.id);
 
   try {
-    await addGuildMemberRole(client.token, interaction.guild.id, target.id, cfg.verified_role_id);
+    await grantVerifiedRole(client.token, interaction.guild.id, target.id, cfg.verified_role_id);
     saveVerifiedForGuild(interaction.guild.id, target.id, emailHash, null);
   } catch (e) {
     console.error('[man-verify]', e);
