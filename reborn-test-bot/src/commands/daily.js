@@ -263,7 +263,7 @@ module.exports = {
               remainingTime,
               doubleDailyCount: invQty(userId, 'double_daily'),
               isSuccess: false,
-              footerBrand: 'REBORN test',
+              footerBrand: 'BLZstarss',
             });
           } catch {
             return interaction.editReply({
@@ -295,7 +295,7 @@ module.exports = {
             rewardAmount,
             rewardEmoji,
             isSuccess: true,
-            footerBrand: 'REBORN test',
+            footerBrand: 'BLZZstarss',
             rebornMajLine: REBORN_MAJ_LINE,
           }),
           new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000)),
@@ -330,7 +330,7 @@ module.exports = {
           remainingTime,
           doubleDailyCount: ddc,
           isSuccess: false,
-          footerBrand: 'REBORN test',
+          footerBrand: 'BLZZstarss',
         }),
         new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000)),
       ]);
