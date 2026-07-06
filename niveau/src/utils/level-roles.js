@@ -56,18 +56,21 @@ function getRoleNameForLevel(level) {
 async function updateLevelRoles(member, newLevel) {
     if (!member) return;
 
-    const correctRoleName = getRoleNameForLevel(newLevel);
-    if (!correctRoleName) return; // Pas de rôle défini pour ce palier.
+    const correctRole = getRoleNameForLevel(newLevel);
+    if (!correctRole.name) return; // Pas de rôle défini pour ce palier.
 
     const normalize = (str) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
     const allLevelRoleNames = Object.values(LEVEL_ROLES);
+    const allLevelRoleIds = Object.values(LEVEL_ROLE_IDS);
+    
     // Filtrage insensible aux accents
     const rolesToRemove = member.roles.cache.filter(role => {
         const normRoleName = normalize(role.name);
 
         // Est-ce un nouveau rôle qui n'est PAS le bon ?
-        const isIncorrectNewRole = allLevelRoleNames.some(name => normalize(name) === normRoleName) && normRoleName !== normalize(correctRoleName);
+        const isIncorrectNewRole = (allLevelRoleNames.some(name => normalize(name) === normRoleName) && normRoleName !== normalize(correctRole.name)) 
+            || (allLevelRoleIds.includes(role.id) && role.id !== correctRole.id);
 
         // Est-ce un ancien rôle obsolète ?
         const isLegacyRole = LEGACY_ROLES.some(name => normalize(name) === normRoleName);
@@ -84,28 +87,37 @@ async function updateLevelRoles(member, newLevel) {
         }
     }
 
-    // Si le membre a déjà le bon rôle (vérification normalisée), on ne fait rien.
-    if (member.roles.cache.some(role => normalize(role.name) === normalize(correctRoleName))) {
+    // Si le membre a déjà le bon rôle (vérification par ID ou nom normalisé), on ne fait rien.
+    if (correctRole.id && member.roles.cache.has(correctRole.id)) {
+        return;
+    }
+    if (member.roles.cache.some(role => normalize(role.name) === normalize(correctRole.name))) {
         return;
     }
 
-    // Chercher le rôle sur le serveur (Exact OU Normalisé)
-    let roleToAssign = member.guild.roles.cache.find(r => r.name === correctRoleName);
+    // Chercher le rôle sur le serveur (Par ID en priorité, puis par nom)
+    let roleToAssign = null;
+    if (correctRole.id) {
+        roleToAssign = member.guild.roles.cache.get(correctRole.id);
+    }
     if (!roleToAssign) {
-        roleToAssign = member.guild.roles.cache.find(r => normalize(r.name) === normalize(correctRoleName));
+        roleToAssign = member.guild.roles.cache.find(r => r.name === correctRole.name);
+    }
+    if (!roleToAssign) {
+        roleToAssign = member.guild.roles.cache.find(r => normalize(r.name) === normalize(correctRole.name));
     }
 
     // Si le rôle n'existe pas, le créer.
     if (!roleToAssign) {
         try {
-            console.log(`Création du rôle de niveau : "${correctRoleName}"`);
+            logger.info(`Création du rôle de niveau : "${correctRole.name}"`);
             roleToAssign = await member.guild.roles.create({
-                name: correctRoleName,
+                name: correctRole.name,
                 reason: `Rôle de niveau automatique pour le niveau ${newLevel}`,
                 // La position et la couleur peuvent être définies ici si nécessaire.
             });
         } catch (e) {
-            logRoleApiError(`Création rôle niveau "${correctRoleName}"`, member, e);
+            logRoleApiError(`Création rôle niveau "${correctRole.name}"`, member, e);
             return;
         }
     }
