@@ -244,16 +244,16 @@ function getExpectedTreasuryCapacity(upgradeLevel) {
  */
 function getExpectedMemberSlots(upgradeLevel) {
     const slots = {
-        1: 3,
-        2: 4,
-        3: 5,
-        4: 6,
-        5: 6,
-        6: 6,
-        7: 7,
-        8: 8,
-        9: 8,
-        10: 9,
+        1: 5,
+        2: 6,
+        3: 7,
+        4: 8,
+        5: 8,
+        6: 8,
+        7: 9,
+        8: 10,
+        9: 10,
+        10: 11,
     };
-    return slots[upgradeLevel] || 3;
+    return slots[upgradeLevel] || 5;
 }
