@@ -28,21 +28,24 @@ const SORTED_THRESHOLDS = Object.keys(LEVEL_ROLES).map(Number).sort((a, b) => a 
 const LEGACY_ROLES = roleConfig.levelRoles.legacy;
 
 /**
- * Détermine le nom du rôle approprié pour un niveau donné.
+ * Détermine le nom et l'ID du rôle approprié pour un niveau donné.
  * @param {number} level Le niveau de l'utilisateur.
- * @returns {string|null} Le nom du rôle ou null.
+ * @returns {{name: string|null, id: string|null, threshold: number|null}} Le nom et l'ID du rôle ou null.
  */
 function getRoleNameForLevel(level) {
     let roleName = null;
+    let roleThreshold = null;
     // Parcourir les seuils dans l'ordre croissant
     for (const threshold of SORTED_THRESHOLDS) {
         if (level >= threshold) {
             roleName = LEVEL_ROLES[threshold];
+            roleThreshold = threshold;
         } else {
             break;
         }
     }
-    return roleName;
+    const roleId = roleThreshold ? LEVEL_ROLE_IDS[roleThreshold] : null;
+    return { name: roleName, id: roleId, threshold: roleThreshold };
 }
 
 /**
