@@ -7,168 +7,246 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-} = require('discord.js');
-const pg = require('../services/playerGuilds');
-const { label, NEXT_REQUIREMENTS, ORDER, nextGrade } = require('../reborn/grades');
-const ladder = require('../services/guildLadder');
-const { d } = require('../lib/slashDesc');
+} = require("discord.js");
+const pg = require("../services/playerGuilds");
+const {
+  label,
+  NEXT_REQUIREMENTS,
+  ORDER,
+  nextGrade,
+} = require("../reborn/grades");
+const ladder = require("../services/guildLadder");
+const { d } = require("../lib/slashDesc");
 
 function parseBig(s) {
-  return BigInt(String(s || '').replace(/\s/g, ''));
+  return BigInt(String(s || "").replace(/\s/g, ""));
 }
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('guilde')
-    .setDescription(d('🛡️', 'Guildes joueur — création, membres, trésorerie et focus.'))
-    .addSubcommand((sc) =>
-      sc
-        .setName('creer')
-        .setDescription(d('✨', 'Créer une guilde (nv 15+, 5 places).'))
-        .addStringOption((o) => o.setName('nom').setDescription('Nom de la guilde').setRequired(true)),
+    .setName("guilde")
+    .setDescription(
+      d("🛡️", "Guildes joueur — création, membres, trésorerie et focus."),
     )
     .addSubcommand((sc) =>
       sc
-        .setName('rejoindre')
-        .setDescription(d('🤝', 'Rejoindre une guilde par ID'))
-        .addStringOption((o) => o.setName('guild_id').setDescription('ID guilde').setRequired(true)),
-    )
-    .addSubcommand((sc) => sc.setName('quitter').setDescription(d('🚪', 'Quitter ta guilde (pas le chef).')))
-    .addSubcommand((sc) => sc.setName('info').setDescription(d('ℹ️', 'Infos sur ta guilde')))
-    .addSubcommand((sc) => sc.setName('liste').setDescription(d('📜', 'Liste des guildes sur ce serveur')))
-    .addSubcommand((sc) =>
-      sc
-        .setName('inviter')
-        .setDescription('Inviter un membre (chef ou permission « rôles »)')
-        .addUserOption((o) => o.setName('membre').setDescription('Joueur').setRequired(true)),
-    )
-    .addSubcommand((sc) =>
-      sc
-        .setName('tresor_depot')
-        .setDescription('Déposer des starss en trésorerie')
-        .addStringOption((o) => o.setName('montant').setDescription('Starss').setRequired(true)),
-    )
-    .addSubcommand((sc) =>
-      sc
-        .setName('tresor_retrait')
-        .setDescription('Retirer des starss (chef ou permission « retrait »)')
-        .addStringOption((o) => o.setName('montant').setDescription('Starss').setRequired(true)),
-    )
-    .addSubcommand((sc) => sc.setName('tresor_voir').setDescription('Voir la trésorerie'))
-    .addSubcommand((sc) => sc.setName('grade_up').setDescription('Acheter le prochain grade (chef)'))
-    .addSubcommand((sc) =>
-      sc
-        .setName('perm_voir')
-        .setDescription('Voir les permissions guilde (toi ou un membre)')
-        .addUserOption((o) => o.setName('membre').setDescription('Membre (chef)').setRequired(false)),
-    )
-    .addSubcommand((sc) =>
-      sc
-        .setName('perm_set')
-        .setDescription('Définir une permission pour un membre (chef)')
-        .addUserOption((o) => o.setName('membre').setDescription('Membre').setRequired(true))
+        .setName("creer")
+        .setDescription(d("✨", "Créer une guilde (nv 15+, 5 places)."))
         .addStringOption((o) =>
-          o
-            .setName('cle')
-            .setDescription('Permission')
-            .setRequired(true)
-            .addChoices(
-              { name: 'Dépôt trésorerie', value: 'depot' },
-              { name: 'Retrait trésorerie', value: 'retrait' },
-              { name: 'Expulsion membre', value: 'kick' },
-              { name: 'Invitations', value: 'roles' },
-            ),
-        )
-        .addBooleanOption((o) => o.setName('actif').setDescription('Activé').setRequired(true)),
-    )
-    .addSubcommandGroup((g) =>
-      g
-        .setName('sous-chef')
-        .setDescription('Gérer les sous-chefs (max 3 par guilde, peuvent lancer un focus).')
-        .addSubcommand((sc) =>
-          sc
-            .setName('ajouter')
-            .setDescription('Promouvoir un membre en sous-chef (chef uniquement).')
-            .addUserOption((o) => o.setName('membre').setDescription('Membre à promouvoir').setRequired(true)),
-        )
-        .addSubcommand((sc) =>
-          sc
-            .setName('retirer')
-            .setDescription('Rétrograder un sous-chef (chef uniquement).')
-            .addUserOption((o) => o.setName('membre').setDescription('Sous-chef à rétrograder').setRequired(true)),
-        )
-        .addSubcommand((sc) =>
-          sc.setName('lister').setDescription('Voir les sous-chefs actuels de ta guilde.'),
+          o.setName("nom").setDescription("Nom de la guilde").setRequired(true),
         ),
     )
     .addSubcommand((sc) =>
       sc
-        .setName('expulser')
-        .setDescription('Expulser un membre (chef ou permission « kick »)')
-        .addUserOption((o) => o.setName('membre').setDescription('Membre à expulser').setRequired(true)),
+        .setName("rejoindre")
+        .setDescription(d("🤝", "Rejoindre une guilde par ID"))
+        .addStringOption((o) =>
+          o.setName("guild_id").setDescription("ID guilde").setRequired(true),
+        ),
     )
     .addSubcommand((sc) =>
       sc
-        .setName('transferer_chef')
-        .setDescription('Transférer le lead à un membre (chef actuel)')
-        .addUserOption((o) => o.setName('nouveau_chef').setDescription('Membre').setRequired(true)),
+        .setName("quitter")
+        .setDescription(d("🚪", "Quitter ta guilde (pas le chef).")),
+    )
+    .addSubcommand((sc) =>
+      sc.setName("info").setDescription(d("ℹ️", "Infos sur ta guilde")),
     )
     .addSubcommand((sc) =>
       sc
-        .setName('dissoudre')
-        .setDescription('Supprimer la guilde (chef, irréversible)'),
+        .setName("liste")
+        .setDescription(d("📜", "Liste des guildes sur ce serveur")),
     )
     .addSubcommand((sc) =>
       sc
-        .setName('focus')
-        .setDescription('Focus guilde (500k trésorerie, CD 7j) — chef ou sous-chef.')
+        .setName("inviter")
+        .setDescription("Inviter un membre (chef ou permission « rôles »)")
+        .addUserOption((o) =>
+          o.setName("membre").setDescription("Joueur").setRequired(true),
+        ),
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName("tresor_depot")
+        .setDescription("Déposer des starss en trésorerie")
+        .addStringOption((o) =>
+          o.setName("montant").setDescription("Starss").setRequired(true),
+        ),
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName("tresor_retrait")
+        .setDescription("Retirer des starss (chef ou permission « retrait »)")
+        .addStringOption((o) =>
+          o.setName("montant").setDescription("Starss").setRequired(true),
+        ),
+    )
+    .addSubcommand((sc) =>
+      sc.setName("tresor_voir").setDescription("Voir la trésorerie"),
+    )
+    .addSubcommand((sc) =>
+      sc.setName("grade_up").setDescription("Acheter le prochain grade (chef)"),
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName("perm_voir")
+        .setDescription("Voir les permissions guilde (toi ou un membre)")
+        .addUserOption((o) =>
+          o
+            .setName("membre")
+            .setDescription("Membre (chef)")
+            .setRequired(false),
+        ),
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName("perm_set")
+        .setDescription("Définir une permission pour un membre (chef)")
+        .addUserOption((o) =>
+          o.setName("membre").setDescription("Membre").setRequired(true),
+        )
         .addStringOption((o) =>
           o
-            .setName('cible')
-            .setDescription('Tape le début du nom de la guilde cible')
+            .setName("cle")
+            .setDescription("Permission")
+            .setRequired(true)
+            .addChoices(
+              { name: "Dépôt trésorerie", value: "depot" },
+              { name: "Retrait trésorerie", value: "retrait" },
+              { name: "Expulsion membre", value: "kick" },
+              { name: "Invitations", value: "roles" },
+            ),
+        )
+        .addBooleanOption((o) =>
+          o.setName("actif").setDescription("Activé").setRequired(true),
+        ),
+    )
+    .addSubcommandGroup((g) =>
+      g
+        .setName("sous-chef")
+        .setDescription(
+          "Gérer les sous-chefs (max 3 par guilde, peuvent lancer un focus).",
+        )
+        .addSubcommand((sc) =>
+          sc
+            .setName("ajouter")
+            .setDescription(
+              "Promouvoir un membre en sous-chef (chef uniquement).",
+            )
+            .addUserOption((o) =>
+              o
+                .setName("membre")
+                .setDescription("Membre à promouvoir")
+                .setRequired(true),
+            ),
+        )
+        .addSubcommand((sc) =>
+          sc
+            .setName("retirer")
+            .setDescription("Rétrograder un sous-chef (chef uniquement).")
+            .addUserOption((o) =>
+              o
+                .setName("membre")
+                .setDescription("Sous-chef à rétrograder")
+                .setRequired(true),
+            ),
+        )
+        .addSubcommand((sc) =>
+          sc
+            .setName("lister")
+            .setDescription("Voir les sous-chefs actuels de ta guilde."),
+        ),
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName("expulser")
+        .setDescription("Expulser un membre (chef ou permission « kick »)")
+        .addUserOption((o) =>
+          o
+            .setName("membre")
+            .setDescription("Membre à expulser")
+            .setRequired(true),
+        ),
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName("transferer_chef")
+        .setDescription("Transférer le lead à un membre (chef actuel)")
+        .addUserOption((o) =>
+          o.setName("nouveau_chef").setDescription("Membre").setRequired(true),
+        ),
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName("dissoudre")
+        .setDescription("Supprimer la guilde (chef, irréversible)"),
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName("focus")
+        .setDescription(
+          "Focus guilde (500k trésorerie, CD 7j) — chef ou sous-chef.",
+        )
+        .addStringOption((o) =>
+          o
+            .setName("cible")
+            .setDescription("Tape le début du nom de la guilde cible")
             .setRequired(true)
             .setAutocomplete(true),
         )
         .addStringOption((o) =>
           o
-            .setName('mode')
-            .setDescription('Effet')
+            .setName("mode")
+            .setDescription("Effet")
             .setRequired(true)
             .addChoices(
-              { name: '-500 GRP / membre cible', value: '1' },
-              { name: '-3000 GRP total réparti', value: '2' },
-              { name: '÷2 GRP de la cible pendant 2h', value: '3' },
+              { name: "-500 GRP / membre cible", value: "1" },
+              { name: "-3000 GRP total réparti", value: "2" },
+              { name: "÷2 GRP de la cible pendant 2h", value: "3" },
             ),
         ),
     )
-    .addSubcommand((sc) => sc.setName('salon').setDescription('Créer le salon privé de ta guilde (chef).'))
     .addSubcommand((sc) =>
       sc
-        .setName('decrire')
-        .setDescription('Définir la description publique de ta guilde (chef).')
-        .addStringOption((o) =>
-          o.setName('texte').setDescription('Description (≤ 200 caractères)').setRequired(true),
-        ),
+        .setName("salon")
+        .setDescription("Créer le salon privé de ta guilde (chef)."),
     )
     .addSubcommand((sc) =>
       sc
-        .setName('role_set')
-        .setDescription('Donner un rôle interne à un membre (chef, ex. « Officier »).')
-        .addUserOption((o) => o.setName('membre').setDescription('Membre').setRequired(true))
+        .setName("decrire")
+        .setDescription("Définir la description publique de ta guilde (chef).")
         .addStringOption((o) =>
           o
-            .setName('label')
-            .setDescription('Étiquette (≤ 32 caractères, vide = retirer)')
+            .setName("texte")
+            .setDescription("Description (≤ 200 caractères)")
             .setRequired(true),
         ),
     )
     .addSubcommand((sc) =>
-      sc.setName('grade_info').setDescription('Voir les exigences de chaque grade (Bronze → Star).'),
+      sc
+        .setName("role_set")
+        .setDescription(
+          "Donner un rôle interne à un membre (chef, ex. « Officier »).",
+        )
+        .addUserOption((o) =>
+          o.setName("membre").setDescription("Membre").setRequired(true),
+        )
+        .addStringOption((o) =>
+          o
+            .setName("label")
+            .setDescription("Étiquette (≤ 32 caractères, vide = retirer)")
+            .setRequired(true),
+        ),
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName("grade_info")
+        .setDescription("Voir les exigences de chaque grade (Bronze → Star)."),
     ),
   async execute(interaction) {
     const hub = interaction.guildId;
     if (!hub) {
-      await interaction.reply({ content: 'Sur un serveur uniquement.' });
+      await interaction.reply({ content: "Sur un serveur uniquement." });
       return;
     }
     const uid = interaction.user.id;
@@ -176,128 +254,149 @@ module.exports = {
     const sub = interaction.options.getSubcommand();
 
     // ─── Groupe « sous-chef » : ajouter / retirer / lister ─────────────
-    if (subGroup === 'sous-chef') {
+    if (subGroup === "sous-chef") {
       const m = pg.getMembershipInHub(uid, hub);
-      if (!m) return interaction.reply({ content: 'Pas de guilde.' });
-      if (sub === 'lister') {
+      if (!m) return interaction.reply({ content: "Pas de guilde." });
+      if (sub === "lister") {
         const ids = pg.listSubLeaders(m.guild_id);
         const txt = ids.length
-          ? ids.map((id) => `• <@${id}>`).join('\n')
-          : '*Aucun sous-chef pour l\'instant — `/guilde sous-chef ajouter` pour en désigner.*';
+          ? ids.map((id) => `• <@${id}>`).join("\n")
+          : "*Aucun sous-chef pour l'instant — `/guilde sous-chef ajouter` pour en désigner.*";
         return interaction.reply({
           content: `🥈 **Sous-chefs (${ids.length}/${pg.SUB_LEADER_CAP})** :\n${txt}`,
         });
       }
-      if (m.leader_id !== uid) return interaction.reply({ content: 'Chef uniquement.' });
-      const target = interaction.options.getUser('membre', true);
-      if (sub === 'ajouter') {
+      if (m.leader_id !== uid)
+        return interaction.reply({ content: "Chef uniquement." });
+      const target = interaction.options.getUser("membre", true);
+      if (sub === "ajouter") {
         const r = pg.setSubLeader(m.guild_id, uid, target.id, true);
         if (!r.ok) return interaction.reply({ content: r.error });
-        if (r.already) return interaction.reply({ content: `${target} est **déjà** sous-chef.` });
+        if (r.already)
+          return interaction.reply({
+            content: `${target} est **déjà** sous-chef.`,
+          });
         return interaction.reply({
           content: `🥈 ${target} promu **sous-chef** — il peut maintenant lancer un focus pour la guilde.`,
         });
       }
-      if (sub === 'retirer') {
+      if (sub === "retirer") {
         const r = pg.setSubLeader(m.guild_id, uid, target.id, false);
         if (!r.ok) return interaction.reply({ content: r.error });
-        return interaction.reply({ content: `${target} n'est plus sous-chef.` });
+        return interaction.reply({
+          content: `${target} n'est plus sous-chef.`,
+        });
       }
       return;
     }
 
-    if (sub === 'creer') {
-      const nom = interaction.options.getString('nom', true);
+    if (sub === "creer") {
+      const nom = interaction.options.getString("nom", true);
       const r = pg.createGuild(hub, uid, interaction.user.username, nom);
       if (!r.ok) return interaction.reply({ content: r.error });
-      return interaction.reply({ content: `Guilde créée — ID : **${r.guildId}**` });
+      return interaction.reply({
+        content: `Guilde créée — ID : **${r.guildId}**`,
+      });
     }
 
-    if (sub === 'rejoindre') {
-      const gid = interaction.options.getString('guild_id', true).trim();
+    if (sub === "rejoindre") {
+      const gid = interaction.options.getString("guild_id", true).trim();
       const r = pg.joinGuild(hub, uid, interaction.user.username, gid);
       if (!r.ok) return interaction.reply({ content: r.error });
-      return interaction.reply({ content: 'Tu as rejoint la guilde.' });
+      return interaction.reply({ content: "Tu as rejoint la guilde." });
     }
 
-    if (sub === 'quitter') {
+    if (sub === "quitter") {
       const r = pg.leaveGuild(hub, uid);
       if (!r.ok) return interaction.reply({ content: r.error });
-      return interaction.reply({ content: 'Tu as quitté la guilde.' });
+      return interaction.reply({ content: "Tu as quitté la guilde." });
     }
 
-    if (sub === 'liste') {
+    if (sub === "liste") {
       const list = pg.listGuildsOnHub(hub);
-      if (!list.length) return interaction.reply({ content: 'Aucune guilde.' });
+      if (!list.length) return interaction.reply({ content: "Aucune guilde." });
       const lines = list.map(
         (g) =>
-          `• **${g.name}** \`${g.id}\` — nv **${g.guild_level}** — grade **${label(g.grade || '')}** — trésor **${BigInt(g.treasury || '0').toLocaleString('fr-FR')}**`,
+          `• **${g.name}** \`${g.id}\` — nv **${g.guild_level}** — grade **${label(g.grade || "")}** — trésor **${BigInt(g.treasury || "0").toLocaleString("fr-FR")}**`,
       );
-      return interaction.reply({ content: lines.join('\n').slice(0, 1900) });
+      return interaction.reply({ content: lines.join("\n").slice(0, 1900) });
     }
 
-    if (sub === 'info') {
+    if (sub === "info") {
       const m = pg.getMembershipInHub(uid, hub);
-      if (!m) return interaction.reply({ content: 'Pas de guilde.' });
+      if (!m) return interaction.reply({ content: "Pas de guilde." });
       const g = pg.getGuild(m.guild_id);
       const n = pg.memberCount(m.guild_id);
       const cap = pg.effectiveMemberCap(g);
-      const treasuryB = BigInt(g.treasury || '0');
-      const gxpB = BigInt(g.gxp || '0');
+      const treasuryB = BigInt(g.treasury || "0");
+      const gxpB = BigInt(g.gxp || "0");
       const sep = ladder.antiSepStatus(g.id, hub);
       const sepLine = sep.protected
         ? `**Anti-séparation** : oui — ${sep.reason}`
-        : '**Anti-séparation** : non';
+        : "**Anti-séparation** : non";
       const roles = pg.listInternalRoles(g.id);
       const rolesLine = roles.length
-        ? roles.map((r) => `• <@${r.user_id}> — *${r.role_label}*`).join('\n')
+        ? roles.map((r) => `• <@${r.user_id}> — *${r.role_label}*`).join("\n")
         : null;
       const salonLine = g.salon_channel_id
         ? `<#${g.salon_channel_id}>`
-        : '*Aucun* — `/guilde salon` pour en créer un.';
-      const descBlock = g.description ? String(g.description).slice(0, 900) : null;
+        : "*Aucun* — `/guilde salon` pour en créer un.";
+      const descBlock = g.description
+        ? String(g.description).slice(0, 900)
+        : null;
       const capNote =
-        cap !== g.member_cap ? ` *(places stockées : ${g.member_cap})*` : '';
+        cap !== g.member_cap ? ` *(places stockées : ${g.member_cap})*` : "";
 
       const intro = new TextDisplayBuilder().setContent(
         [
           `# ${g.name}`,
           `Identifiant \`${g.id}\``,
-          '',
+          "",
           `**Chef** : <@${g.leader_id}>`,
           `**Membres** : **${n}** / **${cap}**${capNote}`,
           `**Niveau guilde** : **${g.guild_level}**`,
-          `**Grade** : **${label(g.grade || '')}**`,
-        ].join('\n'),
+          `**Grade** : **${label(g.grade || "")}**`,
+        ].join("\n"),
       );
       const eco = new TextDisplayBuilder().setContent(
         [
-          '## Économie & progression',
-          `**GXP** (guilde) : **${gxpB.toLocaleString('fr-FR')}**`,
-          `**Trésorerie** : **${treasuryB.toLocaleString('fr-FR')}** starss`,
-          '',
+          "## Économie & progression",
+          `**GXP** (guilde) : **${gxpB.toLocaleString("fr-FR")}**`,
+          `**Trésorerie** : **${treasuryB.toLocaleString("fr-FR")}** starss`,
+          "",
           sepLine,
-          '',
+          "",
           `**Salon privé** : ${salonLine}`,
-        ].join('\n'),
+        ].join("\n"),
       );
       const parts = [intro, eco];
       if (descBlock) {
-        parts.push(new TextDisplayBuilder().setContent(`## Description\n${descBlock}`));
+        parts.push(
+          new TextDisplayBuilder().setContent(`## Description\n${descBlock}`),
+        );
       }
       if (rolesLine) {
-        parts.push(new TextDisplayBuilder().setContent(`## Rôles internes\n${rolesLine}`));
+        parts.push(
+          new TextDisplayBuilder().setContent(
+            `## Rôles internes\n${rolesLine}`,
+          ),
+        );
       }
       const container = new ContainerBuilder();
       for (const p of parts) container.addTextDisplayComponents(p);
-      return interaction.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
+      return interaction.reply({
+        components: [container],
+        flags: MessageFlags.IsComponentsV2,
+      });
     }
 
-    if (sub === 'inviter') {
-      const u = interaction.options.getUser('membre', true);
+    if (sub === "inviter") {
+      const u = interaction.options.getUser("membre", true);
       const m = pg.getMembershipInHub(uid, hub);
       if (!m || !pg.canInviteMembers(m.guild_id, uid)) {
-        return interaction.reply({ content: 'Réservé au chef ou permission « invitations ».' });
+        return interaction.reply({
+          content: "Réservé au chef ou permission « invitations ».",
+        });
       }
       const r = pg.createPendingInvite(hub, m.guild_id, uid, u.id);
       if (!r.ok) return interaction.reply({ content: r.error });
@@ -305,143 +404,175 @@ module.exports = {
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId(`guild_invite:accept:${r.inviteId}`)
-          .setLabel('Accepter')
+          .setLabel("Accepter")
           .setStyle(ButtonStyle.Success),
         new ButtonBuilder()
           .setCustomId(`guild_invite:decline:${r.inviteId}`)
-          .setLabel('Refuser')
+          .setLabel("Refuser")
           .setStyle(ButtonStyle.Secondary),
       );
       const inviteEmbed = new EmbedBuilder()
         .setColor(0x5865f2)
-        .setTitle('Invitation à rejoindre une guilde')
-        .setDescription(`**${interaction.user.username}** t’invite à rejoindre **\`${g.name}\`**.\nL'invitation expirera dans 5 minutes.`)
-        .setThumbnail(u.displayAvatarURL({ extension: 'png', size: 128 }));
+        .setTitle("Invitation à rejoindre une guilde")
+        .setDescription(
+          `**${interaction.user.username}** t’invite à rejoindre **\`${g.name}\`**.\nL'invitation expirera dans 5 minutes.`,
+        )
+        .setThumbnail(u.displayAvatarURL({ extension: "png", size: 128 }));
       try {
-        await u.send({
+        const channel = interaction.channel;
+        if (!channel?.isTextBased?.()) {
+          pg.cancelPendingInvite(r.inviteId);
+          return interaction.reply({
+            content: `Impossible d’envoyer l’invitation dans ce salon.`,
+          });
+        }
+        await channel.send({
           content: `<@${u.id}>`,
           embeds: [inviteEmbed],
           components: [row],
         });
       } catch (e) {
         pg.cancelPendingInvite(r.inviteId);
-        return interaction.reply({ content: `Impossible d’envoyer l’invitation à ${u} : ${e?.message || e}` });
+        return interaction.reply({
+          content: `Impossible d’envoyer l’invitation dans ce salon : ${e?.message || e}`,
+        });
       }
-      return interaction.reply({ content: `Invitation envoyée à ${u} — elle expire dans 5 minutes.` });
+      return interaction.reply({
+        content: `Invitation envoyée à ${u} — elle expire dans 5 minutes.`,
+      });
     }
 
-    if (sub === 'tresor_depot') {
+    if (sub === "tresor_depot") {
       const m = pg.getMembershipInHub(uid, hub);
-      if (!m) return interaction.reply({ content: 'Pas de guilde.' });
+      if (!m) return interaction.reply({ content: "Pas de guilde." });
       let amt;
       try {
-        amt = parseBig(interaction.options.getString('montant', true));
+        amt = parseBig(interaction.options.getString("montant", true));
       } catch {
-        return interaction.reply({ content: 'Montant invalide.' });
+        return interaction.reply({ content: "Montant invalide." });
       }
       const r = pg.treasuryDeposit(m.guild_id, uid, amt);
       if (!r.ok) return interaction.reply({ content: r.error });
-      return interaction.reply({ content: 'Dépôt effectué.' });
+      return interaction.reply({ content: "Dépôt effectué." });
     }
 
-    if (sub === 'tresor_retrait') {
+    if (sub === "tresor_retrait") {
       const m = pg.getMembershipInHub(uid, hub);
-      if (!m) return interaction.reply({ content: 'Pas de guilde.' });
+      if (!m) return interaction.reply({ content: "Pas de guilde." });
       let amt;
       try {
-        amt = parseBig(interaction.options.getString('montant', true));
+        amt = parseBig(interaction.options.getString("montant", true));
       } catch {
-        return interaction.reply({ content: 'Montant invalide.' });
+        return interaction.reply({ content: "Montant invalide." });
       }
       const r = pg.treasuryWithdraw(m.guild_id, uid, amt);
       if (!r.ok) return interaction.reply({ content: r.error });
-      return interaction.reply({ content: 'Retrait effectué.' });
+      return interaction.reply({ content: "Retrait effectué." });
     }
 
-    if (sub === 'tresor_voir') {
+    if (sub === "tresor_voir") {
       const m = pg.getMembershipInHub(uid, hub);
-      if (!m) return interaction.reply({ content: 'Pas de guilde.' });
+      if (!m) return interaction.reply({ content: "Pas de guilde." });
       const v = pg.treasuryView(m.guild_id);
-      return interaction.reply({ content: `Trésorerie : **${v.toLocaleString('fr-FR')}** starss` });
+      return interaction.reply({
+        content: `Trésorerie : **${v.toLocaleString("fr-FR")}** starss`,
+      });
     }
 
-    if (sub === 'grade_up') {
+    if (sub === "grade_up") {
       const r = pg.tryBuyNextGrade(hub, uid);
       if (!r.ok) return interaction.reply({ content: r.error });
       return interaction.reply({ content: `Grade acquis : **${r.label}**` });
     }
 
-    if (sub === 'perm_voir') {
+    if (sub === "perm_voir") {
       const m = pg.getMembershipInHub(uid, hub);
-      if (!m) return interaction.reply({ content: 'Pas de guilde.' });
-      const target = interaction.options.getUser('membre') || interaction.user;
+      if (!m) return interaction.reply({ content: "Pas de guilde." });
+      const target = interaction.options.getUser("membre") || interaction.user;
       if (target.id !== uid && m.leader_id !== uid) {
-        return interaction.reply({ content: 'Voir les perms d’un autre : chef uniquement.' });
+        return interaction.reply({
+          content: "Voir les perms d’un autre : chef uniquement.",
+        });
       }
       const tm = pg.memberRow(m.guild_id, target.id);
-      if (!tm) return interaction.reply({ content: 'Cible pas dans ta guilde.' });
+      if (!tm)
+        return interaction.reply({ content: "Cible pas dans ta guilde." });
       const p = pg.getMemberPerms(m.guild_id, target.id);
-      const subLeader = pg.isSubLeader(m.guild_id, target.id) ? ' · 🥈 sous-chef' : '';
+      const subLeader = pg.isSubLeader(m.guild_id, target.id)
+        ? " · 🥈 sous-chef"
+        : "";
       const txt = p
         ? `depot **${p.depot}** · retrait **${p.retrait}** · kick **${p.kick}** · roles **${p.roles}**${subLeader}`
-        : '—';
-      return interaction.reply({ content: `Permissions <@${target.id}> : ${txt}` });
+        : "—";
+      return interaction.reply({
+        content: `Permissions <@${target.id}> : ${txt}`,
+      });
     }
 
-    if (sub === 'perm_set') {
+    if (sub === "perm_set") {
       const m = pg.getMembershipInHub(uid, hub);
-      if (!m || m.leader_id !== uid) return interaction.reply({ content: 'Chef uniquement.' });
-      const target = interaction.options.getUser('membre', true);
-      const cle = interaction.options.getString('cle', true);
-      const actif = interaction.options.getBoolean('actif', true);
+      if (!m || m.leader_id !== uid)
+        return interaction.reply({ content: "Chef uniquement." });
+      const target = interaction.options.getUser("membre", true);
+      const cle = interaction.options.getString("cle", true);
+      const actif = interaction.options.getBoolean("actif", true);
       const tm = pg.memberRow(m.guild_id, target.id);
-      if (!tm) return interaction.reply({ content: 'Membre pas dans la guilde.' });
+      if (!tm)
+        return interaction.reply({ content: "Membre pas dans la guilde." });
       const r = pg.setMemberPerm(m.guild_id, uid, target.id, cle, actif);
       if (!r.ok) return interaction.reply({ content: r.error });
-      return interaction.reply({ content: `Permission **${cle}** → **${actif ? 'oui' : 'non'}** pour ${target}.` });
+      return interaction.reply({
+        content: `Permission **${cle}** → **${actif ? "oui" : "non"}** pour ${target}.`,
+      });
     }
 
-    if (sub === 'expulser') {
-      const target = interaction.options.getUser('membre', true);
+    if (sub === "expulser") {
+      const target = interaction.options.getUser("membre", true);
       const m = pg.getMembershipInHub(uid, hub);
-      if (!m) return interaction.reply({ content: 'Pas de guilde.' });
+      if (!m) return interaction.reply({ content: "Pas de guilde." });
       const r = pg.kickMember(hub, m.guild_id, uid, target.id);
       if (!r.ok) return interaction.reply({ content: r.error });
-      return interaction.reply({ content: `${target} a été expulsé de la guilde.` });
+      return interaction.reply({
+        content: `${target} a été expulsé de la guilde.`,
+      });
     }
 
-    if (sub === 'transferer_chef') {
-      const neo = interaction.options.getUser('nouveau_chef', true);
+    if (sub === "transferer_chef") {
+      const neo = interaction.options.getUser("nouveau_chef", true);
       const m = pg.getMembershipInHub(uid, hub);
-      if (!m) return interaction.reply({ content: 'Pas de guilde.' });
+      if (!m) return interaction.reply({ content: "Pas de guilde." });
       const r = pg.transferLeadership(hub, m.guild_id, uid, neo.id);
       if (!r.ok) return interaction.reply({ content: r.error });
-      return interaction.reply({ content: `Lead transféré à ${neo}. Tu restes membre avec les perms par défaut.` });
+      return interaction.reply({
+        content: `Lead transféré à ${neo}. Tu restes membre avec les perms par défaut.`,
+      });
     }
 
-    if (sub === 'dissoudre') {
+    if (sub === "dissoudre") {
       const m = pg.getMembershipInHub(uid, hub);
-      if (!m) return interaction.reply({ content: 'Pas de guilde.' });
+      if (!m) return interaction.reply({ content: "Pas de guilde." });
       const r = pg.dissolveGuild(hub, m.guild_id, uid);
       if (!r.ok) return interaction.reply({ content: r.error });
-      return interaction.reply({ content: 'Guilde dissoute (données effacées pour ce test-bot).' });
+      return interaction.reply({
+        content: "Guilde dissoute (données effacées pour ce test-bot).",
+      });
     }
 
-    if (sub === 'focus') {
+    if (sub === "focus") {
       const m = pg.getMembershipInHub(uid, hub);
-      if (!m) return interaction.reply({ content: 'Pas de guilde.' });
-      const target = interaction.options.getString('cible', true).trim();
-      const mode = interaction.options.getString('mode', true);
+      if (!m) return interaction.reply({ content: "Pas de guilde." });
+      const target = interaction.options.getString("cible", true).trim();
+      const mode = interaction.options.getString("mode", true);
       const r = pg.useFocus(hub, m.guild_id, target, mode, uid);
       if (!r.ok) return interaction.reply({ content: r.error });
       const modeLabels = {
-        '1': '-500 GRP par membre cible',
-        '2': '-3 000 GRP répartis',
-        '3': '÷2 GRP cible pendant 2 h',
+        1: "-500 GRP par membre cible",
+        2: "-3 000 GRP répartis",
+        3: "÷2 GRP cible pendant 2 h",
       };
       // Log staff (best-effort).
       try {
-        const focusAudit = require('../services/focusAudit');
+        const focusAudit = require("../services/focusAudit");
         focusAudit
           .sendFocusLog(interaction.client, {
             attackerGuildId: m.guild_id,
@@ -450,71 +581,103 @@ module.exports = {
             mode,
           })
           .catch(() => {});
-      } catch { /* ignore */ }
-      return interaction.reply({ content: `🎯 Focus **${modeLabels[mode] || mode}** appliqué — 500 000 starss prélevés.` });
+      } catch {
+        /* ignore */
+      }
+      return interaction.reply({
+        content: `🎯 Focus **${modeLabels[mode] || mode}** appliqué — 500 000 starss prélevés.`,
+      });
     }
 
-    if (sub === 'salon') {
+    if (sub === "salon") {
       const m = pg.getMembershipInHub(uid, hub);
-      if (!m) return interaction.reply({ content: 'Pas de guilde.' });
+      if (!m) return interaction.reply({ content: "Pas de guilde." });
       const g = pg.getGuild(m.guild_id);
-      if (g.leader_id !== uid) return interaction.reply({ content: 'Chef uniquement.' });
+      if (g.leader_id !== uid)
+        return interaction.reply({ content: "Chef uniquement." });
       if (g.salon_channel_id) {
-        return interaction.reply({ content: `Salon déjà associé : <#${g.salon_channel_id}>.` });
+        return interaction.reply({
+          content: `Salon déjà associé : <#${g.salon_channel_id}>.`,
+        });
       }
       try {
         const everyone = interaction.guild.roles.everyone.id;
-        const memberRows = require('../db')
-          .prepare('SELECT user_id FROM player_guild_members WHERE guild_id = ?')
+        const memberRows = require("../db")
+          .prepare(
+            "SELECT user_id FROM player_guild_members WHERE guild_id = ?",
+          )
           .all(g.id);
         const overwrites = [
-          { id: everyone, deny: ['ViewChannel'] },
-          { id: interaction.client.user.id, allow: ['ViewChannel', 'SendMessages', 'ManageChannels'] },
+          { id: everyone, deny: ["ViewChannel"] },
+          {
+            id: interaction.client.user.id,
+            allow: ["ViewChannel", "SendMessages", "ManageChannels"],
+          },
         ];
         for (const { user_id } of memberRows) {
-          overwrites.push({ id: user_id, allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory'] });
+          overwrites.push({
+            id: user_id,
+            allow: ["ViewChannel", "SendMessages", "ReadMessageHistory"],
+          });
         }
         const ch = await interaction.guild.channels.create({
-          name: `guilde-${(g.name || 'guilde').slice(0, 32).toLowerCase().replace(/[^a-z0-9-]/g, '-')}`,
+          name: `guilde-${(g.name || "guilde")
+            .slice(0, 32)
+            .toLowerCase()
+            .replace(/[^a-z0-9-]/g, "-")}`,
           type: 0,
           topic: `Salon privé — guilde ${g.name} (${g.id})`,
           permissionOverwrites: overwrites,
         });
-        require('../db')
-          .prepare('UPDATE player_guilds SET salon_channel_id = ? WHERE id = ?')
+        require("../db")
+          .prepare("UPDATE player_guilds SET salon_channel_id = ? WHERE id = ?")
           .run(ch.id, g.id);
-        require('../db')
-          .prepare('INSERT OR REPLACE INTO guild_channels (guild_id, channel_id, created_ms) VALUES (?, ?, ?)')
+        require("../db")
+          .prepare(
+            "INSERT OR REPLACE INTO guild_channels (guild_id, channel_id, created_ms) VALUES (?, ?, ?)",
+          )
           .run(g.id, ch.id, Date.now());
         return interaction.reply({ content: `Salon créé : <#${ch.id}>` });
       } catch (e) {
-        console.error('[guilde salon]', e);
-        return interaction.reply({ content: `❌ Impossible de créer le salon : \`${e?.message || e}\` (donne au bot **Manage Channels**).` });
+        console.error("[guilde salon]", e);
+        return interaction.reply({
+          content: `❌ Impossible de créer le salon : \`${e?.message || e}\` (donne au bot **Manage Channels**).`,
+        });
       }
     }
 
-    if (sub === 'decrire') {
+    if (sub === "decrire") {
       const m = pg.getMembershipInHub(uid, hub);
-      if (!m) return interaction.reply({ content: 'Pas de guilde.' });
+      if (!m) return interaction.reply({ content: "Pas de guilde." });
       const g = pg.getGuild(m.guild_id);
-      if (g.leader_id !== uid) return interaction.reply({ content: 'Chef uniquement.' });
-      const txt = interaction.options.getString('texte', true).slice(0, 200);
-      require('../db').prepare('UPDATE player_guilds SET description = ? WHERE id = ?').run(txt, g.id);
-      return interaction.reply({ content: `Description mise à jour :\n> ${txt}` });
+      if (g.leader_id !== uid)
+        return interaction.reply({ content: "Chef uniquement." });
+      const txt = interaction.options.getString("texte", true).slice(0, 200);
+      require("../db")
+        .prepare("UPDATE player_guilds SET description = ? WHERE id = ?")
+        .run(txt, g.id);
+      return interaction.reply({
+        content: `Description mise à jour :\n> ${txt}`,
+      });
     }
 
-    if (sub === 'role_set') {
+    if (sub === "role_set") {
       const m = pg.getMembershipInHub(uid, hub);
-      if (!m) return interaction.reply({ content: 'Pas de guilde.' });
-      const target = interaction.options.getUser('membre', true);
-      const lbl = interaction.options.getString('label', true);
+      if (!m) return interaction.reply({ content: "Pas de guilde." });
+      const target = interaction.options.getUser("membre", true);
+      const lbl = interaction.options.getString("label", true);
       const r = pg.setInternalRole(m.guild_id, uid, target.id, lbl);
       if (!r.ok) return interaction.reply({ content: r.error });
-      if (!r.label) return interaction.reply({ content: `Rôle interne **retiré** pour ${target}.` });
-      return interaction.reply({ content: `Rôle interne **${r.label}** attribué à ${target}.` });
+      if (!r.label)
+        return interaction.reply({
+          content: `Rôle interne **retiré** pour ${target}.`,
+        });
+      return interaction.reply({
+        content: `Rôle interne **${r.label}** attribué à ${target}.`,
+      });
     }
 
-    if (sub === 'grade_info') {
+    if (sub === "grade_info") {
       const lines = [];
       for (const grade of ORDER) {
         if (!grade) continue;
@@ -522,20 +685,22 @@ module.exports = {
         if (!r) continue;
         const parts = [
           `**${label(grade)}**`,
-          `≥ **${Number(r.stars).toLocaleString('fr-FR')}** starss`,
+          `≥ **${Number(r.stars).toLocaleString("fr-FR")}** starss`,
           `rang GR ≥ **${r.minGrpRank}**`,
         ];
         if (r.mythic) parts.push(`${r.mythic}× mythique`);
         if (r.crystal) parts.push(`${r.crystal}× crystal/goatesque`);
-        if (r.needDiamond) parts.push('**Diamant** requis');
-        if (grade === 'star') parts.push('**Anti-séparation** acquise');
-        lines.push(`• ${parts.join(' · ')}`);
+        if (r.needDiamond) parts.push("**Diamant** requis");
+        if (grade === "star") parts.push("**Anti-séparation** acquise");
+        lines.push(`• ${parts.join(" · ")}`);
       }
       const e = new EmbedBuilder()
-        .setTitle('Grades guilde — exigences')
+        .setTitle("Grades guilde — exigences")
         .setColor(0xf1c40f)
-        .setDescription(lines.join('\n'))
-        .setFooter({ text: 'Tu peux acheter le prochain grade avec /guilde grade_up (chef).' });
+        .setDescription(lines.join("\n"))
+        .setFooter({
+          text: "Tu peux acheter le prochain grade avec /guilde grade_up (chef).",
+        });
       return interaction.reply({ embeds: [e] });
     }
   },
@@ -547,19 +712,24 @@ module.exports = {
   async autocomplete(interaction) {
     try {
       const focused = interaction.options.getFocused(true);
-      if (focused.name !== 'cible') return interaction.respond([]);
+      if (focused.name !== "cible") return interaction.respond([]);
       const hub = interaction.guildId;
       if (!hub) return interaction.respond([]);
       const myMembership = pg.getMembershipInHub(interaction.user.id, hub);
       const myGuildId = myMembership?.guild_id || null;
       const all = pg.listGuildsOnHub(hub);
-      const q = String(focused.value || '').toLowerCase().trim();
+      const q = String(focused.value || "")
+        .toLowerCase()
+        .trim();
       const filtered = all
         .filter((g) => g.id !== myGuildId)
         .filter((g) => !q || g.name.toLowerCase().includes(q))
         .slice(0, 25)
         .map((g) => ({
-          name: `${g.name} · grade ${label(g.grade || '')} · nv ${g.guild_level}`.slice(0, 100),
+          name: `${g.name} · grade ${label(g.grade || "")} · nv ${g.guild_level}`.slice(
+            0,
+            100,
+          ),
           value: g.id.slice(0, 100),
         }));
       return interaction.respond(filtered);
