@@ -424,6 +424,7 @@ module.exports = {
           pg.cancelPendingInvite(r.inviteId);
           return interaction.reply({
             content: `Impossible d’envoyer l’invitation dans ce salon.`,
+            ephemeral: true,
           });
         }
         await channel.send({
@@ -435,10 +436,12 @@ module.exports = {
         pg.cancelPendingInvite(r.inviteId);
         return interaction.reply({
           content: `Impossible d’envoyer l’invitation dans ce salon : ${e?.message || e}`,
+          ephemeral: true,
         });
       }
       return interaction.reply({
         content: `Invitation envoyée à ${u} — elle expire dans 5 minutes.`,
+        ephemeral: true,
       });
     }
 
