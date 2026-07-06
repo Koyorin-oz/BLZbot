@@ -78,8 +78,36 @@ const RARITY_PROBABILITIES = [
 
 const TOTAL_WEIGHT = RARITY_PROBABILITIES.reduce((sum, r) => sum + r.weight, 0);
 
-function getItemsByRarity(rarity) {
-    return Object.values(ITEMS).filter(item => item.rarity === rarity && item.type === 'item' && !['xp_boost', 'points_boost', 'starss_boost', 'counting_boost'].includes(item.id));
+/**
+ * Filtre les items par rareté
+ * @param {string} rarity 
+ * @param {string} userId - Pour vérifier si l'utilisateur peut voir certains items
+ * @returns {Array}
+ */
+function getItemsByRarity(rarity, userId = null) {
+    const { getGuildOfUser } = require('./db-guilds');
+    
+    return Object.values(ITEMS).filter(item => {
+        // Filtrer les boosts
+        if (['xp_boost', 'points_boost', 'starss_boost', 'counting_boost'].includes(item.id)) {
+            return false;
+        }
+        
+        // Vérifier la rareté et le type
+        if (item.rarity !== rarity || item.type !== 'item') {
+            return false;
+        }
+        
+        // joker_guilde uniquement pour les chefs de guilde
+        if (item.id === 'joker_guilde' && userId) {
+            const guild = getGuildOfUser(userId);
+            if (!guild || guild.owner_id !== userId) {
+                return false;
+            }
+        }
+        
+        return true;
+    });
 }
 
 function chooseRarity() {
