@@ -205,6 +205,7 @@ module.exports = {
 
             return {
                 components: components,
+                files: files,
                 flags: 32768,
                 ephemeral: true
             };
