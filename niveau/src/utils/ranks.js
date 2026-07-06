@@ -134,51 +134,14 @@ async function updateUserRank(client, userId) {
             return;
         }
 
-        // --- Logique spéciale pour les rangs suprêmes (MASTER, GOAT, STAR) ---
+        // Pas de restriction de progression - le rôle correspond toujours aux points actuels
         const oldRankName = oldRank ? oldRank.name : null;
         const newRankName = newRank.name;
-
-        // Détecter si c'est un saut de rang énorme (probablement admin)
-        const isLikelyAdminAction = !oldRank || (newRank.points - oldRank.points) > 100000;
-
-        // Progression naturelle vers les rangs suprêmes (si ce n'est pas une action admin)
-        if (!isLikelyAdminAction) {
-            // STAR ne peut être atteint que depuis GOAT
-            if (newRankName === 'STAR' && oldRankName !== 'GOAT') {
-                logger.info(`Mise à jour de rôle bloquée pour ${member.user.username}: tentative de passage à STAR sans être GOAT.`);
-                return;
-            }
-
-            // GOAT ne peut être atteint que depuis MASTER
-            if (newRankName === 'GOAT' && oldRankName !== 'MASTER') {
-                logger.info(`Mise à jour de rôle bloquée pour ${member.user.username}: tentative de passage à GOAT sans être MASTER.`);
-                return;
-            }
-
-            // MASTER ne peut être atteint que depuis Mythique II
-            if (newRankName === 'MASTER' && oldRankName !== 'Mythique II') {
-                logger.info(`Mise à jour de rôle bloquée pour ${member.user.username}: tentative de passage à MASTER sans être Mythique II.`);
-                return;
-            }
-
-            // Descente depuis les rangs suprêmes (naturellement)
-            if (oldRankName === 'STAR' && newRankName !== 'GOAT' && newRankName !== 'STAR') {
-                logger.info(`Mise à jour de rôle bloquée pour ${member.user.username}: tentative de quitter STAR pour un autre rang que GOAT.`);
-                return;
-            }
-
-            if (oldRankName === 'GOAT' && newRankName !== 'MASTER' && newRankName !== 'GOAT') {
-                logger.info(`Mise à jour de rôle bloquée pour ${member.user.username}: tentative de quitter GOAT pour un autre rang que MASTER.`);
-                return;
-            }
-
-            if (oldRankName === 'MASTER' && newRankName !== 'Mythique II' && newRankName !== 'MASTER') {
-                logger.info(`Mise à jour de rôle bloquée pour ${member.user.username}: tentative de quitter MASTER pour un autre rang que Mythique II.`);
-                return;
-            }
-        } else {
-            logger.info(`Action admin détectée pour ${member.user.username}: passage de ${oldRankName || 'aucun'} à ${newRankName} autorisé.`);
-        }
+        
+        logger.info(`Mise à jour de rang pour ${member.user.username}: ${oldRankName || 'aucun'} → ${newRankName} (${user.points} RP)`);
+        
+        // Note: Les rangs verrouillés (Mythique+) gardent leur rôle même si les points baissent
+        // via la logique de peak_rank dans getDisplayRank()
 
         // --- Gestion des rôles ---
         // --- Gestion des rôles ---
