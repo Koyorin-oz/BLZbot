@@ -19,6 +19,7 @@ function logRoleApiError(context, member, err) {
 }
 
 const LEVEL_ROLES = roleConfig.levelRoles.thresholds;
+const LEVEL_ROLE_IDS = roleConfig.levelRoles.roleIds || {};
 
 // Seuils triés pour éviter les problèmes d'ordre JavaScript
 const SORTED_THRESHOLDS = Object.keys(LEVEL_ROLES).map(Number).sort((a, b) => a - b);
