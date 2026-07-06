@@ -77,12 +77,29 @@ module.exports = {
 
         const generateMessagePayload = (page) => {
             const components = [];
+            const files = [];
 
             const container = new ContainerBuilder();
 
+            // Bannière de la boutique
+            const bannerPath = path.join(__dirname, '..', '..', 'assets', 'boutique_banner.png');
+            if (fs.existsSync(bannerPath)) {
+                try {
+                    const bannerAttachment = new AttachmentBuilder(bannerPath, { name: 'boutique_banner.png' });
+                    files.push(bannerAttachment);
+                    
+                    const bannerGallery = new MediaGalleryBuilder()
+                        .addItems({ media: { url: 'attachment://boutique_banner.png' } });
+                    
+                    container.addMediaGalleryComponents(bannerGallery);
+                } catch (error) {
+                    logger.warn('Impossible de charger la bannière de la boutique:', error);
+                }
+            }
+
             // Header Section
             const headerText = new TextDisplayBuilder()
-                .setContent(`# 🛒 Boutique\nVotre solde : **${user.stars.toLocaleString('fr-FR')}** Starss 💸`);
+                .setContent(`Votre solde : **${user.stars.toLocaleString('fr-FR')}** Starss 💸`);
 
             container.addTextDisplayComponents(headerText);
 
