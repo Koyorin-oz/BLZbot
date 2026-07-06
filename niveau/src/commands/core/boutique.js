@@ -1,10 +1,12 @@
 
-const { SlashCommandBuilder, TextDisplayBuilder, SectionBuilder, ContainerBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType, MessageFlags, ModalBuilder, StringSelectMenuBuilder, LabelBuilder } = require('discord.js');
+const { SlashCommandBuilder, TextDisplayBuilder, SectionBuilder, ContainerBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType, MessageFlags, ModalBuilder, StringSelectMenuBuilder, LabelBuilder, MediaGalleryBuilder, AttachmentBuilder } = require('discord.js');
 const { getOrCreateUser, grantResources, addItemToInventory } = require('../../utils/db-users');
 const { getItem, getAllItems } = require('../../utils/items');
 const { getDailyShopItems, canPurchaseItem, recordPurchase, checkLegendaryChestSpawn, removeLegendaryChest } = require('../../utils/shop-system.js');
 const db = require('../../database/database');
 const logger = require('../../utils/logger');
+const fs = require('fs');
+const path = require('path');
 
 const FIXED_BOOSTS = [
     getItem('xp_boost'),
