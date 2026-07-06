@@ -398,6 +398,10 @@ module.exports = {
           content: "Réservé au chef ou permission « invitations ».",
         });
       }
+
+      const expiresAt = Math.floor(Date.now() / 1000) + 5 * 60;
+      const timestamp = `<t:${expiresAt}:R>`;
+
       const r = pg.createPendingInvite(hub, m.guild_id, uid, u.id);
       if (!r.ok) return interaction.reply({ content: r.error });
       const g = pg.getGuild(m.guild_id);
@@ -415,7 +419,7 @@ module.exports = {
         .setColor(0x5865f2)
         .setTitle("Invitation à rejoindre une guilde")
         .setDescription(
-          `**<@${interaction.user.id}>** t’invite à rejoindre **\`${g.name}\`**.\nL'invitation expirera dans 5 minutes.`,
+          `**<@${interaction.user.id}>** t’invite à rejoindre **\`${g.name}\`**.\nL'invitation expirera ${timestamp}.`,
         )
         .setThumbnail(u.displayAvatarURL({ extension: "png", size: 128 }));
       try {
@@ -440,7 +444,7 @@ module.exports = {
         });
       }
       return interaction.reply({
-        content: `Invitation envoyée à ${u} — elle expire dans 5 minutes.`,
+        content: `Invitation envoyée à ${u} — elle expire ${timestamp}.`,
         ephemeral: true,
       });
     }
