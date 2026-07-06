@@ -95,12 +95,19 @@ async function renderGuildProfileV2({ guild, members, owner, warInfo, totalMembe
   // ============================================
   panel(ctx, 24, 24, 400, 100, 24, THEME.header);
   
-  const emojiFont = `48px GuildEmoji`;
+  // Utiliser une font avec meilleur support emoji (Noto + Segoe + fallback)
+  const emojiFont = `48px GuildEmoji, "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif`;
   const nameFont = `700 38px ${titleFace}, Arial`;
   
   ctx.font = emojiFont;
   ctx.fillStyle = THEME.text;
-  ctx.fillText(guild.emoji, 50, 82);
+  
+  // Nettoyer l'emoji (supprimer les emojis Discord custom qui ne s'affichent pas)
+  let displayEmoji = guild.emoji || '🏰';
+  if (displayEmoji.includes('<:') || displayEmoji.includes('<a:')) {
+    displayEmoji = '🏰'; // Fallback si emoji custom Discord
+  }
+  ctx.fillText(displayEmoji, 50, 82);
   
   ctx.font = nameFont;
   const guildNameTrunc = truncateText(ctx, guild.name, 280);
