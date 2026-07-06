@@ -415,7 +415,7 @@ module.exports = {
         .setColor(0x5865f2)
         .setTitle("Invitation à rejoindre une guilde")
         .setDescription(
-          `**${interaction.user.username}** t’invite à rejoindre **\`${g.name}\`**.\nL'invitation expirera dans 5 minutes.`,
+          `**<@${interaction.user.id}>** t’invite à rejoindre **\`${g.name}\`**.\nL'invitation expirera dans 5 minutes.`,
         )
         .setThumbnail(u.displayAvatarURL({ extension: "png", size: 128 }));
       try {
