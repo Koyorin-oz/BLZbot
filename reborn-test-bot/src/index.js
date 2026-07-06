@@ -126,7 +126,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         if (!r.ok) {
           await interaction.reply({ content: r.error, ephemeral: true });
         } else {
-          await interaction.reply({ content: 'Invitation refusée.', ephemeral: true });
+          await interaction.reply({ content: '❌ Invitation refusée.', ephemeral: true });
         }
       }
     } catch (e) {
