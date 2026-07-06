@@ -134,20 +134,50 @@ async function updateUserRank(client, userId) {
             return;
         }
 
-        // --- Logique spéciale pour le rôle GOAT ---
+        // --- Logique spéciale pour les rangs suprêmes (MASTER, GOAT, STAR) ---
         const oldRankName = oldRank ? oldRank.name : null;
         const newRankName = newRank.name;
 
-        // On ne peut devenir GOAT qu'en venant de Mythique II
-        if (newRankName === 'GOAT' && oldRankName !== 'Mythique II') {
-            logger.info(`Mise à jour de rôle bloquée pour ${member.user.username}: tentative de passage à GOAT sans être Mythique II.`);
-            return;
-        }
+        // Détecter si c'est un saut de rang énorme (probablement admin)
+        const isLikelyAdminAction = !oldRank || (newRank.points - oldRank.points) > 100000;
 
-        // Si on quitte le rang GOAT, ce ne peut être que pour Mythique II
-        if (oldRankName === 'GOAT' && newRankName !== 'Mythique II') {
-            logger.info(`Mise à jour de rôle bloquée pour ${member.user.username}: tentative de quitter GOAT pour un autre rang que Mythique II.`);
-            return;
+        // Progression naturelle vers les rangs suprêmes (si ce n'est pas une action admin)
+        if (!isLikelyAdminAction) {
+            // STAR ne peut être atteint que depuis GOAT
+            if (newRankName === 'STAR' && oldRankName !== 'GOAT') {
+                logger.info(`Mise à jour de rôle bloquée pour ${member.user.username}: tentative de passage à STAR sans être GOAT.`);
+                return;
+            }
+
+            // GOAT ne peut être atteint que depuis MASTER
+            if (newRankName === 'GOAT' && oldRankName !== 'MASTER') {
+                logger.info(`Mise à jour de rôle bloquée pour ${member.user.username}: tentative de passage à GOAT sans être MASTER.`);
+                return;
+            }
+
+            // MASTER ne peut être atteint que depuis Mythique II
+            if (newRankName === 'MASTER' && oldRankName !== 'Mythique II') {
+                logger.info(`Mise à jour de rôle bloquée pour ${member.user.username}: tentative de passage à MASTER sans être Mythique II.`);
+                return;
+            }
+
+            // Descente depuis les rangs suprêmes (naturellement)
+            if (oldRankName === 'STAR' && newRankName !== 'GOAT' && newRankName !== 'STAR') {
+                logger.info(`Mise à jour de rôle bloquée pour ${member.user.username}: tentative de quitter STAR pour un autre rang que GOAT.`);
+                return;
+            }
+
+            if (oldRankName === 'GOAT' && newRankName !== 'MASTER' && newRankName !== 'GOAT') {
+                logger.info(`Mise à jour de rôle bloquée pour ${member.user.username}: tentative de quitter GOAT pour un autre rang que MASTER.`);
+                return;
+            }
+
+            if (oldRankName === 'MASTER' && newRankName !== 'Mythique II' && newRankName !== 'MASTER') {
+                logger.info(`Mise à jour de rôle bloquée pour ${member.user.username}: tentative de quitter MASTER pour un autre rang que Mythique II.`);
+                return;
+            }
+        } else {
+            logger.info(`Action admin détectée pour ${member.user.username}: passage de ${oldRankName || 'aucun'} à ${newRankName} autorisé.`);
         }
 
         // --- Gestion des rôles ---
