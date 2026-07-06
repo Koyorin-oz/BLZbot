@@ -14,14 +14,14 @@ const UPGRADE_MATRIX = {
         requirements: { guild_value: 0, treasury: 0, wars_won: 0, wars_won_percentage: 0, item: null },
         cost: { stars: 0, item: null },
         unlocks: ['Base guild'],
-        slots_gained: 0, // 3 places de base
+        slots_gained: 0, // 5 places de base
         treasury_capacity: 0
     },
     2: {
         level: 2,
         requirements: { guild_value: 15000, treasury: 0, wars_won: 0, wars_won_percentage: 0, item: null },
         cost: { stars: 175000, item: null },
-        unlocks: ['Trésorerie', '+1 place'], // Total 4
+        unlocks: ['Trésorerie', '+1 place'], // Total 6
         slots_gained: 1,
         treasury_capacity: 750000
     },
@@ -29,7 +29,7 @@ const UPGRADE_MATRIX = {
         level: 3,
         requirements: { guild_value: 30000, treasury: 500000, wars_won: 0, wars_won_percentage: 0, item: null },
         cost: { stars: 500000, item: null },
-        unlocks: ['+1 place'], // Total 5
+        unlocks: ['+1 place'], // Total 7
         slots_gained: 1,
         treasury_capacity: 1500000
     },
@@ -37,7 +37,7 @@ const UPGRADE_MATRIX = {
         level: 4,
         requirements: { guild_value: 60000, treasury: 1250000, wars_won: 0, wars_won_percentage: 0, item: null },
         cost: { stars: 1000000, item: null },
-        unlocks: ['Guilds Tools', '+1 place'], // Total 6
+        unlocks: ['Guilds Tools', '+1 place'], // Total 8
         slots_gained: 1,
         treasury_capacity: 3500000
     },
@@ -45,7 +45,7 @@ const UPGRADE_MATRIX = {
         level: 5,
         requirements: { guild_value: 90000, treasury: 2500000, wars_won: 0, wars_won_percentage: 0, item: null },
         cost: { stars: 2500000, item: null },
-        unlocks: ['Salon de guilde privé', '+0 place'], // Total 6
+        unlocks: ['Salon de guilde privé', '+0 place'], // Total 8
         slots_gained: 0,
         treasury_capacity: 7500000
     },
@@ -53,7 +53,7 @@ const UPGRADE_MATRIX = {
         level: 6,
         requirements: { guild_value: 120000, treasury: 5000000, wars_won: 0, wars_won_percentage: 0, item: null },
         cost: { stars: 5000000, item: null },
-        unlocks: ['Guerre de guildes', '+0 place'], // Total 6
+        unlocks: ['Guerre de guildes', '+0 place'], // Total 8
         slots_gained: 0,
         treasury_capacity: 10000000
     },
@@ -61,7 +61,7 @@ const UPGRADE_MATRIX = {
         level: 7,
         requirements: { guild_value: 150000, treasury: 0, wars_won: 1, wars_won_percentage: 0, item: null },
         cost: { stars: 7500000, item: null },
-        unlocks: ['Rôles Personnalisés', '+1 place'], // Total 7
+        unlocks: ['Rôles Personnalisés', '+1 place'], // Total 9
         slots_gained: 1,
         treasury_capacity: 12500000
     },
@@ -69,7 +69,7 @@ const UPGRADE_MATRIX = {
         level: 8,
         requirements: { guild_value: 180000, treasury: 0, wars_won: 0, wars_won_percentage: 70, item: 'mega_boost' },
         cost: { stars: 10000000, item: 'mega_boost' },
-        unlocks: ['Nouveaux Guilds Tools', '+1 place'], // Total 8
+        unlocks: ['Nouveaux Guilds Tools', '+1 place'], // Total 10
         slots_gained: 1,
         treasury_capacity: 15000000
     },
@@ -77,7 +77,7 @@ const UPGRADE_MATRIX = {
         level: 9,
         requirements: { guild_value: 240000, treasury: 0, wars_won: 0, wars_won_percentage: 80, item: 'mega_boost' },
         cost: { stars: 12500000, item: 'mega_boost' },
-        unlocks: ['+0 place'], // Total 8
+        unlocks: ['+0 place'], // Total 10
         slots_gained: 0,
         treasury_capacity: 15000000
     },
@@ -85,7 +85,7 @@ const UPGRADE_MATRIX = {
         level: 10,
         requirements: { guild_value: 300000, treasury: 0, wars_won: 0, wars_won_percentage: 80, item: 'guild_upgrader' },
         cost: { stars: 15000000, item: 'guild_upgrader', mega_boost: 2 },
-        unlocks: ['+1 place'], // Total 9
+        unlocks: ['+1 place'], // Total 11 (+ jusqu'à 4 places achetables avec joker_guilde = max 15)
         slots_gained: 1,
         treasury_capacity: 15000000
     }

@@ -3,23 +3,34 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 // Font registration
+const registeredFonts = { Inter: false, InterBold: false, GuildEmoji: false, NotoSymbols: false };
 try {
   const assetsPath = path.join(__dirname, '..', 'assets');
   if (fs.existsSync(path.join(assetsPath, 'Inter-Bold.ttf'))) {
       registerFont(path.join(assetsPath, 'Inter-Bold.ttf'), { family: 'InterBold' });
+      registeredFonts.InterBold = true;
   }
   if (fs.existsSync(path.join(assetsPath, 'Inter-Regular.ttf'))) {
       registerFont(path.join(assetsPath, 'Inter-Regular.ttf'), { family: 'Inter' });
+      registeredFonts.Inter = true;
   }
   const fontsPath = path.join(__dirname, '..', 'assets', 'fonts');
   if (fs.existsSync(path.join(fontsPath, 'emojis.ttf'))) {
       registerFont(path.join(fontsPath, 'emojis.ttf'), { family: 'GuildEmoji' });
+      registeredFonts.GuildEmoji = true;
   }
   if (fs.existsSync(path.join(fontsPath, 'NotoSansSymbols2-Regular.ttf'))) {
       registerFont(path.join(fontsPath, 'NotoSansSymbols2-Regular.ttf'), { family: 'NotoSymbols' });
+      registeredFonts.NotoSymbols = true;
+  }
+  
+  // Log des fonts manquantes pour debug
+  const missing = Object.entries(registeredFonts).filter(([_, loaded]) => !loaded).map(([name]) => name);
+  if (missing.length > 0) {
+      console.warn(`⚠️ Fonts manquantes pour le rendu de guilde: ${missing.join(', ')}`);
   }
 } catch(e) {
-    console.error("Could not register fonts", e)
+    console.error("❌ Erreur lors de l'enregistrement des fonts:", e)
 }
 
 const W = 1200, H = 800;
@@ -95,12 +106,19 @@ async function renderGuildProfileV2({ guild, members, owner, warInfo, totalMembe
   // ============================================
   panel(ctx, 24, 24, 400, 100, 24, THEME.header);
   
-  const emojiFont = `48px GuildEmoji`;
+  // Utiliser une font avec meilleur support emoji (Noto + Segoe + fallback)
+  const emojiFont = `48px GuildEmoji, "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif`;
   const nameFont = `700 38px ${titleFace}, Arial`;
   
   ctx.font = emojiFont;
   ctx.fillStyle = THEME.text;
-  ctx.fillText(guild.emoji, 50, 82);
+  
+  // Nettoyer l'emoji (supprimer les emojis Discord custom qui ne s'affichent pas)
+  let displayEmoji = guild.emoji || '🏰';
+  if (displayEmoji.includes('<:') || displayEmoji.includes('<a:')) {
+    displayEmoji = '🏰'; // Fallback si emoji custom Discord
+  }
+  ctx.fillText(displayEmoji, 50, 82);
   
   ctx.font = nameFont;
   const guildNameTrunc = truncateText(ctx, guild.name, 280);
