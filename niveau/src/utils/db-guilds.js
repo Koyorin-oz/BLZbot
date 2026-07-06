@@ -482,11 +482,11 @@ function checkGuildPenalties(guildId) {
 
 /**
  * Calcule le nombre maximum de slots autorisés pour une guilde
- * Prend en compte la limite absolue de 12 membres (9 de base + 3 jokers)
+ * Prend en compte la limite absolue de 15 membres (5 de base + 10 achetables)
  */
 function getGuildMaxSlots(guild) {
-    const absoluteMax = 12;
-    return Math.min(guild.member_slots || 3, absoluteMax);
+    const absoluteMax = 15;
+    return Math.min(guild.member_slots || 5, absoluteMax);
 }
 
 module.exports = {

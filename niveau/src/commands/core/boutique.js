@@ -1,10 +1,12 @@
 
-const { SlashCommandBuilder, TextDisplayBuilder, SectionBuilder, ContainerBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType, MessageFlags, ModalBuilder, StringSelectMenuBuilder, LabelBuilder } = require('discord.js');
+const { SlashCommandBuilder, TextDisplayBuilder, SectionBuilder, ContainerBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType, MessageFlags, ModalBuilder, StringSelectMenuBuilder, LabelBuilder, MediaGalleryBuilder, AttachmentBuilder } = require('discord.js');
 const { getOrCreateUser, grantResources, addItemToInventory } = require('../../utils/db-users');
 const { getItem, getAllItems } = require('../../utils/items');
 const { getDailyShopItems, canPurchaseItem, recordPurchase, checkLegendaryChestSpawn, removeLegendaryChest } = require('../../utils/shop-system.js');
 const db = require('../../database/database');
 const logger = require('../../utils/logger');
+const fs = require('fs');
+const path = require('path');
 
 const FIXED_BOOSTS = [
     getItem('xp_boost'),
@@ -75,12 +77,29 @@ module.exports = {
 
         const generateMessagePayload = (page) => {
             const components = [];
+            const files = [];
 
             const container = new ContainerBuilder();
 
+            // Bannière de la boutique
+            const bannerPath = path.join(__dirname, '..', '..', 'assets', 'boutique_banner.png');
+            if (fs.existsSync(bannerPath)) {
+                try {
+                    const bannerAttachment = new AttachmentBuilder(bannerPath, { name: 'boutique_banner.png' });
+                    files.push(bannerAttachment);
+                    
+                    const bannerGallery = new MediaGalleryBuilder()
+                        .addItems({ media: { url: 'attachment://boutique_banner.png' } });
+                    
+                    container.addMediaGalleryComponents(bannerGallery);
+                } catch (error) {
+                    logger.warn('Impossible de charger la bannière de la boutique:', error);
+                }
+            }
+
             // Header Section
             const headerText = new TextDisplayBuilder()
-                .setContent(`# 🛒 Boutique\nVotre solde : **${user.stars.toLocaleString('fr-FR')}** Starss 💸`);
+                .setContent(`Votre solde : **${user.stars.toLocaleString('fr-FR')}** Starss 💸`);
 
             container.addTextDisplayComponents(headerText);
 
@@ -186,6 +205,7 @@ module.exports = {
 
             return {
                 components: components,
+                files: files,
                 flags: 32768,
                 ephemeral: true
             };
