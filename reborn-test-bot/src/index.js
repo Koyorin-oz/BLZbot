@@ -127,32 +127,52 @@ client.on(Events.InteractionCreate, async (interaction) => {
     const [prefix, action, inviteId] = interaction.customId.split(":");
     if (prefix !== "guild_invite" || !inviteId) return;
     try {
-      await interaction.deferReply({ ephemeral: true });
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({
+          content: "Traitement de l’invitation…",
+          ephemeral: true,
+        });
+      } else {
+        await interaction.reply({
+          content: "Traitement de l’invitation…",
+          ephemeral: true,
+        });
+      }
+
+      let result;
       if (action === "accept") {
-        const r = pg.acceptGuildInvite(
+        result = pg.acceptGuildInvite(
           inviteId,
           interaction.user.id,
           interaction.user.username,
         );
-        if (!r.ok) {
-          await interaction.editReply({ content: r.error });
-        } else {
-          await interaction.editReply({
-            content: "✅ Tu as rejoint la guilde.",
-          });
-        }
       } else if (action === "decline") {
-        const r = pg.declineGuildInvite(inviteId, interaction.user.id);
-        if (!r.ok) {
-          await interaction.editReply({ content: r.error });
-        } else {
-          await interaction.editReply({ content: "❌ Invitation refusée." });
-        }
+        result = pg.declineGuildInvite(inviteId, interaction.user.id);
+      } else {
+        result = { ok: false, error: "Action inconnue." };
+      }
+
+      const content = result?.ok
+        ? action === "accept"
+          ? "✅ Tu as rejoint la guilde."
+          : "❌ Invitation refusée."
+        : result?.error || "Une erreur est survenue.";
+
+      if (interaction.replied || interaction.deferred) {
+        await interaction.editReply({ content }).catch(() => {});
+      } else {
+        await interaction.reply({ content, ephemeral: true }).catch(() => {});
+      }
+
+      try {
+        await interaction.message?.edit?.({ components: [] }).catch(() => {});
+      } catch {
+        /* ignore */
       }
     } catch (e) {
       console.error("[guild invite button]", e);
       await interaction
-        .editReply({ content: "Une erreur est survenue." })
+        .reply({ content: "Une erreur est survenue.", ephemeral: true })
         .catch(() => {});
     }
     return;
