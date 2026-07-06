@@ -9,6 +9,7 @@ const {
 } = require('discord.js');
 const cfg = require('./config');
 const rebornRuntime = require('./rebornRuntime');
+const pg = require('./services/playerGuilds');
 const { refreshApplicationOwners } = require('./lib/owners');
 const { deploySlashCommands, registerNiveauMirrorStubs } = require('./slashDeploy');
 
@@ -109,6 +110,32 @@ client.once(Events.ClientReady, async () => {
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
+  if (interaction.isButton() && interaction.customId.startsWith('guild_invite:')) {
+    const [prefix, action, inviteId] = interaction.customId.split(':');
+    if (prefix !== 'guild_invite' || !inviteId) return;
+    try {
+      if (action === 'accept') {
+        const r = pg.acceptGuildInvite(inviteId, interaction.user.id, interaction.user.username);
+        if (!r.ok) {
+          await interaction.reply({ content: r.error, ephemeral: true });
+        } else {
+          await interaction.reply({ content: '✅ Tu as rejoint la guilde.', ephemeral: true });
+        }
+      } else if (action === 'decline') {
+        const r = pg.declineGuildInvite(inviteId, interaction.user.id);
+        if (!r.ok) {
+          await interaction.reply({ content: r.error, ephemeral: true });
+        } else {
+          await interaction.reply({ content: 'Invitation refusée.', ephemeral: true });
+        }
+      }
+    } catch (e) {
+      console.error('[guild invite button]', e);
+      await interaction.reply({ content: 'Une erreur est survenue.', ephemeral: true }).catch(() => {});
+    }
+    return;
+  }
+
   if (interaction.isAutocomplete()) {
     const cmdAuto = client.commands.get(interaction.commandName);
     if (!cmdAuto?.autocomplete) {

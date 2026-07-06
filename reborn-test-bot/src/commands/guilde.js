@@ -4,6 +4,9 @@ const {
   ContainerBuilder,
   TextDisplayBuilder,
   MessageFlags,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
 } = require('discord.js');
 const pg = require('../services/playerGuilds');
 const { label, NEXT_REQUIREMENTS, ORDER, nextGrade } = require('../reborn/grades');
@@ -296,9 +299,35 @@ module.exports = {
       if (!m || !pg.canInviteMembers(m.guild_id, uid)) {
         return interaction.reply({ content: 'Réservé au chef ou permission « invitations ».' });
       }
-      const r = pg.joinGuild(hub, u.id, u.username, m.guild_id);
+      const r = pg.createPendingInvite(hub, m.guild_id, uid, u.id);
       if (!r.ok) return interaction.reply({ content: r.error });
-      return interaction.reply({ content: `${u} a été ajouté à la guilde.` });
+      const g = pg.getGuild(m.guild_id);
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId(`guild_invite:accept:${r.inviteId}`)
+          .setLabel('Accepter')
+          .setStyle(ButtonStyle.Success),
+        new ButtonBuilder()
+          .setCustomId(`guild_invite:decline:${r.inviteId}`)
+          .setLabel('Refuser')
+          .setStyle(ButtonStyle.Secondary),
+      );
+      const inviteEmbed = new EmbedBuilder()
+        .setColor(0x5865f2)
+        .setTitle('Invitation à rejoindre une guilde')
+        .setDescription(`**${interaction.user.username}** t’invite à rejoindre **\`${g.name}\`**.\nL'invitation expirera dans 5 minutes.`)
+        .setThumbnail(u.displayAvatarURL({ extension: 'png', size: 128 }));
+      try {
+        await u.send({
+          content: `<@${u.id}>`,
+          embeds: [inviteEmbed],
+          components: [row],
+        });
+      } catch (e) {
+        pg.cancelPendingInvite(r.inviteId);
+        return interaction.reply({ content: `Impossible d’envoyer l’invitation à ${u} : ${e?.message || e}` });
+      }
+      return interaction.reply({ content: `Invitation envoyée à ${u} — elle expire dans 5 minutes.` });
     }
 
     if (sub === 'tresor_depot') {
