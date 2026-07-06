@@ -137,7 +137,7 @@ function generateUserDailyShop(userId) {
 
         while (attempts < 20) {
             const rarity = chooseRarity();
-            const itemsOfRarity = getItemsByRarity(rarity);
+            const itemsOfRarity = getItemsByRarity(rarity, userId);
 
             if (itemsOfRarity.length > 0) {
                 randomItem = itemsOfRarity[Math.floor(Math.random() * itemsOfRarity.length)];
