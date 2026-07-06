@@ -3,23 +3,34 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 // Font registration
+const registeredFonts = { Inter: false, InterBold: false, GuildEmoji: false, NotoSymbols: false };
 try {
   const assetsPath = path.join(__dirname, '..', 'assets');
   if (fs.existsSync(path.join(assetsPath, 'Inter-Bold.ttf'))) {
       registerFont(path.join(assetsPath, 'Inter-Bold.ttf'), { family: 'InterBold' });
+      registeredFonts.InterBold = true;
   }
   if (fs.existsSync(path.join(assetsPath, 'Inter-Regular.ttf'))) {
       registerFont(path.join(assetsPath, 'Inter-Regular.ttf'), { family: 'Inter' });
+      registeredFonts.Inter = true;
   }
   const fontsPath = path.join(__dirname, '..', 'assets', 'fonts');
   if (fs.existsSync(path.join(fontsPath, 'emojis.ttf'))) {
       registerFont(path.join(fontsPath, 'emojis.ttf'), { family: 'GuildEmoji' });
+      registeredFonts.GuildEmoji = true;
   }
   if (fs.existsSync(path.join(fontsPath, 'NotoSansSymbols2-Regular.ttf'))) {
       registerFont(path.join(fontsPath, 'NotoSansSymbols2-Regular.ttf'), { family: 'NotoSymbols' });
+      registeredFonts.NotoSymbols = true;
+  }
+  
+  // Log des fonts manquantes pour debug
+  const missing = Object.entries(registeredFonts).filter(([_, loaded]) => !loaded).map(([name]) => name);
+  if (missing.length > 0) {
+      console.warn(`⚠️ Fonts manquantes pour le rendu de guilde: ${missing.join(', ')}`);
   }
 } catch(e) {
-    console.error("Could not register fonts", e)
+    console.error("❌ Erreur lors de l'enregistrement des fonts:", e)
 }
 
 const W = 1200, H = 800;
