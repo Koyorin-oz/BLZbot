@@ -2,11 +2,19 @@
  * Remet à zéro l’économie globale (starss, RP/points, XP, parts ranked, inventaires liés, etc.)
  * sans supprimer les guildes ni les comptes utilisateurs.
  */
-const db = require('../database/database');
+const dbm = require('../database/database');
 const logger = require('./logger');
 const { getAllGuilds, updateGuildLevel } = require('./db-guilds');
 
 require('./ranked-shares'); // assure la table server_config
+
+function forEachDb(fn) {
+    if (typeof dbm.forEachEconomyDatabase === 'function') {
+        dbm.forEachEconomyDatabase(fn);
+    } else {
+        fn(dbm);
+    }
+}
 
 const USER_NUMERIC_RESET = {
     xp: 0,
