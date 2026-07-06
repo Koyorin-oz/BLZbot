@@ -108,87 +108,99 @@ function deleteFromTable(db, table) {
  * @returns {{ usersReset: number, guildsReset: number, deleted: Record<string, number> }}
  */
 function resetServerEconomy() {
-    const userSql = buildUserUpdateSql();
-    const guildSql = buildGuildUpdateSql();
+    let totalUsersReset = 0;
+    let totalGuildsReset = 0;
+    const totalDeleted = {};
 
-    const { usersReset, guildsReset, deleted } = db.transaction(() => {
-        const del = {};
-        let u = 0;
-        if (userSql) {
-            u = db.prepare(userSql).run().changes;
-        }
-        let g = 0;
-        if (guildSql) {
-            g = db.prepare(guildSql).run().changes;
-        }
+    forEachDb((db) => {
+        const userSql = buildUserUpdateSql(db);
+        const guildSql = buildGuildUpdateSql(db);
 
-        db.prepare(
-            'INSERT OR REPLACE INTO server_config (key, value) VALUES (?, ?)'
-        ).run('total_shares_global', 0);
-        db.prepare(
-            'INSERT OR REPLACE INTO server_config (key, value) VALUES (?, ?)'
-        ).run('pool_rp_total', 0);
-
-        const tablesToWipe = [
-            'user_inventory',
-            'quest_progress',
-            'battle_pass',
-            'resource_history',
-            'shop_alerts',
-            'shop_purchases',
-            'daily_shop',
-            'loans',
-            'guild_quest_progress',
-            'server_quest_votes',
-            'puits_tirages',
-            'marketplace_listings',
-            'ranked_daily_activity',
-        ];
-        for (const t of tablesToWipe) {
-            const n = deleteFromTable(t);
-            if (n > 0) del[t] = n;
-        }
-
-        if (tableExists('user_trophies')) {
-            const n = deleteFromTable('user_trophies');
-            if (n > 0) del.user_trophies = n;
-        }
-
-        if (tableExists('war_mvps')) {
-            const n = deleteFromTable('war_mvps');
-            if (n > 0) del.war_mvps = n;
-        }
-
-        if (tableExists('shop_info')) {
-            try {
-                db.prepare(
-                    `UPDATE shop_info SET last_legendary_chest_check = 0, legendary_chest_available = 0`
-                ).run();
-            } catch {
-                /* colonnes optionnelles */
+        const { usersReset, guildsReset, deleted } = db.transaction(() => {
+            const del = {};
+            let u = 0;
+            if (userSql) {
+                u = db.prepare(userSql).run().changes;
             }
+            let g = 0;
+            if (guildSql) {
+                g = db.prepare(guildSql).run().changes;
+            }
+
+            db.prepare(
+                'INSERT OR REPLACE INTO server_config (key, value) VALUES (?, ?)'
+            ).run('total_shares_global', 0);
+            db.prepare(
+                'INSERT OR REPLACE INTO server_config (key, value) VALUES (?, ?)'
+            ).run('pool_rp_total', 0);
+
+            const tablesToWipe = [
+                'user_inventory',
+                'quest_progress',
+                'battle_pass',
+                'resource_history',
+                'shop_alerts',
+                'shop_purchases',
+                'daily_shop',
+                'loans',
+                'guild_quest_progress',
+                'server_quest_votes',
+                'puits_tirages',
+                'marketplace_listings',
+                'ranked_daily_activity',
+            ];
+            for (const t of tablesToWipe) {
+                const n = deleteFromTable(db, t);
+                if (n > 0) del[t] = n;
+            }
+
+            if (tableExists(db, 'user_trophies')) {
+                const n = deleteFromTable(db, 'user_trophies');
+                if (n > 0) del.user_trophies = n;
+            }
+
+            if (tableExists(db, 'war_mvps')) {
+                const n = deleteFromTable(db, 'war_mvps');
+                if (n > 0) del.war_mvps = n;
+            }
+
+            if (tableExists(db, 'shop_info')) {
+                try {
+                    db.prepare(
+                        `UPDATE shop_info SET last_legendary_chest_check = 0, legendary_chest_available = 0`
+                    ).run();
+                } catch {
+                    /* colonnes optionnelles */
+                }
+            }
+
+            return { usersReset: u, guildsReset: g, deleted: del };
+        })();
+
+        totalUsersReset += usersReset;
+        totalGuildsReset += guildsReset;
+        for (const [key, value] of Object.entries(deleted)) {
+            totalDeleted[key] = (totalDeleted[key] || 0) + value;
         }
 
-        return { usersReset: u, guildsReset: g, deleted: del };
-    })();
-
-    try {
-        const guilds = getAllGuilds();
-        for (const g of guilds) {
-            updateGuildLevel(g.id);
+        try {
+            const guilds = getAllGuilds();
+            for (const g of guilds) {
+                updateGuildLevel(g.id);
+            }
+        } catch (e) {
+            logger.error('[reset-economy] Recalcul niveaux guildes:', e?.message || e);
         }
-    } catch (e) {
-        logger.error('[reset-economy] Recalcul niveaux guildes:', e?.message || e);
-    }
+    });
 
     logger.warn(
-        `[reset-economy] Économie réinitialisée — ${usersReset} profil(s), ${guildsReset} guilde(s) (trésorerie/boosts guilde).`
+        `[reset-economy] Économie réinitialisée — ${totalUsersReset} profil(s), ${totalGuildsReset} guilde(s) (trésorerie/boosts guilde).`
     );
 
     return {
-        usersReset,
-        guildsReset,
-        deleted,
+        usersReset: totalUsersReset,
+        guildsReset: totalGuildsReset,
+        deleted: totalDeleted,
     };
 }
 
