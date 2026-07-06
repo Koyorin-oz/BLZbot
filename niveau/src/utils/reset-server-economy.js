@@ -66,11 +66,11 @@ const GUILD_NUMERIC_RESET = {
     guild_boost_until: 0,
 };
 
-function tableExists(name) {
+function tableExists(db, name) {
     return !!db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(name);
 }
 
-function buildUserUpdateSql() {
+function buildUserUpdateSql(db) {
     const cols = db.prepare('PRAGMA table_info(users)').all().map((r) => r.name);
     const parts = [];
     for (const [col, val] of Object.entries(USER_NUMERIC_RESET)) {
@@ -87,7 +87,7 @@ function buildUserUpdateSql() {
     return `UPDATE users SET ${parts.join(', ')}`;
 }
 
-function buildGuildUpdateSql() {
+function buildGuildUpdateSql(db) {
     const cols = db.prepare('PRAGMA table_info(guilds)').all().map((r) => r.name);
     const parts = [];
     for (const [col, val] of Object.entries(GUILD_NUMERIC_RESET)) {
@@ -99,8 +99,8 @@ function buildGuildUpdateSql() {
     return `UPDATE guilds SET ${parts.join(', ')}`;
 }
 
-function deleteFromTable(table) {
-    if (!tableExists(table)) return 0;
+function deleteFromTable(db, table) {
+    if (!tableExists(db, table)) return 0;
     return db.prepare(`DELETE FROM ${table}`).run().changes;
 }
 
