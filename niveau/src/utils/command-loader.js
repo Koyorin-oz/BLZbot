@@ -4,8 +4,13 @@ const logger = require('./logger');
 
 const commandsRootPath = path.join(__dirname, '..', 'commands');
 
-/** Dossiers de commandes « principales » (hors saisonniers, hors giveaway/helpers, hors archive). */
-const MAIN_COMMAND_SUBDIRS = Object.freeze(['core', 'guilde', 'admin', 'misc']);
+/**
+ * Dossiers de commandes « principales » (hors saisonniers, hors giveaway/helpers, hors archive).
+ * Le dossier `guilde` (ancien système de guildes niveau) est volontairement absent :
+ * le système de guildes est entièrement géré par REBORN (`/guilde`, `/profil-guilde`,
+ * `/classement-guilde`). Ni chargé ni déployé côté niveau pour éviter le doublon.
+ */
+const MAIN_COMMAND_SUBDIRS = Object.freeze(['core', 'admin', 'misc']);
 
 /** Fichiers `*-ancien.js` : code conservé dans le repo, jamais chargé ni déployé sur Discord. */
 function isArchivedSlashCommandFile(basename) {
