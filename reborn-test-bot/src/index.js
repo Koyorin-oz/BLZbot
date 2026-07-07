@@ -122,7 +122,8 @@ client.once(Events.ClientReady, async () => {
 client.on(Events.InteractionCreate, async (interaction) => {
   if (interaction.customId.startsWith("guild_invite:")
   ) {
-    const [prefix, action, inviteId] = interaction.customId.split(":")
+    const [prefix, action, inviteId] = interaction.customId.split(":");
+    if (prefix !== "guild_invite" || !inviteId) return;
     try {
       if (!interaction.replied && !interaction.deferred) {
         await interaction.deferReply({ ephemeral: true });
