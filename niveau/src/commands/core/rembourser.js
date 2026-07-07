@@ -124,16 +124,16 @@ module.exports = {
                 // Si trop donné, rembourser juste ce qu'il faut
                 const finalAmount = remainingDebt;
 
-                // Retirer de l'emprunteur
-                updateUserBalance(borrower.id, { stars: -finalAmount });
-
-                // Ajouter au prêteur
+                // Transfert sur le portefeuille réel (REBORN si actif, sinon niveau)
+                const usedReborn = moveLoanStars(borrower.id, -finalAmount, borrower.username);
                 getOrCreateUser(loan.lenderId, lender.username);
-                updateUserBalance(loan.lenderId, { stars: finalAmount });
+                moveLoanStars(loan.lenderId, finalAmount, lender.username);
 
-                // Ajuster les valeurs initiales de guerre (les prêts ne comptent pas)
-                adjustWarInitialValues(borrower.id, { stars: -finalAmount });
-                adjustWarInitialValues(loan.lenderId, { stars: finalAmount });
+                // Ajuster les valeurs initiales de guerre uniquement si le solde niveau a bougé
+                if (!usedReborn) {
+                    adjustWarInitialValues(borrower.id, { stars: -finalAmount });
+                    adjustWarInitialValues(loan.lenderId, { stars: finalAmount });
+                }
 
                 // Marquer comme remboursé
                 const updateLoanStmt = db.prepare('UPDATE loans SET repaid = ?, repaid_amount = ? WHERE id = ?');
