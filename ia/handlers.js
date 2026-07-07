@@ -76,8 +76,9 @@ async function handleMessageCreate(message, client, activeThreads) {
     // (réponses aux replies, mentions, conversations naturelles).
     // Hors de ces salons, l'IA n'interviendra QUE sur mention réelle + par un staff.
     const IA_WHITELIST_CHANNEL_IDS = new Set([
-        config.PUBLIC_IA_CHANNEL_ID,   // 1454467497066762352 — salon IA public
-        config.HARD_MODE_CHANNEL_ID,    // 1461100993889566975 — salon Hard Mode
+        config.PUBLIC_IA_CHANNEL_ID,       // salon IA public
+        config.HARD_MODE_CHANNEL_ID,       // salon chatbot Hard (débridé)
+        config.BASIC_CHATBOT_CHANNEL_ID,   // salon chatbot Normal (sans insultes)
     ].filter(Boolean));
     const isInIaWhitelistChannel = IA_WHITELIST_CHANNEL_IDS.has(message.channel.id);
 
