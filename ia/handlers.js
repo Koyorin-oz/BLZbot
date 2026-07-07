@@ -740,8 +740,8 @@ CONTEXTE SALON : salon « chatbot normal ». Ici tu restes correct et tu n'insul
         responseContent = utils.addDotAfterAt(responseContent);
         responseContent = ensureReplyBody(responseContent);
 
-        // Signaler le contenu dangereux
-        if (isDangerousContent) {
+        // Signaler le contenu dangereux (sauf dans le salon Hard où les insultes sont assumées).
+        if (isDangerousContent && message.channel.id !== config.HARD_MODE_CHANNEL_ID) {
             try {
                 const flagChannel = await client.channels.fetch(config.FLAG_CHANNEL_ID);
                 if (flagChannel) {
