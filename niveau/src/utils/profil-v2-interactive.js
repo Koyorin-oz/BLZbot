@@ -116,6 +116,12 @@ async function loadFiche2ProfileData(interaction) {
             const rebornStars = getRebornStars(targetUser.id);
             if (rebornStars !== null && rebornStars !== undefined) u.stars = rebornStars;
         } catch { /* fallback silencieux sur la valeur niveau */ }
+        // Idem pour le RP/rang : source de vérité = REBORN (cohérence avec /classement).
+        try {
+            const { getRebornRp } = require('./reborn-integration');
+            const rebornRp = getRebornRp(targetUser.id);
+            if (rebornRp !== null && rebornRp !== undefined) u.points = rebornRp;
+        } catch { /* fallback silencieux sur la valeur niveau */ }
         const g = getGuildOfUser(targetUser.id);
         u.guild_name = g ? g.name : 'Aucune Guilde';
         u.guild_level = g ? g.level : 1;
