@@ -136,5 +136,7 @@ async function checkOverdueLoans(client) {
 module.exports = { 
     checkOverdueLoans,
     getTotalDebt,
-    getClosestDebtDeadline
+    getClosestDebtDeadline,
+    getEffectiveStars,
+    moveLoanStars
 };
