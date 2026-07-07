@@ -201,9 +201,11 @@ function memberCount(guildId) {
 function createGuild(hubDiscordId, leaderId, leaderName, name, options = {}) {
   const bypassLevel = options.bypassLevel === true;
   const u = users.getOrCreate(leaderId, leaderName);
-  const canCreate = bypassLevel || cfg.TEST_NO_LIMITS || (u.level || 1) >= 15;
+  // Le niveau 15 est une règle de jeu, pas une limite « de confort » : on n'applique
+  // donc PAS le bypass global TEST_NO_LIMITS ici (seul /admin-creer-guilde peut passer outre).
+  const canCreate = bypassLevel || (u.level || 1) >= GUILD_MIN_LEVEL;
   if (!canCreate) {
-    return { ok: false, error: 'Niveau 15 minimum pour créer une guilde.' };
+    return { ok: false, error: `Niveau ${GUILD_MIN_LEVEL} minimum pour créer une guilde (tu es niveau ${u.level || 1}).` };
   }
   if (getMembershipInHub(leaderId, hubDiscordId)) {
     return { ok: false, error: 'Tu es déjà dans une guilde sur ce serveur.' };
