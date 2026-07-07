@@ -1,12 +1,10 @@
-const path = require('path');
 const {
   SlashCommandBuilder,
-  AttachmentBuilder,
+  EmbedBuilder,
   ButtonBuilder,
   ButtonStyle,
   ActionRowBuilder,
   ContainerBuilder,
-  MediaGalleryBuilder,
   MessageFlags,
   TextDisplayBuilder,
 } = require('discord.js');
@@ -14,20 +12,10 @@ const db = require('../db');
 const pg = require('../services/playerGuilds');
 const gm = require('../services/guildMember');
 const users = require('../services/users');
-const { label, grpRankFromTotal } = require('../reborn/grades');
+const { label, grpRankFromTotal, nextGrade } = require('../reborn/grades');
 const { totalToLevelState } = require('../reborn/xpCurve');
+const ladder = require('../services/guildLadder');
 const { d } = require('../lib/slashDesc');
-
-const { renderGuildProfileV2 } = require(path.join(
-  __dirname,
-  '..',
-  '..',
-  '..',
-  'niveau',
-  'src',
-  'utils',
-  'canvas-guild-profile-v2',
-));
 
 function findGuildOnHub(hubDiscordId, nomOrId) {
   const q = String(nomOrId || '').trim().toLowerCase();
@@ -38,138 +26,41 @@ function findGuildOnHub(hubDiscordId, nomOrId) {
   return list.find((g) => String(g.name || '').toLowerCase().includes(q)) || null;
 }
 
-function safeNumBig(s) {
-  try {
-    return Number(BigInt(s || '0'));
-  } catch {
-    return 0;
-  }
-}
-
-/**
- * Si la guilde est pontée (`niv_*`), retourne les données niveau authoritatives
- * (gxp, member_slots, treasury, upgrade_level, wars, treasury_capacity…).
- * Sinon retourne null → on utilisera les données REBORN.
- */
-function fetchNiveauOriginal(rebornGuildId) {
-  if (!String(rebornGuildId || '').startsWith('niv_')) return null;
-  const niveauId = Number(String(rebornGuildId).slice(4));
-  if (!Number.isFinite(niveauId) || niveauId <= 0) return null;
-  try {
-    const niv = require(path.join(__dirname, '..', '..', '..', 'niveau', 'src', 'utils', 'db-guilds'));
-    const g = typeof niv.getGuildById === 'function' ? niv.getGuildById(niveauId) : null;
-    return g || null;
-  } catch {
-    return null;
-  }
-}
-
-/** Objet « guilde » compatible avec `renderGuildProfileV2` + champs REBORN optionnels canvas. */
-function buildCanvasGuildViewModel(g, totalMembers) {
-  const nivG = fetchNiveauOriginal(g.id);
-  // Champs niveau (autorité) avec fallback sur REBORN si pas de pont.
-  const treasuryNum = nivG ? Number(nivG.treasury || 0) : safeNumBig(g.treasury);
-  const gxpNum = nivG ? Number(nivG.level || 0) : safeNumBig(g.gxp);
-  const upgradeLevel = nivG ? Number(nivG.upgrade_level || 1) : 10;
-  const treasuryCap = nivG && Number(nivG.treasury_capacity) > 0
-    ? Number(nivG.treasury_capacity)
-    : Math.max(treasuryNum * 2, 5_000_000);
-  const memberSlots = nivG ? Number(nivG.member_slots || g.member_cap || 5) : (g.member_cap || 5);
-  const warsWon = nivG ? Number(nivG.wars_won || 0) : 0;
-  const warsWon70 = nivG ? Number(nivG.wars_won_70 || 0) : 0;
-  const warsWon80 = nivG ? Number(nivG.wars_won_80 || 0) : 0;
-  const warsWon90 = nivG ? Number(nivG.wars_won_90 || 0) : 0;
-  const totalTreasuryGen = nivG ? Number(nivG.total_treasury_generated || 0) : treasuryNum;
-  const channelId = nivG?.channel_id || g.salon_channel_id || null;
-  const jokerUses = nivG ? Number(nivG.joker_guilde_uses || 0) : 0;
-  const emoji = nivG?.emoji || '🛡️';
-  const createdAt = nivG?.created_at || g.created_ms;
-  let subChiefs = [];
-  if (nivG?.sub_chiefs) {
-    if (Array.isArray(nivG.sub_chiefs)) subChiefs = nivG.sub_chiefs;
-    else if (typeof nivG.sub_chiefs === 'string') {
-      try { subChiefs = JSON.parse(nivG.sub_chiefs) || []; } catch { subChiefs = []; }
-    }
-  }
-  const treasuryMult = nivG ? Number(nivG.treasury_multiplier_purchased || 1) : 1;
-
-  // Total value cohérent avec /profil bouton Guilde (basé sur niveau/users.total_value).
-  let totalValue = treasuryNum + (gxpNum * 1000); // approximation
-  if (nivG) {
-    // Reproduit la formule niveau : addition des total_value des membres.
-    try {
-      const niv = require(path.join(__dirname, '..', '..', '..', 'niveau', 'src', 'utils', 'db-guilds'));
-      if (typeof niv.getGuildMembersWithDetails === 'function') {
-        const list = niv.getGuildMembersWithDetails(Number(String(g.id).slice(4)));
-        totalValue = list.reduce((s, m) => s + Number(m.total_value || 0), 0);
-      }
-    } catch { /* ignore */ }
-  }
-
-  return {
-    id: g.id,
-    name: g.name || nivG?.name || 'Guilde',
-    owner_id: g.leader_id || nivG?.owner_id,
-    emoji,
-    member_slots: memberSlots,
-    member_cap: memberSlots,
-    total_value: totalValue,
-    upgrade_level: upgradeLevel,
-    level: nivG ? Number(nivG.level || 1) : (g.guild_level || 1),
-    treasury: treasuryNum,
-    treasury_capacity: treasuryCap,
-    treasury_multiplier_purchased: treasuryMult,
-    total_treasury_generated: totalTreasuryGen,
-    wars_won: warsWon,
-    wars_won_70: warsWon70,
-    wars_won_80: warsWon80,
-    wars_won_90: warsWon90,
-    channel_id: channelId,
-    joker_guilde_uses: jokerUses,
-    sub_chiefs: subChiefs,
-    created_at: createdAt,
-    reborn_extras: '',
-    reborn_footer: '',
-  };
-}
-
-async function buildMemberRowsForCanvas(interaction, memRows, leaderId) {
+/** Membres triés (chef en tête) avec pseudo + niveau joueur, pour l'aperçu. */
+async function buildMemberRows(interaction, memRows, leaderId) {
   const out = [];
   for (const { user_id } of memRows) {
     const row = users.getUser(user_id);
     let username = row?.username;
     if (!username || username === 'unknown') {
       try {
-        const du = await interaction.client.users.fetch(user_id);
-        username = du.username;
+        username = (await interaction.client.users.fetch(user_id)).username;
       } catch {
         username = 'Joueur';
       }
     }
-    const stars = Number(users.getStars(user_id));
-    const pts = Number(users.getPoints(user_id));
     out.push({
       user_id,
       username: username || 'Joueur',
-      total_value: stars + pts,
+      level: row ? totalToLevelState(row.xp_total ?? 0).level : 1,
     });
   }
   out.sort((a, b) => {
     if (a.user_id === leaderId) return -1;
     if (b.user_id === leaderId) return 1;
-    return 0;
+    return b.level - a.level;
   });
   return out;
 }
 
 /**
- * Construit le payload `/profil-guilde` (canvas + boutons) pour un (hub, guild).
+ * Construit le payload `/profil-guilde` (embed REBORN + boutons) pour un (hub, guild).
  * Réutilisable depuis :
  *  - la commande slash `/profil-guilde`
  *  - le bouton « 🛡️ Guilde » du `/profil` (niveau) intercepté par REBORN
  *
- * Retourne `{ payload, error }`. Si `error` est défini, c'est un message à
- * afficher au lieu du canvas.
+ * Retourne `{ payload, error }`. Toutes les valeurs viennent de la base REBORN
+ * (`player_guilds`), pour rester cohérentes avec `/guilde info`.
  */
 async function buildProfilGuildePayload(interaction, { hub, gRow }) {
   const g = pg.getGuild(gRow.id);
@@ -180,29 +71,42 @@ async function buildProfilGuildePayload(interaction, { hub, gRow }) {
     .prepare('SELECT user_id, joined_ms FROM player_guild_members WHERE guild_id = ? ORDER BY joined_ms')
     .all(g.id);
   const totalMembers = memRows.length;
-  const members = await buildMemberRowsForCanvas(interaction, memRows, g.leader_id);
-  const owner = await interaction.client.users.fetch(g.leader_id).catch(() => ({ username: 'Chef' }));
-  const canvasGuild = buildCanvasGuildViewModel(g, totalMembers);
+  const cap = pg.effectiveMemberCap(g);
+  const members = await buildMemberRows(interaction, memRows, g.leader_id);
 
-  let png;
-  try {
-    png = await renderGuildProfileV2({
-      guild: canvasGuild,
-      members: members.slice(0, 10),
-      owner: owner || { username: 'Chef' },
-      warInfo: null,
-      totalMembers,
-    });
-  } catch (e) {
-    console.error('[profil-guilde REBORN] canvas', e);
-    return { error: `Impossible de générer l'image (canvas). \`${e?.message || e}\`` };
-  }
+  const treasury = BigInt(g.treasury || '0');
+  const gxp = BigInt(g.gxp || '0');
+  const grade = label(g.grade || '') || 'Aucun';
+  const next = nextGrade(g.grade || '');
+  const sep = ladder.antiSepStatus(g.id, hub);
 
-  const file = new AttachmentBuilder(png, { name: 'guild_profile_reborn.png' });
-  const mediaGallery = new MediaGalleryBuilder().addItems({
-    media: { url: 'attachment://guild_profile_reborn.png' },
-  });
-  const container = new ContainerBuilder().addMediaGalleryComponents(mediaGallery);
+  const memberLines = members
+    .slice(0, 10)
+    .map((m, i) => `${m.user_id === g.leader_id ? '👑' : `\`${i + 1}.\``} **${m.username}** — niveau ${m.level}`)
+    .join('\n');
+  const moreLine = totalMembers > 10 ? `\n*+ ${totalMembers - 10} autres membres*` : '';
+
+  const embed = new EmbedBuilder()
+    .setColor(0xe23d3d)
+    .setTitle(`🛡️ ${g.name}`)
+    .setDescription(g.description ? `*${String(g.description).slice(0, 300)}*` : null)
+    .addFields(
+      { name: 'Chef', value: `<@${g.leader_id}>`, inline: true },
+      { name: 'Membres', value: `${totalMembers} / ${cap}`, inline: true },
+      { name: 'Grade', value: grade + (next ? ` → ${label(next)}` : ' (max)'), inline: true },
+      { name: 'Niveau guilde', value: `${g.guild_level}`, inline: true },
+      { name: 'GXP', value: gxp.toLocaleString('fr-FR'), inline: true },
+      { name: 'Trésorerie', value: `${treasury.toLocaleString('fr-FR')} ⭐`, inline: true },
+      {
+        name: 'Salon privé',
+        value: g.salon_channel_id ? `<#${g.salon_channel_id}>` : `Non débloqué (grade ${label(pg.SALON_MIN_GRADE)})`,
+        inline: true,
+      },
+      { name: 'Anti-séparation', value: sep.protected ? 'Oui' : 'Non', inline: true },
+      { name: 'Identifiant', value: `\`${g.id}\``, inline: true },
+    )
+    .addFields({ name: `Membres (${totalMembers})`, value: memberLines + moreLine || '—' })
+    .setFooter({ text: 'Boutons : liste complète · carrières · quêtes' });
 
   const row1 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
@@ -221,13 +125,11 @@ async function buildProfilGuildePayload(interaction, { hub, gRow }) {
       .setEmoji('📜')
       .setStyle(ButtonStyle.Success),
   );
-  container.addActionRowComponents(row1);
 
   return {
     payload: {
-      files: [file],
-      components: [container],
-      flags: MessageFlags.IsComponentsV2,
+      embeds: [embed],
+      components: [row1],
     },
     g,
   };
