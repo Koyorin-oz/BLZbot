@@ -260,6 +260,32 @@ function getRebornRp(userId) {
   }
 }
 
+/** L'économie REBORN (starss) est-elle active ? */
+function rebornEconomyActive() {
+  return getRebornUsersService() != null;
+}
+
+/**
+ * Ajoute (ou retire si delta < 0) des starss REBORN. Crée la ligne si besoin.
+ * @param {string} userId
+ * @param {number|bigint} delta
+ * @param {string} [username]
+ * @returns {number|null} nouveau solde, ou null si REBORN inactif.
+ */
+function addRebornStars(userId, delta, username) {
+  const svc = getRebornUsersService();
+  if (!svc) return null;
+  try {
+    svc.getOrCreate(userId, username || 'unknown');
+    const d = typeof delta === 'bigint' ? delta : BigInt(Math.trunc(Number(delta) || 0));
+    const n = svc.addStars(userId, d);
+    return typeof n === 'bigint' ? Number(n) : Number(n || 0);
+  } catch (e) {
+    logger.warn('[reborn] addRebornStars:', e?.message || e);
+    return null;
+  }
+}
+
 module.exports = {
   isEnabled,
   rebornAvailable,
