@@ -4,6 +4,11 @@ const cfg = require('../config');
 const { getItem } = require('../reborn/catalog');
 const { NEXT_REQUIREMENTS, grpRankFromTotal, nextGrade, label, rankAtLeast } = require('../reborn/grades');
 
+/** Niveau joueur minimum pour créer une guilde. */
+const GUILD_MIN_LEVEL = 15;
+/** Grade de guilde minimum pour débloquer le salon privé. */
+const SALON_MIN_GRADE = 'or';
+
 function B(s) {
   try {
     return BigInt(s || '0');
