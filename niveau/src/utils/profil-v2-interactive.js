@@ -40,6 +40,14 @@ async function loadFiche2ProfileData(interaction) {
     syncUserBadges(targetUser.id, member);
 
     const user = getOrCreateUser(targetUser.id, targetUser.username);
+    // RP/rang : source de vérité = REBORN (cohérence avec /classement).
+    try {
+        const { getRebornStars, getRebornRp } = require('./reborn-integration');
+        const rebornStars = getRebornStars(targetUser.id);
+        if (rebornStars !== null && rebornStars !== undefined) user.stars = rebornStars;
+        const rebornRp = getRebornRp(targetUser.id);
+        if (rebornRp !== null && rebornRp !== undefined) user.points = rebornRp;
+    } catch { /* fallback silencieux sur les valeurs niveau */ }
     const guild = getGuildOfUser(targetUser.id);
     user.guild_name = guild ? guild.name : 'Aucune Guilde';
     user.guild_level = guild ? guild.level : 1;
