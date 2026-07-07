@@ -138,7 +138,7 @@ module.exports = {
             ),
         ),
     )
-    .addSubcommand((sc) => sc.setName('salon').setDescription('Créer le salon privé de ta guilde (chef).'))
+    .addSubcommand((sc) => sc.setName('salon').setDescription('Créer le salon privé de ta guilde (chef, grade Or minimum).'))
     .addSubcommand((sc) =>
       sc
         .setName('decrire')
