@@ -250,4 +250,5 @@ module.exports = {
   loadRebornSlashFromGeneratedJson,
   bootstrap,
   handleComponentInteraction,
+  getRebornStars,
 };
