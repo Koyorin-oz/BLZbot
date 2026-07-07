@@ -201,6 +201,43 @@ async function handleComponentInteraction(interaction) {
   return rt.handleComponentInteraction(interaction, interaction.client);
 }
 
+let _rebornUsersSvc = null;
+function getRebornUsersService() {
+  if (_rebornUsersSvc) return _rebornUsersSvc;
+  const rt = getRuntime();
+  if (!rt) return null;
+  try {
+    initEnvironment();
+    _rebornUsersSvc = require(path.join(REPO_ROOT, 'reborn-test-bot', 'src', 'services', 'users'));
+    return _rebornUsersSvc;
+  } catch (e) {
+    logger.warn('[reborn] Service users REBORN indisponible:', e?.message || e);
+    return null;
+  }
+}
+
+/**
+ * Solde de starss REBORN (source de vérité de l'économie : boutique, daily, gains…).
+ * `null` si REBORN est inactif ou si l'utilisateur n'a pas encore de ligne REBORN
+ * (dans ce cas l'appelant garde la valeur niveau, évite d'afficher 0 à tort).
+ * @param {string} userId
+ * @returns {number|null}
+ */
+function getRebornStars(userId) {
+  const svc = getRebornUsersService();
+  if (!svc) return null;
+  try {
+    const row = svc.getUser(userId);
+    if (!row) return null;
+    const v = svc.getStars(userId);
+    const big = typeof v === 'bigint' ? v : BigInt(v || 0);
+    return Number(big);
+  } catch (e) {
+    logger.warn('[reborn] getRebornStars:', e?.message || e);
+    return null;
+  }
+}
+
 module.exports = {
   isEnabled,
   rebornAvailable,
