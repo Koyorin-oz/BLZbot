@@ -433,6 +433,11 @@ module.exports = {
       if (g.salon_channel_id) {
         return interaction.reply({ content: `Salon déjà associé : <#${g.salon_channel_id}>.` });
       }
+      if (!pg.canOpenSalon(g)) {
+        return interaction.reply({
+          content: `Salon débloqué au grade **${label(pg.SALON_MIN_GRADE)}** minimum. Ta guilde est **${label(g.grade || '')}** — monte de grade avec \`/guilde grade_up\`.`,
+        });
+      }
       try {
         const everyone = interaction.guild.roles.everyone.id;
         const memberRows = require('../db')
