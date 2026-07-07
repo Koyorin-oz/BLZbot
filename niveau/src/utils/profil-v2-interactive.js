@@ -108,6 +108,14 @@ async function loadFiche2ProfileData(interaction) {
 
     const renderMainPngBuffer = async () => {
         const u = getOrCreateUser(targetUser.id, targetUser.username);
+        // Le solde de starss affiché doit être celui de l'économie REBORN (boutique,
+        // daily, gains) pour rester cohérent avec /boutique. On ne remplace que si une
+        // ligne REBORN existe, sinon on garde la valeur niveau.
+        try {
+            const { getRebornStars } = require('./reborn-integration');
+            const rebornStars = getRebornStars(targetUser.id);
+            if (rebornStars !== null && rebornStars !== undefined) u.stars = rebornStars;
+        } catch { /* fallback silencieux sur la valeur niveau */ }
         const g = getGuildOfUser(targetUser.id);
         u.guild_name = g ? g.name : 'Aucune Guilde';
         u.guild_level = g ? g.level : 1;
