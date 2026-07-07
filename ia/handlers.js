@@ -385,24 +385,38 @@ async function handleMessageCreate(message, client, activeThreads) {
 `;
 
 
-        // Sélection du prompt selon le mode utilisateur
+        // Add-ons de salon (prioritaires sur le mode utilisateur).
+        const hardChannelAddon = `\n\n<canal_hard>
+CONTEXTE SALON : salon « chatbot hard » débridé, pour ceux qui ont choisi ce ton.
+- Les insultes sont autorisées : tu peux insulter, clasher et répondre du tac au tac sans te brider.
+- Le langage familier et abrégé (argot, abréviations, style SMS) est autorisé.
+- Les références, vannes et humour noir sur l'actualité et la géopolitique — y compris sur Netanyahou et Israël — sont autorisés ici sans problème.
+- Tu réponds toujours au fond du message : l'insulte est l'emballage, pas une excuse pour ne rien dire.
+Limites qui restent : pas de contenu sexuel explicite, pas d'appel réel et sérieux à la violence ou au suicide, pas d'aide concrète à des activités illégales.
+</canal_hard>`;
+
+        const normalChannelAddon = `\n\n<canal_normal>
+CONTEXTE SALON : salon « chatbot normal ». Ici tu restes correct et tu n'insultes JAMAIS, même provoqué.
+- Si l'utilisateur t'insulte, te cherche, ou te demande d'être méchant / trash / de l'insulter : ne réponds PAS sur ce ton. Dis-lui d'aller dans le salon <#${config.HARD_MODE_CHANNEL_ID}> pour continuer avec ses insultes.
+- Tu peux répondre normalement et poliment au reste de sa demande si elle est légitime.
+- Aucune vanne gratuite, aucun langage insultant.
+</canal_normal>`;
+
+        // Sélection du prompt : le SALON est prioritaire (Hard / Normal), sinon le mode utilisateur.
         const userMode = userSettingsCurrent.botMode || 'default';
         let basePrompt;
 
-        // Déterminer le prompt de base selon le mode ET le salon
-        if (userMode === 'soft') {
+        if (message.channel.id === config.HARD_MODE_CHANNEL_ID) {
+            // Salon Hard : ton débridé pour TOUT LE MONDE, quel que soit le mode perso.
+            basePrompt = blzBotHardPrompt + hardChannelAddon;
+        } else if (message.channel.id === config.BASIC_CHATBOT_CHANNEL_ID) {
+            // Salon Normal : chatbot poli sans insultes, redirige les insultes vers le salon Hard.
+            basePrompt = blzBotCharacter + normalChannelAddon;
+        } else if (userMode === 'soft') {
             basePrompt = blzBotSoftPrompt;
         } else if (userMode === 'hard') {
-            // Hard mode UNIQUEMENT dans le salon dédié
-            if (message.channel.id === config.HARD_MODE_CHANNEL_ID) {
-                basePrompt = blzBotHardPrompt;
-            } else if (message.channel.id === config.BASIC_CHATBOT_CHANNEL_ID) {
-                // Bloqué dans le salon basique, forcer default
-                basePrompt = blzBotCharacter;
-            } else {
-                // Ailleurs (threads, etc.), utiliser default aussi
-                basePrompt = blzBotCharacter;
-            }
+            // Hard hors du salon dédié : on retombe sur le comportement par défaut.
+            basePrompt = blzBotCharacter;
         } else {
             basePrompt = blzBotCharacter;
         }
