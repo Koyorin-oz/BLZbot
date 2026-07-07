@@ -574,3 +574,46 @@ module.exports = {
     }
   },
 };
+
+/**
+ * Boutons d'invitation guilde (`rbg:iok:<gid>:<tid>` / `rbg:ino:<gid>:<tid>`).
+ * Seule la cible (`tid`) peut répondre. Sur acceptation on rejoint la guilde et,
+ * si un salon privé existe, on donne l'accès au nouveau membre (best-effort).
+ */
+async function handleGuildInviteButton(interaction) {
+  const parts = interaction.customId.split(':'); // ['rbg','iok'|'ino', gid, tid]
+  const action = parts[1];
+  const gid = parts[2];
+  const tid = parts[3];
+  if (interaction.user.id !== tid) {
+    return interaction.reply({ content: 'Cette invitation ne t\'est pas destinée.', ephemeral: true });
+  }
+  const g = pg.getGuild(gid);
+  if (!g) {
+    return interaction.update({ content: 'Cette guilde n\'existe plus.', components: [] }).catch(() => {});
+  }
+  if (action === 'ino') {
+    return interaction.update({ content: `Invitation pour **${g.name}** refusée.`, components: [] }).catch(() => {});
+  }
+  const r = pg.joinGuild(g.hub_discord_id, tid, interaction.user.username, gid);
+  if (!r.ok) {
+    return interaction.update({ content: r.error, components: [] }).catch(() => {});
+  }
+  // Accès au salon privé si présent (best-effort).
+  if (g.salon_channel_id) {
+    try {
+      const guild = await interaction.client.guilds.fetch(g.hub_discord_id);
+      const ch = await guild.channels.fetch(g.salon_channel_id);
+      await ch.permissionOverwrites.edit(tid, {
+        ViewChannel: true,
+        SendMessages: true,
+        ReadMessageHistory: true,
+      });
+    } catch { /* le chef pourra ajuster manuellement */ }
+  }
+  return interaction
+    .update({ content: `Tu as rejoint la guilde **${g.name}** !`, components: [] })
+    .catch(() => {});
+}
+
+module.exports.handleGuildInviteButton = handleGuildInviteButton;
