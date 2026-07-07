@@ -482,7 +482,6 @@ function safeReply(interaction, options) {
 
 async function handleLoanInteraction(interaction) {
     const db = require('../database/database');
-    const { updateUserBalance } = require('../utils/db-users');
 
     // Parse custom ID format: "action-loan-loanId"
     const parts = interaction.customId.split('-');
