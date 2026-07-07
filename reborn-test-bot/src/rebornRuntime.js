@@ -444,6 +444,18 @@ async function handleComponentInteraction(interaction, client) {
     return true;
   }
 
+  if (interaction.isButton() && interaction.customId.startsWith('rbg:i')) {
+    try {
+      const { handleGuildInviteButton } = require('./commands/guilde');
+      await handleGuildInviteButton(interaction);
+    } catch (e) {
+      if (e?.code !== 10062 && e?.code !== 40060) {
+        console.error('[reborn rbg:invite]', e?.message || e);
+      }
+    }
+    return true;
+  }
+
   if (interaction.isButton() && interaction.customId.startsWith('rb:')) {
     if (
       interaction.customId.startsWith('rb:shop:') ||
