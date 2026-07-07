@@ -296,9 +296,36 @@ module.exports = {
       if (!m || !pg.canInviteMembers(m.guild_id, uid)) {
         return interaction.reply({ content: 'Réservé au chef ou permission « invitations ».' });
       }
-      const r = pg.joinGuild(hub, u.id, u.username, m.guild_id);
-      if (!r.ok) return interaction.reply({ content: r.error });
-      return interaction.reply({ content: `${u} a été ajouté à la guilde.` });
+      if (u.bot) return interaction.reply({ content: 'Impossible d\'inviter un bot.' });
+      if (u.id === uid) return interaction.reply({ content: 'Tu es déjà dans la guilde.' });
+      if (pg.getMembershipInHub(u.id, hub)) {
+        return interaction.reply({ content: `${u} est déjà dans une guilde sur ce serveur.` });
+      }
+      const g = pg.getGuild(m.guild_id);
+      if (pg.memberCount(g.id) >= pg.effectiveMemberCap(g)) {
+        return interaction.reply({ content: 'Ta guilde est pleine.' });
+      }
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId(`rbg:iok:${g.id}:${u.id}`).setLabel('Accepter').setStyle(ButtonStyle.Success),
+        new ButtonBuilder().setCustomId(`rbg:ino:${g.id}:${u.id}`).setLabel('Refuser').setStyle(ButtonStyle.Danger),
+      );
+      const dmText = `**${interaction.user.username}** t'invite à rejoindre la guilde **${g.name}** sur **${interaction.guild?.name || 'le serveur'}**.\nAccepte pour la rejoindre.`;
+      let dmOk = false;
+      try {
+        await u.send({ content: dmText, components: [row] });
+        dmOk = true;
+      } catch {
+        dmOk = false;
+      }
+      if (dmOk) {
+        return interaction.reply({ content: `Invitation envoyée à ${u} en message privé.` });
+      }
+      // MP fermés : on poste l'invitation dans le salon en mentionnant la cible.
+      return interaction.reply({
+        content: `${u}, **${interaction.user.username}** t'invite dans la guilde **${g.name}**. Accepte ci-dessous.`,
+        components: [row],
+        allowedMentions: { users: [u.id] },
+      });
     }
 
     if (sub === 'tresor_depot') {
