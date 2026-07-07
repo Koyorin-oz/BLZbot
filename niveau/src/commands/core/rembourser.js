@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const db = require('../../database/database');
-const { getOrCreateUser, updateUserBalance } = require('../../utils/db-users');
+const { getOrCreateUser } = require('../../utils/db-users');
 const { adjustWarInitialValues } = require('../../utils/guild/guild-wars');
 const logger = require('../../utils/logger');
 const { handleCommandError } = require('../../utils/error-handler');
