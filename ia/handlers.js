@@ -92,8 +92,16 @@ async function handleMessageCreate(message, client, activeThreads) {
     const isGuildWideMention =
         mentionAnyGuild && isRealMention && message.channel.isTextBased?.();
     const isPublicChannelMention = isListedPublicMention || isGuildWideMention;
-    const isHardModeChannelMention = message.channel.id === config.HARD_MODE_CHANNEL_ID && hasBotMention;
-    const isBotActiveChannel = isPrivateIaThread || isPublicIaThread || isPublicChannelMention || isHardModeChannelMention;
+    // Salons chatbot dédiés (Hard + Normal) : l'IA répond à tout le monde, mais
+    // UNIQUEMENT quand on la ping ou quand on répond à un de ses messages.
+    const isReplyToBot =
+        Boolean(message.reference?.messageId) &&
+        message.mentions?.repliedUser?.id === client.user.id;
+    const isChatbotChannel =
+        message.channel.id === config.HARD_MODE_CHANNEL_ID ||
+        message.channel.id === config.BASIC_CHATBOT_CHANNEL_ID;
+    const isChatbotChannelTrigger = isChatbotChannel && (hasBotMention || isReplyToBot);
+    const isBotActiveChannel = isPrivateIaThread || isPublicIaThread || isPublicChannelMention || isChatbotChannelTrigger;
 
     const member = await message.guild.members.fetch(message.author.id).catch(() => null);
     const isAdmin = member && member.permissions.has(PermissionsBitField.Flags.Administrator);
