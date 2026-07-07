@@ -102,9 +102,11 @@ async function checkOverdueLoans(client) {
         const totalWithInterest = Math.round(loan.amount * (1.0 + (loan.interest || 0) / 100.0));
         const penaltyAmount = totalWithInterest * 2; // X2 en cas de retard
 
-        // Appliquer la pénalité (l'emprunteur paie, le prêteur reçoit)
-        grantResources(client, loan.borrowerId, { stars: -penaltyAmount, source: 'loan' });
-        grantResources(client, loan.lenderId, { stars: penaltyAmount, source: 'loan' });
+        // Appliquer la pénalité (l'emprunteur paie, le prêteur reçoit) sur le
+        // portefeuille réel (REBORN si actif, sinon niveau).
+        moveLoanStars(loan.borrowerId, -penaltyAmount);
+        moveLoanStars(loan.lenderId, penaltyAmount);
+        void grantResources;
 
         const updateLoanStmt = db.prepare('UPDATE loans SET repaid = 1, repaid_amount = ? WHERE id = ?');
         updateLoanStmt.run(penaltyAmount, loan.id);
