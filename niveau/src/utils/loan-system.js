@@ -3,6 +3,52 @@ const { grantResources } = require('./db-users');
 const logger = require('./logger');
 
 /**
+ * Solde de starss "réel" d'un joueur : celui de l'économie REBORN (boutique,
+ * daily, /profil). Fallback sur la valeur niveau si REBORN est inactif.
+ * @param {string} userId
+ * @param {string} [username]
+ * @returns {number}
+ */
+function getEffectiveStars(userId, username) {
+    try {
+        const { getRebornStars } = require('./reborn-integration');
+        const rb = getRebornStars(userId);
+        if (rb !== null && rb !== undefined) return rb;
+    } catch { /* fallback niveau */ }
+    try {
+        const { getOrCreateUser } = require('./db-users');
+        return getOrCreateUser(userId, username || 'unknown').stars || 0;
+    } catch {
+        return 0;
+    }
+}
+
+/**
+ * Déplace des starss dans le bon portefeuille (REBORN si actif, sinon niveau).
+ * Retourne true si l'opération a touché le portefeuille REBORN (dans ce cas les
+ * valeurs de guerre niveau ne doivent PAS être ajustées, car le solde niveau
+ * n'a pas bougé).
+ * @param {string} userId
+ * @param {number} delta
+ * @param {string} [username]
+ * @returns {boolean} reborn utilisé ?
+ */
+function moveLoanStars(userId, delta, username) {
+    try {
+        const { addRebornStars } = require('./reborn-integration');
+        const res = addRebornStars(userId, delta, username);
+        if (res !== null && res !== undefined) return true;
+    } catch { /* fallback niveau */ }
+    try {
+        const { updateUserBalance } = require('./db-users');
+        updateUserBalance(userId, { stars: delta });
+    } catch (e) {
+        logger.error('moveLoanStars fallback niveau échec:', e?.message || e);
+    }
+    return false;
+}
+
+/**
  * Calcule la dette totale d'un utilisateur (incluant les intérêts).
  * @param {string} userId - L'ID de l'utilisateur emprunteur.
  * @returns {number} La dette totale accumulée.
