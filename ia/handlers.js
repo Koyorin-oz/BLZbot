@@ -58,6 +58,15 @@ async function handleMessageCreate(message, client, activeThreads) {
     if (message.author.bot) return;
     if (!message.guild) return;
 
+    // Chatbot dédié (salons hard + normal) : nouveau système simple et rapide.
+    // S'il prend le message en charge, on s'arrête là (aucun ancien traitement).
+    try {
+        const { handleChatbotMessage } = require('./chatbot.js');
+        if (await handleChatbotMessage(message, client)) return;
+    } catch (e) {
+        utils.log(`[chatbot] ${e?.message || e}`);
+    }
+
     const mentionAnyGuild = iaMentionAnyGuildEnabled();
     const hasBotMention = message.mentions.has(client.user.id);
 
