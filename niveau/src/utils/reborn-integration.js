@@ -300,4 +300,6 @@ module.exports = {
   handleComponentInteraction,
   getRebornStars,
   getRebornRp,
+  rebornEconomyActive,
+  addRebornStars,
 };
