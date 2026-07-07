@@ -157,11 +157,21 @@ function importNiveauGuild(hubDiscordId, niveauGuild, niveauMembers) {
     );
     const leaderPerms = '{"depot":1,"retrait":1,"kick":1,"roles":1,"focus":1}';
     const memberPerms = '{"depot":1,"retrait":0,"kick":0,"roles":0,"focus":0}';
+    // Cap dur : jamais plus de membres que la capacité effective de la guilde.
+    // Le chef est toujours conservé ; les autres ne sont ajoutés que sous le cap.
+    let cap = Infinity;
+    try {
+      const pg = require('./playerGuilds');
+      const gRow = db.prepare('SELECT * FROM player_guilds WHERE id = ?').get(rebornId);
+      cap = pg.effectiveMemberCap(gRow) || Infinity;
+    } catch { /* en cas d'échec, on ne bloque pas la synchro */ }
+    let count = have.size;
     for (const uid of wanted) {
-      if (!have.has(uid)) {
-        const perms = uid === niveauGuild.owner_id ? leaderPerms : memberPerms;
-        insMember.run(rebornId, uid, now, perms);
-      }
+      if (have.has(uid)) continue;
+      const isLeader = uid === niveauGuild.owner_id;
+      if (!isLeader && count >= cap) continue;
+      insMember.run(rebornId, uid, now, isLeader ? leaderPerms : memberPerms);
+      count += 1;
     }
     const delMember = db.prepare('DELETE FROM player_guild_members WHERE guild_id = ? AND user_id = ?');
     for (const uid of have) {
