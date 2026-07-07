@@ -27,6 +27,12 @@ async function renderProfileFichePreviewFromInteraction(interaction, variantRaw,
     }
 
     const user = getOrCreateUser(targetUser.id, targetUser.username);
+    // Solde de starss = économie REBORN (cohérence avec /boutique). Fallback niveau si pas de ligne REBORN.
+    try {
+        const { getRebornStars } = require('./reborn-integration');
+        const rebornStars = getRebornStars(targetUser.id);
+        if (rebornStars !== null && rebornStars !== undefined) user.stars = rebornStars;
+    } catch { /* fallback silencieux */ }
     const guild = getGuildOfUser(targetUser.id);
     user.guild_name = guild ? guild.name : 'Aucune Guilde';
     user.guild_level = guild ? guild.level : 1;
