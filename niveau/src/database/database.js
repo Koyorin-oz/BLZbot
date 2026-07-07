@@ -47,7 +47,7 @@ function initializeDatabase(db) {
             name TEXT NOT NULL UNIQUE,
             owner_id TEXT NOT NULL,
             level INTEGER DEFAULT 0,
-            member_slots INTEGER DEFAULT 3, -- Nombre de places initial (réduit à 3)
+            member_slots INTEGER DEFAULT 5, -- Nombre de places initial
             upgrade_level INTEGER DEFAULT 1,
             treasury INTEGER DEFAULT 0,
             treasury_capacity INTEGER DEFAULT 0,

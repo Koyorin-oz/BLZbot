@@ -208,6 +208,17 @@ function migrate(db) {
       PRIMARY KEY (guild_id, user_id)
     );
 
+    CREATE TABLE IF NOT EXISTS guild_invites (
+      id TEXT PRIMARY KEY,
+      hub_discord_id TEXT NOT NULL,
+      guild_id TEXT NOT NULL,
+      inviter_id TEXT NOT NULL,
+      target_id TEXT NOT NULL,
+      created_ms INTEGER NOT NULL,
+      expires_ms INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending'
+    );
+
     CREATE TABLE IF NOT EXISTS staff_audit (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       hub_discord_id TEXT NOT NULL,

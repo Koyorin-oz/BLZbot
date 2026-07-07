@@ -60,6 +60,7 @@ function effectiveMemberCap(g) {
 
 const DEFAULT_PERMS = { depot: 1, retrait: 0, kick: 0, roles: 0, focus: 0 };
 const LEADER_PERMS = { depot: 1, retrait: 1, kick: 1, roles: 1, focus: 1 };
+const GUILD_INVITE_TTL_MS = 5 * 60 * 1000;
 
 function parsePermsJson(raw) {
   try {
@@ -234,6 +235,65 @@ function createGuild(hubDiscordId, leaderId, leaderName, name, options = {}) {
     'INSERT INTO player_guild_members (guild_id, user_id, joined_ms, perms_json) VALUES (?, ?, ?, ?)',
   ).run(id, leaderId, now, permsJsonString(LEADER_PERMS));
   return { ok: true, guildId: id };
+}
+
+function createPendingInvite(hubDiscordId, guildId, inviterId, targetId) {
+  const g = getGuild(guildId);
+  if (!g || g.hub_discord_id !== hubDiscordId) return { ok: false, error: 'Guilde introuvable sur ce serveur.' };
+  if (!canInviteMembers(guildId, inviterId)) {
+    return { ok: false, error: 'Réservé au chef ou permission « invitations ».' };
+  }
+  if (getMembershipInHub(targetId, hubDiscordId)) return { ok: false, error: 'Cette personne est déjà dans une guilde.' };
+  const n = memberCount(g.id);
+  const cap = effectiveMemberCap(g);
+  if (n >= cap) return { ok: false, error: 'Cette guilde a atteint la limite de membres.' };
+  const inviteId = `${Date.now()}${Math.random().toString(36).slice(2, 10)}`;
+  const now = Date.now();
+  db.prepare(
+    `INSERT INTO guild_invites (id, hub_discord_id, guild_id, inviter_id, target_id, created_ms, expires_ms, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
+  ).run(inviteId, hubDiscordId, g.id, inviterId, targetId, now, now + GUILD_INVITE_TTL_MS);
+  return { ok: true, inviteId };
+}
+
+function getPendingInvite(inviteId) {
+  return db.prepare('SELECT * FROM guild_invites WHERE id = ?').get(inviteId) || null;
+}
+
+function cancelPendingInvite(inviteId) {
+  db.prepare("UPDATE guild_invites SET status = 'cancelled' WHERE id = ?").run(inviteId);
+  return { ok: true };
+}
+
+function acceptGuildInvite(inviteId, targetId, username = '') {
+  const invite = getPendingInvite(inviteId);
+  if (!invite) return { ok: false, error: 'Invitation introuvable.' };
+  if (invite.target_id !== targetId) return { ok: false, error: 'Cette invitation ne te concerne pas.' };
+  if (invite.status !== 'pending') return { ok: false, error: 'Invitation déjà traitée.' };
+  if (Date.now() > invite.expires_ms) {
+    db.prepare("UPDATE guild_invites SET status = 'expired' WHERE id = ?").run(inviteId);
+    return { ok: false, error: 'Invitation expirée.' };
+  }
+  const r = joinGuild(invite.hub_discord_id, targetId, username, invite.guild_id);
+  if (!r.ok) {
+    db.prepare("UPDATE guild_invites SET status = 'failed' WHERE id = ?").run(inviteId);
+    return { ok: false, error: r.error };
+  }
+  db.prepare("UPDATE guild_invites SET status = 'accepted' WHERE id = ?").run(inviteId);
+  return { ok: true };
+}
+
+function declineGuildInvite(inviteId, targetId) {
+  const invite = getPendingInvite(inviteId);
+  if (!invite) return { ok: false, error: 'Invitation introuvable.' };
+  if (invite.target_id !== targetId) return { ok: false, error: 'Cette invitation ne te concerne pas.' };
+  if (invite.status !== 'pending') return { ok: false, error: 'Invitation déjà traitée.' };
+  if (Date.now() > invite.expires_ms) {
+    db.prepare("UPDATE guild_invites SET status = 'expired' WHERE id = ?").run(inviteId);
+    return { ok: false, error: 'Invitation expirée.' };
+  }
+  db.prepare("UPDATE guild_invites SET status = 'declined' WHERE id = ?").run(inviteId);
+  return { ok: true };
 }
 
 function joinGuild(hubDiscordId, userId, username, guildId) {
@@ -597,6 +657,11 @@ module.exports = {
   getMembershipInHub,
   memberCount,
   createGuild,
+  createPendingInvite,
+  getPendingInvite,
+  cancelPendingInvite,
+  acceptGuildInvite,
+  declineGuildInvite,
   joinGuild,
   leaveGuild,
   addGxpFromMemberActivity,

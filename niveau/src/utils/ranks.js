@@ -134,21 +134,14 @@ async function updateUserRank(client, userId) {
             return;
         }
 
-        // --- Logique spéciale pour le rôle GOAT ---
+        // Pas de restriction de progression - le rôle correspond toujours aux points actuels
         const oldRankName = oldRank ? oldRank.name : null;
         const newRankName = newRank.name;
-
-        // On ne peut devenir GOAT qu'en venant de Mythique II
-        if (newRankName === 'GOAT' && oldRankName !== 'Mythique II') {
-            logger.info(`Mise à jour de rôle bloquée pour ${member.user.username}: tentative de passage à GOAT sans être Mythique II.`);
-            return;
-        }
-
-        // Si on quitte le rang GOAT, ce ne peut être que pour Mythique II
-        if (oldRankName === 'GOAT' && newRankName !== 'Mythique II') {
-            logger.info(`Mise à jour de rôle bloquée pour ${member.user.username}: tentative de quitter GOAT pour un autre rang que Mythique II.`);
-            return;
-        }
+        
+        logger.info(`Mise à jour de rang pour ${member.user.username}: ${oldRankName || 'aucun'} → ${newRankName} (${user.points} RP)`);
+        
+        // Note: Les rangs verrouillés (Mythique+) gardent leur rôle même si les points baissent
+        // via la logique de peak_rank dans getDisplayRank()
 
         // --- Gestion des rôles ---
         // --- Gestion des rôles ---
