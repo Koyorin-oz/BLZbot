@@ -561,7 +561,7 @@ module.exports = {
       const r = pg.dissolveGuild(hub, m.guild_id, uid);
       if (!r.ok) return interaction.reply({ content: r.error });
       return interaction.reply({
-        content: "Guilde dissoute (données effacées pour ce test-bot).",
+        content: "Guilde dissoute. Toutes ses données ont été effacées.",
       });
     }
 
