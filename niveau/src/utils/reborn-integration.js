@@ -238,6 +238,28 @@ function getRebornStars(userId) {
   }
 }
 
+/**
+ * RP Ranked REBORN (source de vérité du rang : /classement, rôles ranked…).
+ * `null` si REBORN est inactif ou si l'utilisateur n'a pas encore de ligne REBORN
+ * (dans ce cas l'appelant garde la valeur niveau).
+ * @param {string} userId
+ * @returns {number|null}
+ */
+function getRebornRp(userId) {
+  const svc = getRebornUsersService();
+  if (!svc) return null;
+  try {
+    const row = svc.getUser(userId);
+    if (!row) return null;
+    const v = svc.getPoints(userId);
+    const big = typeof v === 'bigint' ? v : BigInt(v || 0);
+    return Number(big);
+  } catch (e) {
+    logger.warn('[reborn] getRebornRp:', e?.message || e);
+    return null;
+  }
+}
+
 module.exports = {
   isEnabled,
   rebornAvailable,
@@ -251,4 +273,5 @@ module.exports = {
   bootstrap,
   handleComponentInteraction,
   getRebornStars,
+  getRebornRp,
 };
