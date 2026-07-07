@@ -577,7 +577,22 @@ function setMemberPerm(guildId, leaderId, targetUserId, key, value) {
   return { ok: true, perms: cur };
 }
 
+/**
+ * La guilde a-t-elle atteint le grade requis pour ouvrir son salon privé ?
+ * @param {object} guild ligne player_guilds (doit contenir `grade`)
+ * @returns {boolean}
+ */
+function canOpenSalon(guild) {
+  const { ORDER } = require('../reborn/grades');
+  const cur = ORDER.indexOf(guild?.grade || '');
+  const need = ORDER.indexOf(SALON_MIN_GRADE);
+  return cur >= 0 && need >= 0 && cur >= need;
+}
+
 module.exports = {
+  GUILD_MIN_LEVEL,
+  SALON_MIN_GRADE,
+  canOpenSalon,
   getGuild,
   getMembershipInHub,
   memberCount,
