@@ -432,6 +432,44 @@ async function handleComponentInteraction(interaction, client) {
     }
   }
 
+  if (interaction.isButton() && interaction.customId.startsWith('guild_invite:')) {
+    const [, action, inviteId] = interaction.customId.split(':');
+    try {
+      const pg = require('./services/playerGuilds');
+      let result;
+      if (!inviteId) {
+        result = { ok: false, error: 'Invitation invalide.' };
+      } else if (action === 'accept') {
+        result = pg.acceptGuildInvite(inviteId, interaction.user.id, interaction.user.username);
+      } else if (action === 'decline') {
+        result = pg.declineGuildInvite(inviteId, interaction.user.id);
+      } else {
+        result = { ok: false, error: 'Action inconnue.' };
+      }
+      const content = result?.ok
+        ? action === 'accept'
+          ? '✅ Tu as rejoint la guilde.'
+          : '❌ Invitation refusée.'
+        : result?.error || 'Une erreur est survenue.';
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({ content, ephemeral: true }).catch(() => {});
+      } else {
+        await interaction.reply({ content, ephemeral: true }).catch(() => {});
+      }
+      if (result?.ok) {
+        await interaction.message?.edit?.({ components: [] }).catch(() => {});
+      }
+    } catch (e) {
+      if (e?.code !== 10062 && e?.code !== 40060) {
+        console.error('[reborn guild_invite]', e?.message || e);
+      }
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({ content: 'Une erreur est survenue.', ephemeral: true }).catch(() => {});
+      }
+    }
+    return true;
+  }
+
   if (interaction.isButton() && interaction.customId.startsWith('rb_pg_')) {
     try {
       const { handleRebornGuildButton } = require('./commands/profil-guilde');
