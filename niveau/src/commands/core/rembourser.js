@@ -158,15 +158,16 @@ module.exports = {
 
                 logger.info(`${borrower.username} a remboursé ${finalAmount} starss à ${lender.username}.`);
             } else {
-                // Rembourser le montant spécifié (partiel ou exact)
-                updateUserBalance(borrower.id, { stars: -amount });
-
+                // Rembourser le montant spécifié (partiel ou exact) sur le portefeuille réel
+                const usedReborn = moveLoanStars(borrower.id, -amount, borrower.username);
                 getOrCreateUser(loan.lenderId, lender.username);
-                updateUserBalance(loan.lenderId, { stars: amount });
+                moveLoanStars(loan.lenderId, amount, lender.username);
 
-                // Ajuster les valeurs initiales de guerre (les prêts ne comptent pas)
-                adjustWarInitialValues(borrower.id, { stars: -amount });
-                adjustWarInitialValues(loan.lenderId, { stars: amount });
+                // Ajuster les valeurs initiales de guerre uniquement si le solde niveau a bougé
+                if (!usedReborn) {
+                    adjustWarInitialValues(borrower.id, { stars: -amount });
+                    adjustWarInitialValues(loan.lenderId, { stars: amount });
+                }
 
                 // Vérifier si complètement remboursé
                 const newRepaidAmount = alreadyRepaid + amount;
