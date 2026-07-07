@@ -52,9 +52,11 @@ module.exports = {
                 return interaction.editReply({ content: 'La durée du prêt doit être comprise entre 24 heures et 7 jours.' });
             }
 
-            const lenderUser = getOrCreateUser(lender.id, lender.username);
+            getOrCreateUser(lender.id, lender.username);
+            const { getEffectiveStars } = require('../../utils/loan-system');
+            const lenderStars = getEffectiveStars(lender.id, lender.username);
 
-            if (lenderUser.stars < amount) {
+            if (lenderStars < amount) {
                 return interaction.editReply({ content: 'Vous n\'avez pas assez de starss pour prêter ce montant.' });
             }
 
