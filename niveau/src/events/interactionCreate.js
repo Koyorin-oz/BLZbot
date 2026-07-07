@@ -508,17 +508,33 @@ async function handleLoanInteraction(interaction) {
         // Defer update pour avoir plus de temps de traitement
         await interaction.deferUpdate();
 
+        // Re-vérifier que le prêteur a toujours assez de starss (le solde a pu
+        // changer depuis la proposition — évite les soldes négatifs / l'exploit).
+        const { getEffectiveStars, moveLoanStars } = require('../utils/loan-system');
+        const lenderStars = getEffectiveStars(loan.lenderId);
+        if (lenderStars < loan.amount) {
+            db.prepare('DELETE FROM loans WHERE id = ?').run(loanId);
+            return interaction.editReply({
+                content: '❌ Ce prêt est annulé : le prêteur n\'a plus assez de starss.',
+                components: [],
+            });
+        }
+
         const updateLoanStmt = db.prepare('UPDATE loans SET accepted = ? WHERE id = ?');
         updateLoanStmt.run(1, loanId);
 
-        // Transfer starss - SANS multiplicateurs
-        updateUserBalance(loan.lenderId, { stars: -loan.amount });
-        updateUserBalance(loan.borrowerId, { stars: loan.amount });
+        // Transfer starss - SANS multiplicateurs - sur le portefeuille réel (REBORN si actif).
+        const usedReborn = moveLoanStars(loan.lenderId, -loan.amount);
+        moveLoanStars(loan.borrowerId, loan.amount);
 
-        // Ajuster les valeurs de guerre pour éviter l'exploit de farming
-        const { adjustWarInitialValues } = require('../utils/guild/guild-wars');
-        adjustWarInitialValues(loan.lenderId, { stars: -loan.amount });
-        adjustWarInitialValues(loan.borrowerId, { stars: loan.amount });
+        // Ajuster les valeurs de guerre pour éviter l'exploit de farming.
+        // Uniquement si le portefeuille niveau a bougé (sinon le solde niveau
+        // n'a pas changé, aucun ajustement à faire).
+        if (!usedReborn) {
+            const { adjustWarInitialValues } = require('../utils/guild/guild-wars');
+            adjustWarInitialValues(loan.lenderId, { stars: -loan.amount });
+            adjustWarInitialValues(loan.borrowerId, { stars: loan.amount });
+        }
 
         // Faire les opérations asynchrones après la defer
         try {
