@@ -95,6 +95,14 @@ async function updateUserRank(client, userId) {
         const user = getUserPointsStmt.get(userId);
         if (!user) return;
 
+        // Source de vérité du RP/rang = REBORN (cohérence avec /classement et /profil).
+        // On calcule le rang (et donc rôles + notification) sur le RP REBORN si dispo.
+        try {
+            const { getRebornRp } = require('./reborn-integration');
+            const rebornRp = getRebornRp(userId);
+            if (rebornRp !== null && rebornRp !== undefined) user.points = rebornRp;
+        } catch { /* fallback silencieux sur la valeur niveau */ }
+
         const newRank = getRankFromPoints(user.points);
         const newMainRankName = newRank.name.split(' ')[0];
 
