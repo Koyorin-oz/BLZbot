@@ -253,20 +253,23 @@ async function useItem(interaction, itemId) {
                             return;
                         }
 
-                        // Calculer le montant total à rembourser
-                        const totalWithInterest = Math.ceil(selectedLoan.amount * (1 + selectedLoan.interest / 100));
+                        // Calculer le montant total à rembourser (Math.round cohérent avec getTotalDebt)
+                        const totalWithInterest = Math.round(selectedLoan.amount * (1 + selectedLoan.interest / 100));
                         const remainingDebt = totalWithInterest - (selectedLoan.repaid_amount || 0);
 
                         // Rembourser la dette (l'emprunteur n'a rien à payer, le prêteur reçoit l'argent)
                         const lender = await interaction.client.users.fetch(selectedLoan.lenderId);
 
-                        // Donner l'argent au prêteur
+                        // Donner l'argent au prêteur sur le portefeuille réel (REBORN si actif)
                         getOrCreateUser(selectedLoan.lenderId, lender.username);
-                        updateUserBalance(selectedLoan.lenderId, { stars: remainingDebt });
+                        const { moveLoanStars } = require('./loan-system');
+                        const usedReborn = moveLoanStars(selectedLoan.lenderId, remainingDebt, lender.username);
 
-                        // Ajuster les valeurs de guerre pour éviter l'exploit de farming
-                        const { adjustWarInitialValues } = require('./guild/guild-wars');
-                        adjustWarInitialValues(selectedLoan.lenderId, { stars: remainingDebt });
+                        // Ajuster les valeurs de guerre uniquement si le solde niveau a bougé
+                        if (!usedReborn) {
+                            const { adjustWarInitialValues } = require('./guild/guild-wars');
+                            adjustWarInitialValues(selectedLoan.lenderId, { stars: remainingDebt });
+                        }
 
                         // Marquer la dette comme remboursée
                         db.prepare('UPDATE loans SET repaid = 1, repaid_amount = ? WHERE id = ?')
