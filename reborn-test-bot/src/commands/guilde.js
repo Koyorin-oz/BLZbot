@@ -209,7 +209,7 @@ module.exports = {
     .addSubcommand((sc) =>
       sc
         .setName("salon")
-        .setDescription("Créer le salon privé de ta guilde (chef)."),
+        .setDescription("Créer le salon privé de ta guilde (chef, grade Or+)."),
     )
     .addSubcommand((sc) =>
       sc
