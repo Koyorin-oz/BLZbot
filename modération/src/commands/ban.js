@@ -15,7 +15,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('ban')
         .setDescription('Bannir un membre avec une raison spécifique.')
-        .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
+        .setDefaultMemberPermissions(null)
         .addUserOption(option =>
             option.setName('utilisateur')
                 .setDescription('Le membre à bannir')
