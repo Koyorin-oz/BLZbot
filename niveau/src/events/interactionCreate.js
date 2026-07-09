@@ -503,6 +503,16 @@ async function handleLoanInteraction(interaction) {
         return interaction.reply({ content: 'Ce prêt a déjà été traité.', ephemeral: true });
     }
 
+    const ACCEPT_MS = 60 * 60 * 1000;
+    const createdMs = loan.createdAt ? new Date(loan.createdAt).getTime() : 0;
+    if (createdMs && Date.now() - createdMs > ACCEPT_MS) {
+        db.prepare('DELETE FROM loans WHERE id = ?').run(loanId);
+        return interaction.reply({
+            content: 'Ce prêt a expiré : tu avais 1 h pour l’accepter.',
+            ephemeral: true,
+        });
+    }
+
     if (action === 'accept') {
         // Defer update pour avoir plus de temps de traitement
         await interaction.deferUpdate();
