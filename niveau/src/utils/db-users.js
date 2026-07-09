@@ -588,13 +588,9 @@ function updateUserBalance(userId, { xp = 0, points = 0, stars = 0 }) {
             }
         }
         if (points !== 0) {
-            const { rebornEconomyActive } = require('./reborn-integration');
+            const { rebornEconomyActive, addRebornPoints } = require('./reborn-integration');
             if (rebornEconomyActive()) {
-                const svc = require('./reborn-integration').getRebornUsersService?.();
-                if (svc) {
-                    svc.getOrCreate(userId, 'unknown');
-                    svc.addPoints(userId, points);
-                }
+                addRebornPoints(userId, points);
             } else {
                 const { addPlayerRP, burnPlayerRP } = require('./ranked-shares');
                 if (points > 0) addPlayerRP(userId, points);
