@@ -42,7 +42,7 @@ const ITEM_BLURBS = {
   coffre_catm: 'Coffre amélioré : meilleurs gains que le classique.',
   coffre_catl: 'Coffre légendaire : gros gains et chances de bonus.',
   coffre_cats: 'Coffre starss : le plus haut, jackpots possibles.',
-  hacker_token: 'Consomme pour obtenir le rôle Hacker (loot via /salon-hacker).',
+  hacker_token: 'Débloque le salon secret hacker (auto depuis un coffre).',
   coffre_stellaire: 'Coffre de l’event Espace : ouvre-le pour des objets spatiaux.',
   coffre_submerge: 'Coffre de l’event Océan : ouvre-le pour des objets marins.',
   xp_boost: 'Double tes gains d’XP joueur pendant 1 heure.',
