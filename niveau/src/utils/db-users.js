@@ -224,8 +224,21 @@ async function grantResources(client, userId, { xp = 0, points = 0, stars = 0, s
         grantResourcesStmt.run(xp, stars, userId);
 
         if (points > 0) {
-            const { addPlayerRP } = require('./ranked-shares');
-            addPlayerRP(userId, points);
+            const { rebornEconomyActive } = require('./reborn-integration');
+            if (!rebornEconomyActive()) {
+                const { addPlayerRP } = require('./ranked-shares');
+                addPlayerRP(userId, points);
+            }
+        }
+
+        // Starss : portefeuille REBORN si actif (cohérence boutique / profil / prêts).
+        if (stars > 0) {
+            try {
+                const { rebornEconomyActive, addRebornStars } = require('./reborn-integration');
+                if (rebornEconomyActive()) {
+                    addRebornStars(userId, stars);
+                }
+            } catch { /* ignore */ }
         }
 
         // Logger les gains pour le diagnostic
