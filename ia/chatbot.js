@@ -540,7 +540,10 @@ async function handleChatbotMessage(message, client) {
             });
     } catch (e) {
         console.error('[ia chatbot]', collectErrorText(e).slice(0, 300));
-        await message.reply(friendlyError(e)).catch(() => {});
+        const content = isHard ? pickHardLocalFallback(userTextEarly) : friendlyError(e);
+        await message
+            .reply({ content, allowedMentions: { repliedUser: true, parse: [] } })
+            .catch(() => {});
     }
     return true;
 }
