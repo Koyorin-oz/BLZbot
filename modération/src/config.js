@@ -42,8 +42,8 @@ module.exports = {
     /** Salon pour fils privés si MP sanction impossible (surcharge : SANCTION_FALLBACK_CHANNEL_ID dans .env) */
     SANCTION_FALLBACK_CHANNEL_ID:
         process.env.SANCTION_FALLBACK_CHANNEL_ID || '1454490261714370758',
-    /** Lien envoyé en 2e MP après un ban */
-    DEBAN_INVITE_URL: process.env.DEBAN_INVITE_URL || 'https://discord.gg/kR2EzaRa',
+    /** Lien serveur support pour demande de débannissement (2e MP après ban). Surcharge : DEBAN_INVITE_URL */
+    DEBAN_INVITE_URL: process.env.DEBAN_INVITE_URL || 'https://discord.gg/UJNZxzmmPV',
 
     // ==================== MESSAGES ====================
     RECRUITMENT_MESSAGE_ID: '5',
