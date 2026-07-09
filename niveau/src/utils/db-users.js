@@ -424,6 +424,37 @@ function updateUserItemQuantity(userId, itemId, quantity) {
 
 async function setLevel(userId, level, client = null) {
     try {
+        const { rebornEconomyActive, setRebornLevel, getRebornLevelState } = require('./reborn-integration');
+        if (rebornEconomyActive()) {
+            const before = getRebornLevelState(userId) || { level: 1 };
+            const originalLevel = before.level || 1;
+            const st = setRebornLevel(userId, level);
+            const effectiveLevel = st?.level ?? level;
+
+            if (client && effectiveLevel !== originalLevel) {
+                let announceMember = null;
+                await forEachMemberInBlzGuilds(client, userId, async (member) => {
+                    await updateLevelRoles(member, effectiveLevel);
+                    if (!announceMember) announceMember = member;
+                });
+                if (announceMember && effectiveLevel > originalLevel) {
+                    const levelChId = resolveLevelUpChannelId(economyGuildId.getStore());
+                    const levelUpChannel = levelChId
+                        ? await client.channels.fetch(levelChId).catch(() => null)
+                        : null;
+                    if (levelUpChannel) {
+                        levelUpChannel.send({
+                            content: `🎉 Bravo à ${announceMember} qui passe au niveau **${effectiveLevel}** !`,
+                            allowedMentions: { parse: [] },
+                        });
+                    }
+                }
+                const userGuild = getGuildOfUser(userId);
+                if (userGuild) updateGuildLevel(userGuild.id);
+            }
+            return;
+        }
+
         const userBefore = getUserStmt.get(userId);
         const originalLevel = userBefore ? userBefore.level : 1;
 

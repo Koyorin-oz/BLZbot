@@ -421,6 +421,19 @@ function addRebornXp(userId, delta, username) {
   }
 }
 
+/** Définit le niveau REBORN (source /profil, /classement). */
+function setRebornLevel(userId, level, username) {
+  const svc = getRebornUsersService();
+  if (!svc) return null;
+  try {
+    svc.getOrCreate(userId, username || 'unknown');
+    return svc.setPlayerLevel(userId, level);
+  } catch (e) {
+    logger.warn('[reborn] setRebornLevel:', e?.message || e);
+    return null;
+  }
+}
+
 function addRebornPoints(userId, delta, username) {
   const svc = getRebornUsersService();
   if (!svc) return null;
