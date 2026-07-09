@@ -6,7 +6,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('deban')
         .setDescription('Révoquer le bannissement d\'un utilisateur.')
-        .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
+        .setDefaultMemberPermissions(null)
         .addUserOption(option =>
             option.setName('utilisateur')
                 .setDescription('L\'utilisateur à débannir')
