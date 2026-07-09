@@ -239,7 +239,7 @@ async function groqChatCompletion(model, messages, { temperature, maxTokens }) {
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
             body: JSON.stringify({
                 model,
-                messages,
+                messages: prepareGroqMessages(model, messages),
                 temperature: Math.min(2, Math.max(0, temperature)),
                 max_tokens: Math.min(2048, Math.max(64, maxTokens)),
             }),
