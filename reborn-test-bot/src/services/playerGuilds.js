@@ -5,7 +5,7 @@ const { getItem } = require('../reborn/catalog');
 const { NEXT_REQUIREMENTS, grpRankFromTotal, nextGrade, label, rankAtLeast } = require('../reborn/grades');
 
 /** Niveau joueur minimum pour créer une guilde. */
-const GUILD_MIN_LEVEL = 15;
+const GUILD_MIN_LEVEL = 0; // seuil désactivé (création libre — évite désync niveau legacy / REBORN)
 /** Grade de guilde minimum pour débloquer le salon privé. */
 const SALON_MIN_GRADE = 'or';
 
