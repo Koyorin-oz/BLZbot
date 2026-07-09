@@ -8,11 +8,11 @@
  */
 
 const db = require('../db');
-const cfg = require('../config');
 const users = require('./users');
 const meta = require('./meta');
 const quests = require('./quests');
 const skillTree = require('./skillTree');
+const { grantHackerAccess, formatGrantMessage } = require('./hackerAccess');
 
 const ONE_HOUR = 60 * 60 * 1000;
 
