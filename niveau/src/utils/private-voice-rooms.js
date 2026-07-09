@@ -578,6 +578,7 @@ module.exports = {
     resolvePrivateRoomConfig,
     handleLobbyJoin,
     deleteIfOwnerEmpty,
+    rebuildPrivateRoomRegistry,
     ensureSessions,
     buildOverwrites,
     getPrivateRoomVoiceMeta,
