@@ -5,6 +5,7 @@ const {
     ChannelType,
     AttachmentBuilder,
 } = require('discord.js');
+const { denyUnlessCanMod } = require('../utils/mod-access');
 
 /** Types de salons acceptés comme destination. */
 const ALLOWED_DESTINATION_CHANNEL_TYPES = new Set([
