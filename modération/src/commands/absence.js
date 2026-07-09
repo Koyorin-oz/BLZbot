@@ -81,6 +81,11 @@ module.exports = {
                         .setRequired(true))),
 
     async execute(interaction, { dbManager, client }) {
+        const denied = denyUnlessCanMod(interaction, PermissionFlagsBits.ModerateMembers);
+        if (denied) {
+            return interaction.reply({ ...denied, ephemeral: true });
+        }
+
         const subcommand = interaction.options.getSubcommand();
         const absencesDb = dbManager.getStaffAbsencesDb();
 
