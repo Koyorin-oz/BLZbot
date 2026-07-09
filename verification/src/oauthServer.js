@@ -143,10 +143,6 @@ function createOAuthServer(opts) {
           '       Recommandé : VERIFY_PROXY_SECRET=<long random> ou VERIFY_PROXY_IPS=<ip1,ip2>',
       );
     }
-  } else if (!proxyEnforced) {
-    if (!proxyEnforced && !isCompact()) {
-    blzWarn('verif', 'HTTP sans garde-fou proxy (VERIFY_PROXY_SECRET recommandé)');
-  }
   }
 
   const app = express();
