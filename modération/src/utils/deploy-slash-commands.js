@@ -364,9 +364,8 @@ async function deployModerationSlashCommands(client, _config, opts = {}) {
     }
 
     if (compact) {
-        console.log(
-            `[modération] Slash GLOBAL : +${createdCount} maj ${updatedCount} skip ${skippedCount} err ${errorCount} · legacyGlobal ${deletedGlobal} · mirrorGuild ok=${mirrorGuildSetOk}/${mirrorGuildIds.length} · guildOnly +${guildOnlyCreated}/~${guildOnlyUpdated} · cleanGuilds ${guildCleanupTotal}/${guildsVisited}${guildsInError ? ` (err ${guildsInError})` : ''}`
-        );
+        const { blzLine } = require(path.join(__dirname, '..', '..', '..', 'blz-log.js'));
+        blzLine('deploy', `modération +${createdCount} ~${updatedCount} err ${errorCount}`);
     } else {
         console.log(
             `✓ Modération GLOBAL: ${createdCount} new, ${updatedCount} updated, ${skippedCount} skipped, ${errorCount} errors, ${deletedGlobal} retirée(s) du global.`
