@@ -63,7 +63,21 @@ module.exports = {
             }
         } else if (interaction.isButton()) {
             // Gérer les interactions de boutons pour les giveaways
-            if (interaction.customId.startsWith('giveaway_join_')) {
+            } else if (interaction.customId.startsWith('bug_tag:')) {
+                const { handleBugTagButton } = require('../utils/bug-forum-tags');
+                try {
+                    await handleBugTagButton(interaction);
+                } catch (error) {
+                    logger.error('Error handling bug tag button:', error);
+                    try {
+                        if (!interaction.replied && !interaction.deferred) {
+                            await interaction.reply({ content: 'Erreur tag bug.', flags: 64 });
+                        }
+                    } catch (replyError) {
+                        logger.error('Failed to reply after bug tag error:', replyError.code || replyError.message);
+                    }
+                }
+            } else if (interaction.customId.startsWith('giveaway_join_')) {
                 // Gérer la participation aux giveaways
                 await handleGiveawayParticipation(interaction);
             } else if (interaction.customId.startsWith('giveaway_')) {
