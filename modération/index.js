@@ -820,7 +820,7 @@ async function start() {
 
     if (BLZ_COMPACT) {
         const { blzLine } = require(path.join(__dirname, '..', 'blz-log.js'));
-        blzLine('modération', `${client.user.tag} · ${cmdLoaded} cmd · ${eventLoaded} événements`);
+        blzLine('modération', `ready · ${client.user.tag} · ${cmdLoaded} cmd`);
     }
 
     // Le système de vérification (OAuth + capture IP) tourne désormais dans un

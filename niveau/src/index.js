@@ -130,6 +130,9 @@ if (skipSlashDeployEnv) {
 
     const cmdCount = client.commands.size;
     if (BLZ_COMPACT) {
+        const { blzLine } = require(path.join(__dirname, '..', '..', 'blz-log.js'));
+        blzLine('niveau', `ready · ${client.user.tag} · ${cmdCount} cmd`);
+    } else {
         console.log(`[niveau] ${client.user.tag} — ${cmdCount} cmd · ${eventCount} événements`);
     }
 
