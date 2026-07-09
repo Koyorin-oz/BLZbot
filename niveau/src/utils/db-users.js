@@ -283,8 +283,8 @@ async function grantResources(client, userId, { xp = 0, points = 0, stars = 0, s
             checkQuestProgress(client, 'BALANCE_REACH', userAfterUpdate, { newBalance: userAfterUpdate.stars });
         }
 
-        // Gestion des changements de niveau (montée OU descente)
-        if (xp !== 0 && userAfterUpdate) {
+        // Gestion des changements de niveau (montée OU descente) — uniquement économie niveau legacy.
+        if (xpNiveau !== 0 && userAfterUpdate) {
             const originalLevel = userAfterUpdate.level;
             let currentUserData = { ...userAfterUpdate };
             let levelChanged = false;
