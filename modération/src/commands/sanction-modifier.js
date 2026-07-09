@@ -62,11 +62,9 @@ module.exports = {
     },
 
     async execute(interaction, { dbManager }) {
-        if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
-            return interaction.reply({ 
-                content: '❌ Vous n\'avez pas la permission d\'utiliser cette commande.', 
-                ephemeral: true 
-            });
+        const denied = denyUnlessCanMod(interaction, PermissionFlagsBits.ModerateMembers);
+        if (denied) {
+            return interaction.reply({ ...denied, ephemeral: true });
         }
 
         const sanctionId = interaction.options.getInteger('sanction_id');
