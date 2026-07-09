@@ -627,6 +627,7 @@ async function handleChatbotMessage(message, client) {
 
         let reply = '';
         let lastErr;
+        let usedModel = '';
         const models = getModelsToTry(isHard);
         for (let i = 0; i < models.length; i++) {
             const model = models[i];
@@ -636,28 +637,38 @@ async function handleChatbotMessage(message, client) {
                     isHard,
                     maxTokens: maxTokensForModel(model, isHard),
                 });
-                if (reply) break;
+                if (reply) {
+                    usedModel = model;
+                    break;
+                }
                 const emptyErr = new Error(`Réponse vide (${model}).`);
                 emptyErr.code = 'EMPTY_REPLY';
                 lastErr = emptyErr;
-                if (i < models.length - 1) continue;
+                console.warn(`[ia chatbot] réponse vide — ${model}`);
             } catch (e) {
                 lastErr = e;
                 console.error(`[ia chatbot] ${model}:`, collectErrorText(e).slice(0, 200));
-                if (i < models.length - 1 && shouldTryNextModel(e)) continue;
-                if (isHard) break;
-                throw e;
+                const st = pickHttpStatus(e);
+                if (st === 401 || st === 403) break;
+                if (i < models.length - 1) continue;
             }
         }
         if (!reply) {
+            console.warn('[ia chatbot] retry prompt minimal (llama-3.1-8b-instant)');
+            reply = await groqSimpleRetry(userText, userName, isHard);
+            if (reply) usedModel = 'llama-3.1-8b-instant (retry)';
+        }
+        if (!reply) {
             if (isHard) {
-                console.warn('[ia chatbot] fallback local hard (tous les modèles Groq ont échoué)');
-                reply = pickHardLocalFallback(userText);
+                console.warn('[ia chatbot] fallback local hard (Groq indisponible ou filtre)');
+                reply = pickHardLocalFallback(userText, channelId);
             } else if (lastErr) {
                 throw lastErr;
             } else {
                 reply = pickNormalLocalFallback();
             }
+        } else if (usedModel) {
+            console.log(`[ia chatbot] OK ${usedModel} (${reply.length} chars)`);
         }
         reply = trimHardReply(reply, isHard, userText);
         if (reply.length > MAX_DISCORD) reply = reply.slice(0, MAX_DISCORD) + '…';
