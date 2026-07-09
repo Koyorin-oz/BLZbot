@@ -50,7 +50,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('absence')
         .setDescription('Gérer les absences du staff')
-        .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+        .setDefaultMemberPermissions(null)
         .addSubcommand(subcommand =>
             subcommand
                 .setName('définir')

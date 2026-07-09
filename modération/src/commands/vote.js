@@ -26,6 +26,11 @@ module.exports = {
         ),
 
     async execute(interaction, { voteManager, config }) {
+        const denied = denyUnlessCanMod(interaction, PermissionFlagsBits.ModerateMembers);
+        if (denied) {
+            return interaction.reply({ ...denied, ephemeral: true });
+        }
+
         const subcommand = interaction.options.getSubcommand();
 
         try {
