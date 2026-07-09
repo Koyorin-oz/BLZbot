@@ -674,6 +674,8 @@ module.exports = {
   joinGuild,
   leaveGuild,
   addGxpFromMemberActivity,
+  addGuildGxp,
+  setGuildGxp,
   treasuryView,
   treasuryDeposit,
   treasuryWithdraw,
