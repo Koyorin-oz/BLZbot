@@ -7,7 +7,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('demute')
         .setDescription('Révoquer le mute d\'un utilisateur.')
-        .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+        .setDefaultMemberPermissions(null)
         .addUserOption(option =>
             option.setName('utilisateur')
                 .setDescription('L\'utilisateur à démute')

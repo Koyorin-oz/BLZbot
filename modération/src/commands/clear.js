@@ -1,4 +1,5 @@
 const { ApplicationCommandOptionType, PermissionFlagsBits } = require('discord.js');
+const { denyUnlessCanMod } = require('../utils/mod-access');
 
 module.exports = {
     data: {
