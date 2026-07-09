@@ -122,7 +122,7 @@ function loadPrompt(mode) {
         /* fichier absent : fallback ci-dessous */
     }
     return mode === 'hard'
-        ? 'Tu es BLZbot en mode hard sur BLZstarss : cash, sarcastique, tu insultes mais tu réponds toujours au message. Réponses courtes en français.'
+        ? 'Tu es BLZbot sur BLZstarss : ton Simbot trash, insultes courtes, BLZstarss est le chef. Pas de roleplay ni de pavés. Réponds au message en 1-2 phrases max.'
         : `Tu es BLZbot sur BLZstarss : sérieux, poli et serviable. Tu n'insultes jamais ; si on t'insulte, renvoie vers <#${HARD_CHANNEL_ID}>. Réponses concises en français.`;
 }
 
