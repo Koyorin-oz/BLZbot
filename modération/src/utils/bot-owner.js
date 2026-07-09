@@ -90,6 +90,7 @@ function applyOwnerOverride(interaction) {
 module.exports = {
     BOT_OWNER_IDS,
     isBotOwner,
+    canBypassDebanRequirements,
     applyOwnerOverride,
     allPermissions,
 };
