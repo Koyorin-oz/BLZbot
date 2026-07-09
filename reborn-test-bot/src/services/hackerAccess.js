@@ -57,7 +57,9 @@ async function grantHackerAccess(ctx) {
     if (channel?.permissionOverwrites) {
       const existing = channel.permissionOverwrites.cache.get(m.id);
       const canView = existing?.allow?.has(PermissionFlagsBits.ViewChannel);
-      if (!canView) {
+      if (canView) {
+        channelGranted = true;
+      } else {
         try {
           await channel.permissionOverwrites.edit(
             m.id,
