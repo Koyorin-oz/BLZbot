@@ -20,23 +20,37 @@ function normChannelName(s) {
 }
 
 /**
- * ID du salon lobby sur CE serveur : .env / défaut, sinon recherche par nom (autre ID sur serveur de test).
+ * IDs candidats pour le lobby : .env d’abord, puis défaut code (évite un .env obsolète sur Pebble).
  */
-async function resolveLobbyVoiceChannel(guild, preferredId) {
-    if (!guild) return { id: preferredId, channel: null, ok: false };
+function collectLobbyIdCandidates(preferredId) {
+    const ids = [];
+    const add = (id) => {
+        id = String(id || '').trim();
+        if (/^\d{17,22}$/.test(id) && !ids.includes(id)) ids.push(id);
+    };
+    add(preferredId);
+    add(DEFAULT_LOBBY_CHANNEL_ID);
+    return ids;
+}
 
-    if (/^\d{17,22}$/.test(preferredId)) {
-        const ch = await guild.channels.fetch(preferredId).catch(() => null);
-        if (ch?.isVoiceBased?.()) return { id: ch.id, channel: ch, ok: true };
-    }
+async function ensureGuildChannelsCached(guild) {
+    if (!guild) return;
+    if (guild.channels.cache.size >= 8) return;
+    await guild.channels.fetch().catch(() => null);
+}
 
+function findLobbyByName(guild) {
     const custom = String(process.env.PRIVATE_ROOM_LOBBY_NAME || '').trim();
     const exactNames = [
         custom,
         '➕ ・ Crée ton vocale !',
         '➕ · Crée ton vocale !',
+        '➕ ・ Crée ton vocal !',
+        '➕ · Crée ton vocal !',
         'Crée ton vocale !',
         'Crée ton vocale!',
+        'Crée ton vocal !',
+        'Crée ton vocal!',
     ].filter(Boolean);
 
     const seen = new Set();
@@ -47,17 +61,39 @@ async function resolveLobbyVoiceChannel(guild, preferredId) {
         const hit = guild.channels.cache.find(
             (c) => c.isVoiceBased?.() && normChannelName(c.name) === key
         );
-        if (hit) return { id: hit.id, channel: hit, ok: true };
+        if (hit) return hit;
     }
 
-    const fuzzy = guild.channels.cache.find((c) => {
-        if (!c.isVoiceBased?.()) return false;
-        const compact = normChannelName(c.name).replace(/[^a-z0-9]+/g, '');
-        return /cre.{0,10}ton.{0,10}voc/i.test(compact);
-    });
-    if (fuzzy) return { id: fuzzy.id, channel: fuzzy, ok: true };
+    return (
+        guild.channels.cache.find((c) => {
+            if (!c.isVoiceBased?.()) return false;
+            const compact = normChannelName(c.name).replace(/[^a-z0-9]+/g, '');
+            return /cre.{0,10}ton.{0,10}voc/i.test(compact);
+        }) || null
+    );
+}
 
-    return { id: preferredId, channel: null, ok: false };
+/**
+ * ID du salon lobby sur CE serveur : .env / défaut, puis autres IDs connus, puis recherche par nom.
+ */
+async function resolveLobbyVoiceChannel(guild, preferredId) {
+    if (!guild) return { id: preferredId, channel: null, ok: false, triedIds: [] };
+
+    const triedIds = collectLobbyIdCandidates(preferredId);
+    for (const id of triedIds) {
+        const ch = await guild.channels.fetch(id).catch(() => null);
+        if (ch?.isVoiceBased?.()) {
+            return { id: ch.id, channel: ch, ok: true, triedIds, source: 'id' };
+        }
+    }
+
+    await ensureGuildChannelsCached(guild);
+    const byName = findLobbyByName(guild);
+    if (byName) {
+        return { id: byName.id, channel: byName, ok: true, triedIds, source: 'name' };
+    }
+
+    return { id: preferredId, channel: null, ok: false, triedIds };
 }
 
 function getConfig() {
