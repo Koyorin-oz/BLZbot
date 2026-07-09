@@ -1,27 +1,20 @@
-const { ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType, EmbedBuilder } = require('discord.js');
+const { ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType } = require('discord.js');
 const logger = require('./logger');
-const { creerIssueGitHub } = require('./github-issues');
+const { createBugForumPost } = require('./bug-forum-tags');
 
 /**
- * Gère les erreurs de commandes avec un système de rapport de bug via GitHub Issues
- * @param {Interaction} interaction - L'interaction Discord
- * @param {Error} error - L'erreur survenue
- * @param {Client} client - Le client Discord (optionnel, sera récupéré depuis interaction.client)
+ * Gère les erreurs de commandes avec rapport optionnel sur le forum blzbot-bugs.
  */
 async function handleCommandError(interaction, error, client = null) {
-    // Courses bénignes Discord (token expiré / déjà acknowledged) : on ignore
-    // silencieusement. Cela arrive typiquement quand :
-    //   - le bot vient juste de démarrer et le client n'a pas eu le temps de
-    //     consommer l'interaction dans les 3 s ;
-    //   - reborn-test-bot a pris la main sur un bouton avant que le collector
-    //     niveau ne tente son `i.update`.
-    // Pas de logger.error, pas de bug-report : ce ne sont pas de vraies erreurs.
     if (error && (error.code === 10062 || error.code === 40060)) {
         return;
     }
     const discordClient = client || interaction.client;
     const bugId = `bug-${Date.now()}`;
-    logger.error(`[ERREUR ${bugId}] Une erreur est survenue lors de l'exécution de la commande '${interaction.commandName}':`, error);
+    logger.error(
+        `[ERREUR ${bugId}] Une erreur est survenue lors de l'exécution de la commande '${interaction.commandName}':`,
+        error,
+    );
 
     const reportButton = new ButtonBuilder()
         .setCustomId(`report_bug_${bugId}`)
@@ -32,10 +25,10 @@ async function handleCommandError(interaction, error, client = null) {
     const row = new ActionRowBuilder().addComponents(reportButton);
 
     const replyOptions = {
-        content: `❌ Oups ! Une erreur est survenue. Si le problème persiste, vous pouvez le signaler au développeur. (ID Erreur: ${bugId})`,
+        content: `❌ Oups ! Une erreur est survenue. Si le problème persiste, tu peux le signaler sur le forum staff. (ID Erreur: ${bugId})`,
         embeds: [],
         components: [row],
-        ephemeral: true
+        ephemeral: true,
     };
 
     try {
@@ -45,61 +38,76 @@ async function handleCommandError(interaction, error, client = null) {
             await interaction.reply(replyOptions);
         }
     } catch (e) {
-        // Ignorer silencieusement si l'interaction a expiré (10062)
         if (e.code !== 10062) {
             logger.error(`[ERREUR ${bugId}] Impossible de répondre à l'interaction pour signaler l'erreur:`, e);
         }
+        return;
     }
 
-    const collector = interaction.channel.createMessageComponentCollector({
+    let replyMsg;
+    try {
+        replyMsg = await interaction.fetchReply();
+    } catch {
+        return;
+    }
+
+    const collector = replyMsg.createMessageComponentCollector({
         componentType: ComponentType.Button,
-        filter: i => i.customId === `report_bug_${bugId}` && i.user.id === interaction.user.id,
-        time: 60000 // 1 minute
+        filter: (i) => i.customId === `report_bug_${bugId}` && i.user.id === interaction.user.id,
+        time: 120000,
     });
 
-    collector.on('collect', async i => {
+    collector.on('collect', async (i) => {
         try {
-            const commandOptions = interaction.options.data.map(opt => `  - ${opt.name}: ${opt.value}`).join('\n');
+            const commandOptions = (interaction.options?.data || [])
+                .map((opt) => `  - ${opt.name}: ${opt.value}`)
+                .join('\n');
+            const stack = String(error?.stack || error?.message || 'n/a').slice(0, 1500);
+            const reporterLabel = `${interaction.member?.displayName || interaction.user.globalName || interaction.user.username} (@${interaction.user.username})`;
 
-            const issueTitle = `🐛 [Auto] Erreur sur /${interaction.commandName} (${bugId})`;
-            const issueBody = [
-                `### Bug Report Automatique`,
+            const description = [
+                '**Rapport automatique** (bouton après erreur de commande)',
                 '',
-                `**ID du Bug**`,
+                `**Commande :** \`/${interaction.commandName}\``,
+                '',
+                commandOptions ? `**Options :**\n\`\`\`\n${commandOptions}\n\`\`\`` : '',
+                `**Message d'erreur :**\n\`\`\`\n${error?.message || 'inconnu'}\n\`\`\``,
+                '',
+                `**Stack :**\n\`\`\`\n${stack}\n\`\`\``,
+            ]
+                .filter(Boolean)
+                .join('\n');
+
+            await createBugForumPost(discordClient, {
+                threadTitle: `[Auto] /${interaction.commandName}`.slice(0, 100),
+                description,
+                reporterLabel,
+                reporterId: interaction.user.id,
                 bugId,
-                '',
-                `**Utilisateur**`,
-                `${interaction.user.tag} (${interaction.user.id})`,
-                '',
-                `**Commande**`,
-                `\`/${interaction.commandName}\``,
-                '',
-                `**Options**`,
-                commandOptions.length > 0 ? `\`\`\`\n${commandOptions}\n\`\`\`` : 'Aucune',
-                '',
-                `**Message d'erreur**`,
-                `\`\`\`\n${error.message}\n\`\`\``,
-                '',
-                `**Stack Trace**`,
-                `\`\`\`\n${error.stack.substring(0, 1500)}\n\`\`\``,
-            ].join('\n');
+            });
 
-            await creerIssueGitHub({ title: issueTitle, body: issueBody });
-            await i.update({ content: '✅ Votre rapport de bug a été envoyé au développeur via GitHub. Merci !', components: [] });
-        } catch (issueError) {
-            logger.error(`[ERREUR ${bugId}] Impossible de créer l'issue GitHub:`, issueError);
-            await i.update({ content: '❌ Impossible de créer le rapport de bug. Veuillez contacter le développeur manuellement.', components: [] });
+            await i.update({
+                content: '✅ Signalement créé sur le forum **blzbot-bugs**. Merci !',
+                components: [],
+            });
+        } catch (reportError) {
+            logger.error(`[ERREUR ${bugId}] Impossible de créer le post forum:`, reportError);
+            await i
+                .update({
+                    content:
+                        '❌ Impossible de créer le signalement (forum staff). Utilise `/bug` ou préviens un dev.',
+                    components: [],
+                })
+                .catch(() => {});
         }
         collector.stop();
     });
 
-    collector.on('end', collected => {
+    collector.on('end', (collected) => {
         if (collected.size === 0) {
-            // Si le bouton n'a pas été cliqué, on le retire du message pour éviter les erreurs futures
-            interaction.editReply({ components: [] }).catch(() => { });
+            interaction.editReply({ components: [] }).catch(() => {});
         }
     });
 }
 
 module.exports = { handleCommandError };
-

@@ -9,10 +9,9 @@ const {
 } = require('discord.js');
 const logger = require('../../utils/logger');
 const {
-    BUG_TRACKER_GUILD_ID,
-    BUG_FORUM_CHANNEL_ID,
     TAG,
     buildBugTagButtons,
+    createBugForumPost,
 } = require('../../utils/bug-forum-tags');
 
 /** Rôle notifié à chaque nouveau signalement sur le forum bugs. */
