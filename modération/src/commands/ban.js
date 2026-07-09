@@ -77,11 +77,9 @@ module.exports = {
     },
 
     async execute(interaction, { dbManager, config }) {
-        if (!interaction.member.permissions.has(PermissionFlagsBits.BanMembers)) {
-            return interaction.reply({
-                content: '❌ Vous n\'avez pas la permission de bannir des membres.',
-                ephemeral: true
-            });
+        const denied = denyUnlessCanMod(interaction, PermissionFlagsBits.BanMembers);
+        if (denied) {
+            return interaction.reply({ ...denied, ephemeral: true });
         }
 
         const utilisateur = interaction.options.getUser('utilisateur');
