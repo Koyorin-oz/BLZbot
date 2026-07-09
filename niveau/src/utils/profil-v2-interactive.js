@@ -77,9 +77,10 @@ async function loadFiche2ProfileData(interaction) {
     }
     user.guild_state = guildState;
 
-    const rank = getDisplayRank(targetUser.id, user.points);
-    const rankIndex = RANKS.findIndex((r) => r.name === rank.name);
-    const nextRank = rankIndex < RANKS.length - 1 ? RANKS[rankIndex + 1] : null;
+    const rankResolved = resolveRankDisplay(targetUser.id, user.points);
+    const rank = rankResolved.rank;
+    const rankIndex = rankResolved.rankIndex;
+    const nextRank = rankResolved.nextRank;
 
     const { getTotalDebt, getClosestDebtDeadline } = require('./loan-system');
     const totalDebt = getTotalDebt(targetUser.id);
