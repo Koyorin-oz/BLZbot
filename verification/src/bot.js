@@ -229,6 +229,15 @@ function createBot(opts) {
     } catch (e) {
       console.error('[bot] Échec enregistrement des commandes globales :', e);
     }
+    const guildId = process.env.GUILD_ID || process.env.VERIFICATION_GUILD_ID;
+    const guild = (guildId && c.guilds.cache.get(guildId)) || c.guilds.cache.first();
+    if (guild) {
+      try {
+        await refreshPublicPanel(guild, c);
+      } catch (e) {
+        console.warn('[bot] refreshPublicPanel au démarrage:', e?.message || e);
+      }
+    }
   });
 
   /**
