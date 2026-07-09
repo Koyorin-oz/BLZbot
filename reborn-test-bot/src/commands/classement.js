@@ -8,6 +8,7 @@ const {
 const db = require('../db');
 const users = require('../services/users');
 const rankedRoles = require('../services/rankedRoles');
+const { totalToLevelState } = require('../reborn/xpCurve');
 const { d } = require('../lib/slashDesc');
 
 /**
