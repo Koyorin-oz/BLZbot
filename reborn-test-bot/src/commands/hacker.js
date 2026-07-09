@@ -79,11 +79,8 @@ function buildStatusContainer(_interaction, kind, extra, fileName) {
   const head =
     kind === 'denied'
       ? new TextDisplayBuilder().setContent(
-          cfg.hackerChannelId
-            ? `-# **Accès refusé** · jeton hacker ou <#${cfg.hackerChannelId}>`
-            : cfg.hackerRoleId
-              ? `-# **Accès refusé** · <@&${cfg.hackerRoleId}>`
-              : '-# **Accès refusé**',
+          cfg.hackerRoleId
+            ? `-# **Accès refusé** · <@&${cfg.hackerRoleId}>`
         )
       : new TextDisplayBuilder().setContent(`-# **Cooldown** · ${extra.waitLabel}`);
   const sep = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false);

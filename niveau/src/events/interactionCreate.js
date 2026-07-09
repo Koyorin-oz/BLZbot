@@ -656,22 +656,21 @@ async function handleWarInteraction(interaction) {
 async function handleHackerItemClaim(interaction) {
     const { EmbedBuilder } = require('discord.js');
     const { canClaimHackerItem, giveHackerItem, getItemDisplayName } = require('../utils/hacker-system');
-    const roleConfig = require('../config/role.config.json');
-    const hackerRoleName = roleConfig.specialRoles.hacker;
+    const { guildHackerRole, memberHasHackerRole, resolveHackerRoleId } = require('../utils/hacker-role');
 
     const userId = interaction.user.id;
 
-    // Vérifier que l'utilisateur a le rôle "Hacker"
     const member = await interaction.guild.members.fetch(userId).catch(() => null);
     if (!member) {
         return interaction.reply({ content: '❌ Impossible de vérifier votre rôle.', ephemeral: true });
     }
 
-    const hackerRole = interaction.guild.roles.cache.find(r => r.name === hackerRoleName);
-    if (!hackerRole || !member.roles.cache.has(hackerRole.id)) {
+    const hackerRole = await guildHackerRole(interaction.guild);
+    if (!hackerRole || !memberHasHackerRole(member)) {
+        const roleMention = hackerRole ? `<@&${hackerRole.id}>` : `**Hackeur** (\`${resolveHackerRoleId()}\`)`;
         const embed = new EmbedBuilder()
             .setTitle('❌ Accès refusé')
-            .setDescription(`Seuls les membres avec le rôle **${hackerRoleName}** peuvent utiliser ce bouton.\n\nVous pouvez obtenir ce rôle en ouvrant un **Coffre Légendaire** (0.1% de chance).`)
+            .setDescription(`Seuls les membres avec le rôle ${roleMention} peuvent utiliser ce bouton.\n\nTu peux l'obtenir via un **Coffre Légendaire** ou le **jeton hacker**.`)
             .setColor('#FF0000');
         return interaction.reply({ embeds: [embed], ephemeral: true });
     }
