@@ -32,6 +32,11 @@ module.exports = {
                         .setRequired(true))),
 
     async execute(interaction, { dbManager }) {
+        const denied = denyUnlessCanMod(interaction, PermissionFlagsBits.ModerateMembers);
+        if (denied) {
+            return interaction.reply({ ...denied, ephemeral: true });
+        }
+
         const notesDb = dbManager.getNotesDb();
         const subcommand = interaction.options.getSubcommand();
         const targetUser = interaction.options.getUser('utilisateur');

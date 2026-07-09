@@ -62,6 +62,11 @@ module.exports = {
     ),
 
   async execute(interaction, { dbManager }) {
+    const denied = denyUnlessCanMod(interaction, PermissionFlagsBits.ModerateMembers);
+    if (denied) {
+      return interaction.reply({ ...denied, ephemeral: true });
+    }
+
     const targetUser = interaction.options.getUser("utilisateur");
     const typeFilter = interaction.options.getString("type") || "all";
     const moderatorFilter = interaction.options.getUser("modérateur");
