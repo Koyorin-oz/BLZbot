@@ -30,6 +30,11 @@ module.exports = {
                         .setRequired(true))),
 
     async execute(interaction) {
+        const denied = denyUnlessCanMod(interaction, PermissionFlagsBits.ModerateMembers);
+        if (denied) {
+            return interaction.reply({ ...denied, ephemeral: true });
+        }
+
         const subcommand = interaction.options.getSubcommand();
 
         if (subcommand === 'salon') {
