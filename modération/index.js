@@ -34,6 +34,7 @@ const SnipeManager = require('./src/modules/snipe');
 const RecruitmentManager = require('./src/modules/recruitment');
 const Scheduler = require('./src/modules/scheduler');
 const { deployModerationSlashCommands } = require('./src/utils/deploy-slash-commands');
+const { bootstrapDebanForumConfig } = require('./src/modules/debanForum');
 const { handleTicketBridgeMessage } = require('./src/events/ticketBridge');
 const { ensureTicketPanelIfMissing } = require('./src/utils/ticket-panel-payload');
 // Système de vérification : extrait dans le bot dédié `verification/` (voir verification/README.md).
