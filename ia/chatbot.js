@@ -40,7 +40,56 @@ const PROMPT_FILES = {
     normal: path.join(__dirname, 'data', 'normalSystemPrompt.txt'),
 };
 
-/** Heuristique : enrichir avec une recherche web légère (SearXNG). */
+function pickOne(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+}
+
+/** Réponses locales si Groq est down / filtre tout — évite le message d'erreur générique en salon hard. */
+function pickHardLocalFallback(userText) {
+    const t = String(userText || '')
+        .toLowerCase()
+        .replace(/<@!?\d+>/g, '')
+        .trim();
+    if (/\bfeur\b/.test(t)) {
+        return pickOne([
+            "coiffeur toi-même t'as cru être drôle avec ton meme de 2019 ?",
+            "feur ? ton humour il a pris le même train que ton charisme",
+            "sale merde ton feur il fait grizz comme un ascenseur en panne",
+        ]);
+    }
+    if (/tais\s*toi|\btg\b|\bftg\b/.test(t)) {
+        return pickOne([
+            "commence par te taire toi d'abord espèce de sonnette d'ascenseur",
+            "tg ? va parler à un mur ça te ressemble plus",
+        ]);
+    }
+    if (/racis/.test(t)) {
+        return pickOne([
+            "cv bien et toi t'as encore 0 personnalité à part m'insulter ?",
+            "raciste va ? t'as inventé une insulte ou tu la recycles depuis 2016 ?",
+        ]);
+    }
+    if (/nique|ntm|fdp|pute|merde|débile|nul|sale|chiant/.test(t)) {
+        return pickOne([
+            'répète une fois on verra qui ragequit en premier',
+            "wow quelle répartie va te faire foutre ailleurs",
+            "t'es là uniquement pour ça ? triste vie frère",
+        ]);
+    }
+    return pickOne([
+        "t'as rien dit d'intéressant là réessaie",
+        "ok et ? t'as une vraie question ou tu spam ?",
+        "j't'ai pas compris boloss reformule",
+    ]);
+}
+
+function pickNormalLocalFallback() {
+    return pickOne([
+        "J'ai eu un souci technique — reformule ta question ?",
+        "Groq a planté une seconde, réessaie ton message.",
+    ]);
+}
+
 function needsWebSearch(text) {
     const t = String(text || '').toLowerCase();
     if (t.length < 10) return false;
