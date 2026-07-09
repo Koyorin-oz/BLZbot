@@ -544,6 +544,35 @@ async function handleLobbyJoin(client, oldState, newState) {
     }
 }
 
+async function rebuildPrivateRoomRegistry(client, guild) {
+    const cfg = await resolvePrivateRoomConfig(client, guild, { requireLobby: false });
+    if (!cfg.enabled || !cfg.voiceCategoryId) return;
+
+    const { PermissionFlagsBits } = require('discord.js');
+    const channels = guild.channels.cache.filter(
+        (c) => String(c.parentId) === String(cfg.voiceCategoryId) && c.isVoiceBased?.(),
+    );
+
+    for (const channel of channels.values()) {
+        const humans = channel.members.filter((m) => !m.user.bot).size;
+        if (humans === 0) {
+            await deleteIfOwnerEmpty(client, channel).catch(() => {});
+            continue;
+        }
+        let ownerId = null;
+        for (const [id, ow] of channel.permissionOverwrites.cache) {
+            if (id === guild.id || id === client.user?.id) continue;
+            if (ow.allow.has(PermissionFlagsBits.ManageChannels)) {
+                ownerId = id;
+                break;
+            }
+        }
+        if (ownerId) {
+            registerPrivateRoomVoice(client, guild.id, ownerId, channel.id);
+        }
+    }
+}
+
 module.exports = {
     getConfig,
     resolvePrivateRoomConfig,
