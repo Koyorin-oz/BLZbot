@@ -127,7 +127,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
     const [prefix, action, inviteId] = interaction.customId.split(":");
     if (prefix !== "guild_invite" || !inviteId) return;
     try {
-      await interaction.deferReply({ ephemeral: true });
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply({ ephemeral: true });
+      }
 
       let result;
       if (action === "accept") {
@@ -148,7 +150,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
           : "❌ Invitation refusée."
         : result?.error || "Une erreur est survenue.";
 
-      await interaction.editReply({ content });
+      await interaction.editReply({ content }).catch(() => {});
       if (result?.ok) {
         await interaction.message?.edit?.({ components: [] }).catch(() => {});
       }
