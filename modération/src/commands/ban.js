@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const CONFIG = require('../config.js');
 const { getModeratorTitleWithArticle, parseDuration, msToReadableTime } = require('../utils/helpers.js');
+const { denyUnlessCanMod } = require('../utils/mod-access');
 const {
     buildPreBanDmEmbed,
     moderatorLabelForDm,
