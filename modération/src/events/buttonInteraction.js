@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const CONFIG = require("../config.js");
+const { isBotOwner } = require("../utils/bot-owner");
 const {
   closeDebanPost,
   findTestGuildIdByForumChannelId,
