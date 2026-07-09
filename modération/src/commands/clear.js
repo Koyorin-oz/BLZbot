@@ -5,7 +5,7 @@ module.exports = {
     data: {
         name: 'clear',
         description: 'Supprime un nombre de messages dans le salon.',
-        default_member_permissions: PermissionFlagsBits.ManageMessages.toString(),
+        default_member_permissions: null,
         options: [
             {
                 type: ApplicationCommandOptionType.Integer,

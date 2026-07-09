@@ -15,11 +15,9 @@ module.exports = {
         .toJSON(),
 
     async execute(interaction, { dbManager }) {
-        if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
-            return interaction.reply({
-                content: '❌ Vous n\'avez pas la permission d\'utiliser cette commande.',
-                flags: MessageFlags.Ephemeral,
-            });
+        const denied = denyUnlessCanMod(interaction, PermissionFlagsBits.ModerateMembers);
+        if (denied) {
+            return interaction.reply({ ...denied, flags: MessageFlags.Ephemeral });
         }
 
         const utilisateur = interaction.options.getUser('utilisateur');
