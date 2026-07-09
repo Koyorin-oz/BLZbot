@@ -26,7 +26,7 @@ module.exports = {
         if (!hackerChannel) {
             return interaction.reply({
                 content: '❌ Le salon Hackeur est introuvable sur le serveur.',
-                ephemeral: true
+                flags: 64,
             });
         }
 
