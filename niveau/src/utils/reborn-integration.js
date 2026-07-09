@@ -409,7 +409,19 @@ function resolveRankDisplay(userId, _rpFallback) {
   };
 }
 
-function addRebornPoints(userId, delta) {
+function addRebornXp(userId, delta, username) {
+  const svc = getRebornUsersService();
+  if (!svc) return null;
+  try {
+    svc.getOrCreate(userId, username || 'unknown');
+    return svc.addXp(userId, delta);
+  } catch (e) {
+    logger.warn('[reborn] addRebornXp:', e?.message || e);
+    return null;
+  }
+}
+
+function addRebornPoints(userId, delta, username) {
   const svc = getRebornUsersService();
   if (!svc) return null;
   try {
