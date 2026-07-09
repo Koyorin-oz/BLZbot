@@ -52,10 +52,7 @@ function canUseVoicePanel(interaction, voiceChannelId, restricted) {
 }
 
 function sanitizeChannelName(raw) {
-    return String(raw || '')
-        .replace(/[\r\n\t]/g, ' ')
-        .trim()
-        .slice(0, 100);
+    return sanitizePrivateRoomChannelName(raw);
 }
 
 /**
