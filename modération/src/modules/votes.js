@@ -658,7 +658,7 @@ class VoteManager {
       return { success: false, pending: false };
     }
 
-    if (banCheck.tooRecent) {
+    if (banCheck.tooRecent && !canBypassDebanRequirements(userData.discordId)) {
       const eligibilityDate = new Date(
         banCheck.banDate.getTime() + BAN_WAIT_MS,
       );

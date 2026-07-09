@@ -381,6 +381,9 @@ module.exports = {
 
         // Créer le rapport complet
         const report =
+            (data.adminTestRequest
+                ? `**⚙️ Demande test admin** — le demandeur n’est pas banni (bypass bot admin).\n\n`
+                : '') +
             `**📋 Demande de débannissement**\n\n` +
             `**🔒 Contexte du bannissement :**\n` +
             `- **Raison :** ${data.whyBanned}\n` +
