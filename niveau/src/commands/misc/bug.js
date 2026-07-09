@@ -87,46 +87,21 @@ module.exports = {
         const threadName = rawTitle.slice(0, 100);
         const reporter = buildReporterLabel(interaction);
         const userId = interaction.user.id;
-        const timestamp = Math.floor(Date.now() / 1000);
-        const whenFr = `<t:${timestamp}:F>`;
 
         const descSlice = description.length > 3900 ? `${description.slice(0, 3897)}…` : description;
-
-        const embed = new EmbedBuilder()
-            .setTitle('🐛 Signalement')
-            .setDescription(descSlice)
-            .addFields(
-                { name: 'Membre', value: reporter, inline: true },
-                { name: 'ID Discord', value: `\`${userId}\``, inline: true },
-                { name: 'Date du signalement', value: whenFr, inline: false }
-            )
-            .setColor(0xe67e22)
-            .setTimestamp();
+        const bodyText = [
+            descSlice,
+            '',
+            `**Membre :** ${reporter}`,
+            `**ID :** \`${userId}\``,
+        ].join('\n');
 
         try {
-            const channel = await interaction.client.channels.fetch(BUG_FORUM_CHANNEL_ID);
-
-            if (!channel || channel.type !== ChannelType.GuildForum) {
-                logger.error(`[bug] Salon ${BUG_FORUM_CHANNEL_ID} introuvable ou pas un forum.`);
-                return interaction.editReply({
-                    content:
-                        '❌ Le salon de signalement est indisponible. Préviens un administrateur (configuration forum).',
-                });
-            }
-
-            if (channel.guildId !== BUG_TRACKER_GUILD_ID) {
-                logger.warn(`[bug] Forum guild mismatch: ${channel.guildId} vs ${BUG_TRACKER_GUILD_ID}`);
-            }
-
-            await channel.threads.create({
-                name: threadName,
-                message: {
-                    content: `<@&${BUG_NOTIFY_ROLE_ID}>`,
-                    embeds: [embed],
-                    components: buildBugTagButtons(),
-                    allowedMentions: { roles: [BUG_NOTIFY_ROLE_ID] },
-                },
-                appliedTags: [TAG.enCours],
+            await createBugForumPost(interaction.client, {
+                threadTitle: threadName,
+                description: bodyText,
+                reporterLabel: reporter,
+                reporterId: userId,
             });
 
             await interaction.editReply({
