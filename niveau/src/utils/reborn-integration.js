@@ -450,6 +450,32 @@ function addRebornInventory(userId, itemId, qty = 1) {
   }
 }
 
+/**
+ * IDs des top joueurs depuis la BDD REBORN (starss / niveau XP).
+ * @param {'stars'|'level'} field
+ * @param {number} [limit]
+ * @returns {{ id: string }[]|null}
+ */
+function getRebornTopUserIds(field, limit = 10) {
+  if (!rebornEconomyActive()) return null;
+  try {
+    initEnvironment();
+    const db = require(path.join(REPO_ROOT, 'reborn-test-bot', 'src', 'db'));
+    if (field === 'stars') {
+      return db
+        .prepare('SELECT id FROM users ORDER BY CAST(stars AS INTEGER) DESC LIMIT ?')
+        .all(limit);
+    }
+    if (field === 'level') {
+      return db.prepare('SELECT id FROM users ORDER BY COALESCE(xp_total, 0) DESC LIMIT ?').all(limit);
+    }
+    return null;
+  } catch (e) {
+    logger.warn('[reborn] getRebornTopUserIds:', e?.message || e);
+    return null;
+  }
+}
+
 async function syncRebornRankRole(client, userId, hubId) {
   const rr = getRebornRankedRoles();
   if (!rr || !client || !hubId) return null;
