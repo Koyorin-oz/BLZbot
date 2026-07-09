@@ -94,17 +94,18 @@ async function handleVoiceRoomPanelButton(interaction) {
                 const modal = new ModalBuilder()
                     .setCustomId(modalBase('rename'))
                     .setTitle('Renommer le salon');
-                modal.addComponents(
-                    new ActionRowBuilder().addComponents(
-                        new TextInputBuilder()
-                            .setCustomId('pvr_input_name')
-                            .setLabel('Nouveau nom du salon')
-                            .setStyle(TextInputStyle.Short)
-                            .setMinLength(1)
-                            .setMaxLength(100)
-                            .setRequired(true)
-                    )
-                );
+                const nameInput = new TextInputBuilder()
+                    .setCustomId('pvr_input_name')
+                    .setLabel('Nouveau nom du salon')
+                    .setStyle(TextInputStyle.Short)
+                    .setMinLength(1)
+                    .setMaxLength(100)
+                    .setRequired(true);
+                const currentName = sanitizeChannelName(channel.name);
+                if (currentName) {
+                    nameInput.setValue(currentName.slice(0, 100));
+                }
+                modal.addComponents(new ActionRowBuilder().addComponents(nameInput));
                 return interaction.showModal(modal);
             }
             case 'limit': {
