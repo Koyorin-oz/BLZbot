@@ -14,8 +14,16 @@ const config = require('./config.js');
 const HARD_CHANNEL_ID = config.HARD_MODE_CHANNEL_ID;
 const NORMAL_CHANNEL_ID = config.BASIC_CHATBOT_CHANNEL_ID;
 
-const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
-const BUILTIN_FALLBACKS = ['llama-3.1-8b-instant', 'openai/gpt-oss-120b'];
+// Modèles chatbot : hard = persona trash (Kimi K2 / OSS), normal = polyvalent.
+const HARD_DEFAULT_MODEL = 'moonshotai/kimi-k2-instruct';
+const NORMAL_DEFAULT_MODEL = 'llama-3.3-70b-versatile';
+const HARD_FALLBACKS = [
+    'openai/gpt-oss-120b',
+    'meta-llama/llama-4-maverick-17b-128e-instruct',
+    'llama-3.3-70b-versatile',
+    'llama-3.1-8b-instant',
+];
+const NORMAL_FALLBACKS = ['llama-3.1-8b-instant', 'qwen/qwen3-32b'];
 const GROQ_BASE_URL = String(process.env.GROQ_API_BASE || 'https://api.groq.com/openai/v1').replace(/\/$/, '');
 const MAX_DISCORD = 1900;
 
