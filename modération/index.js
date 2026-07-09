@@ -174,6 +174,12 @@ client.once('clientReady', async () => {
     }
 
     try {
+        await bootstrapDebanForumConfig(client);
+    } catch (e) {
+        console.error('[DebanForum] Bootstrap forum deban:', e?.message || e);
+    }
+
+    try {
         await ensureTicketPanelIfMissing(client);
     } catch (e) {
         console.error('[Tickets] Panneau auto au boot:', e?.message || e);
