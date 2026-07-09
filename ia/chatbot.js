@@ -680,7 +680,7 @@ async function handleChatbotMessage(message, client) {
             });
     } catch (e) {
         console.error('[ia chatbot]', collectErrorText(e).slice(0, 300));
-        const content = isHard ? pickHardLocalFallback(userTextEarly) : friendlyError(e);
+        const content = isHard ? pickHardLocalFallback(userTextEarly, channelId) : friendlyError(e);
         await message
             .reply({ content, allowedMentions: { repliedUser: true, parse: [] } })
             .catch(() => {});
