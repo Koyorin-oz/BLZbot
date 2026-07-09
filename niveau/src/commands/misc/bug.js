@@ -4,18 +4,9 @@ const {
     TextInputBuilder,
     TextInputStyle,
     ActionRowBuilder,
-    ChannelType,
-    EmbedBuilder,
 } = require('discord.js');
 const logger = require('../../utils/logger');
-const {
-    TAG,
-    buildBugTagButtons,
-    createBugForumPost,
-} = require('../../utils/bug-forum-tags');
-
-/** Rôle notifié à chaque nouveau signalement sur le forum bugs. */
-const BUG_NOTIFY_ROLE_ID = '1493277032745013452';
+const { createBugForumPost } = require('../../utils/bug-forum-tags');
 
 const MODAL_CUSTOM_ID = 'bug_report_modal';
 const FIELD_TITLE = 'bug_title';
