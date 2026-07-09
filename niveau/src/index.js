@@ -147,9 +147,11 @@ if (skipSlashDeployEnv) {
             ['1', 'true', 'yes'].includes(String(process.env.BLZ_SKIP_CHILD_SLASH_DEPLOY || '').toLowerCase()) ||
             isOrchestratorSlashDeployEnabled()
         ) {
-            console.log(
-                '[niveau] Slash : orchestrateur (run-deploy-all) — pas de deploy ici (évite conflit modération).',
-            );
+            if (!BLZ_COMPACT) {
+                console.log(
+                    '[niveau] Slash : orchestrateur (run-deploy-all) — pas de deploy ici (évite conflit modération).',
+                );
+            }
             return;
         }
         if (skipSlashDeployEnv) {
