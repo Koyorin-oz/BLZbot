@@ -25,11 +25,9 @@ module.exports = {
     },
 
     async execute(interaction) {
-        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
-            return interaction.reply({
-                content: "Tu n'as pas la permission de gérer les messages.",
-                ephemeral: true,
-            });
+        const denied = denyUnlessCanMod(interaction, PermissionFlagsBits.ManageMessages);
+        if (denied) {
+            return interaction.reply({ ...denied, ephemeral: true });
         }
 
         const channel = interaction.channel;
