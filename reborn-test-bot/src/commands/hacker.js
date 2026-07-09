@@ -118,7 +118,7 @@ async function handleHackerSalonButton(interaction) {
   const member = interaction.member;
   const owner = isOwner(uid);
 
-  if (!owner && cfg.hackerRoleId && !hasHackerRole(member)) {
+  if (!owner && !hasHackerRole(member, uid)) {
     const buf = await renderHackerStatusCard('denied');
     const fileName = 'hacker_denied.png';
     const container = buildStatusContainer(interaction, 'denied', {}, fileName);
