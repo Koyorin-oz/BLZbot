@@ -225,6 +225,7 @@ async function syncRankRoleForUser(client, hubDiscordId, userId) {
   }
   const targetRoleId = cfg.find((c) => c.key === tier)?.roleId || null;
   const otherRoleIds = cfg.filter((c) => c.key !== tier && c.roleId).map((c) => c.roleId);
+  const oldTier = lastAppliedTier.get(cacheKey);
   let changed = false;
   try {
     if (targetRoleId && !member.roles.cache.has(targetRoleId)) {
@@ -238,7 +239,23 @@ async function syncRankRoleForUser(client, hubDiscordId, userId) {
       }
     }
     lastAppliedTier.set(cacheKey, tier);
-    return { ok: true, tier, changed };
+
+    if (
+      changed &&
+      oldTier &&
+      oldTier !== tier &&
+      rankIndex(tier) > rankIndex(oldTier)
+    ) {
+      const newLabel = RANK_BY_KEY.get(tier)?.label || tier;
+      try {
+        const { sendRankUpNotification } = require('../../../niveau/src/utils/ranks');
+        await sendRankUpNotification(client, hubDiscordId, userId, member, newLabel);
+      } catch {
+        /* notification best-effort */
+      }
+    }
+
+    return { ok: true, tier, changed, oldTier: oldTier || null };
   } catch (e) {
     return { ok: false, error: `roles: ${e?.message || e}` };
   }
