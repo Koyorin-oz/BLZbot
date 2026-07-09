@@ -98,14 +98,16 @@ function sanitizeHardReply(text) {
 
 /** Coupe les réponses trop longues pour le salon hard. */
 function trimHardReply(text, isHard) {
-    let s = String(text || '').trim();
+    let s = sanitizeHardReply(text);
     if (!isHard || !s) return s;
-    const maxChars = Math.max(120, Number(process.env.IA_HARD_MAX_CHARS || 420));
+    const maxChars = Math.max(80, Number(process.env.IA_HARD_MAX_CHARS || 280));
     if (s.length <= maxChars) return s;
     const cut = s.slice(0, maxChars);
     const lastStop = Math.max(cut.lastIndexOf('.'), cut.lastIndexOf('!'), cut.lastIndexOf('?'));
-    if (lastStop > maxChars * 0.45) return cut.slice(0, lastStop + 1);
-    return `${cut}…`;
+    if (lastStop > maxChars * 0.4) return cut.slice(0, lastStop + 1).trim();
+    const lastSpace = cut.lastIndexOf(' ');
+    if (lastSpace > maxChars * 0.55) return cut.slice(0, lastSpace).trim();
+    return `${cut.trim()}…`;
 }
 
 function getGroqApiKey() {
