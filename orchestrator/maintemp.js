@@ -739,10 +739,7 @@ client.once('clientReady', async () => {
     blzError('maintemp', 'derankUrgence.initialize a échoué :', e?.message || e);
   }
   scheduleSlashSyncFromOrchestrator();
-  blzLine(
-    'maintemp',
-    `${client.user.tag} · prêt · fork ${FORK_DELAY_MS}ms · ${scriptsToRun.map((s) => s.key).join(', ')}`,
-  );
+  blzLine('maintemp', `ready · ${client.user.tag}`);
 });
 
 // Filet de sécurité : si le Gateway de l'orchestrateur ne devient jamais prêt
