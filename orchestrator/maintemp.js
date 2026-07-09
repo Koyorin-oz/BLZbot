@@ -77,7 +77,7 @@
 })();
 
 // --- Modules et configuration de l'environnement ---
-const { fork, execFile } = require('child_process');
+const { fork, spawn } = require('child_process');
 const path = require('path');
 const {
   Client,
