@@ -347,9 +347,18 @@ function extractGroqText(choice) {
     if (!msg) return '';
     let text = msg.content != null ? String(msg.content).trim() : '';
     if (text) return text;
+    if (Array.isArray(msg.tool_calls) && msg.tool_calls.length) {
+        text = msg.tool_calls.map((tc) => tc?.function?.arguments || '').join(' ').trim();
+        if (text) return text;
+    }
     if (msg.reasoning_content != null) {
         const rc = String(msg.reasoning_content).trim();
-        if (rc) return rc.slice(0, 500);
+        if (rc) {
+            const lines = rc.split('\n').map((l) => l.trim()).filter(Boolean);
+            const last = lines[lines.length - 1] || rc;
+            if (last.length >= 8 && last.length <= 500) return last;
+            return rc.slice(0, 500);
+        }
     }
     const reasoning = msg.reasoning != null ? String(msg.reasoning).trim() : '';
     if (reasoning) {
@@ -357,7 +366,7 @@ function extractGroqText(choice) {
             .replace(/<think[^>]*>[\s\S]*?<\/think>/gi, '')
             .replace(/<redacted_thinking[^>]*>[\s\S]*?<\/redacted_thinking>/gi, '')
             .trim();
-        if (stripped) return stripped;
+        if (stripped) return stripped.slice(0, 500);
     }
     return '';
 }
