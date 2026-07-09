@@ -558,8 +558,17 @@ function getUserInventory(userId) {
 function updateUserBalance(userId, { xp = 0, points = 0, stars = 0 }) {
     try {
         if (xp !== 0) {
+            let xpNiveau = xp;
+            try {
+                const { rebornEconomyActive, addRebornXp } = require('./reborn-integration');
+                if (rebornEconomyActive()) {
+                    addRebornXp(userId, xp);
+                    xpNiveau = 0;
+                }
+            } catch { /* ignore */ }
+            if (xpNiveau !== 0) {
             const stmt = db.prepare('UPDATE users SET xp = xp + ? WHERE id = ?');
-            stmt.run(xp, userId);
+            stmt.run(xpNiveau, userId);
             // Recalcul niveau après modif admin (montée ou descente).
             const userAfterUpdate = getUserStmt.get(userId);
             if (userAfterUpdate) {
