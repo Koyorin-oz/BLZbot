@@ -8,11 +8,13 @@ const {
     EmbedBuilder,
 } = require('discord.js');
 const logger = require('../../utils/logger');
+const {
+    BUG_TRACKER_GUILD_ID,
+    BUG_FORUM_CHANNEL_ID,
+    TAG,
+    buildBugTagButtons,
+} = require('../../utils/bug-forum-tags');
 
-/** Serveur forum bugs (fixe, indépendant du GUILD_ID test/prod). */
-const BUG_TRACKER_GUILD_ID = '1493276404643532810';
-const BUG_FORUM_CHANNEL_ID = '1493282774323302450';
-const BUG_FORUM_TAG_ID = '1493284188504461322';
 /** Rôle notifié à chaque nouveau signalement sur le forum bugs. */
 const BUG_NOTIFY_ROLE_ID = '1493277032745013452';
 
