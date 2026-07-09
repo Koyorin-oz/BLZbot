@@ -333,6 +333,10 @@ async function renderGuildProfileV2({ guild, members, owner, warInfo, totalMembe
   // Salon privé
   if (guild.channel_id) {
     ctx.fillText(`💬 Salon privé: Actif`, 470, 700);
+  } else if (guild.reborn_mode) {
+    ctx.fillStyle = THEME.sub;
+    const salonHint = guild.reborn_salon_hint || 'Non débloqué (grade Or)';
+    ctx.fillText(`💬 Salon: ${salonHint}`, 470, 700);
   } else {
     ctx.fillStyle = THEME.sub;
     ctx.fillText(`💬 Salon privé: Non débloqué (U5)`, 470, 700);
