@@ -1,11 +1,13 @@
 /**
- * Logs BLZbot — format court pour Pebble / orchestrateur (BLZ_COMPACT_LOG).
- * Auto-compact si le conteneur est sous /home/container (PebbleHost).
+ * Logs BLZbot — format épuré type Simbot (BLZ_COMPACT_LOG auto sur PebbleHost).
  */
 const fs = require('node:fs');
 
 let _policyApplied = false;
 let _testBannerShown = false;
+/** @type {Map<string, number>} */
+const _dedupRecent = new Map();
+const DEDUP_MS = 3 * 60 * 1000;
 
 function isPebbleHost() {
     if (process.env.BLZ_PEBBLE_HOST === '1') return true;
@@ -60,7 +62,7 @@ function timeTag() {
 }
 
 /**
- * @param {string} tag ex. niveau, modération, maintemp
+ * @param {string} tag
  * @param {string} message
  */
 function blzLine(tag, message) {
@@ -81,16 +83,47 @@ function blzError(tag, message, err) {
     console.error(`${t} [${tag}] ${message}${extra}`);
 }
 
-/** `niveau/src/index.js` → `niveau` */
+/** `niveau/src/index.js` → `niveau`, `ia/index.js` → `ia` */
 function shortScriptName(scriptPath) {
     const s = String(scriptPath || '').replace(/\\/g, '/');
     if (s.includes('niveau/')) return 'niveau';
     if (s.includes('modération/') || s.includes('moderation/')) return 'modération';
     if (s.includes('verification/')) return 'verif';
-    if (s.includes('/ia/')) return 'ia';
+    if (s.includes('/ia/') || s === 'ia/index.js' || s.startsWith('ia/')) return 'ia';
     if (s.includes('reborn-test-bot')) return 'reborn';
+    if (s.includes('run-deploy-all') || s.includes('deploy-all')) return 'deploy';
     const base = s.split('/').pop() || s;
     return base.replace(/\.js$/, '');
+}
+
+/** Retire timestamps / tags imbriqués des workers. */
+function normalizeChildBody(line) {
+    let s = String(line).trim();
+    for (let i = 0; i < 8; i++) {
+        const next = s
+            .replace(/^\d{2}:\d{2}:\d{2}\s+/, '')
+            .replace(/^\[\d{4}-\d{2}-\d{2}T[^\]]+\]\s+/, '')
+            .replace(/^\[(ERROR|WARN|INFO|DEBUG)\]\s+/i, '')
+            .replace(/^\[[\w\-\/éèàùâêîôûçÉÈÀ\.]+\]\s+/i, '')
+            .trim();
+        if (next === s) break;
+        s = next;
+    }
+    return s;
+}
+
+function shouldDedupLine(body) {
+    const key = body.slice(0, 160);
+    const now = Date.now();
+    const prev = _dedupRecent.get(key);
+    if (prev != null && now - prev < DEDUP_MS) return true;
+    _dedupRecent.set(key, now);
+    if (_dedupRecent.size > 400) {
+        for (const [k, ts] of _dedupRecent) {
+            if (now - ts > DEDUP_MS) _dedupRecent.delete(k);
+        }
+    }
+    return false;
 }
 
 const CHILD_LINE_SKIP = [
@@ -140,7 +173,7 @@ const CHILD_LINE_SKIP = [
     /Événement Saint-Valentin/i,
     /✅ Commandes des événements chargées/i,
     /\[INFO\] Commandes niveau \(global\)/i,
-    /\[deploy-all\] Démarrage — si rien/i,
+    /\[deploy-all\] Démarrage/i,
     /\[deploy-all\] Déploiement :/i,
     /\[deploy-all\] Connecté :/i,
     /\[deploy-all\] 1\/2/i,
@@ -149,80 +182,91 @@ const CHILD_LINE_SKIP = [
     /\[BLZ\] BLZ_MAIN_GUILD_ID ne peut pas/i,
     /\[BLZ\] Ton GUILD_ID dans le \.env est déjà/i,
     /\[reborn\] BDD :/i,
+    /Slash : orchestrateur/i,
+    /REBORN \d+ cmd prêtes/i,
+    /Slash niveau \+ modération/i,
+    /Connecté .+ · app \d+/i,
+    /REBORN preflight OK/i,
+    /REBORN : \d+ slash/i,
+    /Global niveau :/i,
+    /REBORN sur guilde/i,
+    /REBORN secours guilde/i,
+    /\[DebanForum\] Forum/i,
+    /Fonts manquantes pour le rendu de guilde/i,
+    /BLZ_REBORN_SLASH_SCOPE=/i,
+    /Salon panneau IA inconnu/i,
+    /HTTP sans garde-fou proxy/i,
+    /HTTP :\d+ · ⚠ sans proxy/i,
+    /Vérification reset streak/i,
+    /Supplying "ephemeral"/i,
+    /Use `node --trace-warnings`/i,
+    /\(node:\d+\) Warning:/i,
+    /Deploy slash terminé.*cherche temple/i,
+    /\[BOT_ROLE\]/i,
+    /\[PRIVATE_ROOM\]/i,
+    /Échec sur tous les nœuds SearXNG/i,
+    /chercher temple:guilde dans les lignes/i,
+    /legacyGlobal/i,
+    /mirrorGuild/i,
+    /guildOnly \+/i,
+    /cleanGuilds/i,
+    /purgeGlobal/i,
+    /REBORN guild \+/i,
 ];
 
-const CHILD_LINE_KEEP = [
-    /Slash GLOBAL/i,
-    /Slash \*\*guild\*\*/i,
-    /\[deploy(-all)?\] Terminé/i,
-    /\[deploy\] /i,
-    /REBORN sur guilde/i,
-    /temple:(guilde|oui|NON)/i,
-    /REBORN preflight/i,
-    /Global niveau :/i,
-    /\[maintemp\] Deploy slash/i,
-    /\[maintemp\]/i,
-    /est prêt/i,
-    /Connecté en tant que/i,
-    /— \d+ cmd/i,
-    /Modération GLOBAL:/i,
-    /\[modération\] Slash GLOBAL/i,
-    /\[niveau\] Slash GLOBAL/i,
-    /ERREUR|❌|Crash|error/i,
-    /\[WARN\]/i,
-    /\[ERROR\]/i,
+const CHILD_LINE_ALLOW = [
+    /^ready ·/i,
+    /\best prêt\b/i,
+    /BLZbot-.+#\d+ · prêt/i,
+    /Slash GLOBAL : \+/i,
+    /\[deploy\] Terminé/i,
+    /Deploy slash (démarré|ok|échec|terminé)/i,
+    /Deploy slash dans \d+s/i,
+    /Services :/i,
+    /Lancement des services/i,
+    /REBORN OK/i,
+    /REBORN désactivé/i,
     /Mode TEST ·/i,
-    /\[verif\] (bot|http|Build)/i,
-    /\[ia\]/i,
-    /\[Welcome\]/i,
-    /\[ANTI-RAID\]/i,
+    /❌|ERREUR|\[ERROR\]|Crash|unhandledRejection|uncaughtException/i,
+    /Deploy slash échec/i,
+    /\[maintemp\]/i,
+    /git ·/i,
+    /pebble-pull/i,
+    /OAuth · slash/i,
 ];
 
 /**
- * Filtre le bruit des workers sous maintemp (compact uniquement).
  * @param {string} scriptName
  * @param {string} line
  */
 function shouldEmitChildLine(scriptName, line) {
     if (!isCompact()) return true;
-    const raw = String(line).replace(/\r\n/g, '\n');
-    const parts = raw.split('\n');
-    return parts.some((part) => {
-        const s = part.trim();
-        if (!s) return false;
-        if (CHILD_LINE_KEEP.some((re) => re.test(s))) return true;
-        if (CHILD_LINE_SKIP.some((re) => re.test(s))) return false;
-        if (/^\[INFO\]/i.test(s)) return false;
-        if (/^✓ Commande chargée:/i.test(s)) return false;
-        if (/^✓ Événement chargé:/i.test(s)) return false;
-        if (/^\[COMMANDS\]/i.test(s)) return false;
-        if (/^\[EVENTS\]/i.test(s)) return false;
-        if (/^\[READY\]/i.test(s)) return false;
-        if (/^🔄 Tentative modèle:/i.test(s)) return false;
-        if (/^🎯 Groq ciblé/i.test(s)) return false;
-        if (/^🔄 Tentative Groq/i.test(s)) return false;
-        if (/^✅ Stream Groq/i.test(s)) return false;
-        if (/^✅ Succès Groq/i.test(s)) return false;
-        if (/^✅ JSON détecté/i.test(s)) return false;
-        if (/^📋 Réponse structurée/i.test(s)) return false;
-        if (/^🔍 \[DUPLICATE CHECK\]/i.test(s)) return false;
-        if (/^🧠 \d+ nouveaux faits/i.test(s)) return false;
-        if (/^Appel Groq \(ex-Gemma\)/i.test(s)) return false;
-        if (/Embeddings non configurés/i.test(s)) return false;
-        if (/Paramètres utilisateur chargés/i.test(s)) return false;
-        if (/La base de connaissances des embeddings est vide/i.test(s)) return false;
-        if (/Historique du fil chargé/i.test(s)) return false;
-        if (/Démarrage de la tâche d'archivage/i.test(s)) return false;
-        if (/Archivage\/suppression des fils/i.test(s)) return false;
-        if (/Salon panneau IA inconnu/i.test(s)) return false;
-        if (/Commandes slash enregistrées \(mode additif\)/i.test(s)) return false;
-        if (/^\[\d{4}-\d{2}-\d{2}T/.test(s) && !/❌|ERREUR|Error|Crash/i.test(s)) return false;
-        return true;
-    });
+    const s = String(line).replace(/\r\n/g, '\n').trim();
+    if (!s) return false;
+
+    const body = normalizeChildBody(s);
+    if (!body) return false;
+
+    if (CHILD_LINE_SKIP.some((re) => re.test(body) || re.test(s))) return false;
+
+    if (CHILD_LINE_ALLOW.some((re) => re.test(body))) {
+        return !shouldDedupLine(body);
+    }
+
+    if (/^ready ·/i.test(body)) return !shouldDedupLine(body);
+    if (/❌|ERREUR|\[ERROR\]|Crash/i.test(body)) return true;
+
+  // Messages courts utiles (≤ 90 car.) sans bruit deploy intermédiaire
+    if (body.length <= 90 && !/\[niveau\/deploy\]/i.test(body) && !/REBORN/i.test(body)) {
+        return !shouldDedupLine(body);
+    }
+
+    return false;
 }
 
 /**
- * Affiche une ligne enfant avec tag court.
+ * @param {string} scriptName
+ * @param {string} text
  */
 function emitChildLine(scriptName, text) {
     const tag = shortScriptName(scriptName);
@@ -231,7 +275,8 @@ function emitChildLine(scriptName, text) {
         const s = line.trimEnd();
         if (!s.trim()) continue;
         if (!shouldEmitChildLine(scriptName, s)) continue;
-        const body = s.replace(/^\[[^\]]+\]\s*/, '').trim() || s;
+        const body = normalizeChildBody(s);
+        if (!body) continue;
         blzLine(tag, body);
     }
 }
@@ -259,6 +304,7 @@ module.exports = {
     blzWarn,
     blzError,
     shortScriptName,
+    normalizeChildBody,
     shouldEmitChildLine,
     emitChildLine,
     logTestModeBanner,
