@@ -54,9 +54,36 @@ function _applyBoost(uid, field, durationMs) {
 }
 
 /**
+ * Attribue le rôle hacker Discord (REBORN_HACKER_ROLE_ID) après consommation du jeton.
+ * @param {{ userId: string, guildId?: string|null, client?: import('discord.js').Client, member?: import('discord.js').GuildMember }} ctx
+ */
+async function grantHackerRoleFromToken(ctx) {
+  const roleId = cfg.hackerRoleId;
+  if (!roleId) {
+    return { ok: true, roleGranted: false, reason: 'no_role_config' };
+  }
+  const { userId, guildId, client, member } = ctx;
+  if (!guildId || !client) {
+    return { ok: false, error: 'Utilise le **jeton hacker** sur le serveur (pas en DM).' };
+  }
+  let m = member;
+  if (!m?.roles) {
+    const guild = await client.guilds.fetch(guildId).catch(() => null);
+    if (!guild) return { ok: false, error: 'Serveur introuvable.' };
+    m = await guild.members.fetch(userId).catch(() => null);
+  }
+  if (!m) return { ok: false, error: 'Impossible de te trouver sur le serveur.' };
+  if (m.roles.cache.has(roleId)) {
+    return { ok: true, roleGranted: false, alreadyHad: true };
+  }
+  await m.roles.add(roleId, 'Jeton hacker consommé');
+  return { ok: true, roleGranted: true };
+}
+
+/**
  * @param {string} userId
  * @param {string} itemId
- * @param {{ guildId?: string|null }} [ctx]
+ * @param {{ guildId?: string|null, client?: import('discord.js').Client, member?: import('discord.js').GuildMember }} [ctx]
  * @returns {Promise<{ ok: boolean, error?: string, message?: string, lines?: string[] }>}
  */
 async function useItem(userId, itemId, ctx = {}) {
