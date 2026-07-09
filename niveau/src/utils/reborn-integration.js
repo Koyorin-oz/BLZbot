@@ -286,7 +286,73 @@ function addRebornStars(userId, delta, username) {
   }
 }
 
-function getRebornRankedRoles() {
+function getRebornLevelState(userId) {
+  const svc = getRebornUsersService();
+  if (!svc) return null;
+  try {
+    const row = svc.getUser(userId);
+    if (!row) return null;
+    const { totalToLevelState, T_START, MAX_LEVEL } = require(path.join(
+      REPO_ROOT,
+      'reborn-test-bot',
+      'src',
+      'reborn',
+      'xpCurve',
+    ));
+    const st = totalToLevelState(row.xp_total ?? 0);
+    const xp_needed =
+      st.level < MAX_LEVEL ? T_START[st.level + 1] - T_START[st.level] : 1;
+    return {
+      level: st.level,
+      xp: st.xpInto,
+      xp_needed,
+      xp_total: st.xpTotal,
+    };
+  } catch (e) {
+    logger.warn('[reborn] getRebornLevelState:', e?.message || e);
+    return null;
+  }
+}
+
+/**
+ * Aligne un objet user (profil niveau) sur starss / RP / niveau REBORN si une ligne existe.
+ * @param {object} user
+ * @param {string} userId
+ * @returns {object}
+ */
+function applyRebornProfileEconomy(user, userId) {
+  const stars = getRebornStars(userId);
+  if (stars !== null && stars !== undefined) user.stars = stars;
+  const rp = getRebornRp(userId);
+  if (rp !== null && rp !== undefined) user.points = rp;
+  const lv = getRebornLevelState(userId);
+  if (lv) {
+    user.level = lv.level;
+    user.xp = lv.xp;
+    user.xp_needed = lv.xp_needed;
+  }
+  return user;
+}
+
+/**
+ * Ajoute de l'XP joueur REBORN (courbe xp_total). Crée la ligne si besoin.
+ * @param {string} userId
+ * @param {number} delta
+ * @param {string} [username]
+ * @returns {{ level: number, xp: number, xpTotal: number }|null}
+ */
+function addRebornXp(userId, delta, username) {
+  const svc = getRebornUsersService();
+  if (!svc) return null;
+  try {
+    svc.getOrCreate(userId, username || 'unknown');
+    return svc.addXp(userId, delta);
+  } catch (e) {
+    logger.warn('[reborn] addRebornXp:', e?.message || e);
+    return null;
+  }
+}
+
   if (!getRebornUsersService()) return null;
   try {
     initEnvironment();
