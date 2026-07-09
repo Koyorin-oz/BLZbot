@@ -14,7 +14,8 @@ const {
 } = require('discord.js');
 const { getOrCreateUser, getUserInventory } = require('./db-users');
 const { getGuildOfUser, getGuildById, getGuildMembersWithDetails } = require('./db-guilds');
-const { getDisplayRank, RANKS } = require('./ranks');
+const { RANKS } = require('./ranks');
+const { resolveRankDisplay } = require('./reborn-integration');
 const { getAllUserQuests } = require('./db-quests');
 const { QUESTS, checkQuestProgress, syncUserBadges } = require('./quests');
 const { renderProfilePreviewVariant } = require('./canvas-profile-variants');
