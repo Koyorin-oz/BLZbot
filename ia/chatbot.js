@@ -253,6 +253,10 @@ function extractGroqText(choice) {
     if (!msg) return '';
     let text = msg.content != null ? String(msg.content).trim() : '';
     if (text) return text;
+    if (msg.reasoning_content != null) {
+        const rc = String(msg.reasoning_content).trim();
+        if (rc) return rc.slice(0, 500);
+    }
     const reasoning = msg.reasoning != null ? String(msg.reasoning).trim() : '';
     if (reasoning) {
         const stripped = reasoning
