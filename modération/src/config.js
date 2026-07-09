@@ -27,8 +27,12 @@ module.exports = {
     PANEL_GUILD_ID: process.env.PANEL_GUILD_ID || process.env.GUILD_ID || '1351221530998345828',
 
     // ==================== SALONS ====================
-    /** Fallback (anciens panneaux / bouton sans ID) : ancien salon **texte** des votes deban. Préférer un forum + `/panel-deban`. */
-    DEBAN_CHANNEL_ID: '1382368378613796997',
+    /** Salon forum des demandes de deban (posts + votes). Surcharge : DEBAN_FORUM_CHANNEL_ID dans .env */
+    DEBAN_FORUM_CHANNEL_ID:
+        process.env.DEBAN_FORUM_CHANNEL_ID || '1496947909055221860',
+    /** Fallback panneau legacy (`launch_form` sans ID) — = forum deban par défaut. */
+    DEBAN_CHANNEL_ID:
+        process.env.DEBAN_FORUM_CHANNEL_ID || process.env.DEBAN_CHANNEL_ID || '1496947909055221860',
     RECRUITMENT_ANNOUNCEMENT_CHANNEL_ID: '1454478266416234648',
     RECRUITMENT_CHANNEL_ID: '1343195997869834290',
     STAFF_CHANNEL_ID: '1439327530267054121',
