@@ -188,6 +188,11 @@ module.exports = {
         ),
 
     async execute(interaction) {
+        const denied = denyUnlessCanMod(interaction, PermissionFlagsBits.ManageMessages);
+        if (denied) {
+            return interaction.reply({ ...denied, ephemeral: true });
+        }
+
         const targetChannel = interaction.options.getChannel('salon') || interaction.channel;
         const rawMessage = interaction.options.getString('message');
         const useEmbed = interaction.options.getBoolean('embed') ?? false;
