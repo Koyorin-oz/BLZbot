@@ -196,17 +196,20 @@ async function renderGuildProfileV2({ guild, members, owner, warInfo, totalMembe
     const memberName = truncateText(ctx, member.username, 250);
     ctx.fillText(memberName, 85, yPos);
     
-    // Valeur
+    // Valeur (legacy) ou niveau joueur (REBORN)
     ctx.font = `400 14px ${textFace}`;
     ctx.fillStyle = THEME.sub;
-    const mValue = member.total_value || 0;
-    const valueStr = mValue >= 1000000 
-      ? `${(mValue / 1000000).toFixed(1)}M` 
-      : mValue >= 1000 
-        ? `${(mValue / 1000).toFixed(1)}K` 
-        : mValue.toLocaleString('fr-FR');
-        
-    ctx.fillText(`💎 ${valueStr}`, 340, yPos);
+    if (guild.reborn_mode) {
+      ctx.fillText(`Nv ${member.level || 1}`, 340, yPos);
+    } else {
+      const mValue = member.total_value || 0;
+      const valueStr = mValue >= 1000000 
+        ? `${(mValue / 1000000).toFixed(1)}M` 
+        : mValue >= 1000 
+          ? `${(mValue / 1000).toFixed(1)}K` 
+          : mValue.toLocaleString('fr-FR');
+      ctx.fillText(`💎 ${valueStr}`, 340, yPos);
+    }
     
     ctx.fillStyle = THEME.text;
   }
