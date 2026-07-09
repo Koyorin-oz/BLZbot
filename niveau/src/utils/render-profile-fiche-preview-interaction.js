@@ -3,7 +3,8 @@ const fs = require('node:fs');
 const { AttachmentBuilder } = require('discord.js');
 const { getOrCreateUser } = require('./db-users');
 const { getGuildOfUser, getGuildMembersWithDetails } = require('./db-guilds');
-const { getDisplayRank, RANKS } = require('./ranks');
+const { RANKS } = require('./ranks');
+const { resolveRankDisplay } = require('./reborn-integration');
 const {
     PROFILE_PREVIEW_VARIANTS,
     renderProfilePreviewVariant,
