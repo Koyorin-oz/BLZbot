@@ -221,7 +221,16 @@ async function grantResources(client, userId, { xp = 0, points = 0, stars = 0, s
             // ... (logique existante conservée si besoin, mais je ne touche qu'aux statements finaux)
         }
 
-        grantResourcesStmt.run(xp, stars, userId);
+        let starsNiveau = stars;
+        try {
+            const { rebornEconomyActive, addRebornStars } = require('./reborn-integration');
+            if (rebornEconomyActive() && stars > 0) {
+                addRebornStars(userId, stars);
+                starsNiveau = 0;
+            }
+        } catch { /* ignore */ }
+
+        grantResourcesStmt.run(xp, starsNiveau, userId);
 
         if (points > 0) {
             const { rebornEconomyActive } = require('./reborn-integration');
@@ -229,16 +238,6 @@ async function grantResources(client, userId, { xp = 0, points = 0, stars = 0, s
                 const { addPlayerRP } = require('./ranked-shares');
                 addPlayerRP(userId, points);
             }
-        }
-
-        // Starss : portefeuille REBORN si actif (cohérence boutique / profil / prêts).
-        if (stars > 0) {
-            try {
-                const { rebornEconomyActive, addRebornStars } = require('./reborn-integration');
-                if (rebornEconomyActive()) {
-                    addRebornStars(userId, stars);
-                }
-            } catch { /* ignore */ }
         }
 
         // Logger les gains pour le diagnostic
