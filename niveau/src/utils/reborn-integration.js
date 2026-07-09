@@ -515,5 +515,6 @@ module.exports = {
   resolveRankDisplay,
   addRebornInventory,
   PUITS_ITEM_TO_REBORN,
+  getRebornTopUserIds,
   syncRebornRankRole,
 };
