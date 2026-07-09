@@ -202,17 +202,10 @@ function memberCount(guildId) {
 
 /**
  * @param {object} [options]
- * @param {boolean} [options.bypassLevel] — staff : ignore l’exigence nv 15 (ex. `/admin-creer-guilde`).
+ * @param {boolean} [options.bypassLevel] — conservé pour compat admin (sans effet si seuil = 0).
  */
 function createGuild(hubDiscordId, leaderId, leaderName, name, options = {}) {
-  const bypassLevel = options.bypassLevel === true;
-  const u = users.getOrCreate(leaderId, leaderName);
-  // Le niveau 15 est une règle de jeu, pas une limite « de confort » : on n'applique
-  // donc PAS le bypass global TEST_NO_LIMITS ici (seul /admin-creer-guilde peut passer outre).
-  const canCreate = bypassLevel || (u.level || 1) >= GUILD_MIN_LEVEL;
-  if (!canCreate) {
-    return { ok: false, error: `Niveau ${GUILD_MIN_LEVEL} minimum pour créer une guilde (tu es niveau ${u.level || 1}).` };
-  }
+  users.getOrCreate(leaderId, leaderName);
   if (getMembershipInHub(leaderId, hubDiscordId)) {
     return { ok: false, error: 'Tu es déjà dans une guilde sur ce serveur.' };
   }
