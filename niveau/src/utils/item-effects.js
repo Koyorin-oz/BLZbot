@@ -630,10 +630,15 @@ async function applyDrop(interaction, userId, drop) {
         case 'role_mega_pirate':
             await assignRoleToCoffreUser(guild, userId, SPECIAL_ROLES.megaPirate);
             return `Vous avez gagné le rôle « ${SPECIAL_ROLES.megaPirate} »!`;
-        case 'role_hackeur':
-            await assignRoleToCoffreUser(guild, userId, SPECIAL_ROLES.hacker);
+        case 'role_hackeur': {
+            const { guildHackerRole } = require('./hacker-role');
+            const member = await guild.members.fetch(userId).catch(() => null);
+            const role = await guildHackerRole(guild);
+            if (member && role) await member.roles.add(role, 'Coffre légendaire — rôle Hackeur');
+            else await assignRoleToCoffreUser(guild, userId, SPECIAL_ROLES.hacker);
             await grantHackerChannelAccess(guild?.client, userId);
-            return `Vous avez gagné le rôle « ${SPECIAL_ROLES.hacker} »! Accédez au salon secret <#${resolveHackerChannelId()}>.`;
+            return `Vous avez gagné le rôle **Hackeur** ! Accédez au salon secret <#${resolveHackerChannelId()}>.`;
+        }
         default:
             addItemToInventory(userId, drop.item);
             return `Vous avez gagné l\'objet: ${drop.item}!`;
