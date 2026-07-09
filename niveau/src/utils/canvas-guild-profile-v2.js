@@ -230,8 +230,8 @@ async function renderGuildProfileV2({ guild, members, owner, warInfo, totalMembe
   ctx.fillStyle = THEME.accent;
   ctx.fillText('💰 Trésorerie', 470, 185);
   
-  // Vérifier si la trésorerie est débloquée (Upgrade 2+)
-  if (guild.upgrade_level < 2) {
+  // Vérifier si la trésorerie est débloquée (Upgrade 2+ ou mode REBORN)
+  if (!guild.reborn_mode && guild.upgrade_level < 2) {
     ctx.font = `600 24px ${titleFace}`;
     ctx.fillStyle = '#888888';
     ctx.fillText('🔒 Verrouillé', 470, 225);
