@@ -582,8 +582,10 @@ async function deployCommands(client) {
         }
 
         if (compact) {
-            console.log(
-                `[niveau] Slash GLOBAL : +${createdCount} ~${updatedCount} skip ${skippedCount} err ${errorCount} · purgeGlobal ${deletedGlobal} · REBORN guild +${rebornGuildStats.created} ~${rebornGuildStats.updated} · cleanGuilds ${guildCleanupTotal}/${guildsVisited}${guildsInError ? ` (err ${guildsInError})` : ''} · temple:${rebornForGuild.has('temple') ? 'oui' : 'NON'} · salon-hacker:${rebornForGuild.has('salon-hacker') ? 'oui' : 'NON'}`
+            const { blzLine } = require(path.join(__dirname, '..', '..', '..', 'blz-log.js'));
+            blzLine(
+                'deploy',
+                `global +${createdCount} ~${updatedCount} skip ${skippedCount} err ${errorCount} · reborn ${rebornForGuild.size} guilde · temple:${rebornForGuild.has('temple') ? 'ok' : 'non'}`,
             );
         } else {
             console.log('\n═══════════════════════════════════════════════════════════════');
