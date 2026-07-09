@@ -579,6 +579,7 @@ module.exports = {
   registerReadyTasks,
   registerInteractionHandler,
   handleComponentInteraction,
+  handleGuildInviteButton,
   applyProfilBypassEnv,
   makeExecuteCtx,
 };
