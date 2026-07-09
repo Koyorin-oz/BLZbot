@@ -401,6 +401,7 @@ module.exports = {
   getRebornRp,
   rebornEconomyActive,
   addRebornStars,
+  addRebornPoints,
   getRebornRankedRoles,
   getRebornRankDisplay,
   resolveRankDisplay,

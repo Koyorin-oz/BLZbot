@@ -190,14 +190,23 @@ module.exports = {
                 // Appliquer les récompenses (les boosts sont gérés dans grantResources)
                 const baseXp = 10, basePoints = 10;
                 let baseStars = 10;
+                let grantPoints = basePoints;
+                try {
+                    const { rebornEconomyActive } = require('../utils/reborn-integration');
+                    if (rebornEconomyActive()) grantPoints = 0;
+                } catch { /* ignore */ }
 
                 grantResources(client, author.id, {
                     xp: baseXp,
-                    points: isUserInVoice ? 0 : basePoints, // RANKED V2: Pas de RP si en vocal
+                    points: isUserInVoice ? 0 : grantPoints,
                     stars: baseStars,
                     source: 'message'
                 });
-                updateUserRank(client, author.id);
+                if (!grantPoints) {
+                    // RP géré par reborn earn.js — pas de double comptage niveau.
+                } else {
+                    updateUserRank(client, author.id);
+                }
 
                 // MAJ Mars 2026: Accorder des PT (Points de Tirage) pour le Puits de Combat
                 grantTiragePoints(author.id, PT_PER_MESSAGE);
