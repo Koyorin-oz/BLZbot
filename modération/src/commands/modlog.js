@@ -418,8 +418,7 @@ module.exports = {
         }
       });
 
-      // Calculer les totaux par type
-      const totalsByType = {};
+      let totalsByType = {};
       totals.forEach((t) => (totalsByType[t.type] = t.count));
 
       let historique = buildHistorique(sanctions, notes, staffWarns);
