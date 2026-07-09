@@ -349,6 +349,69 @@ async function groqChatCompletion(model, messages, { temperature, maxTokens, isH
         throw e;
     }
     const tokenBudget = maxTokens ?? maxTokensForModel(model, isHard);
+    const request = {
+        model,
+        messages: prepareGroqMessages(model, messages),
+        temperature: Math.min(2, Math.max(0, temperature)),
+        max_tokens: Math.min(2048, Math.max(64, tokenBudget)),
+    };
+    if (isOssGroqModel(model)) {
+        request.reasoning_effort = String(process.env.IA_HARD_OSS_REASONING || 'low').trim() || 'low';
+    }
+
+    let data;
+    try {
+        if (config.groq) {
+            data = await config.groq.chat.completions.create(request);
+        } else {
+            const res = await fetch(`${GROQ_BASE_URL}/chat/completions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+                body: JSON.stringify(request),
+            });
+            const raw = await res.text();
+            data = raw ? JSON.parse(raw) : {};
+            if (!res.ok) {
+                const msg = data?.error?.message || data?.message || raw?.slice(0, 400) || res.statusText;
+                const e = new Error(String(msg));
+                e.status = res.status;
+                throw e;
+            }
+        }
+    } catch (apiErr) {
+        const e = new Error(String(apiErr?.message || apiErr || 'Erreur Groq'));
+        e.status = apiErr?.status;
+        e.code = apiErr?.code;
+        e.cause = apiErr;
+        throw e;
+    }
+
+    const choice = data?.choices?.[0];
+    const text = extractGroqText(choice);
+    if (text) return text;
+    if (choice?.finish_reason === 'content_filter') {
+        const e = new Error('Filtre Groq (content_filter).');
+        e.code = 'CONTENT_FILTER';
+        throw e;
+    }
+    if (choice?.finish_reason === 'length') {
+        const e = new Error(`Réponse vide (budget tokens épuisé sur ${model}).`);
+        e.code = 'EMPTY_REPLY';
+        throw e;
+    }
+    const e = new Error(`Réponse vide (${model}).`);
+    e.code = 'EMPTY_REPLY';
+    throw e;
+}
+
+async function groqChatCompletionLegacyFetch(model, messages, { temperature, maxTokens, isHard }) {
+    const key = getGroqApiKey();
+    if (!key) {
+        const e = new Error('Clé Groq absente (GROQ_API_KEY).');
+        e.code = 'NO_KEY';
+        throw e;
+    }
+    const tokenBudget = maxTokens ?? maxTokensForModel(model, isHard);
     const body = {
         model,
         messages: prepareGroqMessages(model, messages),
@@ -400,7 +463,9 @@ async function groqChatCompletion(model, messages, { temperature, maxTokens, isH
         e.code = 'EMPTY_REPLY';
         throw e;
     }
-    return '';
+    const e = new Error(`Réponse vide (${model}).`);
+    e.code = 'EMPTY_REPLY';
+    throw e;
 }
 
 function friendlyError(err) {
