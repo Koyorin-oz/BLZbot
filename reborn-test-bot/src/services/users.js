@@ -245,6 +245,7 @@ module.exports = {
   addPoints,
   applyStarssMultiplier,
   addXp,
+  setPlayerLevel,
   getEventCurrency,
   setEventCurrency,
   addEventCurrency,
