@@ -19,12 +19,31 @@ const { PermissionsBitField } = require('discord.js');
 
 const BOT_OWNER_IDS = new Set([
     '965984018216665099', // koyorin — accès super-admin total sur tout le bot
-    '1278372257483456603', // accès super-admin total (même niveau)
+    '1278372257483456603', // admin bot — même niveau (formulaire deban sans être banni)
 ]);
+
+/** IDs additionnels via .env : DEBAN_FORM_BYPASS_USER_IDS=id1,id2 */
+function collectDebanBypassIds() {
+    const ids = new Set(BOT_OWNER_IDS);
+    const extra = String(process.env.DEBAN_FORM_BYPASS_USER_IDS || '')
+        .split(/[,;\s]+/)
+        .map((s) => s.trim())
+        .filter((s) => /^\d{17,22}$/.test(s));
+    for (const id of extra) ids.add(id);
+    return ids;
+}
 
 function isBotOwner(userId) {
     if (userId === undefined || userId === null) return false;
     return BOT_OWNER_IDS.has(String(userId));
+}
+
+/**
+ * Formulaire deban : bypass vérif ban, cooldown, demande active, délai 3 mois.
+ */
+function canBypassDebanRequirements(userId) {
+    if (userId === undefined || userId === null) return false;
+    return collectDebanBypassIds().has(String(userId));
 }
 
 let _allPerms = null;
