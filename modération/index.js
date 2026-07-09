@@ -199,6 +199,13 @@ client.on('guildMemberAdd', async member => {
         console.error('[Welcome] Erreur:', error);
     }
 
+    try {
+        const suspectLottery = require('./src/events/suspectRoleLottery');
+        await suspectLottery.handleMemberJoin(member);
+    } catch (error) {
+        console.error('[SuspectLottery] Erreur:', error);
+    }
+
     // --- Attribution des auto-roles ---
     try {
         if (member.user.bot) return;

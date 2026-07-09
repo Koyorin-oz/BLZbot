@@ -53,6 +53,18 @@ module.exports = {
     SUSPECT_ROLE_ID: '1400457540386422916', // Rôle suspect
     MEMBER_ROLE_ID: '1323236382881222797', // Rôle membre (nouveaux arrivants)
 
+    /** Tirage aléatoire : ~1 nouveau sur N arrivants reçoit le rôle suspect (vérif obligatoire). */
+    SUSPECT_ROLE_LOTTERY: {
+        ENABLED: !['0', 'false', 'no', 'off'].includes(
+            String(process.env.SUSPECT_LOTTERY_ENABLED || 'true').toLowerCase()
+        ),
+        GUILD_ID: process.env.SUSPECT_LOTTERY_GUILD_ID || process.env.GUILD_ID || '1097110036192448656',
+        ROLE_ID: process.env.SUSPECT_ROLE_ID || '1400457540386422916',
+        EVERY_N_JOINS: Math.max(2, parseInt(process.env.SUSPECT_LOTTERY_EVERY || '17', 10) || 17),
+        /** Ne pas tirer quelqu'un qui a déjà ce rôle (ex. vérifié / règlement accepté). */
+        SKIP_IF_HAS_ROLE_ID: process.env.SUSPECT_LOTTERY_SKIP_ROLE_ID || '1323296825725292646',
+    },
+
     // ==================== UTILISATEURS SPÉCIAUX ====================
     SPECIAL_USER_ID: '1232324259506815026',
 
