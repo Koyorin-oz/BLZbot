@@ -835,6 +835,17 @@ function initializeDatabase(db) {
         );
     `);
 
+    // Préférences salon vocal privé (nom personnalisé par membre / serveur)
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS private_voice_room_prefs (
+            guild_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            channel_name TEXT NOT NULL,
+            updated_ms INTEGER NOT NULL,
+            PRIMARY KEY (guild_id, user_id)
+        );
+    `);
+
     // --- RANKED V2 Part 2: Table d'activité pour le pool dynamique ---
     db.exec(`
         CREATE TABLE IF NOT EXISTS ranked_daily_activity (
