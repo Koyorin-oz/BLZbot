@@ -229,12 +229,76 @@ async function handleEventButton(interaction, client) {
 }
 
 /**
+ * Boutons Accepter / Refuser sur une invitation guilde (`guild_invite:accept|decline:<id>`).
+ * @returns {Promise<boolean>} true si l'interaction a été consommée
+ */
+async function handleGuildInviteButton(interaction) {
+  if (!interaction.isButton() || !interaction.customId.startsWith('guild_invite:')) {
+    return false;
+  }
+
+  const [prefix, action, inviteId] = interaction.customId.split(':');
+  if (prefix !== 'guild_invite' || !inviteId) return false;
+
+  const pg = require('./services/playerGuilds');
+
+  try {
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.deferReply({ ephemeral: true });
+    }
+
+    let result;
+    if (action === 'accept') {
+      result = pg.acceptGuildInvite(
+        inviteId,
+        interaction.user.id,
+        interaction.user.username,
+      );
+    } else if (action === 'decline') {
+      result = pg.declineGuildInvite(inviteId, interaction.user.id);
+    } else {
+      result = { ok: false, error: 'Action inconnue.' };
+    }
+
+    const content = result?.ok
+      ? action === 'accept'
+        ? '✅ Tu as rejoint la guilde.'
+        : '❌ Invitation refusée.'
+      : result?.error || 'Une erreur est survenue.';
+
+    await interaction.editReply({ content }).catch(() => {});
+    if (result?.ok) {
+      await interaction.message?.edit?.({ components: [] }).catch(() => {});
+    }
+  } catch (e) {
+    if (e?.code !== 10062 && e?.code !== 40060) {
+      console.error('[guild invite button]', e?.message || e);
+    }
+    if (interaction.deferred || interaction.replied) {
+      await interaction
+        .editReply({ content: 'Une erreur est survenue.' })
+        .catch(() => {});
+    } else {
+      await interaction
+        .reply({ content: 'Une erreur est survenue.', ephemeral: true })
+        .catch(() => {});
+    }
+  }
+
+  return true;
+}
+
+/**
  * Boutons / menus / achats REBORN (pas les slash — gérés via `client.commands`).
  * @returns {Promise<boolean>} true si l’interaction a été consommée
  */
 async function handleComponentInteraction(interaction, client) {
   const { handlePurchase } = require('./services/purchase');
   const { handlePanelInteraction } = require('./services/panelComponents');
+
+  if (await handleGuildInviteButton(interaction)) {
+    return true;
+  }
 
   if (
     interaction.isButton() &&
