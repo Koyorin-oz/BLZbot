@@ -218,6 +218,7 @@ const CHILD_LINE_ALLOW = [
     /^ready ·/i,
     /\best prêt\b/i,
     /BLZbot-.+#\d+ · prêt/i,
+    /global \+\d+/i,
     /modération \+\d+/i,
     /\[deploy\] Terminé/i,
     /Deploy slash (démarré|ok|échec|terminé)/i,
