@@ -268,8 +268,15 @@ async function renderGuildProfileV2({ guild, members, owner, warInfo, totalMembe
   ctx.fillStyle = THEME.accent;
   ctx.fillText('⚔️ Guerres', 470, 405);
   
-  // Vérifier si les guerres sont débloquées (Upgrade 6+)
-  if (guild.upgrade_level < 6) {
+  // Vérifier si les guerres sont débloquées (Upgrade 6+ ou mode REBORN simplifié)
+  if (guild.reborn_mode) {
+    ctx.font = `400 18px ${textFace}`;
+    ctx.fillStyle = THEME.text;
+    ctx.fillText('🛡️ Guilde joueur REBORN', 470, 440);
+    ctx.fillStyle = THEME.sub;
+    ctx.fillText('Guerres legacy : non liées à ce profil', 470, 475);
+    ctx.fillText(`Focus / grades / trésorerie : actifs`, 470, 505);
+  } else if (guild.upgrade_level < 6) {
     ctx.font = `600 24px ${titleFace}`;
     ctx.fillStyle = '#888888';
     ctx.fillText('🔒 Verrouillé', 470, 450);
