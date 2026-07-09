@@ -287,24 +287,30 @@ async function buildGuildEmojiAppendix(guild) {
     }
 }
 
-async function groqChatCompletion(model, messages, { temperature, maxTokens }) {
+async function groqChatCompletion(model, messages, { temperature, maxTokens, isHard }) {
     const key = getGroqApiKey();
     if (!key) {
         const e = new Error('Clé Groq absente (GROQ_API_KEY).');
         e.code = 'NO_KEY';
         throw e;
     }
+    const tokenBudget = maxTokens ?? maxTokensForModel(model, isHard);
+    const body = {
+        model,
+        messages: prepareGroqMessages(model, messages),
+        temperature: Math.min(2, Math.max(0, temperature)),
+        max_tokens: Math.min(2048, Math.max(64, tokenBudget)),
+    };
+    if (isOssGroqModel(model)) {
+        body.reasoning_effort = String(process.env.IA_HARD_OSS_REASONING || 'low').trim() || 'low';
+    }
+
     let res;
     try {
         res = await fetch(`${GROQ_BASE_URL}/chat/completions`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-            body: JSON.stringify({
-                model,
-                messages: prepareGroqMessages(model, messages),
-                temperature: Math.min(2, Math.max(0, temperature)),
-                max_tokens: Math.min(2048, Math.max(64, maxTokens)),
-            }),
+            body: JSON.stringify(body),
         });
     } catch (netErr) {
         const e = new Error(String(netErr?.message || netErr || 'Erreur réseau'));
@@ -312,27 +318,32 @@ async function groqChatCompletion(model, messages, { temperature, maxTokens }) {
         throw e;
     }
 
-    const body = await res.text();
+    const raw = await res.text();
     let data = {};
-    if (body) {
+    if (raw) {
         try {
-            data = JSON.parse(body);
+            data = JSON.parse(raw);
         } catch {
-            data = { _raw: body.slice(0, 500) };
+            data = { _raw: raw.slice(0, 500) };
         }
     }
     if (!res.ok) {
-        const msg = data?.error?.message || data?.message || body?.slice(0, 400) || res.statusText;
+        const msg = data?.error?.message || data?.message || raw?.slice(0, 400) || res.statusText;
         const e = new Error(String(msg));
         e.status = res.status;
         throw e;
     }
     const choice = data?.choices?.[0];
-    const text = choice?.message?.content != null ? String(choice.message.content).trim() : '';
+    const text = extractGroqText(choice);
     if (text) return text;
     if (choice?.finish_reason === 'content_filter') {
         const e = new Error('Filtre Groq (content_filter).');
         e.code = 'CONTENT_FILTER';
+        throw e;
+    }
+    if (choice?.finish_reason === 'length') {
+        const e = new Error(`Réponse vide (budget tokens épuisé sur ${model}).`);
+        e.code = 'EMPTY_REPLY';
         throw e;
     }
     return '';
