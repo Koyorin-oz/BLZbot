@@ -7,7 +7,10 @@ const {
   ContainerBuilder,
   MessageFlags,
   TextDisplayBuilder,
+  AttachmentBuilder,
+  MediaGalleryBuilder,
 } = require('discord.js');
+const path = require('path');
 const db = require('../db');
 const pg = require('../services/playerGuilds');
 const gm = require('../services/guildMember');
@@ -16,6 +19,17 @@ const { label, grpRankFromTotal, nextGrade } = require('../reborn/grades');
 const { totalToLevelState } = require('../reborn/xpCurve');
 const ladder = require('../services/guildLadder');
 const { d } = require('../lib/slashDesc');
+
+const { renderGuildProfileV2 } = require(path.join(
+  __dirname,
+  '..',
+  '..',
+  '..',
+  'niveau',
+  'src',
+  'utils',
+  'canvas-guild-profile-v2',
+));
 
 function findGuildOnHub(hubDiscordId, nomOrId) {
   const q = String(nomOrId || '').trim().toLowerCase();
