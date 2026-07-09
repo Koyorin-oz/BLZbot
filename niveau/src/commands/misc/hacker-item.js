@@ -55,21 +55,24 @@ module.exports = {
                 await botMessage.edit({ embeds: [embed], components: [row] });
                 return interaction.reply({
                     content: '✅ Message du salon Hackeur mis à jour!',
-                    ephemeral: true
+                    flags: 64,
                 });
             } else {
                 // Envoyer un nouveau message
                 await hackerChannel.send({ embeds: [embed], components: [row] });
                 return interaction.reply({
                     content: '✅ Message envoyé au salon Hackeur!',
-                    ephemeral: true
+                    flags: 64,
                 });
             }
         } catch (error) {
             console.error('Erreur dans la commande hacker-item:', error);
+            if (interaction.replied || interaction.deferred) {
+                return interaction.followUp({ content: '❌ Une erreur s\'est produite.', flags: 64 });
+            }
             return interaction.reply({
                 content: '❌ Une erreur s\'est produite.',
-                ephemeral: true
+                flags: 64,
             });
         }
     }
