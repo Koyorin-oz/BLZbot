@@ -304,17 +304,27 @@ function performTirages(userId, count = 1) {
  */
 async function applyTirageRewards(client, userId, rewards) {
     const { grantResources, addItemToInventory } = require('./db-users');
+    const { rebornEconomyActive, addRebornStars, addRebornInventory } = require('./reborn-integration');
+    const useReborn = rebornEconomyActive();
     const messages = [];
 
     for (const reward of rewards) {
         switch (reward.type) {
             case 'starss':
-                await grantResources(client, userId, { stars: reward.amount, source: 'puits' });
+                if (useReborn) {
+                    addRebornStars(userId, reward.amount);
+                } else {
+                    await grantResources(client, userId, { stars: reward.amount, source: 'puits' });
+                }
                 messages.push(`${reward.emoji} **${reward.name}**`);
                 break;
 
             case 'item':
-                addItemToInventory(userId, reward.itemId, reward.amount);
+                if (useReborn) {
+                    addRebornInventory(userId, reward.itemId, reward.amount);
+                } else {
+                    addItemToInventory(userId, reward.itemId, reward.amount);
+                }
                 messages.push(`${reward.emoji} **${reward.name}** x${reward.amount}`);
                 break;
 
