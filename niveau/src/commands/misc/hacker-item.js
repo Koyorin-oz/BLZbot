@@ -18,7 +18,7 @@ module.exports = {
         if (!process.env.HACKER_CHANNEL) {
             return interaction.reply({
                 content: '❌ L\'ID du salon Hackeur n\'est pas configuré. Vérifiez HACKER_CHANNEL dans le .env',
-                ephemeral: true
+                flags: 64,
             });
         }
 
