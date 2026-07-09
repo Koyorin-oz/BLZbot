@@ -232,7 +232,7 @@ if (scriptsToRun.length === 0) {
   console.error('[maintemp] BLZ_FORK_SERVICES ne correspond à aucun service connu. Clés: checktoken, moderation, niveau, linkscanner, ia, bug — ou "all".');
   process.exit(1);
 }
-blzLine('maintemp', `Services : ${scriptsToRun.map((s) => s.key).join(', ')}`);
+  blzLine('maintemp', `services · ${scriptsToRun.map((s) => s.key).join(', ')}`);
 
 // Stocke les processus enfants
 const scriptProcesses = {};
