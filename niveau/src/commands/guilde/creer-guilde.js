@@ -42,11 +42,8 @@ module.exports = {
             return interaction.reply({ content: `Une guilde avec le nom "${guildName}" existe déjà. Veuillez choisir un autre nom.`, flags: 64 });
         }
 
-        // 4. Vérifier les prérequis de l'utilisateur
+        // 4. Vérifier les prérequis de l'utilisateur (niveau min désactivé)
         const user = getOrCreateUser(userId, interaction.user.username);
-        if (user.level < REQUIRED_LEVEL) {
-            return interaction.reply({ content: `Vous devez être au moins niveau ${REQUIRED_LEVEL} pour créer une guilde.`, flags: 64 });
-        }
         if (user.stars < GUILD_COST) {
             return interaction.reply({ content: `Il vous manque **${(GUILD_COST - user.stars).toLocaleString('fr-FR')}** Starss pour créer une guilde.`, flags: 64 });
         }
