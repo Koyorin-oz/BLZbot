@@ -1,8 +1,10 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, EmbedBuilder } = require('discord.js');
 
 /** Serveur staff / bugs (forum blzbot-bugs). */
 const BUG_TRACKER_GUILD_ID = '1493276404643532810';
 const BUG_FORUM_CHANNEL_ID = '1493282774323302450';
+/** Rôle notifié à chaque nouveau signalement. */
+const BUG_NOTIFY_ROLE_ID = '1493277032745013452';
 
 const TAG = {
     corriger: '1493284123333365915',
