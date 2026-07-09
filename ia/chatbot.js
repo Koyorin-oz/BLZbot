@@ -438,20 +438,26 @@ async function handleChatbotMessage(message, client) {
         ];
 
         const temperature = isHard ? 0.82 : 0.6;
-        const maxTokens = isHard
-            ? Number(process.env.IA_HARD_MAX_TOKENS || 120)
-            : Number(process.env.IA_CHATBOT_MAX_TOKENS || 640);
 
         let reply = '';
         let lastErr;
         const models = getModelsToTry(isHard);
         for (let i = 0; i < models.length; i++) {
+            const model = models[i];
             try {
-                reply = await groqChatCompletion(models[i], messages, { temperature, maxTokens });
+                reply = await groqChatCompletion(model, messages, {
+                    temperature,
+                    isHard,
+                    maxTokens: maxTokensForModel(model, isHard),
+                });
                 if (reply) break;
+                const emptyErr = new Error(`Réponse vide (${model}).`);
+                emptyErr.code = 'EMPTY_REPLY';
+                lastErr = emptyErr;
                 if (i < models.length - 1) continue;
             } catch (e) {
                 lastErr = e;
+                console.error(`[ia chatbot] ${model}:`, collectErrorText(e).slice(0, 200));
                 if (i < models.length - 1 && shouldTryNextModel(e)) continue;
                 throw e;
             }
