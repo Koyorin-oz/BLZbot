@@ -601,6 +601,7 @@ function updateUserBalance(userId, { xp = 0, points = 0, stars = 0 }) {
                     setLevelStmt.run(currentUserData.level, currentUserData.xp, currentUserData.xp_needed, userId);
                 }
             }
+            }
         }
         if (points !== 0) {
             const { rebornEconomyActive, addRebornPoints } = require('./reborn-integration');
