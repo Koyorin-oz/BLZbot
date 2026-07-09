@@ -8,12 +8,13 @@ const {
     EmbedBuilder,
 } = require('discord.js');
 const logger = require('../../utils/logger');
-const {
-    BUG_FORUM_CHANNEL_ID,
-    BUG_TAG_EN_COURS_ID,
-    BUG_NOTIFY_ROLE_ID,
-    BUG_TRACKER_GUILD_ID,
-} = require('../../utils/bug-forum');
+
+/** Serveur forum bugs (fixe, indépendant du GUILD_ID test/prod). */
+const BUG_TRACKER_GUILD_ID = '1493276404643532810';
+const BUG_FORUM_CHANNEL_ID = '1493282774323302450';
+const BUG_FORUM_TAG_ID = '1493284188504461322';
+/** Rôle notifié à chaque nouveau signalement sur le forum bugs. */
+const BUG_NOTIFY_ROLE_ID = '1493277032745013452';
 
 const MODAL_CUSTOM_ID = 'bug_report_modal';
 const FIELD_TITLE = 'bug_title';
@@ -123,7 +124,7 @@ module.exports = {
                     embeds: [embed],
                     allowedMentions: { roles: [BUG_NOTIFY_ROLE_ID] },
                 },
-                appliedTags: [BUG_TAG_EN_COURS_ID],
+                appliedTags: [BUG_FORUM_TAG_ID],
             });
 
             await interaction.editReply({
