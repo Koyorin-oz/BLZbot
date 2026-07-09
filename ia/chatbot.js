@@ -335,6 +335,7 @@ async function handleChatbotMessage(message, client) {
             if (lastErr) throw lastErr;
             reply = isHard ? "T'as rien dit d'intéressant, réessaie." : 'Je n\'ai pas de réponse, reformule ?';
         }
+        reply = trimHardReply(reply, isHard);
         if (reply.length > MAX_DISCORD) reply = reply.slice(0, MAX_DISCORD) + '…';
 
         await message
