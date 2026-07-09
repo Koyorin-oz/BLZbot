@@ -127,17 +127,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     const [prefix, action, inviteId] = interaction.customId.split(":");
     if (prefix !== "guild_invite" || !inviteId) return;
     try {
-      if (interaction.replied || interaction.deferred) {
-        await interaction.followUp({
-          content: "Traitement de l’invitation…",
-          ephemeral: true,
-        });
-      } else {
-        await interaction.reply({
-          content: "Traitement de l’invitation…",
-          ephemeral: true,
-        });
-      }
+      await interaction.deferReply({ ephemeral: true });
 
       let result;
       if (action === "accept") {
@@ -158,22 +148,17 @@ client.on(Events.InteractionCreate, async (interaction) => {
           : "❌ Invitation refusée."
         : result?.error || "Une erreur est survenue.";
 
-      if (interaction.replied || interaction.deferred) {
-        await interaction.editReply({ content }).catch(() => {});
-      } else {
-        await interaction.reply({ content, ephemeral: true }).catch(() => {});
-      }
-
-      try {
+      await interaction.editReply({ content });
+      if (result?.ok) {
         await interaction.message?.edit?.({ components: [] }).catch(() => {});
-      } catch {
-        /* ignore */
       }
     } catch (e) {
       console.error("[guild invite button]", e);
-      await interaction
-        .reply({ content: "Une erreur est survenue.", ephemeral: true })
-        .catch(() => {});
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ content: "Une erreur est survenue." }).catch(() => {});
+      } else {
+        await interaction.reply({ content: "Une erreur est survenue.", ephemeral: true }).catch(() => {});
+      }
     }
     return;
   }
