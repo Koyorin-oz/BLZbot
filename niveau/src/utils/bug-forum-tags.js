@@ -114,9 +114,64 @@ async function handleBugTagButton(interaction) {
     return true;
 }
 
+/**
+ * Crée un post sur le forum blzbot-bugs (utilisé par /bug et rapports auto).
+ * @param {import('discord.js').Client} client
+ * @param {{
+ *   threadTitle: string,
+ *   description: string,
+ *   reporterLabel: string,
+ *   reporterId: string,
+ *   bugId?: string,
+ * }} opts
+ * @returns {Promise<import('discord.js').ThreadChannel>}
+ */
+async function createBugForumPost(client, opts) {
+    const channel = await client.channels.fetch(BUG_FORUM_CHANNEL_ID);
+    if (!channel || channel.type !== ChannelType.GuildForum) {
+        throw new Error(`Forum bugs introuvable (${BUG_FORUM_CHANNEL_ID})`);
+    }
+
+    const threadName = String(opts.threadTitle || 'Signalement').replace(/\s+/g, ' ').slice(0, 100);
+    const descSlice =
+        String(opts.description || '').length > 3900
+            ? `${String(opts.description).slice(0, 3897)}…`
+            : String(opts.description || '(aucune description)');
+
+    const timestamp = Math.floor(Date.now() / 1000);
+    const embed = new EmbedBuilder()
+        .setTitle('🐛 Signalement')
+        .setDescription(descSlice)
+        .addFields(
+            { name: 'Membre', value: opts.reporterLabel, inline: true },
+            { name: 'ID Discord', value: `\`${opts.reporterId}\``, inline: true },
+            { name: 'Date du signalement', value: `<t:${timestamp}:F>`, inline: false },
+        )
+        .setColor(0xe67e22)
+        .setTimestamp();
+
+    if (opts.bugId) {
+        embed.addFields({ name: 'ID erreur', value: `\`${opts.bugId}\``, inline: false });
+    }
+
+    const thread = await channel.threads.create({
+        name: threadName,
+        message: {
+            content: `<@&${BUG_NOTIFY_ROLE_ID}>`,
+            embeds: [embed],
+            components: buildBugTagButtons(),
+            allowedMentions: { roles: [BUG_NOTIFY_ROLE_ID] },
+        },
+        appliedTags: [TAG.enCours],
+    });
+
+    return thread;
+}
+
 module.exports = {
     BUG_TRACKER_GUILD_ID,
     BUG_FORUM_CHANNEL_ID,
+    BUG_NOTIFY_ROLE_ID,
     TAG,
     EN_COURS_TAG_IDS,
     BUTTON_PREFIX,
