@@ -124,9 +124,10 @@ module.exports = {
                 message: {
                     content: `<@&${BUG_NOTIFY_ROLE_ID}>`,
                     embeds: [embed],
+                    components: buildBugTagButtons(),
                     allowedMentions: { roles: [BUG_NOTIFY_ROLE_ID] },
                 },
-                appliedTags: [BUG_FORUM_TAG_ID],
+                appliedTags: [TAG.enCours],
             });
 
             await interaction.editReply({
