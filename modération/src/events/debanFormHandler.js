@@ -308,6 +308,7 @@ module.exports = {
             discordUsername: interaction.user.username,
             discordId: interaction.user.id,
             startedAt: new Date().toISOString(),
+            adminTestRequest: canBypassDebanRequirements(interaction.user.id),
         });
         voteManager.activeDebanRequests.add(interaction.user.id);
 
