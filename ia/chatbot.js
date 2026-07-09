@@ -289,21 +289,33 @@ async function handleChatbotMessage(message, client) {
         await message.channel.sendTyping().catch(() => {});
 
         let system = loadPrompt(isHard ? 'hard' : 'normal');
+        system = `${system}\n\n${buildSpeakerContext(message)}`;
         const emojiBit = await buildGuildEmojiAppendix(message.guild);
         if (emojiBit) system = `${system}\n\n---\n${emojiBit}`;
 
         const userName = message.member?.displayName || message.author.username;
         const userText = cleanContent(message, client) || '(pas de texte)';
-        const history = await buildHistory(message, client);
+
+        if (isHard && needsWebSearch(userText)) {
+            const webBit = await fetchWebContextForQuery(userText);
+            if (webBit) system += webBit;
+        }
+
+        const history = await buildHistory(message, client, isHard ? 4 : 6);
 
         const messages = [
             { role: 'system', content: system },
             ...history,
-            { role: 'user', content: `${userName}: ${userText}` },
+            {
+                role: 'user',
+                content: `${userName} [${message.author.id}]: ${userText}`,
+            },
         ];
 
-        const temperature = isHard ? 1.05 : 0.6;
-        const maxTokens = Number(process.env.IA_CHATBOT_MAX_TOKENS || 640);
+        const temperature = isHard ? 0.95 : 0.6;
+        const maxTokens = isHard
+            ? Number(process.env.IA_HARD_MAX_TOKENS || 220)
+            : Number(process.env.IA_CHATBOT_MAX_TOKENS || 640);
 
         let reply = '';
         let lastErr;
