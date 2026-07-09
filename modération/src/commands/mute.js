@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { parseDuration, msToReadableTime, getModeratorTitleWithArticle } = require('../utils/helpers');
 const { deferEphemeral } = require('../utils/interaction-ack');
+const { denyUnlessCanMod } = require('../utils/mod-access');
 const CONFIG = require('../config.js');
 const {
     buildPostSanctionDmEmbed,
