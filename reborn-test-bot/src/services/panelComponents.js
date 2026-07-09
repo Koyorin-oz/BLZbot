@@ -233,7 +233,11 @@ async function handlePanelInteraction(interaction) {
     }
     const itemId = v.slice(2);
     const itemEffects = require('./itemEffects');
-    const r = await itemEffects.useItem(interaction.user.id, itemId, { guildId: interaction.guildId || null });
+    const r = await itemEffects.useItem(interaction.user.id, itemId, {
+      guildId: interaction.guildId || null,
+      client: interaction.client,
+      member: interaction.member,
+    });
     if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
     await interaction.deferUpdate();
     const p = await buildInventairePayload(interaction.user.id, interaction.user.username);

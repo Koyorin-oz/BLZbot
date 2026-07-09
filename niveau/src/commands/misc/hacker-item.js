@@ -1,16 +1,17 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('hacker-item')
-        .setDescription('Récupérer un item aléatoire du salon secret hackeur (Usage admin seulement)'),
+        .setDescription('Récupérer un item aléatoire du salon secret hackeur (Usage admin seulement)')
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
     
     async execute(interaction) {
         // Vérifier les permissions admin
-        if (!interaction.member.permissions.has('ADMINISTRATOR')) {
+        if (!interaction.member?.permissions?.has(PermissionFlagsBits.Administrator)) {
             return interaction.reply({
-                content: '❌ Vous n\'avez pas la permission d\'utiliser cette commande.',
-                ephemeral: true
+                content: '❌ Cette commande est réservée aux admins (mise à jour du panneau legacy). Les joueurs utilisent `/salon-hacker` et le **jeton hacker** depuis `/inventaire`.',
+                flags: 64,
             });
         }
 
