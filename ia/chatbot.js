@@ -554,6 +554,26 @@ async function buildHistory(message, client, limit = 6) {
  * Gère un message dans un des deux salons chatbot.
  * @returns {Promise<boolean>} true si pris en charge (l'appelant doit s'arrêter).
  */
+async function groqSimpleRetry(userText, userName, isHard) {
+    const model = 'llama-3.1-8b-instant';
+    const system = isHard
+        ? 'Tu es BLZbot, bot Discord trash du serveur BLZstarss. Réponds en 1-2 phrases max en français, direct, sans roleplay ni crochets [SYSTÈME].'
+        : `Tu es BLZbot, bot poli du serveur BLZstarss. Réponds en français, concis, sans insultes.`;
+    try {
+        return await groqChatCompletion(
+            model,
+            [
+                { role: 'system', content: system },
+                { role: 'user', content: `${userName}: ${userText}` },
+            ],
+            { temperature: isHard ? 0.75 : 0.55, isHard, maxTokens: isHard ? 180 : 400 },
+        );
+    } catch (e) {
+        console.warn('[ia chatbot] retry simple Groq:', collectErrorText(e).slice(0, 120));
+        return '';
+    }
+}
+
 async function handleChatbotMessage(message, client) {
     if (message.author.bot || !message.guild) return false;
 
@@ -567,6 +587,12 @@ async function handleChatbotMessage(message, client) {
         Boolean(message.reference?.messageId) &&
         message.mentions?.repliedUser?.id === client.user.id;
     if (!mentioned && !isReplyToBot) return false;
+
+    if (wasMessageHandled(message.id)) {
+        console.warn(`[ia chatbot] message ${message.id} déjà traité — skip doublon`);
+        return true;
+    }
+    markMessageHandled(message.id);
 
     const userTextEarly = cleanContent(message, client) || '(pas de texte)';
 
