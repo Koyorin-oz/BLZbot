@@ -239,7 +239,21 @@ async function grantResources(client, userId, { xp = 0, points = 0, stars = 0, s
 
         grantResourcesStmt.run(xpNiveau, starsNiveau, userId);
 
-        if (points > 0) {
+        if (points !== 0) {
+            try {
+                const { rebornEconomyActive, addRebornPoints } = require('./reborn-integration');
+                if (rebornEconomyActive()) {
+                    addRebornPoints(userId, points);
+                } else {
+                    const { addPlayerRP, burnPlayerRP } = require('./ranked-shares');
+                    if (points > 0) addPlayerRP(userId, points);
+                    else burnPlayerRP(userId, -points);
+                }
+            } catch { /* ignore */ }
+        }
+
+        // Ancien bloc — conservé pour référence : RP niveau si pas REBORN.
+        if (false && points > 0) {
             const { rebornEconomyActive } = require('./reborn-integration');
             if (!rebornEconomyActive()) {
                 const { addPlayerRP } = require('./ranked-shares');
