@@ -80,8 +80,8 @@ function buildEmbed(type, requesterId) {
       countSql = `SELECT COUNT(*) AS c FROM users WHERE CAST(stars AS INTEGER) > (SELECT CAST(stars AS INTEGER) FROM users WHERE id = ?)`;
       myValSql = `SELECT CAST(stars AS INTEGER) AS v FROM users WHERE id = ?`;
     } else if (type === 'niveau') {
-      countSql = `SELECT COUNT(*) AS c FROM users WHERE (level > (SELECT level FROM users WHERE id = ?)) OR (level = (SELECT level FROM users WHERE id = ?) AND xp_total > (SELECT xp_total FROM users WHERE id = ?))`;
-      myValSql = `SELECT level AS v, xp_total AS xptot FROM users WHERE id = ?`;
+      countSql = `SELECT COUNT(*) AS c FROM users WHERE COALESCE(xp_total, 0) > (SELECT COALESCE(xp_total, 0) FROM users WHERE id = ?)`;
+      myValSql = `SELECT xp_total AS xptot FROM users WHERE id = ?`;
     } else if (type === 'rp') {
       countSql = `SELECT COUNT(*) AS c FROM users WHERE CAST(points AS INTEGER) > (SELECT CAST(points AS INTEGER) FROM users WHERE id = ?)`;
       myValSql = `SELECT CAST(points AS INTEGER) AS v FROM users WHERE id = ?`;
