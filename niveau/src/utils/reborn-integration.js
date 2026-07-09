@@ -400,7 +400,7 @@ function resolveRankDisplay(userId, _rpFallback) {
       };
     }
   }
-  const rank = getDisplayRank(userId, rpFallback);
+  const rank = getDisplayRank(userId, _rpFallback);
   const rankIndex = RANKS.findIndex((r) => r.name === rank.name);
   return {
     rank,
