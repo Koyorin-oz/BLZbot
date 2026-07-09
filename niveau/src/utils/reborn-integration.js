@@ -286,6 +286,91 @@ function addRebornStars(userId, delta, username) {
   }
 }
 
+function getRebornRankedRoles() {
+  if (!getRebornUsersService()) return null;
+  try {
+    initEnvironment();
+    return require(path.join(REPO_ROOT, 'reborn-test-bot', 'src', 'services', 'rankedRoles'));
+  } catch (e) {
+    logger.warn('[reborn] rankedRoles:', e?.message || e);
+    return null;
+  }
+}
+
+/** Map IDs items puits (niveau) → inventaire REBORN. */
+const PUITS_ITEM_TO_REBORN = {
+  coffre_normal: 'coffre_classique',
+  coffre_mega: 'coffre_catm',
+  coffre_legendaire: 'coffre_catl',
+};
+
+/**
+ * Rang affiché selon l'échelle REBORN (même logique que /classement).
+ * @param {number} rp
+ * @returns {{ name: string, points: number, key: string }|null}
+ */
+function getRebornRankDisplay(rp) {
+  const rr = getRebornRankedRoles();
+  if (!rr) return null;
+  const r = rr.rankForRp(rp);
+  return { name: r.label, points: Number(r.threshold), key: r.key };
+}
+
+/**
+ * Rang + suivant pour /profil (cohérent avec /classement quand REBORN actif).
+ * @param {string} userId
+ * @param {number} rpFallback RP niveau si pas de ligne REBORN
+ */
+function resolveRankDisplay(userId, rpFallback) {
+  const { getDisplayRank, RANKS } = require('./ranks');
+  if (rebornEconomyActive()) {
+    const rebornRp = getRebornRp(userId);
+    const effectiveRp = rebornRp !== null && rebornRp !== undefined ? rebornRp : rpFallback;
+    const rr = getRebornRankedRoles();
+    if (rr) {
+      const rank = rr.rankForRp(effectiveRp);
+      const next = rr.nextRank(effectiveRp);
+      return {
+        rank: { name: rank.label, points: Number(rank.threshold), key: rank.key },
+        nextRank: next ? { name: next.label, points: Number(next.threshold) } : null,
+        rankIndex: Math.max(0, rr.rankIndex(rank.key)),
+      };
+    }
+  }
+  const rank = getDisplayRank(userId, rpFallback);
+  const rankIndex = RANKS.findIndex((r) => r.name === rank.name);
+  return {
+    rank,
+    nextRank: rankIndex >= 0 && rankIndex < RANKS.length - 1 ? RANKS[rankIndex + 1] : null,
+    rankIndex: rankIndex >= 0 ? rankIndex : 0,
+  };
+}
+
+function addRebornInventory(userId, itemId, qty = 1) {
+  const svc = getRebornUsersService();
+  if (!svc) return false;
+  try {
+    svc.getOrCreate(userId, 'unknown');
+    const mapped = PUITS_ITEM_TO_REBORN[itemId] || itemId;
+    svc.addInventory(userId, mapped, qty);
+    return true;
+  } catch (e) {
+    logger.warn('[reborn] addRebornInventory:', e?.message || e);
+    return false;
+  }
+}
+
+async function syncRebornRankRole(client, userId, hubId) {
+  const rr = getRebornRankedRoles();
+  if (!rr || !client || !hubId) return null;
+  try {
+    return await rr.syncRankRoleForUser(client, hubId, userId);
+  } catch (e) {
+    logger.warn('[reborn] syncRebornRankRole:', e?.message || e);
+    return null;
+  }
+}
+
 module.exports = {
   isEnabled,
   rebornAvailable,
