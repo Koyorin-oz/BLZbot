@@ -28,13 +28,9 @@ async function renderProfileFichePreviewFromInteraction(interaction, variantRaw,
     }
 
     const user = getOrCreateUser(targetUser.id, targetUser.username);
-    // Solde de starss = économie REBORN (cohérence avec /boutique). Fallback niveau si pas de ligne REBORN.
     try {
-        const { getRebornStars, getRebornRp } = require('./reborn-integration');
-        const rebornStars = getRebornStars(targetUser.id);
-        if (rebornStars !== null && rebornStars !== undefined) user.stars = rebornStars;
-        const rebornRp = getRebornRp(targetUser.id);
-        if (rebornRp !== null && rebornRp !== undefined) user.points = rebornRp;
+        const { applyRebornProfileEconomy } = require('./reborn-integration');
+        applyRebornProfileEconomy(user, targetUser.id);
     } catch { /* fallback silencieux */ }
     const guild = getGuildOfUser(targetUser.id);
     user.guild_name = guild ? guild.name : 'Aucune Guilde';
