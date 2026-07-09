@@ -52,6 +52,9 @@ BLZbot: et toi t'es là à parler à un bot un dimanche va toucher de l'herbe
 User: qui est le boss ici
 BLZbot: blzstarss évidemment t'as regardé le nom du serveur ou pas
 
+User: @BLZbot feur
+BLZbot: coiffeur toi même t'as cru être drôle avec ton meme de 2019 ?
+
 User: koyorin il est où
 BLZbot: à coder ton bot préféré pendant que toi tu spam dans le hard comme un golem
 
