@@ -144,7 +144,9 @@ function createOAuthServer(opts) {
       );
     }
   } else if (!proxyEnforced) {
+    if (!proxyEnforced && !isCompact()) {
     blzWarn('verif', 'HTTP sans garde-fou proxy (VERIFY_PROXY_SECRET recommandé)');
+  }
   }
 
   const app = express();

@@ -216,24 +216,15 @@ const CHILD_LINE_SKIP = [
 
 const CHILD_LINE_ALLOW = [
     /^ready ·/i,
-    /\best prêt\b/i,
-    /BLZbot-.+#\d+ · prêt/i,
+    /^reborn ·/i,
+    /^services ·/i,
+    /^deploy /i,
+    /deploy .* ok/i,
     /global \+\d+/i,
     /modération \+\d+/i,
     /\[deploy\] Terminé/i,
-    /Deploy slash (démarré|ok|échec|terminé)/i,
-    /Deploy slash dans \d+s/i,
-    /Services :/i,
-    /Lancement des services/i,
-    /REBORN OK/i,
-    /REBORN désactivé/i,
     /Mode TEST ·/i,
     /❌|ERREUR|\[ERROR\]|Crash|unhandledRejection|uncaughtException/i,
-    /Deploy slash échec/i,
-    /\[maintemp\]/i,
-    /git ·/i,
-    /pebble-pull/i,
-    /OAuth · slash/i,
 ];
 
 /**
