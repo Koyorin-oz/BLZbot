@@ -556,7 +556,11 @@ async function rebuildPrivateRoomRegistry(client, guild) {
     for (const channel of channels.values()) {
         const humans = channel.members.filter((m) => !m.user.bot).size;
         if (humans === 0) {
-            await deleteIfOwnerEmpty(client, channel).catch(() => {});
+            if (getPrivateRoomVoiceMeta(client, channel.id)) {
+                await deleteIfOwnerEmpty(client, channel).catch(() => {});
+            } else {
+                await channel.delete('Salon privé vide (nettoyage au démarrage)').catch(() => {});
+            }
             continue;
         }
         let ownerId = null;
