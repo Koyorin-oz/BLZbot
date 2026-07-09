@@ -276,4 +276,32 @@ async function updateUserRank(client, userId) {
     }
 }
 
-module.exports = { RANKS, MAIN_RANKS, LOCKED_RANKS, getRankFromPoints, getDisplayRank, isRankLocked, updateUserRank };
+async function sendRankUpNotification(client, guildId, userId, member, newRankName) {
+    try {
+        const { resolveRankUpChannelId } = require('./blz-guild-channels');
+        const rankUpChannelId = resolveRankUpChannelId(guildId);
+        if (!rankUpChannelId) return;
+        const rankUpChannel = await client.channels.fetch(rankUpChannelId).catch(() => null);
+        if (!rankUpChannel?.isTextBased?.()) return;
+        const { getOrCreateUser } = require('./db-users');
+        const userData = getOrCreateUser(userId, member.user.username);
+        const shouldPing = userData.notify_rank_up !== 0;
+        await rankUpChannel.send({
+            content: `👑 Félicitations à ${member} qui vient de passer au rang **${newRankName}** !`,
+            allowedMentions: shouldPing ? undefined : { parse: [] },
+        });
+    } catch (e) {
+        logger.warn(`sendRankUpNotification: ${e?.message || e}`);
+    }
+}
+
+module.exports = {
+    RANKS,
+    MAIN_RANKS,
+    LOCKED_RANKS,
+    getRankFromPoints,
+    getDisplayRank,
+    isRankLocked,
+    updateUserRank,
+    sendRankUpNotification,
+};
