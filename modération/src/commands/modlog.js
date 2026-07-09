@@ -13,7 +13,220 @@ const {
 } = require("discord.js");
 const { denyUnlessCanMod } = require("../utils/mod-access");
 
-module.exports = {
+const ITEMS_PAR_PAGE = 5;
+
+function buildHistorique(sanctions, notes, staffWarns) {
+  return [
+    ...sanctions.map((s) => ({
+      type: "sanction",
+      sanctionType: s.type,
+      date: s.date,
+      data: s,
+    })),
+    ...notes.map((n) => ({
+      type: "note",
+      sanctionType: "Note",
+      date: n.date,
+      data: n,
+    })),
+    ...staffWarns.map((w) => ({
+      type: "staffwarn",
+      sanctionType: "Warn Staff",
+      date: w.date,
+      data: w,
+    })),
+  ].sort((a, b) => b.date - a.date);
+}
+
+function buildPages(historique, targetUser, totalsByType, sanctions, staffWarns) {
+  const pages = [];
+  const publicPages = [];
+
+  for (let i = 0; i < historique.length; i += ITEMS_PAR_PAGE) {
+    const currentPage = historique.slice(i, i + ITEMS_PAR_PAGE);
+    const container = new ContainerBuilder();
+    let publicContent = "";
+
+    const activeWarns = sanctions.filter((s) => s.type === "Warn" && s.active).length;
+    let riskLevel = "🟢";
+    if (activeWarns >= 2 || sanctions.length >= 5) riskLevel = "🟡";
+    if (activeWarns >= 3 || sanctions.length >= 10) riskLevel = "🔴";
+
+    const headerContent =
+      `# 🗃️ Historique de ${targetUser.tag}\n` +
+      `*ID: ${targetUser.id}*\n\n` +
+      `${riskLevel} **Résumé:** ` +
+      `🔨 ${totalsByType["Ban"] || 0} bans | ` +
+      `⏳ ${totalsByType["Time Out"] || 0} mutes | ` +
+      `⚠️ ${totalsByType["Warn"] || 0} warns (${activeWarns} actifs) | ` +
+      `👢 ${totalsByType["Kick"] || 0} kicks | ` +
+      `🛡️ ${staffWarns.length} warns staff`;
+
+    container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(headerContent),
+    );
+    publicContent += headerContent + "\n\n";
+
+    container.addSeparatorComponents(
+      new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small),
+    );
+
+    currentPage.forEach((item) => {
+      const date = new Date(item.date).toLocaleString("fr-FR");
+
+      if (item.type === "sanction") {
+        const s = item.data;
+        let emoji = "🛡️";
+        if (s.type === "Ban") emoji = "🔨";
+        if (s.type === "Time Out") emoji = "⏳";
+        if (s.type === "Warn") emoji = "⚠️";
+        if (s.type === "Kick") emoji = "👢";
+
+        let content = `### ${emoji} ${s.type} — ${date}\n`;
+        content += `> **Raison:** ${s.reason || "Aucune"}\n`;
+
+        if (s.type === "Warn") {
+          if (s.rule_name) {
+            content += `> **Règle:** ${s.rule_name}\n`;
+          }
+          content += `> **Statut:** ${s.active ? "🔴 Actif" : "🟢 Expiré"}\n`;
+        }
+        if (s.duration) content += `> **Durée:** ${s.duration}\n`;
+
+        const modId =
+          s.moderatorId === "System" ? "Système" : `<@${s.moderatorId}>`;
+        content += `> **Modérateur:** ${modId}\n`;
+        content += `> **ID:** \`${s.id}\``;
+
+        if (s.pendingDeletion) {
+          const deleteDate = new Date(s.deletionDate).toLocaleDateString("fr-FR");
+          content += `\n> ⚠️ **SUPPRESSION PROGRAMMÉE** le ${deleteDate}`;
+        }
+
+        container.addTextDisplayComponents(
+          new TextDisplayBuilder().setContent(content),
+        );
+        publicContent += content + "\n\n";
+      } else if (item.type === "note") {
+        const n = item.data;
+        const modId = `<@${n.moderatorId}>`;
+        const content =
+          `### 📝 Note — ${date}\n` +
+          `> **Contenu:** ${n.note}\n` +
+          `> **Par:** ${modId}\n` +
+          `> **ID:** \`${n.id}\``;
+
+        container.addTextDisplayComponents(
+          new TextDisplayBuilder().setContent(content),
+        );
+        publicContent += content + "\n\n";
+      } else if (item.type === "staffwarn") {
+        const w = item.data;
+        const modId = `<@${w.moderatorId}>`;
+        const content =
+          `### 🛡️ Warn Staff — ${date}\n` +
+          `> **Raison:** ${w.reason}\n` +
+          `> **Modérateur:** ${modId}\n` +
+          `> **ID:** \`${w.id}\``;
+
+        container.addTextDisplayComponents(
+          new TextDisplayBuilder().setContent(content),
+        );
+        publicContent += content + "\n\n";
+      }
+
+      container.addSeparatorComponents(
+        new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small),
+      );
+    });
+
+    const footer = `*Page ${pages.length + 1} — ${historique.length} élément(s) au total*`;
+    container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(footer),
+    );
+    publicContent += footer;
+
+    pages.push(container);
+    publicPages.push(publicContent);
+  }
+
+  return { pages, publicPages };
+}
+
+function buildNavigationRow(currentPageIdx, pagesLength) {
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId("modlog_prev")
+      .setLabel("◀️ Précédent")
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(currentPageIdx === 0),
+    new ButtonBuilder()
+      .setCustomId("modlog_next")
+      .setLabel("Suivant ▶️")
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(currentPageIdx >= pagesLength - 1),
+    new ButtonBuilder()
+      .setCustomId("modlog_send_public")
+      .setLabel("Envoyer publiquement")
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(false),
+  );
+}
+
+function getPageItems(historique, pageIdx) {
+  return historique.slice(pageIdx * ITEMS_PAR_PAGE, pageIdx * ITEMS_PAR_PAGE + ITEMS_PAR_PAGE);
+}
+
+/** Boutons pour retirer les warns actifs visibles sur la page courante. */
+function buildWarnDeleteRow(pageItems) {
+  const activeWarns = pageItems.filter(
+    (item) =>
+      item.type === "sanction" &&
+      item.sanctionType === "Warn" &&
+      item.data?.active,
+  );
+  if (!activeWarns.length) return null;
+
+  const row = new ActionRowBuilder();
+  for (const item of activeWarns.slice(0, 5)) {
+    row.addComponents(
+      new ButtonBuilder()
+        .setCustomId(`modlog_dw_${item.data.id}`)
+        .setLabel(`🗑️ Warn #${item.data.id}`)
+        .setStyle(ButtonStyle.Danger),
+    );
+  }
+  return row;
+}
+
+function buildModlogComponents(historique, currentPageIdx, pages) {
+  const components = [pages[currentPageIdx], buildNavigationRow(currentPageIdx, pages.length)];
+  const deleteRow = buildWarnDeleteRow(getPageItems(historique, currentPageIdx));
+  if (deleteRow) components.push(deleteRow);
+  return components;
+}
+
+function deactivateWarn(db, warnId, userId) {
+  return new Promise((resolve, reject) => {
+    db.run(
+      "UPDATE sanctions SET active = 0 WHERE id = ? AND userId = ? AND type = 'Warn' AND active = 1",
+      [warnId, userId],
+      function onRun(err) {
+        if (err) reject(err);
+        else resolve(this.changes);
+      },
+    );
+  });
+}
+
+function recomputeTotalsByType(sanctions) {
+  const totalsByType = {};
+  for (const s of sanctions) {
+    totalsByType[s.type] = (totalsByType[s.type] || 0) + 1;
+  }
+  return totalsByType;
+}
+
   data: new SlashCommandBuilder()
     .setName("modlog")
     .setDescription(
