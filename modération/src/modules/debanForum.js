@@ -351,7 +351,7 @@ async function createDebanPost(client, testGuildId, userData, reportContent, men
     const appliedTags = tags.enCours ? [tags.enCours] : [];
 
     const thread = await forumChannel.threads.create({
-        name: `Appeal by @${userData.discordUsername}`.slice(0, 100),
+        name: (userData.adminTestRequest ? '[TEST] ' : '') + `Appeal by @${userData.discordUsername}`.slice(0, 100),
         autoArchiveDuration: 10080, // 7 jours
         appliedTags,
         message: {
