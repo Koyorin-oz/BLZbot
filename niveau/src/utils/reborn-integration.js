@@ -385,13 +385,12 @@ function getRebornRankDisplay(rp) {
  * @param {string} userId
  * @param {number} rpFallback RP niveau si pas de ligne REBORN
  */
-function resolveRankDisplay(userId, rpFallback) {
+function resolveRankDisplay(userId, _rpFallback) {
   const { getDisplayRank, RANKS } = require('./ranks');
   if (rebornEconomyActive()) {
-    const rebornRp = getRebornRp(userId);
-    const effectiveRp = rebornRp !== null && rebornRp !== undefined ? rebornRp : rpFallback;
     const rr = getRebornRankedRoles();
     if (rr) {
+      const effectiveRp = getRebornRp(userId) ?? 0;
       const rank = rr.rankForRp(effectiveRp);
       const next = rr.nextRank(effectiveRp);
       return {
