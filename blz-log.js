@@ -205,6 +205,7 @@ const CHILD_LINE_SKIP = [
     /\[BOT_ROLE\]/i,
     /reborn désactivé/i,
     /reborn backup/i,
+    /\[PRIVATE_ROOM\]/i,
     /Échec sur tous les nœuds SearXNG/i,
     /chercher temple:guilde dans les lignes/i,
     /legacyGlobal/i,
