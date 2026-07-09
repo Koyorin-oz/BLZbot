@@ -5,7 +5,6 @@ const { checkQuestProgress } = require('../../utils/quests');
 const logger = require('../../utils/logger');
 
 const GUILD_COST = 500000;
-const REQUIRED_LEVEL = 15;
 
 module.exports = {
     data: new SlashCommandBuilder()
