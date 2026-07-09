@@ -62,8 +62,7 @@ module.exports = {
                 await handleCommandError(interaction, error);
             }
         } else if (interaction.isButton()) {
-            // Gérer les interactions de boutons pour les giveaways
-            } else if (interaction.customId.startsWith('bug_tag:')) {
+            if (interaction.customId.startsWith('bug_tag:')) {
                 const { handleBugTagButton } = require('../utils/bug-forum-tags');
                 try {
                     await handleBugTagButton(interaction);
