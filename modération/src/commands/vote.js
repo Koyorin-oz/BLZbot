@@ -5,7 +5,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('vote')
         .setDescription('Démarrer un vote pour un utilisateur ou personnalisé')
-        .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+        .setDefaultMemberPermissions(null)
         .addSubcommand(sub =>
             sub.setName('utilisateur')
                 .setDescription('Démarrer un vote pour un utilisateur')
