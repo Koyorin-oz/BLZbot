@@ -100,6 +100,7 @@ function sanitizeHardReply(text) {
     s = s.replace(/\[[^\]]{4,}\]/g, ' ');
     s = s.replace(/\*[^*\n]{2,}\*/g, ' ');
     s = s.replace(/\*\*([^*]+)\*\*/g, '$1');
+    s = s.replace(/\b(mossad|tsahal|idf)\b/gi, '');
     s = s.replace(/\s{2,}/g, ' ').trim();
     return s;
 }
