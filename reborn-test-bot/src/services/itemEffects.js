@@ -8,6 +8,7 @@
  */
 
 const db = require('../db');
+const cfg = require('../config');
 const users = require('./users');
 const meta = require('./meta');
 const quests = require('./quests');
