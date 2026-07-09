@@ -255,7 +255,10 @@ async function buildHistory(message, client, limit = 6) {
                 out.push({ role: 'assistant', content: text.slice(0, 350) });
             } else if (!m.author.bot) {
                 const name = m.member?.displayName || m.author.username;
-                out.push({ role: 'user', content: `${name}: ${text.slice(0, 350)}` });
+                out.push({
+                    role: 'user',
+                    content: `${name} [${m.author.id}]: ${text.slice(0, 280)}`,
+                });
             }
         }
         return out.slice(-limit);
