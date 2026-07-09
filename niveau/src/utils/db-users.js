@@ -252,15 +252,6 @@ async function grantResources(client, userId, { xp = 0, points = 0, stars = 0, s
             } catch { /* ignore */ }
         }
 
-        // Ancien bloc — conservé pour référence : RP niveau si pas REBORN.
-        if (false && points > 0) {
-            const { rebornEconomyActive } = require('./reborn-integration');
-            if (!rebornEconomyActive()) {
-                const { addPlayerRP } = require('./ranked-shares');
-                addPlayerRP(userId, points);
-            }
-        }
-
         // Logger les gains pour le diagnostic
         if (xp > 0) logResourceGain(userId, 'xp', xp, source);
         if (points > 0) logResourceGain(userId, 'points', points, source);
