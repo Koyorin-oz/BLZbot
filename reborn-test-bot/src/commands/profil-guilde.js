@@ -67,8 +67,51 @@ async function buildMemberRows(interaction, memRows, leaderId) {
   return out;
 }
 
+function getSubLeaderIds(guildId) {
+  return db
+    .prepare('SELECT user_id FROM player_guild_members WHERE guild_id = ? AND is_sub_leader = 1')
+    .all(guildId)
+    .map((r) => r.user_id);
+}
+
+/** Adapte une guilde REBORN au format attendu par le canvas V5. */
+function mapRebornGuildForCanvas(g, { cap, treasury, gxp, grade, next, sep, totalMembers }) {
+  const treasuryN = Number(treasury);
+  const gxpN = Number(gxp);
+  const gradeLabel = label(g.grade || '') || 'Aucun';
+  const nextLabel = next ? label(next) : null;
+  return {
+    id: g.id,
+    name: g.name,
+    emoji: g.icon_url && !String(g.icon_url).includes('<') ? g.icon_url : '🛡️',
+    owner_id: g.leader_id,
+    sub_chiefs: getSubLeaderIds(g.id),
+    level: g.guild_level || 1,
+    member_slots: cap,
+    treasury: treasuryN,
+    treasury_capacity: Math.max(treasuryN + 1_000_000, 1_500_000),
+    upgrade_level: 10,
+    total_value: gxpN,
+    treasury_multiplier_purchased: 1,
+    total_treasury_generated: treasuryN,
+    wars_won: 0,
+    wars_won_70: 0,
+    wars_won_80: 0,
+    wars_won_90: 0,
+    channel_id: g.salon_channel_id || null,
+    joker_guilde_uses: 0,
+    created_at: g.created_ms || Date.now(),
+    reborn_mode: true,
+    reborn_gxp: gxpN,
+    reborn_grade_line: `Grade ${gradeLabel}${nextLabel ? ` → ${nextLabel}` : ' (max)'}`,
+    reborn_salon_hint: g.salon_channel_id ? 'Actif' : `Non débloqué (grade ${label(pg.SALON_MIN_GRADE)})`,
+    reborn_extras: `Anti-séparation: ${sep.protected ? 'oui' : 'non'} · ID \`${g.id}\`${g.description ? ` · ${String(g.description).slice(0, 80)}` : ''}`,
+    reborn_footer: 'REBORN · Utilise les boutons pour la liste, les carrières et les quêtes',
+  };
+}
+
 /**
- * Construit le payload `/profil-guilde` (embed REBORN + boutons) pour un (hub, guild).
+ * Construit le payload `/profil-guilde` (canvas V5 + boutons REBORN).
  * Réutilisable depuis :
  *  - la commande slash `/profil-guilde`
  *  - le bouton « 🛡️ Guilde » du `/profil` (niveau) intercepté par REBORN
