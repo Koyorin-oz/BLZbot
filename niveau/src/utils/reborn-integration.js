@@ -216,53 +216,117 @@ function getRebornUsersService() {
   }
 }
 
+function toNumberBig(v) {
+  const big = typeof v === 'bigint' ? v : BigInt(v || 0);
+  return Number(big);
+}
+
 /**
- * Solde de starss REBORN (source de vérité de l'économie : boutique, daily, gains…).
- * `null` si REBORN est inactif ou si l'utilisateur n'a pas encore de ligne REBORN
- * (dans ce cas l'appelant garde la valeur niveau, évite d'afficher 0 à tort).
+ * Snapshot économie joueur REBORN (source unique : profil, classement, rôles).
  * @param {string} userId
- * @returns {number|null}
+ * @param {string} [username]
+ * @returns {null | { stars: number, points: number, level: number, xp: number, xp_needed: number, xp_total: number }}
  */
-function getRebornStars(userId) {
+function getRebornEconomySnapshot(userId, username) {
   const svc = getRebornUsersService();
   if (!svc) return null;
   try {
+    svc.getOrCreate(userId, username || 'unknown');
+    const { totalToLevelState, T_START, MAX_LEVEL } = require(path.join(
+      REPO_ROOT,
+      'reborn-test-bot',
+      'src',
+      'reborn',
+      'xpCurve',
+    ));
     const row = svc.getUser(userId);
-    if (!row) return null;
-    const v = svc.getStars(userId);
-    const big = typeof v === 'bigint' ? v : BigInt(v || 0);
-    return Number(big);
+    const st = totalToLevelState(row?.xp_total ?? 0);
+    const xp_needed =
+      st.level < MAX_LEVEL ? T_START[st.level + 1] - T_START[st.level] : 1;
+    return {
+      stars: toNumberBig(svc.getStars(userId)),
+      points: toNumberBig(svc.getPoints(userId)),
+      level: st.level,
+      xp: st.xpInto,
+      xp_needed,
+      xp_total: st.xpTotal,
+    };
   } catch (e) {
-    logger.warn('[reborn] getRebornStars:', e?.message || e);
+    logger.warn('[reborn] getRebornEconomySnapshot:', e?.message || e);
     return null;
   }
 }
 
 /**
- * RP Ranked REBORN (source de vérité du rang : /classement, rôles ranked…).
- * `null` si REBORN est inactif ou si l'utilisateur n'a pas encore de ligne REBORN
- * (dans ce cas l'appelant garde la valeur niveau).
- * @param {string} userId
- * @returns {number|null}
+ * Solde starss REBORN. `null` seulement si REBORN inactif ; sinon 0 minimum (jamais de repli blzbot).
  */
-function getRebornRp(userId) {
-  const svc = getRebornUsersService();
-  if (!svc) return null;
-  try {
-    const row = svc.getUser(userId);
-    if (!row) return null;
-    const v = svc.getPoints(userId);
-    const big = typeof v === 'bigint' ? v : BigInt(v || 0);
-    return Number(big);
-  } catch (e) {
-    logger.warn('[reborn] getRebornRp:', e?.message || e);
-    return null;
-  }
+function getRebornStars(userId, username) {
+  const snap = getRebornEconomySnapshot(userId, username);
+  return snap ? snap.stars : null;
 }
 
-/** L'économie REBORN (starss) est-elle active ? */
+/** RP ranked REBORN. `null` seulement si REBORN inactif. */
+function getRebornRp(userId, username) {
+  const snap = getRebornEconomySnapshot(userId, username);
+  return snap ? snap.points : null;
+}
+
+/** L'économie REBORN est-elle active ? */
 function rebornEconomyActive() {
   return getRebornUsersService() != null;
+}
+
+function getRebornLevelState(userId, username) {
+  const snap = getRebornEconomySnapshot(userId, username);
+  if (!snap) return null;
+  return {
+    level: snap.level,
+    xp: snap.xp,
+    xp_needed: snap.xp_needed,
+    xp_total: snap.xp_total,
+  };
+}
+
+/**
+ * Aligne un objet user (profil niveau) sur l'économie REBORN — sans repli sur blzbot.sqlite.
+ */
+function applyRebornProfileEconomy(user, userId, username) {
+  const snap = getRebornEconomySnapshot(userId, username);
+  if (!snap) return user;
+  user.stars = snap.stars;
+  user.points = snap.points;
+  user.level = snap.level;
+  user.xp = snap.xp;
+  user.xp_needed = snap.xp_needed;
+  return user;
+}
+
+function setRebornRp(userId, amount, username) {
+  const svc = getRebornUsersService();
+  if (!svc) return null;
+  try {
+    svc.getOrCreate(userId, username || 'unknown');
+    const v = typeof amount === 'bigint' ? amount : BigInt(Math.max(0, Math.trunc(Number(amount) || 0)));
+    svc.setPoints(userId, v);
+    return toNumberBig(svc.getPoints(userId));
+  } catch (e) {
+    logger.warn('[reborn] setRebornRp:', e?.message || e);
+    return null;
+  }
+}
+
+function setRebornStars(userId, amount, username) {
+  const svc = getRebornUsersService();
+  if (!svc) return null;
+  try {
+    svc.getOrCreate(userId, username || 'unknown');
+    const v = typeof amount === 'bigint' ? amount : BigInt(Math.max(0, Math.trunc(Number(amount) || 0)));
+    svc.setStars(userId, v);
+    return toNumberBig(svc.getStars(userId));
+  } catch (e) {
+    logger.warn('[reborn] setRebornStars:', e?.message || e);
+    return null;
+  }
 }
 
 /**
