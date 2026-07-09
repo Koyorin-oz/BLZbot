@@ -67,16 +67,33 @@ function buildSpeakerContext(message) {
     const display = message.member?.displayName || message.author.username;
     const lines = [
         '---',
-        'INTERLOCUTEUR ACTUEL (réponds à LUI/ELLE uniquement) :',
-        `Pseudo affiché : ${display}`,
-        `ID Discord : ${uid}`,
+        'INTERLOCUTEUR ACTUEL (tu lui parles à LUI/ELLE, pas à un autre) :',
+        `Pseudo : ${display}`,
+        `ID : ${uid}`,
     ];
-    if (uid === KNOWN_USERS.koyorin_oz) {
-        lines.push('C’est koyorin_oz (créateur) — tu peux le respecter un minimum tout en restant hard.');
+    if (uid === KNOWN_USERS.BLZstarss) {
+        lines.push('C’est BLZstarss — le CHEF du serveur. Respect minimum, ton plus soft qu’avec les randoms.');
+    } else if (uid === KNOWN_USERS.koyorin_oz) {
+        lines.push('C’est koyorin_oz (dev). Tu peux clash en rigolant, pas comme un random.');
+    } else if (uid === KNOWN_USERS.imroxxor) {
+        lines.push('C’est imroxxor (co-dev). Pareil, un peu de respect.');
     } else {
-        lines.push(`Ce n’est PAS koyorin_oz (koyorin = ${KNOWN_USERS.koyorin_oz}). Ne confonds pas les pseudos.`);
+        lines.push(
+            `Random du serveur. Full clash autorisé. Ce n’est PAS koyorin (${KNOWN_USERS.koyorin_oz}) ni BLZstarss (${KNOWN_USERS.BLZstarss}).`,
+        );
     }
     return lines.join('\n');
+}
+
+/** Retire le théâtre RP que le modèle invente parfois ([SYSTÈME], *actions*, etc.). */
+function sanitizeHardReply(text) {
+    let s = String(text || '').trim();
+    if (!s) return s;
+    s = s.replace(/\[[^\]]{4,}\]/g, ' ');
+    s = s.replace(/\*[^*\n]{2,}\*/g, ' ');
+    s = s.replace(/\*\*([^*]+)\*\*/g, '$1');
+    s = s.replace(/\s{2,}/g, ' ').trim();
+    return s;
 }
 
 /** Coupe les réponses trop longues pour le salon hard. */
