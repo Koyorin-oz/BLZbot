@@ -658,7 +658,7 @@ function scheduleSlashSyncFromOrchestrator() {
   const deployScript = path.join(REPO_ROOT, 'scripts', 'run-deploy-all.js');
   blzLine(
     'maintemp',
-    `Deploy slash dans ${Math.round(delay / 1000)}s (BLZ_AUTO_DEPLOY_SLASH=0 pour couper)`,
+    `deploy auto dans ${Math.round(delay / 1000)}s`,
   );
 
   const runDeployOnce = (attemptLabel) => {

@@ -26,7 +26,7 @@ try {
   
   // Log des fonts manquantes pour debug
   const missing = Object.entries(registeredFonts).filter(([_, loaded]) => !loaded).map(([name]) => name);
-  if (missing.length > 0) {
+  if (missing.length > 0 && process.env.BLZ_COMPACT_LOG !== '1') {
       console.warn(`⚠️ Fonts manquantes pour le rendu de guilde: ${missing.join(', ')}`);
   }
 } catch(e) {
