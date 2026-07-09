@@ -493,12 +493,7 @@ function createOAuthServer(opts) {
   });
 
   const server = app.listen(opts.httpPort, httpHost, () => {
-    if (isCompact()) {
-      blzLine(
-        'verif',
-        `HTTP :${opts.httpPort}${proxyEnforced ? ' · proxy OK' : ' · ⚠ sans proxy'}`,
-      );
-    } else {
+    if (!isCompact()) {
       console.log(
         `[http] OAuth sur ${httpHost}:${opts.httpPort} — callback ${opts.redirectUri}` +
           (proxyEnforced ? ' — ⛓️ reverse proxy obligatoire' : ' — ⚠️  pas de garde-fou proxy'),

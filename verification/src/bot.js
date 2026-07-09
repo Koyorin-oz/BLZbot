@@ -216,7 +216,7 @@ function createBot(opts) {
     try {
       await c.application.commands.set(buildSlashCommands());
       if (isCompact()) {
-        blzLine('verif', `${c.user.tag} · OAuth · slash enregistrés`);
+        blzLine('verif', `ready · ${c.user.tag}`);
       } else {
         console.log(`[bot] Connecté : ${c.user.tag}`);
         console.log(
