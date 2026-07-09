@@ -467,6 +467,11 @@ async function setLevel(userId, level, client = null) {
 
 function setPoints(userId, points) {
     try {
+        const { rebornEconomyActive, setRebornRp } = require('./reborn-integration');
+        if (rebornEconomyActive()) {
+            setRebornRp(userId, points);
+            return;
+        }
         const { getUserRP, addPlayerRP, burnPlayerRP } = require('./ranked-shares');
         const currentRP = getUserRP(userId);
         const diff = points - currentRP;
