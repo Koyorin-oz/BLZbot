@@ -35,6 +35,10 @@ const autoDeploySlashOnReady = String(process.env.REBORN_AUTO_DEPLOY_SLASH || '1
 /** Rôle Discord requis pour le loot salon hacker (bouton du panneau /salon-hacker). Laisser vide désactive la commande côté rôle (owner bypass). */
 const hackerRoleId = (process.env.REBORN_HACKER_ROLE_ID || '').trim() || null;
 
+/** Salon secret hacker (accès via jeton / coffre). */
+const hackerChannelId =
+  (process.env.REBORN_HACKER_CHANNEL_ID || process.env.HACKER_CHANNEL || '1454484970843144391').trim() || null;
+
 const HACKER_SALON_COOLDOWN_MS = 12 * 60 * 60 * 1000;
 
 /**
