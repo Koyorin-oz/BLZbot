@@ -78,9 +78,14 @@ async function grantHackerAccess(ctx) {
 
   meta.set(`${META_KEY_PREFIX}${userId}`, '1');
 
-  const ok = roleGranted || alreadyHadRole || channelGranted || meta.get(`${META_KEY_PREFIX}${userId}`) === '1';
-  if (!ok && !roleId && channelId) {
-    return { ok: false, error: 'Impossible d’ouvrir le salon hacker (permissions bot insuffisantes).' };
+  const accessViaRole = roleGranted || alreadyHadRole;
+  const accessViaChannel = channelGranted;
+  if (!accessViaRole && !accessViaChannel && channelId) {
+    return {
+      ok: false,
+      error:
+        'Impossible d’ouvrir le salon hacker — vérifie que le bot peut gérer les permissions du salon.',
+    };
   }
 
   return {
