@@ -16,6 +16,21 @@ const NORMAL_CHANNEL_ID = config.BASIC_CHATBOT_CHANNEL_ID;
 
 const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
 const BUILTIN_FALLBACKS = ['llama-3.1-8b-instant', 'openai/gpt-oss-120b'];
+const GROQ_BASE_URL = String(process.env.GROQ_API_BASE || 'https://api.groq.com/openai/v1').replace(/\/$/, '');
+const MAX_DISCORD = 1900;
+
+/** IDs fixes — ne jamais confondre les pseudos dans le salon hard. */
+const KNOWN_USERS = {
+    koyorin_oz: '965984018216665099',
+    imroxxor: '1057705135515639859',
+    BLZstarss: '845654783264030721',
+};
+
+const PROMPT_FILES = {
+    hard: path.join(__dirname, 'data', 'hardSystemPrompt.txt'),
+    normal: path.join(__dirname, 'data', 'normalSystemPrompt.txt'),
+};
+
 /** Heuristique : enrichir avec une recherche web légère (SearXNG). */
 function needsWebSearch(text) {
     const t = String(text || '').toLowerCase();
