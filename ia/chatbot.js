@@ -353,7 +353,7 @@ async function handleChatbotMessage(message, client) {
             if (webBit) system += webBit;
         }
 
-        const history = await buildHistory(message, client, isHard ? 4 : 6);
+        const history = await buildHistory(message, client, isHard ? 2 : 6);
 
         const messages = [
             { role: 'system', content: system },
