@@ -125,23 +125,38 @@ async function renderGuildProfileV2({ guild, members, owner, warInfo, totalMembe
   ctx.fillText(guildNameTrunc, 120, 78);
 
   // ============================================
-  // TOP CENTER: Valeur + Upgrade
+  // TOP CENTER: Valeur + Upgrade (ou stats REBORN)
   // ============================================
   panel(ctx, 444, 24, 330, 100, 24, THEME.header);
   
   ctx.font = `700 28px ${titleFace}`;
   ctx.fillStyle = THEME.accent;
-  const guildValueDisplay = (guild.total_value || 0) >= 1000000 
-    ? `${((guild.total_value || 0) / 1000000).toFixed(1)}M` 
-    : (guild.total_value || 0) >= 1000 
-      ? `${((guild.total_value || 0) / 1000).toFixed(1)}K` 
-      : (guild.total_value || 0).toLocaleString('fr-FR');
-  ctx.fillText(`💎 ${guildValueDisplay} valeur`, 470, 65);
-  
-  ctx.font = `600 22px ${textFace}`;
-  ctx.fillStyle = THEME.sub;
-  const upgradeName = guild.upgrade_level === 10 ? 'Upgrade X' : `Upgrade ${guild.upgrade_level}`;
-  ctx.fillText(upgradeName, 470, 100);
+  if (guild.reborn_mode) {
+    const gxpN = Number(guild.reborn_gxp || guild.total_value || 0);
+    const gxpDisp =
+      gxpN >= 1_000_000
+        ? `${(gxpN / 1_000_000).toFixed(1)}M`
+        : gxpN >= 1000
+          ? `${(gxpN / 1000).toFixed(1)}K`
+          : gxpN.toLocaleString('fr-FR');
+    ctx.fillText(`⚡ ${gxpDisp} GXP`, 470, 65);
+    ctx.font = `600 20px ${textFace}`;
+    ctx.fillStyle = THEME.sub;
+    const gradeLine = guild.reborn_grade_line || `Niveau guilde ${guild.level || 1}`;
+    ctx.fillText(truncateText(ctx, gradeLine, 300), 470, 100);
+  } else {
+    const guildValueDisplay = (guild.total_value || 0) >= 1000000 
+      ? `${((guild.total_value || 0) / 1000000).toFixed(1)}M` 
+      : (guild.total_value || 0) >= 1000 
+        ? `${((guild.total_value || 0) / 1000).toFixed(1)}K` 
+        : (guild.total_value || 0).toLocaleString('fr-FR');
+    ctx.fillText(`💎 ${guildValueDisplay} valeur`, 470, 65);
+    
+    ctx.font = `600 22px ${textFace}`;
+    ctx.fillStyle = THEME.sub;
+    const upgradeName = guild.upgrade_level === 10 ? 'Upgrade X' : `Upgrade ${guild.upgrade_level}`;
+    ctx.fillText(upgradeName, 470, 100);
+  }
 
   // ============================================
   // LEFT: Liste des Membres (10 premiers)
