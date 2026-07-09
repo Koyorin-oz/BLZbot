@@ -91,10 +91,6 @@ function trimHardReply(text, isHard) {
     return `${cut}…`;
 }
 
-    hard: path.join(__dirname, 'data', 'hardSystemPrompt.txt'),
-    normal: path.join(__dirname, 'data', 'normalSystemPrompt.txt'),
-};
-
 function getGroqApiKey() {
     return String(config.GROQ_API_KEY || process.env.GROQ_API_KEY || '').trim();
 }
