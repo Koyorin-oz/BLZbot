@@ -414,7 +414,7 @@ async function createPrivateVoice(client, member, cfg) {
         return { ok: false, error: 'category' };
     }
 
-    const name = defaultChannelName(member);
+    const name = resolvePrivateRoomChannelName(guild.id, member);
     const channel = await guild.channels.create({
         name,
         type: ChannelType.GuildVoice,
