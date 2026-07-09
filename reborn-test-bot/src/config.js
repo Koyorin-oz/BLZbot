@@ -84,6 +84,7 @@ module.exports = {
   ownerIds,
   autoDeploySlashOnReady,
   hackerRoleId,
+  hackerChannelId,
   HACKER_SALON_COOLDOWN_MS,
   mirrorNiveauExecute,
   mirrorNiveauSlash,
