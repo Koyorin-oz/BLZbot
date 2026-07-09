@@ -554,18 +554,61 @@ function updateUserBalance(userId, { xp = 0, points = 0, stars = 0 }) {
         if (xp !== 0) {
             const stmt = db.prepare('UPDATE users SET xp = xp + ? WHERE id = ?');
             stmt.run(xp, userId);
+            // Recalcul niveau après modif admin (montée ou descente).
+            const userAfterUpdate = getUserStmt.get(userId);
+            if (userAfterUpdate) {
+                let currentUserData = { ...userAfterUpdate };
+                let levelChanged = false;
+                if (xp > 0) {
+                    while (currentUserData.xp >= currentUserData.xp_needed) {
+                        const newXp = currentUserData.xp - currentUserData.xp_needed;
+                        const newLevel = currentUserData.level + 1;
+                        const newXpNeeded = 100 * (newLevel + 1);
+                        currentUserData.xp = newXp;
+                        currentUserData.level = newLevel;
+                        currentUserData.xp_needed = newXpNeeded;
+                        levelChanged = true;
+                    }
+                } else if (xp < 0) {
+                    while (currentUserData.xp < 0 && currentUserData.level > 1) {
+                        const newLevel = currentUserData.level - 1;
+                        const newXpNeeded = 100 * (newLevel + 1);
+                        currentUserData.xp = currentUserData.xp + newXpNeeded;
+                        currentUserData.level = newLevel;
+                        currentUserData.xp_needed = newXpNeeded;
+                        levelChanged = true;
+                    }
+                    if (currentUserData.level === 1 && currentUserData.xp < 0) {
+                        currentUserData.xp = 0;
+                    }
+                }
+                if (levelChanged || currentUserData.xp !== userAfterUpdate.xp) {
+                    setLevelStmt.run(currentUserData.level, currentUserData.xp, currentUserData.xp_needed, userId);
+                }
+            }
         }
         if (points !== 0) {
-            const { addPlayerRP, burnPlayerRP } = require('./ranked-shares');
-            if (points > 0) {
-                addPlayerRP(userId, points);
+            const { rebornEconomyActive } = require('./reborn-integration');
+            if (rebornEconomyActive()) {
+                const svc = require('./reborn-integration').getRebornUsersService?.();
+                if (svc) {
+                    svc.getOrCreate(userId, 'unknown');
+                    svc.addPoints(userId, points);
+                }
             } else {
-                burnPlayerRP(userId, -points);
+                const { addPlayerRP, burnPlayerRP } = require('./ranked-shares');
+                if (points > 0) addPlayerRP(userId, points);
+                else burnPlayerRP(userId, -points);
             }
         }
         if (stars !== 0) {
-            const stmt = db.prepare('UPDATE users SET stars = stars + ? WHERE id = ?');
-            stmt.run(stars, userId);
+            const { rebornEconomyActive, addRebornStars } = require('./reborn-integration');
+            if (rebornEconomyActive()) {
+                addRebornStars(userId, stars);
+            } else {
+                const stmt = db.prepare('UPDATE users SET stars = stars + ? WHERE id = ?');
+                stmt.run(stars, userId);
+            }
         }
 
         // Mise à jour des stats All-Time pour les modifs manuelles
