@@ -102,6 +102,17 @@ function addXp(userId, delta) {
   return { xp: st.xpInto, level: st.level, xpTotal: newTotal };
 }
 
+/** Fixe le niveau joueur (début du palier, 0 XP dans le niveau). */
+function setPlayerLevel(userId, level) {
+  getOrCreate(userId, '');
+  const { T_START, MAX_LEVEL, totalToLevelState } = require('../reborn/xpCurve');
+  const lv = Math.max(1, Math.min(MAX_LEVEL, Math.floor(Number(level) || 1)));
+  const newTotal = T_START[lv] ?? 0;
+  const st = totalToLevelState(newTotal);
+  xpStmt.run(st.xpInto, st.level, newTotal, userId);
+  return { xp: st.xpInto, level: st.level, xpTotal: newTotal };
+}
+
 function getEventCurrency(userId) {
   const u = getStmt.get(userId);
   return u ? B(u.event_currency) : 0n;
