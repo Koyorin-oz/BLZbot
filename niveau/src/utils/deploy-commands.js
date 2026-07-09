@@ -184,7 +184,7 @@ async function deployRebornSlashToGuilds(
         const prevReborn = existing.filter((c) => rebornCommands.has(c.name)).size;
         try {
             const setResult = await guild.commands.set(payload);
-            const newReborn = setResult.filter((c) => rebornCommands.has(c.name)).length;
+            const newReborn = setResult.filter((c) => rebornCommands.has(c.name)).size;
             created += Math.max(0, newReborn - prevReborn);
             updated += Math.min(prevReborn, newReborn);
             if (!compact) {
