@@ -218,7 +218,7 @@ const CHILD_LINE_ALLOW = [
     /^ready ·/i,
     /\best prêt\b/i,
     /BLZbot-.+#\d+ · prêt/i,
-    /Slash GLOBAL : \+/i,
+    /global \+\d+/i,
     /\[deploy\] Terminé/i,
     /Deploy slash (démarré|ok|échec|terminé)/i,
     /Deploy slash dans \d+s/i,
