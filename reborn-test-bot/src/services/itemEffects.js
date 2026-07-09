@@ -72,7 +72,7 @@ async function useItem(userId, itemId, ctx = {}) {
   const chestSub = purchase.ITEM_TO_CHEST_SUB[id];
   if (chestSub) {
     if (!users.takeInventory(userId, id, 1)) return { ok: false, error: 'Indisponible.' };
-    const r = purchase.openChest(userId, chestSub, ctx?.guildId || null);
+    const r = await purchase.openChest(userId, chestSub, ctx?.guildId || null, ctx);
     return { ok: true, message: r.message };
   }
 
