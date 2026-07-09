@@ -19,6 +19,10 @@ const {
     ensureSessions,
     resolvePrivateRoomConfig,
 } = require('./private-voice-rooms');
+const {
+    sanitizePrivateRoomChannelName,
+    savePrivateRoomName,
+} = require('./private-room-prefs');
 
 function sessionKey(guildId, userId) {
     return `${guildId}:${userId}`;
