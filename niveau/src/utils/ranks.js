@@ -90,18 +90,22 @@ async function updateUserRank(client, userId) {
         if (!guild) return;
 
         const member = await guild.members.fetch(userId).catch(() => null);
-        if (!member) return; // L'utilisateur n'est plus dans le serveur
+        if (!member) return;
 
         const user = getUserPointsStmt.get(userId);
         if (!user) return;
 
-        // Source de vérité du RP/rang = REBORN (cohérence avec /classement et /profil).
-        // On calcule le rang (et donc rôles + notification) sur le RP REBORN si dispo.
+        // Économie REBORN active : rôles + notifications via rankedRoles uniquement
+        // (évite le double assignement niveau/REBORN qui causait Émeraude III vs Diamant III).
         try {
-            const { getRebornRp } = require('./reborn-integration');
-            const rebornRp = getRebornRp(userId);
-            if (rebornRp !== null && rebornRp !== undefined) user.points = rebornRp;
-        } catch { /* fallback silencieux sur la valeur niveau */ }
+            const { rebornEconomyActive, getRebornRp, syncRebornRankRole } = require('./reborn-integration');
+            if (rebornEconomyActive()) {
+                const rebornRp = getRebornRp(userId);
+                if (rebornRp !== null && rebornRp !== undefined) user.points = rebornRp;
+                await syncRebornRankRole(client, userId, targetGuildId);
+                return;
+            }
+        } catch { /* fallback niveau */ }
 
         const newRank = getRankFromPoints(user.points);
         const newMainRankName = newRank.name.split(' ')[0];
