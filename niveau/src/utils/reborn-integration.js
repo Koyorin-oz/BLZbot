@@ -520,6 +520,7 @@ module.exports = {
   setRebornRp,
   setRebornStars,
   addRebornXp,
+  setRebornLevel,
   rebornEconomyActive,
   addRebornStars,
   addRebornPoints,

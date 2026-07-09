@@ -85,7 +85,12 @@ module.exports = {
 
             } else if (subcommand === 'set-level') {
                 const level = interaction.options.getInteger('niveau');
-                setLevel(targetUser.id, level);
+                const { rebornEconomyActive, getRebornLevelState } = require('../../utils/reborn-integration');
+                const beforeLevel = rebornEconomyActive()
+                    ? (getRebornLevelState(targetUser.id, targetUser.username)?.level ?? 1)
+                    : (getOrCreateUser(targetUser.id, targetUser.username).level ?? 1);
+
+                await setLevel(targetUser.id, level, interaction.client);
 
                 // Mettre à jour le niveau de la guilde si l'utilisateur en a une
                 const userGuild = getGuildOfUser(targetUser.id);
@@ -96,14 +101,18 @@ module.exports = {
                 // Mettre à jour les rôles de niveau
                 const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
                 if (member) {
-                    await updateLevelRoles(member, level);
+                    const { rebornEconomyActive: rebornOn, getRebornLevelState: rebornLv } = require('../../utils/reborn-integration');
+                    const displayLevel = rebornOn()
+                        ? (rebornLv(targetUser.id, targetUser.username)?.level ?? level)
+                        : level;
+                    await updateLevelRoles(member, displayLevel);
                 }
 
                 await interaction.reply({
                     content: `✅ Le niveau de **${targetUser.username}** a été défini sur **${level}**.`,
                     flags: 64
                 });
-                logger.info(`Admin ${interaction.user.tag} set level for ${targetUser.tag} to ${level}`);
+                logger.info(`Admin ${interaction.user.tag} set level for ${targetUser.tag} to ${level} (was ${beforeLevel})`);
             }
         } catch (error) {
             logger.error(`Error in xp command:`, error);
