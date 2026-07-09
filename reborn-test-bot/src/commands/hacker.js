@@ -188,10 +188,14 @@ module.exports = {
         [
           'En tant que **Hackeur**, tu peux récupérer un **item aléatoire** toutes les **12 heures** !',
           '',
+          cfg.hackerChannelId ? `Salon : <#${cfg.hackerChannelId}>` : '',
+          '',
           'Clique sur le bouton ci-dessous pour récupérer ton item.',
           '',
           '*Tu ne peux réclamer qu’**une fois** toutes les 12 heures.*',
-        ].join('\n'),
+        ]
+          .filter(Boolean)
+          .join('\n'),
       );
 
     const row = new ActionRowBuilder().addComponents(
