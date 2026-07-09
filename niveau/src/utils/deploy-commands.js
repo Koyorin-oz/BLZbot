@@ -243,9 +243,14 @@ async function deployRebornGuildSlashOnly(client, opts = {}) {
         globalSlashNames: globalNames,
     });
     const hasTemple = rebornForGuild.has('temple');
-    console.log(
-        `[niveau] REBORN secours guilde : +${stats.created} ~${stats.updated} err ${stats.errors} · temple:${hasTemple ? 'oui' : 'NON'}`,
-    );
+    if (compact) {
+        const { blzLine } = require(path.join(__dirname, '..', '..', '..', 'blz-log.js'));
+        blzLine('niveau', `reborn backup · ${rebornForGuild.size} cmd · temple:${hasTemple ? 'ok' : 'non'}`);
+    } else {
+        console.log(
+            `[niveau] REBORN secours guilde : +${stats.created} ~${stats.updated} err ${stats.errors} · temple:${hasTemple ? 'oui' : 'NON'}`,
+        );
+    }
     return stats;
 }
 
