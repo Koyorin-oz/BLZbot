@@ -19,11 +19,11 @@ const BUILTIN_FALLBACKS = ['llama-3.1-8b-instant', 'openai/gpt-oss-120b'];
 const GROQ_BASE_URL = String(process.env.GROQ_API_BASE || 'https://api.groq.com/openai/v1').replace(/\/$/, '');
 const MAX_DISCORD = 1900;
 
-/** IDs fixes — ne jamais confondre les pseudos dans le salon hard. */
+/** IDs fixes — hiérarchie serveur BLZstarss. */
 const KNOWN_USERS = {
+    BLZstarss: '845654783264030721',
     koyorin_oz: '965984018216665099',
     imroxxor: '1057705135515639859',
-    BLZstarss: '845654783264030721',
 };
 
 const PROMPT_FILES = {
