@@ -32,8 +32,9 @@ const ownerIds = new Set(
 /** À chaque démarrage du bot : enregistrer les slash commands (sauf si =0). */
 const autoDeploySlashOnReady = String(process.env.REBORN_AUTO_DEPLOY_SLASH || '1').trim() !== '0';
 
-/** Rôle Discord requis pour le loot salon hacker (bouton du panneau /salon-hacker). Laisser vide désactive la commande côté rôle (owner bypass). */
-const hackerRoleId = (process.env.REBORN_HACKER_ROLE_ID || '').trim() || null;
+/** Rôle Discord « Hackeur » (jeton hacker / panneau /salon-hacker). */
+const hackerRoleId =
+  (process.env.REBORN_HACKER_ROLE_ID || process.env.HACKER_ROLE_ID || '1432469784653467701').trim() || null;
 
 /** Salon secret hacker (accès via jeton / coffre). */
 const hackerChannelId =
