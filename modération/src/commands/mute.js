@@ -15,7 +15,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('mute')
         .setDescription('Rendre un membre muet avec une durée et une raison spécifiques.')
-        .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+        .setDefaultMemberPermissions(null)
         .addUserOption(option =>
             option.setName('utilisateur')
                 .setDescription('Le membre à rendre muet')
