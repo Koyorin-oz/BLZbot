@@ -309,11 +309,6 @@ async function handleVoiceRoomPanelModal(interaction) {
             });
         }
 
-        const userRaw = interaction.fields.getTextInputValue('pvr_input_user')?.trim() || '';
-        if (!/^\d{17,22}$/.test(userRaw)) {
-            return interaction.reply({ content: 'ID membre invalide.', flags: 64 });
-        }
-
         if (kind === 'kick') {
             if (userRaw === meta.ownerId) {
                 return interaction.reply({ content: 'Tu ne peux pas expulser le propriétaire ainsi.', flags: 64 });
