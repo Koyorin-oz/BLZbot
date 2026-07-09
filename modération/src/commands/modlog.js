@@ -463,7 +463,7 @@ module.exports = {
               });
             }
 
-            const row = sanctions.find((s) => s.id === warnId);
+            const row = sanctions.find((s) => Number(s.id) === warnId);
             if (row) row.active = 0;
 
             totalsByType = recomputeTotalsByType(sanctions);
