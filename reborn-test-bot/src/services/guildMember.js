@@ -28,8 +28,22 @@ function addGrp(guildId, userId, delta) {
   write(guildId, userId, gxp, grp + d);
 }
 
+function setGxp(guildId, userId, amount) {
+  const a = typeof amount === 'bigint' ? amount : users.B(amount);
+  if (a < 0n) throw new Error('Montant GXP négatif interdit.');
+  const { grp } = read(guildId, userId);
+  write(guildId, userId, a, grp);
+}
+
+function setGrp(guildId, userId, amount) {
+  const a = typeof amount === 'bigint' ? amount : users.B(amount);
+  if (a < 0n) throw new Error('Montant GRP négatif interdit.');
+  const { gxp } = read(guildId, userId);
+  write(guildId, userId, gxp, a);
+}
+
 function getMemberRow(guildId, userId) {
   return read(guildId, userId);
 }
 
-module.exports = { addGxp, addGrp, getMemberRow };
+module.exports = { addGxp, addGrp, setGxp, setGrp, getMemberRow };

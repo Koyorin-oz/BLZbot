@@ -341,6 +341,22 @@ function addGuildGxp(guildId, delta) {
   );
 }
 
+function setGuildGxp(guildId, total) {
+  const g = getGuild(guildId);
+  if (!g) return { ok: false, error: 'Guilde introuvable.' };
+  const next = typeof total === 'bigint' ? total : B(total);
+  if (next < 0n) return { ok: false, error: 'Montant GXP négatif interdit.' };
+  const gl = guildLevelFromTotalGxp(next);
+  const cap = effectiveMemberCap({ ...g, guild_level: gl });
+  db.prepare('UPDATE player_guilds SET gxp = ?, guild_level = ?, member_cap = ? WHERE id = ?').run(
+    next.toString(),
+    gl,
+    cap,
+    guildId,
+  );
+  return { ok: true, gxp: next, guildLevel: gl, memberCap: cap };
+}
+
 function addGxpFromMemberActivity(hubDiscordId, userId, delta) {
   const m = getMembershipInHub(userId, hubDiscordId);
   if (!m) return;
