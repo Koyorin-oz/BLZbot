@@ -4,7 +4,7 @@ const logger = require('./logger');
 const { postOrReplaceMusicPanel } = require('./voice-music-manager');
 
 /** Salon d’accueil par défaut (rejoindre ce vocal → création d’un salon privé). */
-const DEFAULT_LOBBY_CHANNEL_ID = '1388968408711823411';
+const DEFAULT_LOBBY_CHANNEL_ID = '1524760611765096498';
 
 /** Catégorie Discord où créer les vocaux privés (surcharge : PRIVATE_ROOM_CATEGORY_ID dans le .env). */
 const DEFAULT_VOICE_CATEGORY_ID = '1388968406664871986';
