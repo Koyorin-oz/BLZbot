@@ -134,9 +134,33 @@ function loadPrompt(mode) {
         : `Tu es BLZbot sur BLZstarss : sérieux, poli et serviable. Tu n'insultes jamais ; si on t'insulte, renvoie vers <#${HARD_CHANNEL_ID}>. Réponses concises en français.`;
 }
 
-function getModelsToTry() {
-    const primary = String(process.env.IA_CHATBOT_MODEL || process.env.GROQ_MODEL || DEFAULT_MODEL).trim() || DEFAULT_MODEL;
-    return [...new Set([primary, ...BUILTIN_FALLBACKS.filter((m) => m !== primary)])];
+function getModelsToTry(isHard) {
+    const envKey = isHard ? 'IA_HARD_CHATBOT_MODEL' : 'IA_CHATBOT_MODEL';
+    const primary = String(
+        process.env[envKey] ||
+            process.env.GROQ_MODEL ||
+            (isHard ? HARD_DEFAULT_MODEL : NORMAL_DEFAULT_MODEL),
+    ).trim();
+    const fallbacks = isHard ? HARD_FALLBACKS : NORMAL_FALLBACKS;
+    return [...new Set([primary, ...fallbacks.filter((m) => m !== primary)])];
+}
+
+/** Modèles OSS Groq : pas de rôle system — on injecte le prompt dans le 1er user. */
+function prepareGroqMessages(model, messages) {
+    if (!String(model).startsWith('openai/gpt-oss')) return messages;
+    const system = messages.find((m) => m.role === 'system');
+    const rest = messages.filter((m) => m.role !== 'system');
+    if (!system?.content) return rest;
+    const firstUser = rest.findIndex((m) => m.role === 'user');
+    if (firstUser === -1) {
+        return [{ role: 'user', content: `${system.content}\n\n---\n(réponds maintenant)` }, ...rest];
+    }
+    const merged = [...rest];
+    merged[firstUser] = {
+        role: 'user',
+        content: `${system.content}\n\n---\n${merged[firstUser].content}`,
+    };
+    return merged;
 }
 
 function collectErrorText(err) {
