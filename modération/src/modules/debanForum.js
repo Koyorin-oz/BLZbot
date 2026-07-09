@@ -69,7 +69,118 @@ function removeForumConfigForGuild(testGuildId) {
     return false;
 }
 
-/* ============================ FORUM SETUP ============================ */
+/**
+ * Assure que le forum possède les tags En cours / Deban / Refuse (crée ceux qui manquent).
+ * @returns {Promise<Record<string, string>>} tags indexés par clé (enCours/deban/refuse)
+ */
+async function ensureForumTagsOnChannel(forumChannel) {
+    if (!forumChannel || forumChannel.type !== ChannelType.GuildForum) {
+        throw new Error('Salon forum invalide.');
+    }
+
+    const existing = forumChannel.availableTags || [];
+    const byName = new Map(existing.map((t) => [String(t.name).toLowerCase().trim(), t]));
+    const payload = existing.map((t) => ({
+        id: t.id,
+        name: t.name,
+        emoji: t.emoji || undefined,
+        moderated: Boolean(t.moderated),
+    }));
+
+    let added = false;
+    for (const spec of TAG_SPECS) {
+        if (byName.has(spec.name.toLowerCase().trim())) continue;
+        payload.push({
+            name: spec.name,
+            emoji: spec.emoji ? { name: spec.emoji } : undefined,
+            moderated: spec.moderated,
+        });
+        added = true;
+    }
+
+    if (added) {
+        await forumChannel.setAvailableTags(payload);
+        forumChannel = await forumChannel.fetch();
+    }
+
+    return indexTagsByKey(forumChannel);
+}
+
+/**
+ * Lie un forum **existant** (déjà créé à la main ou via /panel-deban creer-forum).
+ * Persiste tags + IDs dans deban_forum_config.json pour la guilde de routage `testGuildId`.
+ *
+ * @param {import('discord.js').Client} client
+ * @param {{ testGuildId: string, forumChannelId: string }} opts
+ */
+async function registerExistingDebanForum(client, { testGuildId, forumChannelId }) {
+    if (!testGuildId || !forumChannelId) {
+        throw new Error('testGuildId et forumChannelId requis.');
+    }
+
+    let forumChannel = await client.channels.fetch(forumChannelId).catch(() => null);
+    if (!forumChannel || forumChannel.type !== ChannelType.GuildForum) {
+        throw new Error(`Salon ${forumChannelId} introuvable ou n'est pas un forum.`);
+    }
+
+    await ensureForumTagsOnChannel(forumChannel);
+    forumChannel = await client.channels.fetch(forumChannelId).catch(() => forumChannel);
+    const tagsIndex = indexTagsByKey(forumChannel);
+
+    if (!tagsIndex.enCours || !tagsIndex.deban || !tagsIndex.refuse) {
+        console.warn(
+            `[DebanForum] Tags incomplets sur ${forumChannel.name} (${forumChannel.id}) :`,
+            tagsIndex
+        );
+    }
+
+    return setForumConfigForGuild(testGuildId, {
+        forumGuildId: forumChannel.guild.id,
+        forumChannelId: forumChannel.id,
+        tags: {
+            enCours: tagsIndex.enCours || null,
+            deban: tagsIndex.deban || null,
+            refuse: tagsIndex.refuse || null,
+        },
+        linkedExisting: true,
+    });
+}
+
+/**
+ * Au boot : enregistre le forum deban par défaut pour toutes les guildes de routage connues.
+ */
+async function bootstrapDebanForumConfig(client) {
+    const CONFIG = require('../config.js');
+    const forumChannelId = String(CONFIG.DEBAN_FORUM_CHANNEL_ID || CONFIG.DEBAN_CHANNEL_ID || '').trim();
+    if (!/^\d{17,22}$/.test(forumChannelId)) return null;
+
+    const guildIds = [
+        ...new Set(
+            [
+                CONFIG.MAIN_GUILD_ID,
+                CONFIG.TICKETS?.SUPPORT_GUILD_ID,
+                CONFIG.PANEL_GUILD_ID,
+                process.env.GUILD_ID,
+            ]
+                .map((id) => String(id || '').trim())
+                .filter((id) => /^\d{17,22}$/.test(id))
+        ),
+    ];
+
+    let lastCfg = null;
+    for (const testGuildId of guildIds) {
+        try {
+            lastCfg = await registerExistingDebanForum(client, { testGuildId, forumChannelId });
+            console.log(
+                `[DebanForum] Forum <#${forumChannelId}> lié pour guilde ${testGuildId} (tags: enCours=${lastCfg?.tags?.enCours ? 'ok' : '?'})`
+            );
+        } catch (err) {
+            console.warn(`[DebanForum] Lien forum guilde ${testGuildId}:`, err?.message || err);
+        }
+    }
+    return lastCfg;
+}
+
 
 /**
  * Crée un forum channel avec les 3 tags (En cours / Deban / Refuse), puis persiste la config.
