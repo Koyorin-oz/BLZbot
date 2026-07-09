@@ -199,6 +199,8 @@ async function openChest(uid, sub, guildId = null, accessCtx = null) {
   lines.push(...loot.lines);
   if (totalStars > 0n) users.addStars(uid, totalStars);
   if (totalXp > 0) users.addXp(uid, totalXp);
+
+  let pendingHackerGrant = false;
   for (const { id, qty } of allItems) {
     if (id === 'diamant') {
       const h = meta.diamondHolder();
@@ -209,7 +211,33 @@ async function openChest(uid, sub, guildId = null, accessCtx = null) {
       }
       meta.setDiamondHolder(uid);
     }
+    if (id === 'hacker_token') {
+      pendingHackerGrant = true;
+      continue;
+    }
     users.addInventory(uid, id, qty);
+  }
+
+  if (pendingHackerGrant) {
+    const ctx = accessCtx || {};
+    const grantCtx = {
+      userId: uid,
+      guildId: guildId || ctx.guildId || null,
+      client: ctx.client || null,
+      member: ctx.member || null,
+    };
+    if (grantCtx.client && grantCtx.guildId) {
+      const { grantHackerAccess, formatGrantMessage } = require('./hackerAccess');
+      const accessResult = await grantHackerAccess(grantCtx);
+      if (accessResult.ok) {
+        lines.push(formatGrantMessage(accessResult).replace(/\n/g, ' · '));
+      } else {
+        users.addInventory(uid, 'hacker_token', 1);
+        lines.push('*(Jeton hacker en inventaire — utilise-le depuis `/inventaire`)*');
+      }
+    } else {
+      users.addInventory(uid, 'hacker_token', 1);
+    }
   }
 
   // Tracking quêtes : ouverture coffre légendaire + gain de starss.

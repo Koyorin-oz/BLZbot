@@ -36,8 +36,9 @@ const RARITY_ACCENT = {
   Staresque: 0xfacc15,
 };
 
-function hasHackerRole(member) {
-  if (!cfg.hackerRoleId) return true;
+function hasHackerRole(member, userId) {
+  if (hasHackerSalonAccess(userId, member)) return true;
+  if (!cfg.hackerRoleId) return false;
   if (!member || !member.roles) return false;
   return member.roles.cache.has(cfg.hackerRoleId);
 }

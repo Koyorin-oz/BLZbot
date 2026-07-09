@@ -201,26 +201,15 @@ async function useItem(userId, itemId, ctx = {}) {
     return { ok: true, message: '💠 **Crystal** consommé : +500 000 starss (et tu peux toujours en garder pour un palier de grade).' };
   }
 
-  // Jeton hacker : consomme l'item et donne le rôle Hacker (loot 12 h via panneau /salon-hacker).
+  // Jeton hacker : accès salon secret + loot via panneau /salon-hacker.
   if (id === 'hacker_token') {
     if (!users.takeInventory(userId, id, 1)) return { ok: false, error: 'Indisponible.' };
-    const roleResult = await grantHackerRoleFromToken({ ...ctx, userId });
-    if (!roleResult.ok) {
+    const accessResult = await grantHackerAccess({ ...ctx, userId });
+    if (!accessResult.ok) {
       users.addInventory(userId, id, 1);
-      return { ok: false, error: roleResult.error };
+      return { ok: false, error: accessResult.error };
     }
-    const lines = [];
-    if (roleResult.roleGranted) {
-      lines.push('💻 **Rôle Hacker** attribué !');
-    } else if (roleResult.alreadyHad) {
-      lines.push('Tu avais déjà le rôle **Hacker** — jeton consommé.');
-    } else {
-      lines.push('Jeton consommé (rôle hacker non configuré côté bot — contacte le staff).');
-    }
-    lines.push(
-      'Va dans le **salon hacker** et clique sur **Récupérer mon item** du panneau `/salon-hacker` pour ton loot (toutes les 12 h).',
-    );
-    return { ok: true, message: lines.join('\n') };
+    return { ok: true, message: formatGrantMessage(accessResult) };
   }
 
   // Items « décoratifs » (planète, étoile, baleine…) : pas d'effet direct,
