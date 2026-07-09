@@ -120,48 +120,7 @@ client.once(Events.ClientReady, async () => {
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
-  if (
-    interaction.isButton() &&
-    interaction.customId.startsWith("guild_invite:")
-  ) {
-    const [prefix, action, inviteId] = interaction.customId.split(":");
-    if (prefix !== "guild_invite" || !inviteId) return;
-    try {
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.deferReply({ ephemeral: true });
-      }
-
-      let result;
-      if (action === "accept") {
-        result = pg.acceptGuildInvite(
-          inviteId,
-          interaction.user.id,
-          interaction.user.username,
-        );
-      } else if (action === "decline") {
-        result = pg.declineGuildInvite(inviteId, interaction.user.id);
-      } else {
-        result = { ok: false, error: "Action inconnue." };
-      }
-
-      const content = result?.ok
-        ? action === "accept"
-          ? "✅ Tu as rejoint la guilde."
-          : "❌ Invitation refusée."
-        : result?.error || "Une erreur est survenue.";
-
-      await interaction.editReply({ content }).catch(() => {});
-      if (result?.ok) {
-        await interaction.message?.edit?.({ components: [] }).catch(() => {});
-      }
-    } catch (e) {
-      console.error("[guild invite button]", e);
-      if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({ content: "Une erreur est survenue." }).catch(() => {});
-      } else {
-        await interaction.reply({ content: "Une erreur est survenue.", ephemeral: true }).catch(() => {});
-      }
-    }
+  if (await rebornRuntime.handleGuildInviteButton(interaction)) {
     return;
   }
 
