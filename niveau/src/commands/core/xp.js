@@ -92,18 +92,15 @@ module.exports = {
 
                 await setLevel(targetUser.id, level, interaction.client);
 
-                // Mettre à jour le niveau de la guilde si l'utilisateur en a une
                 const userGuild = getGuildOfUser(targetUser.id);
                 if (userGuild) {
                     updateGuildLevel(userGuild.id);
                 }
 
-                // Mettre à jour les rôles de niveau
                 const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
                 if (member) {
-                    const { rebornEconomyActive: rebornOn, getRebornLevelState: rebornLv } = require('../../utils/reborn-integration');
-                    const displayLevel = rebornOn()
-                        ? (rebornLv(targetUser.id, targetUser.username)?.level ?? level)
+                    const displayLevel = rebornEconomyActive()
+                        ? (getRebornLevelState(targetUser.id, targetUser.username)?.level ?? level)
                         : level;
                     await updateLevelRoles(member, displayLevel);
                 }
