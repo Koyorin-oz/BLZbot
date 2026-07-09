@@ -371,7 +371,7 @@ async function handleChatbotMessage(message, client) {
 
         let reply = '';
         let lastErr;
-        const models = getModelsToTry();
+        const models = getModelsToTry(isHard);
         for (let i = 0; i < models.length; i++) {
             try {
                 reply = await groqChatCompletion(models[i], messages, { temperature, maxTokens });
