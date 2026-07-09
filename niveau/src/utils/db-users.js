@@ -488,6 +488,11 @@ function setPoints(userId, points) {
 
 function setStars(userId, stars) {
     try {
+        const { rebornEconomyActive, setRebornStars } = require('./reborn-integration');
+        if (rebornEconomyActive()) {
+            setRebornStars(userId, stars);
+            return;
+        }
         setStarsStmt.run(stars, userId);
         updateMaxStarsStmt.run(stars, userId, stars);
     } catch (error) {

@@ -92,6 +92,12 @@ function buildEmbed(type, requesterId) {
       const m = db.prepare(myValSql).get(requesterId);
       const st = totalToLevelState(Number(m?.xptot || 0));
       myVal = `${st.level} (${Number(m?.xptot || 0).toLocaleString('fr-FR')} XP)`;
+    } else if (type === 'rp') {
+      myRank = db.prepare(countSql).get(requesterId).c;
+      const m = db.prepare(myValSql).get(requesterId);
+      const rp = BigInt(m?.v || 0);
+      const rank = rankedRoles.rankForRp(rp);
+      myVal = `${rp.toLocaleString('fr-FR')} · ${rank.label}`;
     } else {
       myRank = db.prepare(countSql).get(requesterId).c;
       const m = db.prepare(myValSql).get(requesterId);
