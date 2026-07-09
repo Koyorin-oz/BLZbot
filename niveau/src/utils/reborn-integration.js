@@ -346,6 +346,20 @@ function resolveRankDisplay(userId, rpFallback) {
   };
 }
 
+function addRebornPoints(userId, delta) {
+  const svc = getRebornUsersService();
+  if (!svc) return null;
+  try {
+    svc.getOrCreate(userId, 'unknown');
+    svc.addPoints(userId, delta);
+    const v = svc.getPoints(userId);
+    return typeof v === 'bigint' ? Number(v) : Number(v || 0);
+  } catch (e) {
+    logger.warn('[reborn] addRebornPoints:', e?.message || e);
+    return null;
+  }
+}
+
 function addRebornInventory(userId, itemId, qty = 1) {
   const svc = getRebornUsersService();
   if (!svc) return false;
