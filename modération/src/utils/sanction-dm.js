@@ -92,9 +92,16 @@ async function trySendSanctionDm(user, embed) {
  * Envoie le lien de débannissement (2e MP après l'embed ban).
  */
 async function sendDebanInviteDm(user) {
-    const url = CONFIG.DEBAN_INVITE_URL || 'https://discord.gg/kR2EzaRa';
+    const url = CONFIG.DEBAN_INVITE_URL || 'https://discord.gg/UJNZxzmmPV';
+    const text = [
+        '**Débannissement**',
+        '',
+        'Rejoins le **serveur support** via le lien ci-dessous, puis clique sur **« Lancer le formulaire »** dans le salon déban pour déposer ta demande.',
+        '',
+        url,
+    ].join('\n');
     return user
-        .send({ content: `**Débannissement :** ${url}` })
+        .send({ content: text })
         .then(() => true)
         .catch(() => false);
 }

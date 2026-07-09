@@ -105,7 +105,7 @@ module.exports = {
                             return interaction.reply({
                                 content: "❌ Vous n'êtes pas banni du serveur principal.\n\n" +
                                     "Si vous pensez que c'est une erreur, veuillez contacter un modérateur.\n" +
-                                    "Si vous souhaitez rejoindre le serveur : https://discord.gg/UJNZxzmmPV",
+                                    "Si vous souhaitez rejoindre le serveur : " + CONFIG.DEBAN_INVITE_URL,
                                 ephemeral: true
                             });
                         }

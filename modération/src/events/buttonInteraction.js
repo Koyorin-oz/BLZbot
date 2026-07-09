@@ -741,7 +741,7 @@ async function endDebanVoteProgrammatically(
         )
         .setDescription(
           accepted
-            ? `Le staff a voté **en votre faveur**. Vous avez été débanni du serveur.\n\nLien d'invitation : https://discord.gg/UJNZxzmmPV`
+            ? `Le staff a voté **en votre faveur**. Vous avez été débanni du serveur.\n\nLien d'invitation : ${CONFIG.DEBAN_INVITE_URL}`
             : `Le staff a voté **contre** votre demande de débannissement.\n\nVous pourrez soumettre une nouvelle demande dans **30 jours**.`,
         )
         .setTimestamp();
