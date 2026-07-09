@@ -345,12 +345,9 @@ async function handleList(interaction, absencesDb) {
  * Supprimer une absence (Admin uniquement)
  */
 async function handleDelete(interaction, absencesDb, client) {
-    // Vérifier les permissions admin
-    if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
-        return interaction.reply({
-            content: '❌ Seuls les administrateurs peuvent supprimer des absences.',
-            ephemeral: true
-        });
+    const denied = denyUnlessCanMod(interaction, PermissionFlagsBits.Administrator);
+    if (denied) {
+        return interaction.reply({ ...denied, ephemeral: true });
     }
 
     const absenceId = interaction.options.getInteger('id');
