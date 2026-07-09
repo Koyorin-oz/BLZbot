@@ -640,6 +640,32 @@ async function applyDrop(interaction, userId, drop) {
     }
 }
 
+function resolveHackerChannelId() {
+    return (process.env.HACKER_CHANNEL || process.env.REBORN_HACKER_CHANNEL_ID || '1454484970843144391').trim();
+}
+
+async function grantHackerChannelAccess(client, userId) {
+    const channelId = resolveHackerChannelId();
+    if (!client || !channelId) return;
+    try {
+        const channel = await client.channels.fetch(channelId).catch(() => null);
+        if (!channel?.permissionOverwrites) return;
+        const existing = channel.permissionOverwrites.cache.get(userId);
+        if (existing?.allow?.has(PermissionFlagsBits.ViewChannel)) return;
+        await channel.permissionOverwrites.edit(
+            userId,
+            {
+                ViewChannel: true,
+                SendMessages: true,
+                ReadMessageHistory: true,
+            },
+            { reason: 'Accès salon secret hacker (coffre)' },
+        );
+    } catch (error) {
+        console.error(`Erreur accès salon hacker pour ${userId}:`, error);
+    }
+}
+
 async function assignRoleToCoffreUser(guild, userId, roleName) {
     try {
         const member = await guild.members.fetch(userId);
