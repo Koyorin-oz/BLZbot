@@ -72,6 +72,21 @@ client.once('clientReady', async (c) => {
         await utils.setupPanelIfNeeded(client);
     }
 
+    if (config.groq) {
+        try {
+            const ping = await config.groq.chat.completions.create({
+                model: 'llama-3.1-8b-instant',
+                messages: [{ role: 'user', content: 'ping' }],
+                max_tokens: 8,
+            });
+            const ok = Boolean(ping?.choices?.[0]?.message?.content?.trim());
+            utils.log(ok ? '[chatbot] Groq OK (llama-3.1-8b-instant)' : '[chatbot] Groq répond vide — vérifie GROQ_API_KEY / quotas');
+        } catch (groqErr) {
+            utils.log(`[chatbot] Groq indisponible au démarrage : ${groqErr?.message || groqErr}`);
+            utils.log('[chatbot] Salon hard utilisera le fallback local tant que Groq ne répond pas.');
+        }
+    }
+
     const commands = [{ name: 'ia', description: 'Gère les paramètres du bot.', options: [{ name: 'settings', description: 'Ouvre le panneau de configuration.', type: 1 }] }];
     try {
         for (const cmd of commands) {
