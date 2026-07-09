@@ -194,8 +194,11 @@ async function buildProfilGuildePayload(interaction, { hub, gRow }) {
 
   return {
     payload: {
-      embeds: [embed],
-      components: [row1],
+      content: null,
+      embeds: [],
+      files: [file],
+      components: [container, row1],
+      flags: MessageFlags.IsComponentsV2,
     },
     g,
   };
