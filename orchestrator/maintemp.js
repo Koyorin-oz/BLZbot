@@ -720,7 +720,7 @@ let _childrenStarted = false;
 function startChildrenOnce(reason) {
   if (_childrenStarted) return;
   _childrenStarted = true;
-  blzLine('maintemp', `Lancement des services (${reason}) : ${scriptsToRun.map((s) => s.key).join(', ')}`);
+  blzLine('maintemp', `services · ${scriptsToRun.map((s) => s.key).join(', ')}`);
   runScriptsWithDelay(scriptsToRun, FORK_DELAY_MS);
 }
 
