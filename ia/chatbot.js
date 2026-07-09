@@ -138,33 +138,89 @@ function loadPrompt(mode) {
         : `Tu es BLZbot sur BLZstarss : sérieux, poli et serviable. Tu n'insultes jamais ; si on t'insulte, renvoie vers <#${HARD_CHANNEL_ID}>. Réponses concises en français.`;
 }
 
+function normalizeModelId(model) {
+    const m = String(model || '').trim();
+    if (m === 'moonshotai/kimi-k2-instruct') return 'moonshotai/kimi-k2-instruct-0905';
+    return m;
+}
+
+function isOssGroqModel(model) {
+    return String(model).startsWith('openai/gpt-oss');
+}
+
 function getModelsToTry(isHard) {
     const envKey = isHard ? 'IA_HARD_CHATBOT_MODEL' : 'IA_CHATBOT_MODEL';
-    const primary = String(
+    const primary = normalizeModelId(
         process.env[envKey] ||
             process.env.GROQ_MODEL ||
             (isHard ? HARD_DEFAULT_MODEL : NORMAL_DEFAULT_MODEL),
-    ).trim();
-    const fallbacks = isHard ? HARD_FALLBACKS : NORMAL_FALLBACKS;
+    );
+    const fallbacks = (isHard ? HARD_FALLBACKS : NORMAL_FALLBACKS).map(normalizeModelId);
     return [...new Set([primary, ...fallbacks.filter((m) => m !== primary)])];
 }
 
-/** Modèles OSS Groq : pas de rôle system — on injecte le prompt dans le 1er user. */
+/** Modèles OSS Groq : pas de rôle system — prompt injecté dans le 1er user (format YAML). */
 function prepareGroqMessages(model, messages) {
-    if (!String(model).startsWith('openai/gpt-oss')) return messages;
+    if (!isOssGroqModel(model)) return messages;
     const system = messages.find((m) => m.role === 'system');
     const rest = messages.filter((m) => m.role !== 'system');
     if (!system?.content) return rest;
+
+    const indent = (text) =>
+        String(text)
+            .split('\n')
+            .map((line) => `  ${line}`)
+            .join('\n');
+
     const firstUser = rest.findIndex((m) => m.role === 'user');
+    const inject = (userContent) =>
+        `---
+type: structured_prompt
+follow_instructions: true
+
+system_instructions: |
+${indent(system.content)}
+
+user_request: |
+${indent(userContent)}
+---
+
+RAPPEL: tu es BLZbot. Réponds en 1-2 phrases max, trash et direct.`;
+
     if (firstUser === -1) {
-        return [{ role: 'user', content: `${system.content}\n\n---\n(réponds maintenant)` }, ...rest];
+        return [{ role: 'user', content: inject('(réponds maintenant)') }, ...rest];
     }
     const merged = [...rest];
     merged[firstUser] = {
         role: 'user',
-        content: `${system.content}\n\n---\n${merged[firstUser].content}`,
+        content: inject(merged[firstUser].content),
     };
     return merged;
+}
+
+function extractGroqText(choice) {
+    const msg = choice?.message;
+    if (!msg) return '';
+    let text = msg.content != null ? String(msg.content).trim() : '';
+    if (text) return text;
+    const reasoning = msg.reasoning != null ? String(msg.reasoning).trim() : '';
+    if (reasoning) {
+        const stripped = reasoning
+            .replace(/<think[^>]*>[\s\S]*?<\/think>/gi, '')
+            .replace(/<redacted_thinking[^>]*>[\s\S]*?<\/redacted_thinking>/gi, '')
+            .trim();
+        if (stripped) return stripped;
+    }
+    return '';
+}
+
+function maxTokensForModel(model, isHard) {
+    if (isOssGroqModel(model)) {
+        return Math.min(2048, Math.max(512, Number(process.env.IA_HARD_OSS_MAX_TOKENS || 768)));
+    }
+    return isHard
+        ? Number(process.env.IA_HARD_MAX_TOKENS || 180)
+        : Number(process.env.IA_CHATBOT_MAX_TOKENS || 640);
 }
 
 function collectErrorText(err) {
