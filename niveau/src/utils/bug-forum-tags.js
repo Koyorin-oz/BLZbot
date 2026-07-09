@@ -104,7 +104,7 @@ async function handleBugTagButton(interaction) {
     await interaction.deferUpdate();
     const action = await toggleForumTag(thread, tagId);
     const label = tagLabelForId(tagId);
-  const verb = action === 'added' ? 'ajouté' : 'retiré';
+    const verb = action === 'added' ? 'ajouté' : 'retiré';
     await interaction.followUp({
         content: `🏷️ Tag **${label}** ${verb} sur ce signalement.`,
         flags: 64,
