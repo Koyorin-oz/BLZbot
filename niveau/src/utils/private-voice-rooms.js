@@ -547,9 +547,16 @@ async function handleLobbyJoin(client, oldState, newState) {
     const cfg = await resolvePrivateRoomConfig(client, newState.guild);
     if (!cfg.enabled) {
         if (cfg.error === 'lobby_not_found') {
-            logger.warn(
-                `[PRIVATE_ROOM] Salon lobby introuvable (ID ${cfg.lobbyChannelId}). Vérifie PRIVATE_ROOM_LOBBY_CHANNEL_ID / GUILD_ID.`
-            );
+            if (!client._privateRoomLobbyWarned) client._privateRoomLobbyWarned = new Set();
+            const warnKey = `${newState.guild.id}:${(cfg.lobbyTriedIds || [cfg.lobbyChannelId]).join(',')}`;
+            if (!client._privateRoomLobbyWarned.has(warnKey)) {
+                client._privateRoomLobbyWarned.add(warnKey);
+                const tried = (cfg.lobbyTriedIds || [cfg.lobbyChannelId]).join(', ');
+                logger.warn(
+                    `[PRIVATE_ROOM] Salon lobby introuvable sur « ${newState.guild.name} » (IDs testés : ${tried}). ` +
+                        `Mets PRIVATE_ROOM_LOBBY_CHANNEL_ID=${DEFAULT_LOBBY_CHANNEL_ID} dans le .env Pebble, ou PRIVATE_ROOM_LOBBY_NAME= avec le nom exact du salon.`
+                );
+            }
         } else if (cfg.error === 'missing_category' && !client._privateRoomMissingCategoryWarned) {
             client._privateRoomMissingCategoryWarned = true;
             logger.warn('[PRIVATE_ROOM] Catégorie vocale invalide — vérifie PRIVATE_ROOM_CATEGORY_ID dans le .env.');
