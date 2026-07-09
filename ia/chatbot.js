@@ -18,10 +18,11 @@ const NORMAL_CHANNEL_ID = config.BASIC_CHATBOT_CHANNEL_ID;
 const HARD_DEFAULT_MODEL = 'moonshotai/kimi-k2-instruct-0905';
 const NORMAL_DEFAULT_MODEL = 'llama-3.3-70b-versatile';
 const HARD_FALLBACKS = [
+    'llama-3.1-8b-instant',
+    'llama-3.3-70b-versatile',
     'openai/gpt-oss-120b',
     'meta-llama/llama-4-maverick-17b-128e-instruct',
-    'llama-3.3-70b-versatile',
-    'llama-3.1-8b-instant',
+    'qwen/qwen3-32b',
 ];
 const NORMAL_FALLBACKS = ['llama-3.1-8b-instant', 'qwen/qwen3-32b'];
 const GROQ_BASE_URL = String(process.env.GROQ_API_BASE || 'https://api.groq.com/openai/v1').replace(/\/$/, '');
