@@ -425,8 +425,9 @@ function addRebornPoints(userId, delta, username) {
   const svc = getRebornUsersService();
   if (!svc) return null;
   try {
-    svc.getOrCreate(userId, 'unknown');
-    svc.addPoints(userId, delta);
+    svc.getOrCreate(userId, username || 'unknown');
+    const d = typeof delta === 'bigint' ? delta : BigInt(Math.trunc(Number(delta) || 0));
+    svc.addPoints(userId, d);
     const v = svc.getPoints(userId);
     return typeof v === 'bigint' ? Number(v) : Number(v || 0);
   } catch (e) {
