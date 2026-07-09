@@ -22,6 +22,24 @@ const TOP_ROLE_COLORS = roleConfig.topRoleColors;
  * @returns {Array} - [{id, position}, ...]
  */
 function getTopUsers(category) {
+    try {
+        const { rebornEconomyActive, getRebornTopUserIds } = require('./reborn-integration');
+        if (rebornEconomyActive()) {
+            if (category === 'stars') {
+                const rows = getRebornTopUserIds('stars', 10);
+                if (rows?.length) {
+                    return rows.map((r, i) => ({ id: r.id, position: i + 1 }));
+                }
+            }
+            if (category === 'level') {
+                const rows = getRebornTopUserIds('level', 10);
+                if (rows?.length) {
+                    return rows.map((r, i) => ({ id: r.id, position: i + 1 }));
+                }
+            }
+        }
+    } catch { /* fallback blzbot */ }
+
     let query = '';
     switch (category) {
         case 'stars':
