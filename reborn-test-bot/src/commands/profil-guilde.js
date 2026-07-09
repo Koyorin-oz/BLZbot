@@ -137,33 +137,42 @@ async function buildProfilGuildePayload(interaction, { hub, gRow }) {
   const next = nextGrade(g.grade || '');
   const sep = ladder.antiSepStatus(g.id, hub);
 
-  const memberLines = members
-    .slice(0, 10)
-    .map((m, i) => `${m.user_id === g.leader_id ? '👑' : `\`${i + 1}.\``} **${m.username}** — niveau ${m.level}`)
-    .join('\n');
-  const moreLine = totalMembers > 10 ? `\n*+ ${totalMembers - 10} autres membres*` : '';
+  const owner = await interaction.client.users.fetch(g.leader_id).catch(() => null);
+  const canvasGuild = mapRebornGuildForCanvas(g, {
+    cap,
+    treasury,
+    gxp,
+    grade,
+    next,
+    sep,
+    totalMembers,
+  });
+  const canvasMembers = members.map((m) => ({
+    user_id: m.user_id,
+    username: m.username,
+    level: m.level,
+    total_value: 0,
+  }));
 
-  const embed = new EmbedBuilder()
-    .setColor(0xe23d3d)
-    .setTitle(`🛡️ ${g.name}`)
-    .setDescription(g.description ? `*${String(g.description).slice(0, 300)}*` : null)
-    .addFields(
-      { name: 'Chef', value: `<@${g.leader_id}>`, inline: true },
-      { name: 'Membres', value: `${totalMembers} / ${cap}`, inline: true },
-      { name: 'Grade', value: grade + (next ? ` → ${label(next)}` : ' (max)'), inline: true },
-      { name: 'Niveau guilde', value: `${g.guild_level}`, inline: true },
-      { name: 'GXP', value: gxp.toLocaleString('fr-FR'), inline: true },
-      { name: 'Trésorerie', value: `${treasury.toLocaleString('fr-FR')} ⭐`, inline: true },
-      {
-        name: 'Salon privé',
-        value: g.salon_channel_id ? `<#${g.salon_channel_id}>` : `Non débloqué (grade ${label(pg.SALON_MIN_GRADE)})`,
-        inline: true,
-      },
-      { name: 'Anti-séparation', value: sep.protected ? 'Oui' : 'Non', inline: true },
-      { name: 'Identifiant', value: `\`${g.id}\``, inline: true },
-    )
-    .addFields({ name: `Membres (${totalMembers})`, value: memberLines + moreLine || '—' })
-    .setFooter({ text: 'Boutons : liste complète · carrières · quêtes' });
+  let png;
+  try {
+    png = await renderGuildProfileV2({
+      guild: canvasGuild,
+      members: canvasMembers,
+      owner: owner || { username: members.find((m) => m.user_id === g.leader_id)?.username || 'Chef' },
+      warInfo: null,
+      totalMembers,
+    });
+  } catch (e) {
+    console.error('[profil-guilde canvas]', e?.message || e);
+    return { error: 'Impossible de générer le canvas profil guilde.' };
+  }
+
+  const file = new AttachmentBuilder(png, { name: 'guild_profile_v2.png' });
+  const mediaGallery = new MediaGalleryBuilder().addItems({
+    media: { url: 'attachment://guild_profile_v2.png' },
+  });
+  const container = new ContainerBuilder().addMediaGalleryComponents(mediaGallery);
 
   const row1 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
