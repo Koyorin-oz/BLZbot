@@ -16,17 +16,66 @@ const NORMAL_CHANNEL_ID = config.BASIC_CHATBOT_CHANNEL_ID;
 
 const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
 const BUILTIN_FALLBACKS = ['llama-3.1-8b-instant', 'openai/gpt-oss-120b'];
-const GROQ_BASE_URL = String(process.env.GROQ_API_BASE || 'https://api.groq.com/openai/v1').replace(/\/$/, '');
-const MAX_DISCORD = 1900;
+/** Heuristique : enrichir avec une recherche web légère (SearXNG). */
+function needsWebSearch(text) {
+    const t = String(text || '').toLowerCase();
+    if (t.length < 10) return false;
+    if (
+        /(c'est quoi|cest quoi|qui est|qu'est-ce|quand est|sortie de|actualit|trend|tiktok|meme|manga|anime|épisode|saison \d|news|récent|2024|2025|2026|explique|cherche|google)/i.test(
+            t,
+        )
+    ) {
+        return true;
+    }
+    return t.includes('?') && t.split(/\s+/).length >= 5;
+}
 
-/** IDs fixes — ne jamais confondre les pseudos dans le salon hard. */
-const KNOWN_USERS = {
-    koyorin_oz: '965984018216665099',
-    imroxxor: '1057705135515639859',
-    BLZstarss: '845654783264030721',
-};
+async function fetchWebContextForQuery(query) {
+    if (String(process.env.IA_CHATBOT_WEB_SEARCH || '1').trim() === '0') return '';
+    try {
+        const { searchInternet } = require('./utils.js');
+        const q = String(query || '').replace(/<@!?\d+>/g, '').trim().slice(0, 140);
+        if (!q) return '';
+        const results = await searchInternet(q);
+        if (!results?.length) return '';
+        const lines = results
+            .slice(0, 4)
+            .map((r, i) => `${i + 1}. ${r.title} — ${String(r.content || '').replace(/\s+/g, ' ').slice(0, 180)}`);
+        return `\n---\nINFOS WEB (réponds avec ça si pertinent, reste court, ne liste pas les URLs) :\n${lines.join('\n')}`;
+    } catch {
+        return '';
+    }
+}
 
-const PROMPT_FILES = {
+function buildSpeakerContext(message) {
+    const uid = message.author.id;
+    const display = message.member?.displayName || message.author.username;
+    const lines = [
+        '---',
+        'INTERLOCUTEUR ACTUEL (réponds à LUI/ELLE uniquement) :',
+        `Pseudo affiché : ${display}`,
+        `ID Discord : ${uid}`,
+    ];
+    if (uid === KNOWN_USERS.koyorin_oz) {
+        lines.push('C’est koyorin_oz (créateur) — tu peux le respecter un minimum tout en restant hard.');
+    } else {
+        lines.push(`Ce n’est PAS koyorin_oz (koyorin = ${KNOWN_USERS.koyorin_oz}). Ne confonds pas les pseudos.`);
+    }
+    return lines.join('\n');
+}
+
+/** Coupe les réponses trop longues pour le salon hard. */
+function trimHardReply(text, isHard) {
+    let s = String(text || '').trim();
+    if (!isHard || !s) return s;
+    const maxChars = Math.max(120, Number(process.env.IA_HARD_MAX_CHARS || 420));
+    if (s.length <= maxChars) return s;
+    const cut = s.slice(0, maxChars);
+    const lastStop = Math.max(cut.lastIndexOf('.'), cut.lastIndexOf('!'), cut.lastIndexOf('?'));
+    if (lastStop > maxChars * 0.45) return cut.slice(0, lastStop + 1);
+    return `${cut}…`;
+}
+
     hard: path.join(__dirname, 'data', 'hardSystemPrompt.txt'),
     normal: path.join(__dirname, 'data', 'normalSystemPrompt.txt'),
 };
