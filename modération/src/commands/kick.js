@@ -64,11 +64,9 @@ module.exports = {
     },
 
     async execute(interaction, { dbManager }) {
-        if (!interaction.member.permissions.has(PermissionFlagsBits.KickMembers)) {
-            return interaction.reply({
-                content: '❌ Vous n\'avez pas la permission d\'expulser des membres.',
-                ephemeral: true
-            });
+        const denied = denyUnlessCanMod(interaction, PermissionFlagsBits.KickMembers);
+        if (denied) {
+            return interaction.reply({ ...denied, ephemeral: true });
         }
 
         const utilisateur = interaction.options.getUser('utilisateur');
