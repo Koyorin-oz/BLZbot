@@ -216,8 +216,23 @@ async function handleVoiceRoomPanelButton(interaction) {
                 });
                 return;
             }
+            case 'permit': {
+                const modal = new ModalBuilder()
+                    .setCustomId(modalBase('permit'))
+                    .setTitle('Autoriser un membre (whitelist)');
+                modal.addComponents(
+                    new ActionRowBuilder().addComponents(
+                        new TextInputBuilder()
+                            .setCustomId('pvr_input_user')
+                            .setLabel('ID Discord du membre')
+                            .setStyle(TextInputStyle.Short)
+                            .setPlaceholder('Colle l’ID Discord')
+                            .setRequired(true),
+                    ),
+                );
+                return interaction.showModal(modal);
+            }
             case 'timer':
-            case 'permit':
             case 'ring':
             case 'region':
             case 'claim':
