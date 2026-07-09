@@ -422,173 +422,17 @@ module.exports = {
       const totalsByType = {};
       totals.forEach((t) => (totalsByType[t.type] = t.count));
 
-      // Fusionner et trier l'historique
-      const historique = [
-        ...sanctions.map((s) => ({
-          type: "sanction",
-          sanctionType: s.type,
-          date: s.date,
-          data: s,
-        })),
-        ...notes.map((n) => ({
-          type: "note",
-          sanctionType: "Note",
-          date: n.date,
-          data: n,
-        })),
-        ...staffWarns.map((w) => ({
-          type: "staffwarn",
-          sanctionType: "Warn Staff",
-          date: w.date,
-          data: w,
-        })),
-      ].sort((a, b) => b.date - a.date);
-
-      // Pagination
-      const itemsParPage = 5;
-      const pages = [];
-      const publicPages = [];
-
-      for (let i = 0; i < historique.length; i += itemsParPage) {
-        const currentPage = historique.slice(i, i + itemsParPage);
-
-        // Construire le container pour cette page
-        const container = new ContainerBuilder();
-
-        // Préparer le contenu public textuel de la page
-        let publicContent = "";
-
-        // Header avec résumé
-        const activeWarns = sanctions.filter(
-          (s) => s.type === "Warn" && s.active,
-        ).length;
-        let riskLevel = "🟢";
-        if (activeWarns >= 2 || sanctions.length >= 5) riskLevel = "🟡";
-        if (activeWarns >= 3 || sanctions.length >= 10) riskLevel = "🔴";
-
-        const headerContent =
-          `# 🗃️ Historique de ${targetUser.tag}\n` +
-          `*ID: ${targetUser.id}*\n\n` +
-          `${riskLevel} **Résumé:** ` +
-          `🔨 ${totalsByType["Ban"] || 0} bans | ` +
-          `⏳ ${totalsByType["Time Out"] || 0} mutes | ` +
-          `⚠️ ${totalsByType["Warn"] || 0} warns (${activeWarns} actifs) | ` +
-          `👢 ${totalsByType["Kick"] || 0} kicks | ` +
-          `🛡️ ${staffWarns.length} warns staff`;
-
-        container.addTextDisplayComponents(
-          new TextDisplayBuilder().setContent(headerContent),
-        );
-        publicContent += headerContent + "\n\n";
-
-        container.addSeparatorComponents(
-          new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small),
-        );
-
-        // Ajouter les items de cette page
-        currentPage.forEach((item) => {
-          const date = new Date(item.date).toLocaleString("fr-FR");
-
-          if (item.type === "sanction") {
-            const s = item.data;
-            let emoji = "🛡️";
-            if (s.type === "Ban") emoji = "🔨";
-            if (s.type === "Time Out") emoji = "⏳";
-            if (s.type === "Warn") emoji = "⚠️";
-            if (s.type === "Kick") emoji = "👢";
-
-            let content = `### ${emoji} ${s.type} — ${date}\n`;
-            content += `> **Raison:** ${s.reason || "Aucune"}\n`;
-
-            if (s.type === "Warn") {
-              if (s.rule_name) {
-                content += `> **Règle:** ${s.rule_name}\n`;
-              }
-              content += `> **Statut:** ${s.active ? "🔴 Actif" : "🟢 Expiré"}\n`;
-            }
-            if (s.duration) content += `> **Durée:** ${s.duration}\n`;
-
-            const modId =
-              s.moderatorId === "System" ? "Système" : `<@${s.moderatorId}>`;
-            content += `> **Modérateur:** ${modId}\n`;
-            content += `> **ID:** \`${s.id}\``;
-
-            if (s.pendingDeletion) {
-              const deleteDate = new Date(s.deletionDate).toLocaleDateString(
-                "fr-FR",
-              );
-              content += `\n> ⚠️ **SUPPRESSION PROGRAMMÉE** le ${deleteDate}`;
-            }
-
-            container.addTextDisplayComponents(
-              new TextDisplayBuilder().setContent(content),
-            );
-            publicContent += content + "\n\n";
-          } else if (item.type === "note") {
-            const n = item.data;
-            const modId = `<@${n.moderatorId}>`;
-            const content =
-              `### 📝 Note — ${date}\n` +
-              `> **Contenu:** ${n.note}\n` +
-              `> **Par:** ${modId}\n` +
-              `> **ID:** \`${n.id}\``;
-
-            container.addTextDisplayComponents(
-              new TextDisplayBuilder().setContent(content),
-            );
-            publicContent += content + "\n\n";
-          } else if (item.type === "staffwarn") {
-            const w = item.data;
-            const modId = `<@${w.moderatorId}>`;
-            const content =
-              `### 🛡️ Warn Staff — ${date}\n` +
-              `> **Raison:** ${w.reason}\n` +
-              `> **Modérateur:** ${modId}\n` +
-              `> **ID:** \`${w.id}\``;
-
-            container.addTextDisplayComponents(
-              new TextDisplayBuilder().setContent(content),
-            );
-            publicContent += content + "\n\n";
-          }
-
-          container.addSeparatorComponents(
-            new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small),
-          );
-        });
-
-        // Footer avec pagination
-        const footer = `*Page ${pages.length + 1} — ${historique.length} élément(s) au total*`;
-        container.addTextDisplayComponents(
-          new TextDisplayBuilder().setContent(footer),
-        );
-        publicContent += footer;
-
-        pages.push(container);
-        publicPages.push(publicContent);
-      }
-
-      // Créer les boutons de navigation
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId("modlog_prev")
-          .setLabel("◀️ Précédent")
-          .setStyle(ButtonStyle.Secondary)
-          .setDisabled(true),
-        new ButtonBuilder()
-          .setCustomId("modlog_next")
-          .setLabel("Suivant ▶️")
-          .setStyle(ButtonStyle.Secondary)
-          .setDisabled(pages.length <= 1),
-        new ButtonBuilder()
-          .setCustomId("modlog_send_public")
-          .setLabel("Envoyer publiquement")
-          .setStyle(ButtonStyle.Secondary)
-          .setDisabled(false),
+      let historique = buildHistorique(sanctions, notes, staffWarns);
+      let { pages, publicPages } = buildPages(
+        historique,
+        targetUser,
+        totalsByType,
+        sanctions,
+        staffWarns,
       );
 
       const response = await interaction.editReply({
-        components: [pages[0], row],
+        components: buildModlogComponents(historique, 0, pages),
         flags: MessageFlags.IsComponentsV2,
         allowedMentions: { parse: [] },
       });
@@ -600,6 +444,57 @@ module.exports = {
       let currentPageIdx = 0;
 
       collector.on("collect", async (i) => {
+        if (i.customId.startsWith("modlog_dw_")) {
+          const denied = denyUnlessCanMod(i, PermissionFlagsBits.ModerateMembers);
+          if (denied) {
+            return i.reply({ ...denied, ephemeral: true });
+          }
+
+          const warnId = parseInt(String(i.customId).replace("modlog_dw_", ""), 10);
+          if (!Number.isFinite(warnId)) {
+            return i.reply({ content: "❌ ID de warn invalide.", ephemeral: true });
+          }
+
+          try {
+            const changes = await deactivateWarn(sanctionsDb, warnId, targetUser.id);
+            if (!changes) {
+              return i.reply({
+                content: `❌ Warn #${warnId} introuvable ou déjà retiré.`,
+                ephemeral: true,
+              });
+            }
+
+            const row = sanctions.find((s) => s.id === warnId);
+            if (row) row.active = 0;
+
+            totalsByType = recomputeTotalsByType(sanctions);
+            historique = buildHistorique(sanctions, notes, staffWarns);
+            ({ pages, publicPages } = buildPages(
+              historique,
+              targetUser,
+              totalsByType,
+              sanctions,
+              staffWarns,
+            ));
+            if (currentPageIdx >= pages.length) {
+              currentPageIdx = Math.max(0, pages.length - 1);
+            }
+
+            await i.update({
+              components: buildModlogComponents(historique, currentPageIdx, pages),
+              flags: MessageFlags.IsComponentsV2,
+              allowedMentions: { parse: [] },
+            });
+          } catch (err) {
+            console.error("modlog delete warn:", err);
+            await i.reply({
+              content: "❌ Erreur lors de la suppression du warn.",
+              ephemeral: true,
+            });
+          }
+          return;
+        }
+
         if (i.user.id !== interaction.user.id) {
           return i.reply({
             content: "Ce menu ne vous est pas destiné.",
@@ -641,21 +536,23 @@ module.exports = {
           return;
         }
 
-        row.components[0].setDisabled(currentPageIdx === 0);
-        row.components[1].setDisabled(currentPageIdx === pages.length - 1);
-
         await i.update({
-          components: [pages[currentPageIdx], row],
+          components: buildModlogComponents(historique, currentPageIdx, pages),
           flags: MessageFlags.IsComponentsV2,
           allowedMentions: { parse: [] },
         });
       });
 
       collector.on("end", () => {
-        row.components.forEach((b) => b.setDisabled(true));
+        const nav = buildNavigationRow(currentPageIdx, pages.length);
+        nav.components.forEach((b) => b.setDisabled(true));
+        const deleteRow = buildWarnDeleteRow(getPageItems(historique, currentPageIdx));
+        if (deleteRow) deleteRow.components.forEach((b) => b.setDisabled(true));
+        const components = [pages[currentPageIdx], nav];
+        if (deleteRow) components.push(deleteRow);
         response
           .edit({
-            components: [pages[currentPageIdx], row],
+            components,
             flags: MessageFlags.IsComponentsV2,
             allowedMentions: { parse: [] },
           })
