@@ -73,7 +73,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('envoyer-message')
         .setDescription('Envoie un message via le bot (texte brut ou embed, avec fichiers joints).')
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
+        .setDefaultMemberPermissions(null)
         .setDMPermission(false)
         .addStringOption((opt) =>
             opt
