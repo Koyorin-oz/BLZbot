@@ -57,12 +57,9 @@ module.exports = {
     },
 
     async execute(interaction) {
-        // Vérification permission (redondant avec default_member_permissions mais sécurité supp)
-        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
-            return interaction.reply({
-                content: "❌ Vous n'avez pas la permission de gérer les messages.",
-                ephemeral: true
-            });
+        const denied = denyUnlessCanMod(interaction, PermissionFlagsBits.ManageMessages);
+        if (denied) {
+            return interaction.reply({ ...denied, ephemeral: true });
         }
 
         const subcommand = interaction.options.getSubcommand();
