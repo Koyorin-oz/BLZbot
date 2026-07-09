@@ -387,4 +387,10 @@ module.exports = {
   getRebornRp,
   rebornEconomyActive,
   addRebornStars,
+  getRebornRankedRoles,
+  getRebornRankDisplay,
+  resolveRankDisplay,
+  addRebornInventory,
+  PUITS_ITEM_TO_REBORN,
+  syncRebornRankRole,
 };
