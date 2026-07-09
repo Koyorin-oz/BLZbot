@@ -80,11 +80,11 @@ async function grantHackerAccess(ctx) {
 
   const accessViaRole = roleGranted || alreadyHadRole;
   const accessViaChannel = channelGranted;
-  if (!accessViaRole && !accessViaChannel && channelId) {
+  if (!accessViaRole && !accessViaChannel) {
     return {
       ok: false,
       error:
-        'Impossible d’ouvrir le salon hacker — vérifie que le bot peut gérer les permissions du salon.',
+        'Impossible d’ouvrir le salon hacker — vérifie que le bot peut gérer les permissions du salon et le rôle Hacker.',
     };
   }
 
