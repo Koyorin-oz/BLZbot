@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { denyUnlessCanMod } = require('../utils/mod-access');
 
 module.exports = {
     data: new SlashCommandBuilder()
