@@ -156,9 +156,10 @@ const ITEM_TO_CHEST_SUB = {
  * @param {string} uid
  * @param {'classic'|'catm'|'catl'|'cats'} sub
  * @param {string|null} [guildId]
- * @returns {{ message: string }}
+ * @param {{ guildId?: string|null, client?: import('discord.js').Client, member?: import('discord.js').GuildMember }} [accessCtx]
+ * @returns {Promise<{ message: string }>}
  */
-function openChest(uid, sub, guildId = null) {
+async function openChest(uid, sub, guildId = null, accessCtx = null) {
   const def = CHEST_META[sub];
   const label = def ? def.label : 'Coffre';
 
