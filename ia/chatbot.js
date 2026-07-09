@@ -465,6 +465,8 @@ async function handleChatbotMessage(message, client) {
         message.mentions?.repliedUser?.id === client.user.id;
     if (!mentioned && !isReplyToBot) return false;
 
+    const userTextEarly = cleanContent(message, client) || '(pas de texte)';
+
     try {
         await message.channel.sendTyping().catch(() => {});
 
@@ -474,7 +476,7 @@ async function handleChatbotMessage(message, client) {
         if (emojiBit) system = `${system}\n\n---\n${emojiBit}`;
 
         const userName = message.member?.displayName || message.author.username;
-        const userText = cleanContent(message, client) || '(pas de texte)';
+        const userText = userTextEarly;
 
         if (isHard && needsWebSearch(userText)) {
             const webBit = await fetchWebContextForQuery(userText);
