@@ -123,7 +123,7 @@ module.exports = {
                     embeds: [embed],
                     allowedMentions: { roles: [BUG_NOTIFY_ROLE_ID] },
                 },
-                appliedTags: [BUG_FORUM_TAG_ID],
+                appliedTags: [BUG_TAG_EN_COURS_ID],
             });
 
             await interaction.editReply({
