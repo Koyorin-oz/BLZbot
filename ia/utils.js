@@ -119,9 +119,9 @@ const log = (message) => {
       return;
     }
     if (/❌|ERREUR|Error|Crash|est prêt|inconnu \(10003\)|Tous les modèles Groq ont échoué/i.test(msg)) {
-      const clean = msg.replace(/est prêt\.?/i, '').trim();
       if (/est prêt/i.test(msg)) {
-        blzLine('ia', `ready · ${clean || msg}`);
+        const who = msg.match(/^(.+?)\s+est prêt/i)?.[1]?.trim() || msg;
+        blzLine('ia', `ready · ${who}`);
       } else {
         blzLine('ia', msg.replace(/^\[[\d-]+T[^\]]+\]\s*/, ''));
       }
