@@ -59,13 +59,18 @@ function buildEmbed(type, requesterId) {
   lines = rowList.map((r, i) => {
     const star = i < 3 ? ['🥇', '🥈', '🥉'][i] : `**${i + 1}.**`;
     let extra = '';
-    if (type === 'niveau' && r.xptot) extra = ` (XP total ${Number(r.xptot).toLocaleString('fr-FR')})`;
+    let score = BigInt(r.score || 0);
+    if (type === 'niveau') {
+      const st = totalToLevelState(Number(r.xptot || 0));
+      score = BigInt(st.level);
+      extra = ` (XP total ${Number(r.xptot || 0).toLocaleString('fr-FR')})`;
+    }
     if (type === 'rp') {
       const tier = rankedRoles.tierForRp(BigInt(r.score || 0));
       const tierDef = rankedRoles.TIER_DEFS.find((t) => t.key === tier);
       extra = ` · **${tierDef?.label || tier}**`;
     }
-    return `${star} <@${r.id}> — **${BigInt(r.score || 0).toLocaleString('fr-FR')}** ${def.unit}${extra}`;
+    return `${star} <@${r.id}> — **${score.toLocaleString('fr-FR')}** ${def.unit}${extra}`;
   });
 
   try {
