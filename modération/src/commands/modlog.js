@@ -227,6 +227,7 @@ function recomputeTotalsByType(sanctions) {
   return totalsByType;
 }
 
+module.exports = {
   data: new SlashCommandBuilder()
     .setName("modlog")
     .setDescription(
