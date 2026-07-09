@@ -52,42 +52,128 @@ function pickOne(arr) {
     return arr[Math.floor(Math.random() * arr.length)];
 }
 
+function markMessageHandled(messageId) {
+    const now = Date.now();
+    recentHandledMessages.set(messageId, now);
+    if (recentHandledMessages.size > 200) {
+        for (const [id, ts] of recentHandledMessages) {
+            if (now - ts > HANDLED_TTL_MS) recentHandledMessages.delete(id);
+        }
+    }
+}
+
+function wasMessageHandled(messageId) {
+    const ts = recentHandledMessages.get(messageId);
+    if (!ts) return false;
+    if (Date.now() - ts > HANDLED_TTL_MS) {
+        recentHandledMessages.delete(messageId);
+        return false;
+    }
+    return true;
+}
+
+function pickFallbackAvoidRepeat(channelId, options) {
+    const prev = recentFallbackByChannel.get(channelId) || [];
+    const pool = options.filter((o) => !prev.includes(o));
+    const pick = pickOne(pool.length ? pool : options);
+    const next = [...prev, pick].slice(-FALLBACK_HISTORY);
+    recentFallbackByChannel.set(channelId, next);
+    return pick;
+}
+
+function isGibberish(text) {
+    const t = String(text || '').replace(/\s+/g, '');
+    if (t.length < 6) return false;
+    const letters = (t.match(/[a-zàâäéèêëïîôùûüç]/gi) || []).length;
+    const ratio = letters / t.length;
+    if (ratio < 0.55) return true;
+    if (t.length > 40 && !/\s/.test(String(text))) return true;
+    const vowels = (t.match(/[aeiouyàâéèêëïîôùûü]/gi) || []).length;
+    return vowels / Math.max(1, letters) < 0.12;
+}
+
 /** Réponses locales si Groq est down / filtre tout — évite le message d'erreur générique en salon hard. */
-function pickHardLocalFallback(userText) {
-    const t = String(userText || '')
-        .toLowerCase()
+function pickHardLocalFallback(userText, channelId = 'global') {
+    const raw = String(userText || '')
         .replace(/<@!?\d+>/g, '')
         .trim();
+    const t = raw.toLowerCase();
+
+    if (/\b(traduis|translate|traduction)\b/.test(t)) {
+        return pickFallbackAvoidRepeat(channelId, [
+            "c'est du bruit de clavier pas une langue va apprendre l'alphabet d'abord",
+            'traduction : « je suis une quiche qui spam le bot » voilà c\'est bon ?',
+            'même Google Translate il aurait abandonné sur ton pavé random',
+        ]);
+    }
+    if (/\b(israel|israelien|palestin|gaza|mossad|juif|rn\b|france ce soir|politique)\b/.test(t)) {
+        return pickFallbackAvoidRepeat(channelId, [
+            "non je suis un bot discord pas un débat télé espèce de débile",
+            'j\'ai pas de camp je code des slash commands va toucher de l\'herbe',
+            'question politique random de minuit va dormir au lieu de me ping',
+        ]);
+    }
+    if (/\b(pourquoi|répond|repond|comprend|spam|déteste|deteste|hais)\b/.test(t) && t.includes('?')) {
+        return pickFallbackAvoidRepeat(channelId, [
+            'je réponds là tu lis pas ou t\'es en PLS ?',
+            't\'as ping le bot pour te plaindre qu\'il répond pas t\'es special',
+            'si t\'étais intéressant j\'aurais un vrai avis là t\'as le minimum syndical',
+        ]);
+    }
+    if (/\b(beau|belle|mignon|jtm|je t'aime|t'es fort|goat|w\b)\b/.test(t)) {
+        return pickFallbackAvoidRepeat(channelId, [
+            'merci j\'sais déjà maintenant pose une vraie question',
+            'flatter un bot discord niveau vie sociale : critique',
+            'ok bg de Discord maintenant dis un truc utile',
+        ]);
+    }
+    if (isGibberish(raw)) {
+        return pickFallbackAvoidRepeat(channelId, [
+            'ton clavier il a glissé ou t\'as laissé ton chat taper ?',
+            'j\'ai pas décodé ton alphabet martien reformule en humain',
+            'message illisible 0 effort va te faire foutre',
+        ]);
+    }
     if (/\bfeur\b/.test(t)) {
-        return pickOne([
+        return pickFallbackAvoidRepeat(channelId, [
             "coiffeur toi-même t'as cru être drôle avec ton meme de 2019 ?",
             "feur ? ton humour il a pris le même train que ton charisme",
             "sale merde ton feur il fait grizz comme un ascenseur en panne",
         ]);
     }
     if (/tais\s*toi|\btg\b|\bftg\b/.test(t)) {
-        return pickOne([
+        return pickFallbackAvoidRepeat(channelId, [
             "commence par te taire toi d'abord espèce de sonnette d'ascenseur",
             "tg ? va parler à un mur ça te ressemble plus",
         ]);
     }
     if (/racis/.test(t)) {
-        return pickOne([
+        return pickFallbackAvoidRepeat(channelId, [
             "cv bien et toi t'as encore 0 personnalité à part m'insulter ?",
             "raciste va ? t'as inventé une insulte ou tu la recycles depuis 2016 ?",
         ]);
     }
-    if (/nique|ntm|fdp|pute|merde|débile|nul|sale|chiant/.test(t)) {
-        return pickOne([
+    if (/nique|ntm|fdp|pute|merde|débile|debile|nul|sale|chiant|boloss|déteste|deteste/.test(t)) {
+        return pickFallbackAvoidRepeat(channelId, [
             'répète une fois on verra qui ragequit en premier',
             "wow quelle répartie va te faire foutre ailleurs",
             "t'es là uniquement pour ça ? triste vie frère",
+            'ok et ? t\'as autre chose ou c\'est ta personnalité entière ?',
         ]);
     }
-    return pickOne([
+    if (t.includes('?')) {
+        return pickFallbackAvoidRepeat(channelId, [
+            'bonne question mais Groq il a bug là — reformule en une phrase',
+            'j\'aurais répondu mais l\'API est en PLS, réessaie dans 10 sec',
+            'question reçue réponse en maintenance répète plus court',
+        ]);
+    }
+    return pickFallbackAvoidRepeat(channelId, [
         "t'as rien dit d'intéressant là réessaie",
         "ok et ? t'as une vraie question ou tu spam ?",
         "j't'ai pas compris boloss reformule",
+        'message vide niveau intelligence reformule',
+        'tu m\'as ping pour ça ? courage',
     ]);
 }
 
