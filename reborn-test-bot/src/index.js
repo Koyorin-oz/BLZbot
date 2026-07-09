@@ -9,7 +9,6 @@ const {
 } = require("discord.js");
 const cfg = require("./config");
 const rebornRuntime = require("./rebornRuntime");
-const pg = require("./services/playerGuilds");
 const { refreshApplicationOwners } = require("./lib/owners");
 const {
   deploySlashCommands,
