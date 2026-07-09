@@ -81,7 +81,7 @@ function rollCats(meta, userId) {
   if (roll === 'vip') return { lines: ['+1 point VIP (converti 250k starss)'], stars: 250_000n, xp: 0, items: [] };
   if (roll === 'retry') return { lines: ['Second tirage Coffre starss !'], stars: 100_000n, xp: 0, items: [], rollAgain: true };
   if (roll === 'hacker_token') {
-    return { lines: ['Jeton **Accès Hacker** (consommable rôle)'], stars: 0n, xp: 0, items: [{ id: 'hacker_token', qty: 1 }] };
+    return { lines: ['**Accès salon secret hacker** débloqué !'], stars: 0n, xp: 0, items: [{ id: 'hacker_token', qty: 1 }] };
   }
   const h = meta.diamondHolder();
   if (h && h !== userId) {

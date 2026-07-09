@@ -5,7 +5,7 @@ const { getGuildOfUser } = require('./db-guilds');
 const { generateDailyShop } = require('./shop-system');
 const { forceCompleteQuest, getAllUserQuests, checkQuestProgress } = require('./db-quests');
 const { checkQuestProgress: checkQuestProgressMain } = require('./quests');
-const { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder, ComponentType } = require('discord.js');
+const { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder, ComponentType, PermissionFlagsBits } = require('discord.js');
 const roleConfig = require('../config/role.config.json');
 
 const SPECIAL_ROLES = roleConfig.specialRoles;
