@@ -248,7 +248,8 @@ async function syncRankRoleForUser(client, hubDiscordId, userId) {
     ) {
       const newLabel = RANK_BY_KEY.get(tier)?.label || tier;
       try {
-        const { sendRankUpNotification } = require('../../../niveau/src/utils/ranks');
+        const ranksPath = require('path').join(__dirname, '..', '..', '..', 'niveau', 'src', 'utils', 'ranks');
+        const { sendRankUpNotification } = require(ranksPath);
         await sendRankUpNotification(client, hubDiscordId, userId, member, newLabel);
       } catch {
         /* notification best-effort */
