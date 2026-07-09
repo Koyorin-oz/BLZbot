@@ -222,15 +222,22 @@ async function grantResources(client, userId, { xp = 0, points = 0, stars = 0, s
         }
 
         let starsNiveau = stars;
+        let xpNiveau = xp;
         try {
-            const { rebornEconomyActive, addRebornStars } = require('./reborn-integration');
-            if (rebornEconomyActive() && stars > 0) {
-                addRebornStars(userId, stars);
-                starsNiveau = 0;
+            const { rebornEconomyActive, addRebornStars, addRebornXp } = require('./reborn-integration');
+            if (rebornEconomyActive()) {
+                if (stars > 0) {
+                    addRebornStars(userId, stars);
+                    starsNiveau = 0;
+                }
+                if (xp !== 0) {
+                    addRebornXp(userId, xp);
+                    xpNiveau = 0;
+                }
             }
         } catch { /* ignore */ }
 
-        grantResourcesStmt.run(xp, starsNiveau, userId);
+        grantResourcesStmt.run(xpNiveau, starsNiveau, userId);
 
         if (points > 0) {
             const { rebornEconomyActive } = require('./reborn-integration');
