@@ -250,9 +250,10 @@ function pickHttpStatus(err) {
 }
 
 function shouldTryNextModel(err) {
+    if (err?.code === 'CONTENT_FILTER' || err?.code === 'EMPTY_REPLY') return true;
     const st = pickHttpStatus(err);
     if (st === 401 || st === 403) return false;
-    if (st === 400 || st === 404 || st === 429) return true;
+    if (st === 400 || st === 404 || st === 429 || (st >= 500 && st <= 599)) return true;
     const lower = collectErrorText(err).toLowerCase();
     return (
         lower.includes('rate limit') ||
@@ -260,6 +261,8 @@ function shouldTryNextModel(err) {
         lower.includes('not found') ||
         lower.includes('decommissioned') ||
         lower.includes('does not exist') ||
+        lower.includes('content_filter') ||
+        lower.includes('empty') ||
         (lower.includes('model') && lower.includes('not available'))
     );
 }
