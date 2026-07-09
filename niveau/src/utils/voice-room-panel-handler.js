@@ -295,11 +295,9 @@ async function handleVoiceRoomPanelModal(interaction) {
                 return interaction.reply({ content: 'Nom invalide.', flags: 64 });
             }
             await channel.setName(name, 'Panneau vocal privé — renommer');
-            if (meta.ownerId === interaction.user.id) {
-                savePrivateRoomName(guild.id, meta.ownerId, name);
-            }
+            savePrivateRoomName(guild.id, meta.ownerId, name);
             return interaction.reply({
-                content: `Salon renommé : **${name}**\nCe nom sera réutilisé la prochaine fois que tu créeras ton vocal via le lobby.`,
+                content: `Salon renommé : **${name}**\nCe nom sera réutilisé la prochaine fois que le créateur recréera son vocal via le lobby.`,
                 flags: 64,
             });
         }
