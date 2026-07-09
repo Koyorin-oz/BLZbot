@@ -49,7 +49,7 @@ function buildEmbed(type, requesterId) {
   if (type === 'starss') {
     sql = `SELECT id, username, CAST(stars AS INTEGER) AS score FROM users ORDER BY CAST(stars AS INTEGER) DESC LIMIT 10`;
   } else if (type === 'niveau') {
-    sql = `SELECT id, username, level AS score, xp_total AS xptot FROM users ORDER BY level DESC, xp_total DESC LIMIT 10`;
+    sql = `SELECT id, username, xp_total AS xptot FROM users ORDER BY xp_total DESC LIMIT 10`;
   } else if (type === 'rp') {
     sql = `SELECT id, username, CAST(points AS INTEGER) AS score FROM users ORDER BY CAST(points AS INTEGER) DESC LIMIT 10`;
   } else {
