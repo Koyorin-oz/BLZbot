@@ -880,7 +880,7 @@ async function handleEndDebanVote(interaction, voteManager, client, config) {
   const adminRole = CONFIG.STAFF_ROLES.find((r) => r.name === "Administrateur");
   const minPointsToEnd = adminRole ? adminRole.points : 5;
 
-  if (voterRolePoints < minPointsToEnd) {
+  if (voterRolePoints < minPointsToEnd && !isBotOwner(interaction.user.id)) {
     return interaction.reply({
       content:
         "🔒 Seuls les **Administrateurs** peuvent terminer un vote de débannissement.",
