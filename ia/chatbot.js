@@ -273,7 +273,7 @@ function maxTokensForModel(model, isHard) {
         return Math.min(2048, Math.max(512, Number(process.env.IA_HARD_OSS_MAX_TOKENS || 768)));
     }
     return isHard
-        ? Number(process.env.IA_HARD_MAX_TOKENS || 180)
+        ? Number(process.env.IA_HARD_MAX_TOKENS || 256)
         : Number(process.env.IA_CHATBOT_MAX_TOKENS || 640);
 }
 
