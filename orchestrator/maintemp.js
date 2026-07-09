@@ -662,34 +662,47 @@ function scheduleSlashSyncFromOrchestrator() {
   );
 
   const runDeployOnce = (attemptLabel) => {
-    blzLine('maintemp', `Deploy slash démarré (${attemptLabel})…`);
+    blzLine('maintemp', `deploy ${attemptLabel}…`);
     const deployEnv = {
       ...process.env,
       BLZ_COMPACT_LOG: '1',
       DOTENV_CONFIG_QUIET: 'true',
       LOG_LEVEL: process.env.BLZ_CHILD_LOG_LEVEL || 'ERROR',
     };
-    execFile(
-      process.execPath,
-      [deployScript],
-      { cwd: REPO_ROOT, env: deployEnv, maxBuffer: 8 * 1024 * 1024, timeout: 300000 },
-      (err, stdout, stderr) => {
-        if (stdout) {
-          if (isCompact()) emitChildLine('deploy-all', stdout);
-          else process.stdout.write(stdout);
-        }
-        if (stderr) {
-          if (isCompact()) emitChildLine('deploy-all', stderr);
-          else process.stderr.write(stderr);
-        }
-        if (err) {
-          blzError('maintemp', `Deploy slash échec (${attemptLabel})`, err);
-          return false;
-        }
-        blzLine('maintemp', `Deploy slash terminé (${attemptLabel}) — cherche temple:guilde dans les lignes deploy`);
-        return true;
-      },
-    );
+    let outBuf = '';
+    let errBuf = '';
+    const proc = spawn(process.execPath, [deployScript], {
+      cwd: REPO_ROOT,
+      env: deployEnv,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    const flushLines = (buf, isErr) => {
+      const parts = buf.split('\n');
+      const rest = parts.pop() ?? '';
+      for (const part of parts) {
+        if (!part.trim()) continue;
+        if (isErr) emitChildLine('deploy', part);
+        else emitChildLine('deploy', part);
+      }
+      return rest;
+    };
+    proc.stdout.on('data', (chunk) => {
+      outBuf += chunk.toString();
+      outBuf = flushLines(outBuf, false);
+    });
+    proc.stderr.on('data', (chunk) => {
+      errBuf += chunk.toString();
+      errBuf = flushLines(errBuf, true);
+    });
+    proc.on('close', (code) => {
+      if (outBuf.trim()) emitChildLine('deploy', outBuf);
+      if (errBuf.trim()) emitChildLine('deploy', errBuf);
+      if (code === 0) blzLine('maintemp', `deploy ${attemptLabel} ok`);
+      else blzError('maintemp', `deploy ${attemptLabel} code ${code}`);
+    });
+    proc.on('error', (err) => {
+      blzError('maintemp', `deploy ${attemptLabel}`, err);
+    });
   };
 
   setTimeout(() => {
