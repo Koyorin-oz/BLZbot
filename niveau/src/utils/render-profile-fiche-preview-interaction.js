@@ -30,7 +30,7 @@ async function renderProfileFichePreviewFromInteraction(interaction, variantRaw,
     const user = getOrCreateUser(targetUser.id, targetUser.username);
     try {
         const { applyRebornProfileEconomy } = require('./reborn-integration');
-        applyRebornProfileEconomy(user, targetUser.id);
+        applyRebornProfileEconomy(user, targetUser.id, targetUser.username);
     } catch { /* fallback silencieux */ }
     const guild = getGuildOfUser(targetUser.id);
     user.guild_name = guild ? guild.name : 'Aucune Guilde';

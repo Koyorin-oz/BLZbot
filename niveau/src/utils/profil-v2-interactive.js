@@ -44,7 +44,7 @@ async function loadFiche2ProfileData(interaction) {
     // Starss / RP / niveau : source de vérité REBORN (cohérence avec /classement).
     try {
         const { applyRebornProfileEconomy } = require('./reborn-integration');
-        applyRebornProfileEconomy(user, targetUser.id);
+        applyRebornProfileEconomy(user, targetUser.id, targetUser.username);
     } catch { /* fallback silencieux sur les valeurs niveau */ }
     const guild = getGuildOfUser(targetUser.id);
     user.guild_name = guild ? guild.name : 'Aucune Guilde';
