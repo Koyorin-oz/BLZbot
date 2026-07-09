@@ -86,7 +86,7 @@ async function main() {
 
     blzLine(
         'deploy',
-        'Terminé — REBORN en guilde (/temple, /daily, …). Ctrl+Maj+R dans Discord si le menu / ne se met pas à jour.',
+        'Terminé — Ctrl+Maj+R dans Discord si le menu / ne se met pas à jour.',
     );
 }
 

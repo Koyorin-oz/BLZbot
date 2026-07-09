@@ -1,5 +1,7 @@
 require('dotenv').config({ quiet: true });
 
+const path = require('node:path');
+
 const LOG_LEVELS = {
     NONE: 0,
     ERROR: 1,
@@ -8,10 +10,6 @@ const LOG_LEVELS = {
     DEBUG: 4,
 };
 
-/**
- * Sous maintemp, BLZ_COMPACT_LOG=1 : on ignore LOG_LEVEL du .env (souvent INFO/WARN) pour éviter le spam au boot.
- * Pour forcer WARN/INFO sur les workers : BLZ_CHILD_LOG_LEVEL=WARN dans le .env racine.
- */
 function resolveLogLevel() {
     if (process.env.BLZ_COMPACT_LOG === '1') {
         const child = process.env.BLZ_CHILD_LOG_LEVEL;
@@ -28,27 +26,47 @@ function resolveLogLevel() {
 }
 
 const currentLogLevel = resolveLogLevel();
+const compact = process.env.BLZ_COMPACT_LOG === '1';
+let blz = null;
+if (compact) {
+    try {
+        blz = require(path.join(__dirname, '..', '..', '..', 'blz-log.js'));
+    } catch {
+        blz = null;
+    }
+}
+
+function emit(level, message, ...args) {
+    const extra = args.length ? ` ${args.map((a) => (a?.message ? a.message : String(a))).join(' ')}` : '';
+    const msg = `${message}${extra}`.trim();
+    if (!msg) return;
+
+    if (compact && blz) {
+        if (level === 'error') blz.blzError('niveau', msg);
+        else if (level === 'warn') blz.blzWarn('niveau', msg);
+        else if (level === 'info' || level === 'debug') {
+            /* compact : pas de spam info/debug */
+        }
+        return;
+    }
+
+    const prefix = level === 'error' ? '[ERROR]' : level === 'warn' ? '[WARN]' : level === 'debug' ? '[DEBUG]' : '[INFO]';
+    const fn = level === 'error' ? console.error : level === 'warn' ? console.warn : console.log;
+    fn(`${prefix} ${msg}`);
+}
 
 const logger = {
     error: (message, ...args) => {
-        if (currentLogLevel >= LOG_LEVELS.ERROR) {
-            console.error(`[ERROR] ${message}`, ...args);
-        }
+        if (currentLogLevel >= LOG_LEVELS.ERROR) emit('error', message, ...args);
     },
     warn: (message, ...args) => {
-        if (currentLogLevel >= LOG_LEVELS.WARN) {
-            console.warn(`[WARN] ${message}`, ...args);
-        }
+        if (currentLogLevel >= LOG_LEVELS.WARN) emit('warn', message, ...args);
     },
     info: (message, ...args) => {
-        if (currentLogLevel >= LOG_LEVELS.INFO) {
-            console.log(`[INFO] ${message}`, ...args);
-        }
+        if (currentLogLevel >= LOG_LEVELS.INFO) emit('info', message, ...args);
     },
     debug: (message, ...args) => {
-        if (currentLogLevel >= LOG_LEVELS.DEBUG) {
-            console.log(`[DEBUG] ${message}`, ...args);
-        }
+        if (currentLogLevel >= LOG_LEVELS.DEBUG) emit('debug', message, ...args);
     },
 };
 
