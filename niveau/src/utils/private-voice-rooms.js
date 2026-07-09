@@ -140,6 +140,7 @@ async function resolvePrivateRoomConfig(client, guild, opts = {}) {
                     panelTextChannelId,
                     enabled: false,
                     error: 'lobby_not_found',
+                    lobbyTriedIds: lobbyRes.triedIds || [preferredLobby],
                 };
             }
             lobbyChannelId = lobbyRes.id;
@@ -148,14 +149,20 @@ async function resolvePrivateRoomConfig(client, guild, opts = {}) {
             if ((!envCat || !/^\d{17,22}$/.test(envCat)) && lobbyRes.channel?.parentId) {
                 voiceCategoryId = lobbyRes.channel.parentId;
             }
+            const envLobby = String(process.env.PRIVATE_ROOM_LOBBY_CHANNEL_ID || '').trim();
             if (
                 lobbyRes.id !== preferredLobby &&
                 !client._privateRoomLobbyResolvedLog?.has(guild.id)
             ) {
                 if (!client._privateRoomLobbyResolvedLog) client._privateRoomLobbyResolvedLog = new Set();
                 client._privateRoomLobbyResolvedLog.add(guild.id);
+                const via = lobbyRes.source === 'name' ? 'nom du salon' : 'ID de secours';
+                const envHint =
+                    envLobby && envLobby !== lobbyRes.id
+                        ? ` Ton .env a PRIVATE_ROOM_LOBBY_CHANNEL_ID=${envLobby} (obsolète) — mets ${lobbyRes.id}.`
+                        : ` Optionnel : PRIVATE_ROOM_LOBBY_CHANNEL_ID=${lobbyRes.id}`;
                 logger.info(
-                    `[PRIVATE_ROOM] Lobby sur « ${guild.name} » : <#${lobbyRes.id}> (l’ID par défaut ne correspond pas à ce serveur). Optionnel : PRIVATE_ROOM_LOBBY_CHANNEL_ID=${lobbyRes.id}`
+                    `[PRIVATE_ROOM] Lobby sur « ${guild.name} » : <#${lobbyRes.id}> (trouvé via ${via}).${envHint}`
                 );
             }
         }

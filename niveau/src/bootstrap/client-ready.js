@@ -96,9 +96,10 @@ function registerClientReady(client, { isHalloweenActive }) {
             .resolvePrivateRoomConfig(client, prvGuild)
             .then((prv) => {
                 if (!prv.enabled) {
+                    const tried = (prv.lobbyTriedIds || [prv.lobbyChannelId]).join(', ');
                     const prvMsg =
                         prv.error === 'lobby_not_found'
-                            ? `[PRIVATE_ROOM] Lobby introuvable sur la guilde (ID ${prv.lobbyChannelId}). Vérifie GUILD_ID / invite du bot.`
+                            ? `[PRIVATE_ROOM] Lobby introuvable sur « ${prvGuild.name} » (IDs testés : ${tried}). Mets PRIVATE_ROOM_LOBBY_CHANNEL_ID=${prvMod.DEFAULT_LOBBY_CHANNEL_ID || '1524760611765096498'} dans le .env.`
                             : prv.error === 'missing_category'
                               ? '[PRIVATE_ROOM] Inactif : catégorie vocale invalide (vérifie PRIVATE_ROOM_CATEGORY_ID).'
                               : '[PRIVATE_ROOM] Inactif (PRIVATE_ROOM_ENABLED=0 ou configuration invalide).';
