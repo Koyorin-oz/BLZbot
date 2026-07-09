@@ -94,20 +94,23 @@ function buildSpeakerContext(message) {
 }
 
 /** Retire le théâtre RP que le modèle invente parfois ([SYSTÈME], *actions*, etc.). */
-function sanitizeHardReply(text) {
+function sanitizeHardReply(text, userText = '') {
     let s = String(text || '').trim();
     if (!s) return s;
     s = s.replace(/\[[^\]]{4,}\]/g, ' ');
     s = s.replace(/\*[^*\n]{2,}\*/g, ' ');
     s = s.replace(/\*\*([^*]+)\*\*/g, '$1');
-    s = s.replace(/\b(mossad|tsahal|idf)\b/gi, '');
+    const userAskedGeo = /\b(israel|israelien|mossad|juif|palestin|gaza)\b/i.test(String(userText));
+    if (!userAskedGeo) {
+        s = s.replace(/\b(mossad|tsahal|idf)\b/gi, '');
+        s = s.replace(/\s+,/g, ',').replace(/,\s*,/g, ',').trim();
+    }
     s = s.replace(/\s{2,}/g, ' ').trim();
     return s;
 }
 
-/** Coupe les réponses trop longues pour le salon hard. */
-function trimHardReply(text, isHard) {
-    let s = sanitizeHardReply(text);
+function trimHardReply(text, isHard, userText = '') {
+    let s = sanitizeHardReply(text, userText);
     if (!isHard || !s) return s;
     const maxChars = Math.max(80, Number(process.env.IA_HARD_MAX_CHARS || 280));
     if (s.length <= maxChars) return s;
