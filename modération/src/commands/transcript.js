@@ -4,7 +4,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('transcript')
         .setDescription('Générer un transcript de messages')
-        .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+        .setDefaultMemberPermissions(null)
         .addSubcommand(subcommand =>
             subcommand
                 .setName('salon')

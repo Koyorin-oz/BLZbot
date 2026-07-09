@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize, MessageFlags } = require('discord.js');
 const CONFIG = require('../config.js');
+const { denyUnlessCanMod } = require('../utils/mod-access');
 
 /**
  * Parse une durée en format humain (ex: "2j", "1s", "3h") en millisecondes
