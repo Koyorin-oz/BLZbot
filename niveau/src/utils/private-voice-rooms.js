@@ -2,6 +2,7 @@ const { ChannelType, PermissionFlagsBits } = require('discord.js');
 const { Routes } = require('discord-api-types/v10');
 const logger = require('./logger');
 const { postOrReplaceMusicPanel } = require('./voice-music-manager');
+const { resolvePrivateRoomChannelName } = require('./private-room-prefs');
 
 /** Salon d’accueil par défaut (rejoindre ce vocal → création d’un salon privé). */
 const DEFAULT_LOBBY_CHANNEL_ID = '1524760611765096498';
