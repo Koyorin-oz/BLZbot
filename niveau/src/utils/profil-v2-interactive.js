@@ -171,9 +171,10 @@ async function loadFiche2ProfileData(interaction) {
         else if (dvx >= 10000 || dvp >= 5000) vns = '⚠️ Gains vocaux /5.';
 
         const invokerStaffTitle = await getPreviewStaffTitleForUser(interaction.client, targetUser.id);
-        const r = getDisplayRank(targetUser.id, u.points);
-        const ri = RANKS.findIndex((x) => x.name === r.name);
-        const nr = ri < RANKS.length - 1 ? RANKS[ri + 1] : null;
+        const rankResolved = resolveRankDisplay(targetUser.id, u.points);
+        const r = rankResolved.rank;
+        const ri = rankResolved.rankIndex;
+        const nr = rankResolved.nextRank;
         let rip = path.resolve(__dirname, '..', 'assets', 'rank-icons', `${ri + 1}.png`);
         if (!fs.existsSync(rip)) rip = path.resolve(__dirname, '..', 'assets', 'rank-icons', '1.png');
 
