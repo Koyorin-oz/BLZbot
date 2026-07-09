@@ -89,9 +89,10 @@ function buildEmbed(type, requesterId) {
     let myRank;
     let myVal;
     if (type === 'niveau') {
-      myRank = db.prepare(countSql).get(requesterId, requesterId, requesterId).c;
+      myRank = db.prepare(countSql).get(requesterId).c;
       const m = db.prepare(myValSql).get(requesterId);
-      myVal = `${m?.v || 0} (${Number(m?.xptot || 0).toLocaleString('fr-FR')} XP)`;
+      const st = totalToLevelState(Number(m?.xptot || 0));
+      myVal = `${st.level} (${Number(m?.xptot || 0).toLocaleString('fr-FR')} XP)`;
     } else {
       myRank = db.prepare(countSql).get(requesterId).c;
       const m = db.prepare(myValSql).get(requesterId);
