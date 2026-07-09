@@ -14,8 +14,8 @@ const config = require('./config.js');
 const HARD_CHANNEL_ID = config.HARD_MODE_CHANNEL_ID;
 const NORMAL_CHANNEL_ID = config.BASIC_CHATBOT_CHANNEL_ID;
 
-// Modèles chatbot : hard = persona trash (Kimi K2 / OSS), normal = polyvalent.
-const HARD_DEFAULT_MODEL = 'moonshotai/kimi-k2-instruct';
+// Modèles chatbot : hard = persona trash (Kimi K2 0905 / OSS), normal = polyvalent.
+const HARD_DEFAULT_MODEL = 'moonshotai/kimi-k2-instruct-0905';
 const NORMAL_DEFAULT_MODEL = 'llama-3.3-70b-versatile';
 const HARD_FALLBACKS = [
     'openai/gpt-oss-120b',
