@@ -199,7 +199,7 @@ async function deployRebornSlashToGuilds(
     }
 
     console.log(
-        `[niveau/deploy] REBORN sur guilde(s) ${guildIds.join(', ')} : +${created} ~${updated} err ${errors} (${rebornCommands.size} cmd)`,
+        `[niveau/deploy] REBORN sur guilde(s) ${guildIds.join(', ')} : ok (${rebornCommands.size} cmd, ${guildIds.length} serveur(s))`,
     );
     return { created, updated, errors, guildIds };
 }
