@@ -117,7 +117,7 @@ async function loadFiche2ProfileData(interaction) {
         const u = getOrCreateUser(targetUser.id, targetUser.username);
         try {
             const { applyRebornProfileEconomy } = require('./reborn-integration');
-            applyRebornProfileEconomy(u, targetUser.id);
+            applyRebornProfileEconomy(u, targetUser.id, targetUser.username);
         } catch { /* fallback silencieux sur la valeur niveau */ }
         const g = getGuildOfUser(targetUser.id);
         u.guild_name = g ? g.name : 'Aucune Guilde';
