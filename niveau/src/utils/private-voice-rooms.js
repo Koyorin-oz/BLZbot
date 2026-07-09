@@ -634,6 +634,7 @@ async function rebuildPrivateRoomRegistry(client, guild) {
 }
 
 module.exports = {
+    DEFAULT_LOBBY_CHANNEL_ID,
     getConfig,
     resolvePrivateRoomConfig,
     handleLobbyJoin,
