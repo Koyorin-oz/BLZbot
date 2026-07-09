@@ -4,7 +4,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('note')
         .setDescription('Gérer les notes d\'un membre.')
-        .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+        .setDefaultMemberPermissions(null)
         .addSubcommand(subcommand =>
             subcommand
                 .setName('ajouter')

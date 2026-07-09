@@ -18,7 +18,7 @@ module.exports = {
     .setDescription(
       "Afficher l'historique des sanctions et des notes d'un membre.",
     )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+    .setDefaultMemberPermissions(null)
     .addUserOption((option) =>
       option
         .setName("utilisateur")
