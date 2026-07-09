@@ -5,7 +5,7 @@ module.exports = {
     data: {
         name: 'clean',
         description: 'Supprime plusieurs messages en masse.',
-        default_member_permissions: PermissionFlagsBits.ManageMessages.toString(),
+        default_member_permissions: null,
         options: [
             {
                 type: ApplicationCommandOptionType.Subcommand,

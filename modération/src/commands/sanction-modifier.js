@@ -8,7 +8,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('sanction-modifier')
         .setDescription('Modifier le descriptif d\'une sanction que vous avez émise.')
-        .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+        .setDefaultMemberPermissions(null)
         .addIntegerOption(option =>
             option.setName('sanction_id')
                 .setDescription('ID de la sanction à modifier')
