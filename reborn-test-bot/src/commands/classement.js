@@ -66,9 +66,8 @@ function buildEmbed(type, requesterId) {
       extra = ` (XP total ${Number(r.xptot || 0).toLocaleString('fr-FR')})`;
     }
     if (type === 'rp') {
-      const tier = rankedRoles.tierForRp(BigInt(r.score || 0));
-      const tierDef = rankedRoles.TIER_DEFS.find((t) => t.key === tier);
-      extra = ` · **${tierDef?.label || tier}**`;
+      const rank = rankedRoles.rankForRp(BigInt(r.score || 0));
+      extra = ` · **${rank.label}**`;
     }
     return `${star} <@${r.id}> — **${score.toLocaleString('fr-FR')}** ${def.unit}${extra}`;
   });

@@ -23,6 +23,14 @@ function getInactivityThresholdHours(rank) {
  * @param {import('discord.js').Client} client Le client Discord.
  */
 function processDecay(client) {
+    try {
+        const { rebornEconomyActive } = require('./reborn-integration');
+        if (rebornEconomyActive()) {
+            logger.debug('Decay legacy ignoré — décrépitude RP gérée par REBORN.');
+            return;
+        }
+    } catch { /* ignore */ }
+
     logger.info('Vérification de la perte de points (decay) par inactivité...');
 
     const now = Date.now();
