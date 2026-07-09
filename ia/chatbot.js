@@ -331,9 +331,9 @@ async function handleChatbotMessage(message, client) {
             },
         ];
 
-        const temperature = isHard ? 0.95 : 0.6;
+        const temperature = isHard ? 0.82 : 0.6;
         const maxTokens = isHard
-            ? Number(process.env.IA_HARD_MAX_TOKENS || 220)
+            ? Number(process.env.IA_HARD_MAX_TOKENS || 120)
             : Number(process.env.IA_CHATBOT_MAX_TOKENS || 640);
 
         let reply = '';
