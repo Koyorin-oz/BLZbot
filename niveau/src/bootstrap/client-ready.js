@@ -109,6 +109,9 @@ function registerClientReady(client, { isHalloweenActive }) {
                     logger.info(
                         `[PRIVATE_ROOM] Actif — lobby <#${prv.lobbyChannelId}> → catégorie \`${prv.voiceCategoryId}\`${panelHint}`
                     );
+                    prvMod.rebuildPrivateRoomRegistry(client, prvGuild).catch((e) => {
+                        logger.warn('[PRIVATE_ROOM] rebuild registry:', e?.message || e);
+                    });
                 }
             })
             .catch((e) => logger.error('[PRIVATE_ROOM] Résolution config:', e?.message || e));
