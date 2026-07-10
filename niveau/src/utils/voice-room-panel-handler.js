@@ -18,6 +18,7 @@ const {
     getPrivateRoomVoiceMeta,
     ensureSessions,
     resolvePrivateRoomConfig,
+    isProtectedLobbyChannel,
 } = require('./private-voice-rooms');
 const {
     sanitizePrivateRoomChannelName,
