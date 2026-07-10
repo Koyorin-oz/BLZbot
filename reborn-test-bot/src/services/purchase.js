@@ -40,7 +40,7 @@ function extendBoost(userId, field) {
  */
 async function handlePurchase(interaction, parts) {
   if (require('./economyState').isPaused()) {
-    await interaction.reply({ content: 'L’économie du serveur est en pause. La boutique est temporairement gelée.' });
+    await replyEphemeral(interaction, { content: 'L’économie du serveur est en pause. La boutique est temporairement gelée.' });
     return;
   }
   const uid = interaction.user.id;
