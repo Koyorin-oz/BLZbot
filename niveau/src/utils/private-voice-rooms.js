@@ -785,6 +785,12 @@ async function rebuildPrivateRoomRegistry(client, guild) {
     );
 
     for (const channel of channels.values()) {
+        if (isProtectedLobbyChannel(channel, client, cfg)) {
+            registerLobbyChannel(client, guild.id, channel.id);
+            await applyLobbyPermissions(channel, guild).catch(() => null);
+            continue;
+        }
+
         const humans = channel.members.filter((m) => !m.user.bot).size;
         if (humans === 0) {
             if (getPrivateRoomVoiceMeta(client, channel.id)) {
