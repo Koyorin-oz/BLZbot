@@ -88,14 +88,7 @@ function computeGrpGain(baseGrp, userId, hubDiscordId) {
   return grpGain;
 }
 
-function grantGrpForActivity(hubDiscordId, userId, baseGrp) {
-  if (baseGrp <= 0n) return;
-  grpSeason.maybeResetMonthlyGrp(hubDiscordId);
-  const grpGain = computeGrpGain(baseGrp, userId, hubDiscordId);
-  if (grpGain > 0n) gm.addGrp(hubDiscordId, userId, grpGain);
-  const after = gm.getMemberRow(hubDiscordId, userId);
-  grpSeason.recordGrpPeaksIfNeeded(hubDiscordId, userId, after.grp);
-}
+function grantVoiceMinutes(guildId, userId, minutes) {
   if (minutes <= 0n) return;
   if (economyState.isPaused()) return;
   users.getOrCreate(userId, '');
@@ -129,15 +122,7 @@ function grantGrpForActivity(hubDiscordId, userId, baseGrp) {
   gxpGain = indexBonuses.applyBp(userId, gxpGain, 'gxpBp');
   gm.addGxp(guildId, userId, gxpGain);
   const baseGrp = C.grpRatesForMessage().vocMin * minutes;
-  const grpBp = skillTree.guildGrpMultBp(userId);
-  const focus = grpFocusMultForUser(guildId, userId);
-  const loyalBp = loyalCampGrpMultBp(guildId, userId);
-  let grpGain = (baseGrp * BigInt(grpBp) * focus * BigInt(loyalBp)) / 10_000_000_000n;
-  grpGain = indexBonuses.applyBp(userId, grpGain, 'grpBp');
-  gm.addGrp(guildId, userId, grpGain);
-  grpSeason.maybeResetMonthlyGrp(guildId);
-  const after = gm.getMemberRow(guildId, userId);
-  grpSeason.recordGrpPeaksIfNeeded(guildId, userId, after.grp);
+  grantGrpForActivity(guildId, userId, baseGrp);
   playerGuilds.addGxpFromMemberActivity(guildId, userId, gxpGain);
 }
 
