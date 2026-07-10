@@ -290,7 +290,7 @@ async function handlePanelInteraction(interaction) {
     const now = Date.now();
     const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
     if (now - last < WEEK_MS) {
-      return interaction.reply({ content: '❌ Déjà réclamé cette semaine.' });
+      return replyEphemeral(interaction, { content: '❌ Déjà réclamé cette semaine.' });
     }
     db.prepare('UPDATE users SET last_event_spawner_claim_ms = ? WHERE id = ?').run(now, uid);
     users.addInventory(uid, 'event_spawner', 1);
