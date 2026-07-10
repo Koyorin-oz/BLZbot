@@ -124,7 +124,7 @@ async function handlePurchase(interaction, parts) {
     }
     const pay = discountedPrice(uid, chest.price);
     if (users.getStars(uid) < pay) {
-      await interaction.reply({ content: 'Pas assez de starss.' });
+      await replyEphemeral(interaction, { content: 'Pas assez de starss.' });
       return;
     }
     users.addStars(uid, -pay);
