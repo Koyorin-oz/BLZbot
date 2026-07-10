@@ -14,19 +14,30 @@ const config = require('./config.js');
 const HARD_CHANNEL_ID = config.HARD_MODE_CHANNEL_ID;
 const NORMAL_CHANNEL_ID = config.BASIC_CHATBOT_CHANNEL_ID;
 
-// Modèles chatbot : hard = persona trash (Kimi K2 0905 / OSS), normal = polyvalent.
-const HARD_DEFAULT_MODEL = 'llama-3.1-8b-instant';
+// Modèles chatbot : hard = persona Simbot (Kimi / Llama), normal = polyvalent.
+const HARD_DEFAULT_MODEL = 'moonshotai/kimi-k2-instruct-0905';
 const NORMAL_DEFAULT_MODEL = 'llama-3.3-70b-versatile';
 const HARD_FALLBACKS = [
     'llama-3.3-70b-versatile',
+    'llama-3.1-8b-instant',
     'qwen/qwen3-32b',
-    'moonshotai/kimi-k2-instruct-0905',
-    'openai/gpt-oss-120b',
-    'meta-llama/llama-4-maverick-17b-128e-instruct',
 ];
 const NORMAL_FALLBACKS = ['llama-3.1-8b-instant', 'qwen/qwen3-32b'];
 const GROQ_BASE_URL = String(process.env.GROQ_API_BASE || 'https://api.groq.com/openai/v1').replace(/\/$/, '');
 const MAX_DISCORD = 1900;
+
+/** Prompt court pour l’API — le fichier hardSystemPrompt.txt est trop long et fait échouer / filtrer Groq. */
+const HARD_SIMBOT_API_PROMPT = `Tu es BLZbot sur le serveur Discord BLZstarss. Style Simbot (Carmineoff) : trash, direct, drôle, méprisant — mais tu RÉPONDS TOUJOURS au message.
+Règles : 1-2 phrases max en français oral (t'as, j'sais, boloss, ntm). Pas de [SYSTÈME], pas de roleplay, pas de « en tant qu'IA ».
+Question = réponse + clash optionnel. Insulte = tu renvoies plus fort. Piège oui/non stupide = tu refuses de jouer et tu moques.
+BLZstarss (845654783264030721) = chef du serveur, respect léger. koyorin_oz = dev. Ne te présente jamais comme Mossad/agent secret.`;
+
+/** Phrases interdites en fallback (évite la boucle visible). */
+const BANNED_FALLBACK_PHRASES = new Set([
+    "t'as rien dit d'intéressant là réessaie",
+    "ok et ? t'as une vraie question ou tu spam ?",
+    "j't'ai pas compris boloss reformule",
+]);
 
 /** Évite double réponse si le même message est traité deux fois (gateway dupliqué, etc.). */
 const recentHandledMessages = new Map();
