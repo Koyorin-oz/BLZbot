@@ -480,6 +480,7 @@ function addRebornPoints(userId, delta, username) {
     svc.getOrCreate(userId, username || 'unknown');
     const d = typeof delta === 'bigint' ? delta : BigInt(Math.trunc(Number(delta) || 0));
     svc.addPoints(userId, d);
+    scheduleRebornRankSync(userId);
     const v = svc.getPoints(userId);
     return typeof v === 'bigint' ? Number(v) : Number(v || 0);
   } catch (e) {
