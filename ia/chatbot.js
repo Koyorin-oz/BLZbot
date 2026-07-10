@@ -794,11 +794,13 @@ async function handleChatbotMessage(message, client) {
 
         let reply = '';
         let usedModel = '';
+        let apiError = null;
         try {
             const result = await requestChatCompletion(messages, { temperature, isHard });
             reply = result.text;
             usedModel = result.model;
         } catch (e) {
+            apiError = e;
             console.error('[ia chatbot] toutes APIs:', collectErrorText(e).slice(0, 200));
         }
 
@@ -806,10 +808,8 @@ async function handleChatbotMessage(message, client) {
             if (isHard) {
                 console.warn('[ia chatbot] fallback local Simbot (APIs indisponibles)');
                 reply = generateSimbotLocalReply(userText, channelId);
-            } else if (lastErr) {
-                throw lastErr;
             } else {
-                reply = pickNormalLocalFallback();
+                reply = apiError ? friendlyError(apiError) : pickNormalLocalFallback();
             }
         } else if (usedModel) {
             console.log(`[ia chatbot] OK ${usedModel} (${reply.length} chars)`);
