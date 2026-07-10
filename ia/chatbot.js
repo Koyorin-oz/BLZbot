@@ -723,9 +723,7 @@ async function buildHistory(message, client, limit = 6) {
  */
 async function groqSimpleRetry(userText, userName, isHard) {
     const model = 'llama-3.1-8b-instant';
-    const system = isHard
-        ? 'Tu es BLZbot, bot Discord trash du serveur BLZstarss. Réponds en 1-2 phrases max en français, direct, sans roleplay ni crochets [SYSTÈME].'
-        : `Tu es BLZbot, bot poli du serveur BLZstarss. Réponds en français, concis, sans insultes.`;
+    const system = isHard ? HARD_SIMBOT_API_PROMPT : `Tu es BLZbot, bot poli du serveur BLZstarss. Réponds en français, concis, sans insultes.`;
     try {
         return await groqChatCompletion(
             model,
@@ -733,7 +731,7 @@ async function groqSimpleRetry(userText, userName, isHard) {
                 { role: 'system', content: system },
                 { role: 'user', content: `${userName}: ${userText}` },
             ],
-            { temperature: isHard ? 0.75 : 0.55, isHard, maxTokens: isHard ? 180 : 400 },
+            { temperature: isHard ? 0.88 : 0.55, isHard, maxTokens: isHard ? 220 : 400 },
         );
     } catch (e) {
         console.warn('[ia chatbot] retry simple Groq:', collectErrorText(e).slice(0, 120));
