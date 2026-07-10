@@ -100,6 +100,12 @@ client.once('clientReady', async (c) => {
     setInterval(() => {
         utils.archiveOldThreads(client);
     }, 3 * 60 * 60 * 1000); // 3 hours
+
+    // Même token que niveau : si l’IA tient la gateway, les gains REBORN (GRP/GXP) doivent tourner ici aussi.
+    if (rebornIntegration.isEnabled()) {
+        const ok = rebornIntegration.registerEarnGateway(client);
+        if (ok) utils.log('[reborn] earn actif sur le client IA (GRP/GXP messages + vocal).');
+    }
 });
 client.on('messageCreate', async (message) => handleMessageCreate(message, client, activeThreads));
 client.on('interactionCreate', async (interaction) => handleInteractionCreate(interaction, client, activeThreads));
