@@ -819,7 +819,7 @@ async function handleChatbotMessage(message, client) {
                 reply = apiError ? friendlyError(apiError) : pickNormalLocalFallback();
             }
         } else if (usedModel) {
-            console.log(`[ia chatbot] OK ${usedModel} (${reply.length} chars)`);
+            chatbotVerboseLog(`[ia chatbot] OK ${usedModel} (${reply.length} chars)`);
         }
         if (reply && isHard) {
             const norm = reply.toLowerCase().replace(/\s+/g, ' ').trim();
