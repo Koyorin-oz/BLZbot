@@ -104,6 +104,7 @@ function grantFromActivity(userId, kind, units = 1n) {
   // Quête « atteindre Master+ » : on signale le franchissement.
   const tierAfter = rankedRoles.tierForRp(p + capped);
   if (tierAfter !== tierBefore) {
+    rankedRoles.resetCacheFor(userId);
     try {
       const quests = require('./quests');
       const rankedMilestones = require('./rankedMilestones');

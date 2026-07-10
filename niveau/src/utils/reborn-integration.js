@@ -160,11 +160,39 @@ function collectRebornSlashMap() {
   return map;
 }
 
+/** @type {import('discord.js').Client|null} */
+let _rankSyncClient = null;
+
+function scheduleRebornRankSync(userId) {
+  if (!userId || !_rankSyncClient) return;
+  const rr = getRebornRankedRoles();
+  if (!rr) return;
+  let hub = '';
+  try {
+    const { economyGuildId } = require('./economy-scope');
+    hub = String(
+      economyGuildId.getStore() || process.env.GUILD_ID || process.env.BLZ_MAIN_GUILD_ID || '',
+    ).trim();
+  } catch {
+    /* ignore */
+  }
+  if (!/^\d{17,22}$/.test(hub)) return;
+  rr.resetCacheFor(userId);
+  rr.syncRankRoleForUser(_rankSyncClient, hub, userId)
+    .then((r) => {
+      if (r?.error) logger.warn(`[reborn] rank sync ${userId}: ${r.error}`);
+    })
+    .catch((e) => {
+      logger.warn('[reborn] scheduleRebornRankSync:', e?.message || e);
+    });
+}
+
 /** @param {import('discord.js').Client} client */
 function registerEarnGateway(client) {
   const rt = getRuntime();
   if (!rt) return false;
   initEnvironment();
+  _rankSyncClient = client;
   rt.registerEarn(client);
   return true;
 }
