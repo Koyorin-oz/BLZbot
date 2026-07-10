@@ -482,6 +482,7 @@ async function deployCommands(client) {
                 'quetes',
                 'temple',
                 'ranked',
+                'setup-lobby',
             ]
                 .concat(
                     String(process.env.BLZ_FORCE_SLASH_REFRESH_NAMES || '')
