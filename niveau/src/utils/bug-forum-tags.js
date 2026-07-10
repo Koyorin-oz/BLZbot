@@ -120,6 +120,7 @@ function buildResolutionEmbed(tagId) {
 async function closeResolvedBugThread(thread, tagId) {
   await thread.send({ embeds: [buildResolutionEmbed(tagId)] });
   await thread.setArchived(true, "Signalement traité");
+  await thread.setLocked(true);
 }
 
 /**
@@ -145,12 +146,12 @@ async function handleBugTagButton(interaction) {
 
   if (isFinalBugTag(tagId)) {
     await closeResolvedBugThread(thread, tagId);
-    await interaction.followUp({
+    await interaction.editReply({
       content: `🏷️ Tag **${label}** appliqué, le signalement a été traité et le fil a été fermé.`,
       flags: 64,
     });
   } else {
-    await interaction.followUp({
+    await interaction.editReply({
       content: `🏷️ Tag **${label}** appliqué sur ce signalement.`,
       flags: 64,
     });
