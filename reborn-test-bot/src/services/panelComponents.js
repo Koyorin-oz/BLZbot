@@ -187,7 +187,7 @@ async function handlePanelInteraction(interaction) {
     const v = pick.get(interaction.user.id, interaction.message.id);
     const parts = partsFromShopValue(v);
     if (!parts) {
-      return interaction.reply({
+      return replyEphemeral(interaction, {
         content: 'Choisis d’abord un article dans le **menu**.',
       });
     }
