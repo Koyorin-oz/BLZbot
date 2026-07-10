@@ -67,7 +67,7 @@ async function handlePurchase(interaction, parts) {
     }
     const price = discountedPrice(uid, BigInt(row.price));
     if (users.getStars(uid) < price) {
-      await interaction.reply({ content: `Pas assez de starss (besoin **${price.toLocaleString('fr-FR')}**).` });
+      await replyEphemeral(interaction, { content: `Pas assez de starss (besoin **${price.toLocaleString('fr-FR')}**).` });
       return;
     }
     users.addStars(uid, -price);
