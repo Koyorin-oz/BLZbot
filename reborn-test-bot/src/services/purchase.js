@@ -262,10 +262,20 @@ async function openChest(uid, sub, guildId = null, accessCtx = null) {
   const starLine = totalStars > 0n ? `+**${totalStars.toLocaleString('fr-FR')}** starss` : '';
   const xpLine = totalXp > 0 ? `+**${totalXp}** XP` : '';
   const head = [starLine, xpLine].filter(Boolean).join(' · ');
-  const body = lines.length ? `\n${lines.map((l) => `• ${l}`).join('\n')}` : '';
+  const bodyParts = [];
+  if (lines.length) {
+    bodyParts.push('', '**Loot :**');
+    for (const line of lines) {
+      if (line.includes('\n')) {
+        for (const sub of line.split('\n')) bodyParts.push(`• ${sub}`);
+      } else {
+        bodyParts.push(`• ${line}`);
+      }
+    }
+  }
   const tail = followUps.length ? `\n${followUps.join('\n')}` : '';
   return {
-    message: `**${label}** ouvert${head ? ` — ${head}` : ''}.${body}${tail}`.slice(0, 1900),
+    message: `**${label}** ouvert${head ? ` — ${head}` : ''}${bodyParts.join('\n')}${tail}`.slice(0, 1900),
   };
 }
 
