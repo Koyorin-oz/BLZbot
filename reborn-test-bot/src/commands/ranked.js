@@ -8,6 +8,7 @@ const users = require('../services/users');
 const rankedRoles = require('../services/rankedRoles');
 const rankedMilestones = require('../services/rankedMilestones');
 const { d } = require('../lib/slashDesc');
+const { replyEphemeral, v2Ephemeral } = require('../lib/ephemeral');
 
 module.exports = {
   data: new SlashCommandBuilder()
