@@ -180,6 +180,13 @@ module.exports = {
       });
     }
 
+    const hub = interaction.guildId;
+    const hackerCh = hub ? resolveChannelIdForGuild(hub) : cfg.hackerChannelId;
+    const salonLine =
+      hackerCh && hub
+        ? `Salon : <#${hackerCh}>`
+        : '';
+
     const embed = new EmbedBuilder()
       .setColor(0x7c2d12)
       .setTitle('🔒 Salon Secret Hackeur')
@@ -187,7 +194,7 @@ module.exports = {
         [
           'En tant que **Hackeur**, tu peux récupérer un **item aléatoire** toutes les **12 heures** !',
           '',
-          cfg.hackerChannelId ? `Salon : <#${cfg.hackerChannelId}>` : '',
+          salonLine,
           '',
           'Clique sur le bouton ci-dessous pour récupérer ton item.',
           '',
