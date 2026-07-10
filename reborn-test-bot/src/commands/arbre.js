@@ -125,9 +125,9 @@ module.exports = {
         '*Une classe se débloque dès qu’une **branche atteint 5/5**. Maîtrise les **5** branches et tu deviens **Maître des voies**.*',
       );
       const td = new TextDisplayBuilder().setContent(lines.join('\n'));
-      return interaction.reply({
+      return replyEphemeral(interaction, {
         components: [new ContainerBuilder().addTextDisplayComponents(td)],
-        flags: MessageFlags.IsComponentsV2,
+        flags: v2Ephemeral(),
       });
     }
 
@@ -168,9 +168,9 @@ module.exports = {
       const td = new TextDisplayBuilder().setContent(
         `✅ Branche **séparatiste** → **${r.newStep}** / 5\nPoints restants : **${skillTree.separatistPoints(uid)}**`,
       );
-      return interaction.reply({
+      return replyEphemeral(interaction, {
         components: [new ContainerBuilder().addTextDisplayComponents(td)],
-        flags: MessageFlags.IsComponentsV2,
+        flags: v2Ephemeral(),
       });
     }
 
