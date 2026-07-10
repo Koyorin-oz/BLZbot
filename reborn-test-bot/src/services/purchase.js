@@ -103,7 +103,7 @@ async function handlePurchase(interaction, parts) {
       await replyEphemeral(interaction, { content: 'Boost inconnu.' });
       return;
     }
-    await interaction.reply({ content: `Boost ×2 (**${sub}**) activé +1h (cumulable).` });
+    await replyEphemeral(interaction, { content: `Boost ×2 (**${sub}**) activé +1h (cumulable).` });
     return;
   }
 
