@@ -103,41 +103,93 @@ function isGibberish(text) {
     return vowels / Math.max(1, letters) < 0.12;
 }
 
-/** Réponses locales si Groq est down / filtre tout — évite le message d'erreur générique en salon hard. */
-function pickHardLocalFallback(userText, channelId = 'global') {
+/** Réponses locales style Simbot quand toutes les APIs ont échoué — jamais les 3 phrases robot en boucle. */
+function generateSimbotLocalReply(userText, channelId = 'global') {
     const raw = String(userText || '')
         .replace(/<@!?\d+>/g, '')
         .trim();
     const t = raw.toLowerCase();
 
+    if (!raw || raw === '(pas de texte)') {
+        return pickFallbackAvoidRepeat(channelId, [
+            'tu m\'as ping sans texte t\'es un génie ou quoi',
+            'message vide comme ta dernière blague vas-y dis un truc',
+            'j\'vois rien là boloss écris quelque chose',
+        ]);
+    }
+
+    if (/^(ah?\s*)?rien\??$/i.test(raw) || /^y\s*a\s*rien/i.test(t)) {
+        return pickFallbackAvoidRepeat(channelId, [
+            'ah rien ? t\'as ping pour rien comme d\'hab continue',
+            'rien ? bah super conversation 10/10 va te coucher',
+            'ok donc t\'as rien à dire mais tu m\'appelles quand même brillant',
+        ]);
+    }
+
+    if (/pas compris|pas compris|vraie question|ok et \?/i.test(t) && /oui|non|c'est oui|c est oui/i.test(t)) {
+        return pickFallbackAvoidRepeat(channelId, [
+            'tu joues avec mes vieilles réponses de secours t\'es au fond du panier frère',
+            'piège oui/non sur un bot discord tu vis dans quelle dimension',
+            'j\'ai capté ton hack de merde non je joue pas à ton jeu',
+        ]);
+    }
+
+    if (/\b(epstein|jeffrey|enfants?|pédoph|pedoph)\b/i.test(t)) {
+        return pickFallbackAvoidRepeat(channelId, [
+            'j\'suis un bot discord pas un tribunal va te faire soigner',
+            'question débile niveau max pose un truc normal boloss',
+            'tu viens dans le hard pour ça ? t\'as 0 humour et 0 dignité',
+        ]);
+    }
+
+    if (/\b(aime|aimes|adore|déteste|deteste|hais|haine)\b/i.test(t) && t.includes('?')) {
+        return pickFallbackAvoidRepeat(channelId, [
+            'j\'aime les gens qui posent des vraies questions pas toi apparemment',
+            'non j\'aime pas perdre mon temps avec des questions random va google',
+            'j\'déteste les pings inutiles comme celui-là si tu veux savoir',
+        ]);
+    }
+
+    if (/^(salut|cc|coucou|yo|wesh|hey|bonjour|bonsoir)\b/i.test(t)) {
+        return pickFallbackAvoidRepeat(channelId, [
+            'salut maintenant dis un truc utile au lieu de faire le beau',
+            'yo boloss t\'as une vraie question ou tu testes',
+            'cc ouais et ?',
+        ]);
+    }
+
+    if (/\b(cassé|clc|nul|broken|bug|marche pas|répète|repète)\b/i.test(t)) {
+        return pickFallbackAvoidRepeat(channelId, [
+            'c\'est toi qui spam les mêmes questions depuis 10 min pas moi',
+            'si j\'étais cassé tu parlerais au vide là t\'as une réponse non',
+            'répète toi d\'abord avec un cerveau fonctionnel',
+        ]);
+    }
+
     if (/\b(traduis|translate|traduction)\b/.test(t)) {
         return pickFallbackAvoidRepeat(channelId, [
             "c'est du bruit de clavier pas une langue va apprendre l'alphabet d'abord",
-            'traduction : « je suis une quiche qui spam le bot » voilà c\'est bon ?',
-            'même Google Translate il aurait abandonné sur ton pavé random',
+            'traduction : « je spam le bot sans réfléchir » voilà',
+            'même Google Translate il aurait abandonné sur ton pavé',
         ]);
     }
+
     if (/\b(israel|israelien|palestin|gaza|mossad|juif|rn\b|france ce soir|politique)\b/.test(t)) {
         return pickFallbackAvoidRepeat(channelId, [
             "non je suis un bot discord pas un débat télé espèce de débile",
-            'j\'ai pas de camp je code des slash commands va toucher de l\'herbe',
-            'question politique random de minuit va dormir au lieu de me ping',
+            'j\'ai pas de camp je gère des slash commands va toucher de l\'herbe',
+            'question politique random va dormir au lieu de me ping',
         ]);
     }
-    if (/\b(pourquoi|répond|repond|comprend|spam|déteste|deteste|hais)\b/.test(t) && t.includes('?')) {
-        return pickFallbackAvoidRepeat(channelId, [
-            'je réponds là tu lis pas ou t\'es en PLS ?',
-            't\'as ping le bot pour te plaindre qu\'il répond pas t\'es special',
-            'si t\'étais intéressant j\'aurais un vrai avis là t\'as le minimum syndical',
-        ]);
-    }
-    if (/\b(beau|belle|mignon|jtm|je t'aime|t'es fort|goat|w\b)\b/.test(t)) {
+
+    if (/\b(beau|belle|mignon|jtm|je t'aime|t'es fort|goat)\b/.test(t)) {
         return pickFallbackAvoidRepeat(channelId, [
             'merci j\'sais déjà maintenant pose une vraie question',
             'flatter un bot discord niveau vie sociale : critique',
             'ok bg de Discord maintenant dis un truc utile',
         ]);
     }
+
     if (isGibberish(raw)) {
         return pickFallbackAvoidRepeat(channelId, [
             'ton clavier il a glissé ou t\'as laissé ton chat taper ?',
@@ -145,26 +197,29 @@ function pickHardLocalFallback(userText, channelId = 'global') {
             'message illisible 0 effort va te faire foutre',
         ]);
     }
+
     if (/\bfeur\b/.test(t)) {
         return pickFallbackAvoidRepeat(channelId, [
             "coiffeur toi-même t'as cru être drôle avec ton meme de 2019 ?",
             "feur ? ton humour il a pris le même train que ton charisme",
-            "sale merde ton feur il fait grizz comme un ascenseur en panne",
         ]);
     }
+
     if (/tais\s*toi|\btg\b|\bftg\b/.test(t)) {
         return pickFallbackAvoidRepeat(channelId, [
             "commence par te taire toi d'abord espèce de sonnette d'ascenseur",
             "tg ? va parler à un mur ça te ressemble plus",
         ]);
     }
+
     if (/racis/.test(t)) {
         return pickFallbackAvoidRepeat(channelId, [
             "cv bien et toi t'as encore 0 personnalité à part m'insulter ?",
             "raciste va ? t'as inventé une insulte ou tu la recycles depuis 2016 ?",
         ]);
     }
-    if (/nique|ntm|fdp|pute|merde|débile|debile|nul|sale|chiant|boloss|déteste|deteste/.test(t)) {
+
+    if (/nique|ntm|fdp|pute|merde|débile|debile|sale|chiant|boloss|déteste|deteste/.test(t)) {
         return pickFallbackAvoidRepeat(channelId, [
             'répète une fois on verra qui ragequit en premier',
             "wow quelle répartie va te faire foutre ailleurs",
@@ -172,20 +227,34 @@ function pickHardLocalFallback(userText, channelId = 'global') {
             'ok et ? t\'as autre chose ou c\'est ta personnalité entière ?',
         ]);
     }
+
     if (t.includes('?')) {
         return pickFallbackAvoidRepeat(channelId, [
-            'bonne question mais Groq il a bug là — reformule en une phrase',
-            'j\'aurais répondu mais l\'API est en PLS, réessaie dans 10 sec',
-            'question reçue réponse en maintenance répète plus court',
+            'bonne question — Groq est en PLS là, réessaie dans 30 sec',
+            'j\'te réponds pas bien parce que l\'API bug pas parce que t\'es intéressant',
+            'question notée réponse en maintenance répète plus court',
+            'j\'en sais rien va google espèce de boloss',
+            'pose ça autrement j\'suis pas ton assistant perso',
         ]);
     }
-    return pickFallbackAvoidRepeat(channelId, [
-        "t'as rien dit d'intéressant là réessaie",
-        "ok et ? t'as une vraie question ou tu spam ?",
-        "j't'ai pas compris boloss reformule",
-        'message vide niveau intelligence reformule',
+
+    const pool = [
+        'ok cool et du coup ?',
+        'j\'ai lu ton msg c\'est toujours aussi creux',
+        'continue j\'te juge en silence',
+        'message reçu contenu absent comme d\'hab',
         'tu m\'as ping pour ça ? courage',
-    ]);
+        'super contribution à la commu là',
+        'j\'note : encore un msg random dans le hard',
+        'va toucher de l\'herbe au lieu de spam le bot',
+    ].filter((p) => !BANNED_FALLBACK_PHRASES.has(p));
+
+    return pickFallbackAvoidRepeat(channelId, pool);
+}
+
+/** @deprecated alias */
+function pickHardLocalFallback(userText, channelId) {
+    return generateSimbotLocalReply(userText, channelId);
 }
 
 function pickNormalLocalFallback() {
