@@ -444,6 +444,7 @@ async function deployCommands(client) {
         // 2. Filtrer : ne garder que les commandes actives (events saisonniers éteints = à retirer)
         const commandsToDeploy = new Map();
         const rebornForGuild = new Map();
+        const guildOnlyNormal = new Map();
         for (const [name, command] of localCommands.entries()) {
             const shouldBeActive =
                 command.source === 'reborn' ||
@@ -456,6 +457,10 @@ async function deployCommands(client) {
             if (command.source === 'reborn') {
                 rebornForGuild.set(name, cleanCmd);
                 // REBORN = guilde uniquement (limite Discord 100 commandes globales déjà pleine).
+                continue;
+            }
+            if (command.source === 'normal' && GUILD_ONLY_NORMAL_SLASH.has(name)) {
+                guildOnlyNormal.set(name, cleanCmd);
                 continue;
             }
             commandsToDeploy.set(name, cleanCmd);
