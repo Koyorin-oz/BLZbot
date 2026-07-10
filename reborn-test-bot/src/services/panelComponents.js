@@ -151,7 +151,7 @@ async function buildArbreContainer(userId, displayName, avatarUrl, layout = 'sta
     );
   }
   c.addActionRowComponents(row0, row1);
-  return { file, container: c, flags: MessageFlags.IsComponentsV2 };
+  return { file, container: c, flags: v2Ephemeral() };
 }
 
 /**

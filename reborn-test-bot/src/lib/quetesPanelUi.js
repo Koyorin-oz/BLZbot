@@ -375,7 +375,7 @@ async function buildNiveauPage(userId, niveauPageIdx) {
   const files = buf
     ? [new AttachmentBuilder(buf, { name: "quetes_archives.png" })]
     : [];
-  return { components: [c], flags: MessageFlags.IsComponentsV2, files };
+  return { components: [c], flags: v2Ephemeral(), files };
 }
 
 /**
