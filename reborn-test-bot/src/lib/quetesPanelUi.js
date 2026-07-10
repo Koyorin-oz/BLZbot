@@ -300,7 +300,7 @@ async function buildRebornPage(userId, niveauPages, ctx = {}) {
   const files = canvasFile ? [canvasFile] : [];
   return {
     components: [c],
-    flags: MessageFlags.IsComponentsV2,
+    flags: v2Ephemeral(),
     files,
     totalPages,
   };
