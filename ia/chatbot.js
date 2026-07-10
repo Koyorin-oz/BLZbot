@@ -11,6 +11,13 @@ const fs = require('node:fs');
 const path = require('node:path');
 const config = require('./config.js');
 
+function chatbotVerboseLog(...args) {
+    const verbose = ['1', 'true', 'yes', 'on'].includes(
+        String(process.env.BLZ_IA_VERBOSE || '').toLowerCase(),
+    );
+    if (verbose) console.log(...args);
+}
+
 const HARD_CHANNEL_ID = config.HARD_MODE_CHANNEL_ID;
 const NORMAL_CHANNEL_ID = config.BASIC_CHATBOT_CHANNEL_ID;
 
