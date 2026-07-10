@@ -165,7 +165,7 @@ async function buildBoutiquePayload(uid, username) {
   return {
     files: blz ? [blz.file] : [],
     components: [container],
-    flags: MessageFlags.IsComponentsV2,
+    flags: v2Ephemeral(),
   };
 }
 
@@ -224,7 +224,7 @@ async function buildInventairePayload(uid, username) {
   return {
     files: [],
     components: [container],
-    flags: MessageFlags.IsComponentsV2,
+    flags: v2Ephemeral(),
   };
 }
 
