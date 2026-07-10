@@ -15,6 +15,7 @@ const skillTree = require('./skillTree');
 const indexBonuses = require('./indexBonuses');
 const quests = require('./quests');
 const trophies = require('./trophies');
+const { replyEphemeral } = require('../lib/ephemeral');
 
 function discountedPrice(userId, base) {
   const b = typeof base === 'bigint' ? base : BigInt(base);
