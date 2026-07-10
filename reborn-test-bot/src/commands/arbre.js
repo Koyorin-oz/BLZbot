@@ -178,17 +178,17 @@ module.exports = {
     const r = skillTree.buy(uid, br);
     if (!r.ok) {
       const err = new TextDisplayBuilder().setContent(`❌ ${r.error}`);
-      return interaction.reply({
+      return replyEphemeral(interaction, {
         components: [new ContainerBuilder().addTextDisplayComponents(err)],
-        flags: MessageFlags.IsComponentsV2,
+        flags: v2Ephemeral(),
       });
     }
     const ok = new TextDisplayBuilder().setContent(
       `✅ **${LABEL[br] || br}** → **${r.newStep}** / 5\nPoints restants : **${(users.getUser(uid).skill_points ?? 0)}**`,
     );
-    return interaction.reply({
+    return replyEphemeral(interaction, {
       components: [new ContainerBuilder().addTextDisplayComponents(ok)],
-      flags: MessageFlags.IsComponentsV2,
+      flags: v2Ephemeral(),
     });
   },
 };
