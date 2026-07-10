@@ -130,7 +130,7 @@ async function handlePurchase(interaction, parts) {
     users.addStars(uid, -pay);
     if (sub === 'catm') users.bumpCatm(uid, shop.utcDateKey());
     users.addInventory(uid, chest.itemId, 1);
-    await interaction.reply({
+    await replyEphemeral(interaction, {
       content: `**${chest.label}** acheté et ajouté à ton inventaire. Ouvre-le depuis \`/inventaire\` (sélectionne-le puis **Utiliser**).`,
     });
   }
