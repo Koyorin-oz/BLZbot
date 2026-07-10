@@ -636,8 +636,8 @@ async function applyDrop(interaction, userId, drop) {
             const role = await guildHackerRole(guild);
             if (member && role) await member.roles.add(role, 'Coffre légendaire — rôle Hackeur');
             else await assignRoleToCoffreUser(guild, userId, SPECIAL_ROLES.hacker);
-            await grantHackerChannelAccess(guild?.client, userId);
-            return `Vous avez gagné le rôle **Hackeur** ! Accédez au salon secret <#${resolveHackerChannelId()}>.`;
+            await grantHackerChannelAccess(guild?.client, userId, guild?.id);
+            return formatHackerGrantMessage(guild?.client, guild?.id);
         }
         default:
             addItemToInventory(userId, drop.item);

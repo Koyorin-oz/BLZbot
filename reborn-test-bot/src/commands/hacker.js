@@ -181,11 +181,13 @@ module.exports = {
     }
 
     const hub = interaction.guildId;
-    const hackerCh = hub ? resolveChannelIdForGuild(hub) : cfg.hackerChannelId;
-    const salonLine =
-      hackerCh && hub
-        ? `Salon : <#${hackerCh}>`
-        : '';
+    const hackerCh = hub ? resolveChannelIdForGuild(hub) : null;
+    let salonLine = '';
+    if (hackerCh && hub) {
+      const ch = await interaction.client.channels.fetch(hackerCh).catch(() => null);
+      if (ch?.guildId === hub) salonLine = `Salon : <#${hackerCh}>`;
+      else if (ch?.name) salonLine = `Salon secret : **#${ch.name}**`;
+    }
 
     const embed = new EmbedBuilder()
       .setColor(0x7c2d12)
