@@ -600,6 +600,15 @@ async function deployCommands(client) {
             }
         }
 
+        if (guildOnlyNormal.size > 0) {
+            const gStats = await upsertGuildSlashCommands(client, guildOnlyNormal, { compact });
+            if (!compact) {
+                console.log(
+                    `[niveau/deploy] Admin guilde : ${[...guildOnlyNormal.keys()].join(', ')} (${gStats.upserted} ok, ${gStats.errors} err)`,
+                );
+            }
+        }
+
         // 6. Nettoyage guilde : supprimer uniquement les doublons déjà présents en GLOBAL (ne pas toucher aux slash REBORN guilde-only).
         let guildCleanupTotal = 0;
         let guildsVisited = 0;
