@@ -168,17 +168,8 @@ function registerEarn(client) {
       if (gxpGain > 0n) {
         gm.addGxp(hub, uid, gxpGain);
       }
-      grpSeason.maybeResetMonthlyGrp(hub);
-      const baseGrp = C.grpRatesForMessage().msg;
-      const grpBp = skillTree.guildGrpMultBp(uid);
-      const focus = grpFocusMultForUser(hub, uid);
-      const loyalBp = loyalCampGrpMultBp(hub, uid);
-      let grpGain = (baseGrp * BigInt(grpBp) * focus * BigInt(loyalBp)) / 10_000_000_000n;
-      grpGain = indexBonuses.applyBp(uid, grpGain, 'grpBp');
-      gm.addGrp(hub, uid, grpGain);
+      grantGrpForActivity(hub, uid, C.grpRatesForMessage().msg);
       streak.updateStreak(client, uid);
-      const after = gm.getMemberRow(hub, uid);
-      grpSeason.recordGrpPeaksIfNeeded(hub, uid, after.grp);
       playerGuilds.addGxpFromMemberActivity(hub, uid, gxpGain);
       const qResult = quests.onMessage(uid);
       if (qResult?.unlocked) {
