@@ -305,7 +305,7 @@ async function handlePanelInteraction(interaction) {
     const fromProfil = goMatch[2] === 'p';
     const br = pick.get(interaction.user.id, interaction.message.id);
     if (!br || !skillTree.BRANCHES.includes(br)) {
-      return interaction.reply({ content: 'Sélectionne une **branche** dans le menu déroulant.' });
+      return replyEphemeral(interaction, { content: 'Sélectionne une **branche** dans le menu déroulant.' });
     }
     const uid = interaction.user.id;
     const r = skillTree.buy(uid, br);
