@@ -114,6 +114,23 @@ function registerClientReady(client, { isHalloweenActive }) {
                         logger.warn('[PRIVATE_ROOM] rebuild registry:', e?.message || e);
                     });
                 }
+                if (prv.error === 'lobby_not_found' || !prv.lobbyChannelId) {
+                    scheduleStartupTask('private-room-lobby', startupBase + 3000, async () => {
+                        try {
+                            const lobby = await prvMod.ensureLobbyChannel(
+                                prvGuild,
+                                prvMod.DEFAULT_VOICE_CATEGORY_ID,
+                            );
+                            logger.info(
+                                `[PRIVATE_ROOM] Lobby auto-créé au boot : <#${lobby.id}> (catégorie ${prvMod.DEFAULT_VOICE_CATEGORY_ID})`,
+                            );
+                        } catch (e) {
+                            logger.warn(
+                                `[PRIVATE_ROOM] Lobby auto au boot impossible : ${e?.message || e} — utilise /setup-lobby (admin) après deploy slash.`,
+                            );
+                        }
+                    });
+                }
             })
             .catch((e) => logger.error('[PRIVATE_ROOM] Résolution config:', e?.message || e));
     }
