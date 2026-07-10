@@ -82,7 +82,7 @@ async function handlePurchase(interaction, parts) {
     }
     users.addInventory(uid, item.id, 1);
     shop.removeSlot(uid, slot);
-    await interaction.reply({
+    await replyEphemeral(interaction, {
       content: `Achat : **${item.name}** pour **${price.toLocaleString('fr-FR')}** starss.`,
     });
     return;
