@@ -428,7 +428,7 @@ async function syncRankRoleForUser(client, hubDiscordId, userId) {
         MAIN_RANK_NAMES.some((m) => normalizeRankName(m) === n) &&
         n !== expectedMainNorm;
       if (!staleSub && !staleMain) continue;
-      if (targetRoleId && role.id === targetRoleId) continue;
+      if (keep.has(role.id)) continue;
       try {
         await member.roles.remove(role, 'Ranked RP rang auto (legacy)');
         changed = true;
