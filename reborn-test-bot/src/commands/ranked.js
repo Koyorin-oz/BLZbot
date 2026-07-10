@@ -55,7 +55,7 @@ module.exports = {
         ].join('\n'),
       );
       const c = new ContainerBuilder().addTextDisplayComponents(body);
-      return interaction.reply({ components: [c], flags: MessageFlags.IsComponentsV2 });
+      return replyEphemeral(interaction, { components: [c], flags: v2Ephemeral() });
     }
 
     if (sub === 'paliers') {
@@ -71,7 +71,7 @@ module.exports = {
         ['# Paliers ranked', '', lines.join('\n')].join('\n'),
       );
       const c = new ContainerBuilder().addTextDisplayComponents(body);
-      return interaction.reply({ components: [c], flags: MessageFlags.IsComponentsV2 });
+      return replyEphemeral(interaction, { components: [c], flags: v2Ephemeral() });
     }
 
     if (sub === 'reclamer') {
