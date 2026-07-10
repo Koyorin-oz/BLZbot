@@ -346,6 +346,7 @@ function setRebornRp(userId, amount, username) {
     svc.getOrCreate(userId, username || 'unknown');
     const v = typeof amount === 'bigint' ? amount : BigInt(Math.max(0, Math.trunc(Number(amount) || 0)));
     svc.setPoints(userId, v);
+    scheduleRebornRankSync(userId);
     return toNumberBig(svc.getPoints(userId));
   } catch (e) {
     logger.warn('[reborn] setRebornRp:', e?.message || e);
