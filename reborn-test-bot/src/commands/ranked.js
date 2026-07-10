@@ -83,7 +83,7 @@ module.exports = {
         (g) =>
           `• **${g.label}** : +${g.stars.toLocaleString('fr-FR')} starss${g.items.length ? ` · ${g.items.map((i) => `${i.qty}× ${i.id}`).join(', ')}` : ''}`,
       );
-      return interaction.reply({
+      return replyEphemeral(interaction, {
         content: `🏆 **${got.length}** palier(s) réclamé(s) :\n${lines.join('\n')}`,
       });
     }
