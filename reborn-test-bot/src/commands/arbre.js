@@ -160,9 +160,9 @@ module.exports = {
       const r = skillTree.buySeparatistStep(uid);
       if (!r.ok) {
         const err = new TextDisplayBuilder().setContent(`❌ ${r.error}`);
-        return interaction.reply({
+        return replyEphemeral(interaction, {
           components: [new ContainerBuilder().addTextDisplayComponents(err)],
-          flags: MessageFlags.IsComponentsV2,
+          flags: v2Ephemeral(),
         });
       }
       const td = new TextDisplayBuilder().setContent(
