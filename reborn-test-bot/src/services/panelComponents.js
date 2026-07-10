@@ -203,7 +203,7 @@ async function handlePanelInteraction(interaction) {
   if (interaction.customId === 'rb:shop:reset') {
     const shopExtras = require('./shopExtras');
     const r = shopExtras.useShopReset(interaction.user.id);
-    if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
+    if (!r.ok) return replyEphemeral(interaction, { content: `❌ ${r.error}` });
     await interaction.deferUpdate();
     const p = await buildBoutiquePayload(interaction.user.id, interaction.user.username);
     return interaction.editReply({ files: p.files, components: p.components, flags: p.flags });
@@ -212,7 +212,7 @@ async function handlePanelInteraction(interaction) {
   if (interaction.customId === 'rb:shop:claim_catl') {
     const shopExtras = require('./shopExtras');
     const r = shopExtras.claimGuaranteedCatl(interaction.user.id);
-    if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
+    if (!r.ok) return replyEphemeral(interaction, { content: `❌ ${r.error}` });
     await interaction.deferUpdate();
     const p = await buildBoutiquePayload(interaction.user.id, interaction.user.username);
     await interaction.editReply({ files: p.files, components: p.components, flags: p.flags });
@@ -239,7 +239,7 @@ async function handlePanelInteraction(interaction) {
       client: interaction.client,
       member: interaction.member,
     });
-    if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
+    if (!r.ok) return replyEphemeral(interaction, { content: `❌ ${r.error}` });
     await interaction.deferUpdate();
     const p = await buildInventairePayload(interaction.user.id, interaction.user.username);
     await interaction.editReply({ files: p.files, components: p.components, flags: p.flags });
@@ -261,21 +261,21 @@ async function handlePanelInteraction(interaction) {
   }
   if (interaction.customId === 'rb:q:skip:d') {
     const r = quests.skipDaily(interaction.user.id);
-    if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
+    if (!r.ok) return replyEphemeral(interaction, { content: `❌ ${r.error}` });
     await interaction.deferUpdate();
     const p = await buildQuetesPayload(interaction.user.id, 0, qCtx(interaction));
     return interaction.editReply(p);
   }
   if (interaction.customId === 'rb:q:skip:w') {
     const r = quests.skipWeekly(interaction.user.id);
-    if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
+    if (!r.ok) return replyEphemeral(interaction, { content: `❌ ${r.error}` });
     await interaction.deferUpdate();
     const p = await buildQuetesPayload(interaction.user.id, 0, qCtx(interaction));
     return interaction.editReply(p);
   }
   if (interaction.customId === 'rb:q:sel_claim') {
     const r = quests.claimSelection(interaction.user.id);
-    if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
+    if (!r.ok) return replyEphemeral(interaction, { content: `❌ ${r.error}` });
     await interaction.deferUpdate();
     const p = await buildQuetesPayload(interaction.user.id, 0, qCtx(interaction));
     return interaction.editReply(p);
@@ -309,7 +309,7 @@ async function handlePanelInteraction(interaction) {
     }
     const uid = interaction.user.id;
     const r = skillTree.buy(uid, br);
-    if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
+    if (!r.ok) return replyEphemeral(interaction, { content: `❌ ${r.error}` });
     // Défère AVANT le rendu canvas + avatar fetch (sinon token expire en 3 s -> 10062).
     await interaction.deferUpdate();
     const b = await buildArbreContainer(
