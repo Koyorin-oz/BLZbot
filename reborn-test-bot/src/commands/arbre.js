@@ -151,9 +151,9 @@ module.exports = {
             '*Gagne **1 point séparatiste** par séparation gagnée côté split.*',
           ].join('\n'),
         );
-        return interaction.reply({
+        return replyEphemeral(interaction, {
           components: [new ContainerBuilder().addTextDisplayComponents(td)],
-          flags: MessageFlags.IsComponentsV2,
+          flags: v2Ephemeral(),
         });
       }
       // action === 'acheter'
