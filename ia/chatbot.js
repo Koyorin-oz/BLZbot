@@ -456,8 +456,95 @@ function maxTokensForModel(model, isHard) {
         return Math.min(2048, Math.max(512, Number(process.env.IA_HARD_OSS_MAX_TOKENS || 768)));
     }
     return isHard
-        ? Number(process.env.IA_HARD_MAX_TOKENS || 256)
+        ? Number(process.env.IA_HARD_MAX_TOKENS || 400)
         : Number(process.env.IA_CHATBOT_MAX_TOKENS || 640);
+}
+
+function buildHardApiSystem(message) {
+    if (String(process.env.IA_HARD_USE_FULL_PROMPT || '').trim() === '1') {
+        return `${loadPrompt('hard')}\n\n${buildSpeakerContext(message)}`;
+    }
+    return `${HARD_SIMBOT_API_PROMPT}\n\n${buildSpeakerContext(message)}`;
+}
+
+async function openRouterChatCompletion(messages, { temperature, maxTokens, isHard }) {
+    const key = String(process.env.OPENROUTER_API_KEY || config.API_KEY || '').trim();
+    if (!key || key.length < 10) return '';
+    const model =
+        process.env.IA_HARD_OPENROUTER_MODEL ||
+        process.env.IA_CHATBOT_OPENROUTER_MODEL ||
+        'meta-llama/llama-3.1-8b-instruct';
+    try {
+        const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${key}`,
+                'HTTP-Referer': 'https://github.com/BLZbot',
+                'X-Title': 'BLZbot',
+            },
+            body: JSON.stringify({
+                model,
+                messages,
+                temperature: Math.min(2, Math.max(0, temperature)),
+                max_tokens: Math.min(1024, Math.max(64, maxTokens)),
+            }),
+        });
+        const raw = await res.text();
+        const data = raw ? JSON.parse(raw) : {};
+        if (!res.ok) {
+            console.warn('[ia chatbot] OpenRouter:', data?.error?.message || raw?.slice(0, 120));
+            return '';
+        }
+        const text = extractGroqText(data?.choices?.[0]);
+        if (text) console.log(`[ia chatbot] OK OpenRouter ${model}`);
+        return text;
+    } catch (e) {
+        console.warn('[ia chatbot] OpenRouter:', e?.message || e);
+        return '';
+    }
+}
+
+async function requestChatCompletion(messages, { temperature, maxTokens, isHard }) {
+    const models = getModelsToTry(isHard);
+    let lastErr;
+    for (let i = 0; i < models.length; i++) {
+        const model = models[i];
+        try {
+            const text = await groqChatCompletion(model, messages, {
+                temperature,
+                isHard,
+                maxTokens: maxTokens ?? maxTokensForModel(model, isHard),
+            });
+            if (text) return { text, model };
+            lastErr = new Error(`Réponse vide (${model})`);
+            lastErr.code = 'EMPTY_REPLY';
+        } catch (e) {
+            lastErr = e;
+            console.error(`[ia chatbot] ${model}:`, collectErrorText(e).slice(0, 200));
+            const st = pickHttpStatus(e);
+            if (st === 401 || st === 403) break;
+        }
+    }
+
+    const simpleUser = messages.filter((m) => m.role === 'user').pop()?.content || '';
+    const simpleSystem =
+        messages.find((m) => m.role === 'system')?.content?.split('\n').slice(0, 8).join('\n') ||
+        HARD_SIMBOT_API_PROMPT;
+    const retry = await groqChatCompletion(
+        'llama-3.1-8b-instant',
+        [
+            { role: 'system', content: simpleSystem },
+            { role: 'user', content: simpleUser },
+        ],
+        { temperature: isHard ? 0.88 : 0.55, isHard, maxTokens: isHard ? 220 : 400 },
+    ).catch(() => '');
+    if (retry) return { text: retry, model: 'llama-3.1-8b-instant (retry)' };
+
+    const orText = await openRouterChatCompletion(messages, { temperature, maxTokens, isHard });
+    if (orText) return { text: orText, model: 'openrouter' };
+
+    throw lastErr || new Error('Aucune API disponible');
 }
 
 function collectErrorText(err) {
