@@ -504,7 +504,7 @@ async function openRouterChatCompletion(messages, { temperature, maxTokens, isHa
             return '';
         }
         const text = extractGroqText(data?.choices?.[0]);
-        if (text) console.log(`[ia chatbot] OK OpenRouter ${model}`);
+        if (text) chatbotVerboseLog(`[ia chatbot] OK OpenRouter ${model}`);
         return text;
     } catch (e) {
         console.warn('[ia chatbot] OpenRouter:', e?.message || e);
