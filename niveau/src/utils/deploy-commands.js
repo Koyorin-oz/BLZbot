@@ -282,6 +282,15 @@ async function deployRebornGuildSlashOnly(client, opts = {}) {
         compact,
         globalSlashNames: globalNames,
     });
+    const guildOnlyNormal = new Map();
+    for (const name of GUILD_ONLY_NORMAL_SLASH) {
+        const fp = path.join(__dirname, '..', 'commands', 'admin', `${name}.js`);
+        const data = loadCommandData(fp);
+        if (data) guildOnlyNormal.set(name, data);
+    }
+    if (guildOnlyNormal.size) {
+        await upsertGuildSlashCommands(client, guildOnlyNormal, { compact });
+    }
     const hasTemple = rebornForGuild.has('temple');
     if (compact) {
         const { blzLine } = require(path.join(__dirname, '..', '..', '..', 'blz-log.js'));
