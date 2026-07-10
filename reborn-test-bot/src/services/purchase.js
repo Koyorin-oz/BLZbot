@@ -57,7 +57,7 @@ async function handlePurchase(interaction, parts) {
     shop.ensureShopSlots(uid);
     const row = shop.getSlot(uid, slot);
     if (!row) {
-      await interaction.reply({ content: 'Slot introuvable.' });
+      await replyEphemeral(interaction, { content: 'Slot introuvable.' });
       return;
     }
     const item = getItem(row.item_id);
