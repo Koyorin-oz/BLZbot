@@ -676,17 +676,10 @@ async function grantHackerChannelAccess(client, userId, guildId) {
     }
 }
 
-function formatHackerGrantMessage(client, guildId) {
-    const channelId = resolveHackerChannelId(guildId);
+function formatHackerGrantMessage(channel, guildId) {
     const lines = ['Vous avez gagné le rôle **Hackeur** !'];
-    if (!channelId || !guildId) {
-        lines.push('Accès salon secret hacker débloqué.');
-        return lines.join(' ');
-    }
-  // Sync check only — mention uniquement si le salon est sur ce serveur.
-    const ch = client?.channels?.cache?.get(channelId);
-    if (ch?.guildId === guildId) {
-        lines.push(`Accédez au salon secret <#${channelId}>.`);
+    if (channel?.guildId && guildId && channel.guildId === guildId) {
+        lines.push(`Accédez au salon secret <#${channel.id}>.`);
     } else {
         lines.push('Accès salon secret hacker débloqué.');
     }
