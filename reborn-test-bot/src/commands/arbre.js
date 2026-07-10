@@ -109,7 +109,7 @@ module.exports = {
       const c = new ContainerBuilder().addTextDisplayComponents(txt);
       return interaction.editReply({
         components: [c],
-        flags: MessageFlags.IsComponentsV2,
+        flags: v2Ephemeral(),
       });
     }
 
