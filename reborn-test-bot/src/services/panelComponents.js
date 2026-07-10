@@ -383,7 +383,7 @@ async function handlePanelInteraction(interaction) {
         });
       } catch (e) {
         console.error('[passeport card]', e);
-        return interaction.followUp({ content: 'Canvas indisponible (module `canvas` / binaire).' });
+        return followUpEphemeral(interaction, { content: 'Canvas indisponible (module `canvas` / binaire).' });
       }
       const f = new AttachmentBuilder(buf, { name: 'passeport_reborn.png' });
       const c = new ContainerBuilder();
