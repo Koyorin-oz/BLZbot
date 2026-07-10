@@ -51,7 +51,7 @@ async function handlePurchase(interaction, parts) {
   if (kind === 's') {
     const slot = parseInt(sub, 10);
     if (Number.isNaN(slot) || slot < 0 || slot > 4) {
-      await interaction.reply({ content: 'Slot invalide.' });
+      await replyEphemeral(interaction, { content: 'Slot invalide.' });
       return;
     }
     shop.ensureShopSlots(uid);
