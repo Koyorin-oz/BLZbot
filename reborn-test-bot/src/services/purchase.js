@@ -230,7 +230,10 @@ async function openChest(uid, sub, guildId = null, accessCtx = null) {
       const { grantHackerAccess, formatGrantMessage } = require('./hackerAccess');
       const accessResult = await grantHackerAccess(grantCtx);
       if (accessResult.ok) {
-        lines.push(formatGrantMessage(accessResult).replace(/\n/g, ' · '));
+        for (let i = lines.length - 1; i >= 0; i -= 1) {
+          if (/salon secret hacker/i.test(lines[i])) lines.splice(i, 1);
+        }
+        lines.push(formatGrantMessage(accessResult, { guildId: grantCtx.guildId }));
       } else {
         users.addInventory(uid, 'hacker_token', 1);
         lines.push('*(Jeton hacker en inventaire — utilise-le depuis `/inventaire`)*');
