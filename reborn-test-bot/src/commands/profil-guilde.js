@@ -19,7 +19,7 @@ const { totalToLevelState } = require('../reborn/xpCurve');
 const ladder = require('../services/guildLadder');
 const { d } = require('../lib/slashDesc');
 
-const { renderGuildProfileV2 } = require(path.join(
+const { renderGuildProfileV2, renderGuildProfileV2Stats } = require(path.join(
   __dirname,
   '..',
   '..',
