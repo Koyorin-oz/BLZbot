@@ -200,15 +200,34 @@ async function buildProfilGuildePayload(interaction, { hub, gRow, page = 1 }) {
     total_value: 0,
   }));
 
+  const stats = buildStatsForCanvas(g, hub, {
+    treasury,
+    gxp,
+    grade,
+    next,
+    sep,
+    totalMembers,
+    cap,
+  });
+
   let png;
   try {
-    png = await renderGuildProfileV2({
-      guild: canvasGuild,
-      members: canvasMembers,
-      owner: owner || { username: members.find((m) => m.user_id === g.leader_id)?.username || 'Chef' },
-      warInfo: null,
-      totalMembers,
-    });
+    if (page === 2) {
+      png = await renderGuildProfileV2Stats({
+        guild: canvasGuild,
+        owner: owner || { username: members.find((m) => m.user_id === g.leader_id)?.username || 'Chef' },
+        stats,
+        totalMembers,
+      });
+    } else {
+      png = await renderGuildProfileV2({
+        guild: canvasGuild,
+        members: canvasMembers,
+        owner: owner || { username: members.find((m) => m.user_id === g.leader_id)?.username || 'Chef' },
+        warInfo: null,
+        totalMembers,
+      });
+    }
   } catch (e) {
     console.error('[profil-guilde canvas]', e?.message || e);
     return { error: 'Impossible de générer le canvas profil guilde.' };
