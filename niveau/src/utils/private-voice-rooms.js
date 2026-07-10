@@ -252,6 +252,7 @@ async function resolveLobbyVoiceChannel(guild, preferredId) {
     await ensureGuildChannelsCached(guild);
     const byName = findLobbyByName(guild);
     if (byName) {
+        registerLobbyChannel(guild.client, guild.id, byName.id);
         return { id: byName.id, channel: byName, ok: true, triedIds, source: 'name' };
     }
 
