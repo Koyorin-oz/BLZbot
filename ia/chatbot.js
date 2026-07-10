@@ -814,6 +814,12 @@ async function handleChatbotMessage(message, client) {
         } else if (usedModel) {
             console.log(`[ia chatbot] OK ${usedModel} (${reply.length} chars)`);
         }
+        if (reply && isHard) {
+            const norm = reply.toLowerCase().replace(/\s+/g, ' ').trim();
+            if (BANNED_FALLBACK_PHRASES.has(norm)) {
+                reply = generateSimbotLocalReply(userText, channelId);
+            }
+        }
         reply = trimHardReply(reply, isHard, userText);
         if (reply.length > MAX_DISCORD) reply = reply.slice(0, MAX_DISCORD) + '…';
 
