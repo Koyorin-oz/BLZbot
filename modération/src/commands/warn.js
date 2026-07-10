@@ -59,6 +59,17 @@ module.exports = {
         if (!(await deferEphemeral(interaction))) return;
 
         const utilisateur = interaction.options.getUser('utilisateur');
+        if (!utilisateur) {
+            const legacyStaffWarn =
+                interaction.options.getString('degre') != null ||
+                (interaction.options.getUser('membre') && !interaction.options.getString('regle'));
+            return interaction.editReply({
+                content: legacyStaffWarn
+                    ? '❌ Tu utilises l’**ancien** `/warn` staff (membre / degré). Utilise **`/warn-passeport`** pour le passeport staff.\nPour une sanction membre : **`/warn`** avec *utilisateur* + *règle*.'
+                    : '❌ Membre introuvable — choisis un utilisateur dans la liste Discord.',
+            });
+        }
+
         const regle = interaction.options.getString('regle');
         const raisonExtra = interaction.options.getString('raison');
         const finalReason = raisonExtra ? `${regle} - ${raisonExtra}` : regle;
