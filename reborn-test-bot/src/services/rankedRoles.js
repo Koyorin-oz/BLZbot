@@ -483,6 +483,7 @@ module.exports = {
   TIER_DEFS,
   RANKS_ASC,
   RANK_ROLE_IDS,
+  FAMILY_ROLE_IDS,
   tierForRp,
   rankForRp,
   nextRank,
