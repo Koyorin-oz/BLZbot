@@ -238,24 +238,7 @@ async function buildProfilGuildePayload(interaction, { hub, gRow, page = 1 }) {
     media: { url: 'attachment://guild_profile_v2.png' },
   });
   const container = new ContainerBuilder().addMediaGalleryComponents(mediaGallery);
-
-  const row1 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(`rb_pg_list_${g.id}`)
-      .setLabel('Liste complète')
-      .setEmoji('📋')
-      .setStyle(ButtonStyle.Primary),
-    new ButtonBuilder()
-      .setCustomId(`rb_pg_careers_${g.id}`)
-      .setLabel('Carrières')
-      .setEmoji('🎓')
-      .setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder()
-      .setCustomId(`rb_pg_quests_${g.id}`)
-      .setLabel('Quêtes')
-      .setEmoji('📜')
-      .setStyle(ButtonStyle.Success),
-  );
+  const row1 = buildProfilGuildeButtons(g.id, page);
 
   return {
     payload: {
@@ -266,6 +249,7 @@ async function buildProfilGuildePayload(interaction, { hub, gRow, page = 1 }) {
       flags: MessageFlags.IsComponentsV2,
     },
     g,
+    page,
   };
 }
 
