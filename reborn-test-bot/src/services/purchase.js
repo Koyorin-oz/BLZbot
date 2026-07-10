@@ -100,7 +100,7 @@ async function handlePurchase(interaction, parts) {
     else if (sub === 'starss') extendBoost(uid, 'starss_boost_ms');
     else {
       users.addStars(uid, price);
-      await interaction.reply({ content: 'Boost inconnu.' });
+      await replyEphemeral(interaction, { content: 'Boost inconnu.' });
       return;
     }
     await interaction.reply({ content: `Boost ×2 (**${sub}**) activé +1h (cumulable).` });
