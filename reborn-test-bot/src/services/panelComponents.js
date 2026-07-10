@@ -173,7 +173,7 @@ async function handlePanelInteraction(interaction) {
     }
     if (interaction.customId === 'rb:q:pick') {
       const r = quests.pickSelection(interaction.user.id, interaction.values[0]);
-      if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
+      if (!r.ok) return replyEphemeral(interaction, { content: `❌ ${r.error}` });
       await interaction.deferUpdate();
       const p = await buildQuetesPayload(interaction.user.id, 0, qCtx(interaction));
       return interaction.editReply(p);
