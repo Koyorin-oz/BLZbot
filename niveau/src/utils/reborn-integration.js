@@ -520,6 +520,7 @@ module.exports = {
   collectRebornSlashMap,
   loadRebornSlashFromGeneratedJson,
   bootstrap,
+  registerEarnGateway,
   handleComponentInteraction,
   getRebornEconomySnapshot,
   getRebornStars,
