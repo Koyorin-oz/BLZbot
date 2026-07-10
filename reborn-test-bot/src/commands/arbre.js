@@ -7,6 +7,7 @@ const {
 const skillTree = require('../services/skillTree');
 const { d } = require('../lib/slashDesc');
 const { buildArbreContainer } = require('../services/panelComponents');
+const { deferReplyEphemeral, replyEphemeral, v2Ephemeral } = require('../lib/ephemeral');
 
 const LABEL = {
   quest: 'Quête',
