@@ -14,6 +14,7 @@ const { buildPassportTextV2 } = require('../lib/passportV2Ui');
 const pick = require('../lib/componentPickCache');
 const { buildBoutiquePayload, buildInventairePayload } = require('../lib/shopV2Ui');
 const { buildQuetesPayload } = require('../lib/quetesPanelUi');
+const { replyEphemeral, followUpEphemeral, deferReplyEphemeral, v2Ephemeral } = require('../lib/ephemeral');
 const { handlePurchase } = require('./purchase');
 const users = require('./users');
 const skillTree = require('./skillTree');
