@@ -331,6 +331,17 @@ async function handleRebornGuildButton(i) {
   if (!gFresh || gFresh.hub_discord_id !== i.guildId) {
     return i.reply({ content: 'Guilde invalide.' }).catch(() => {});
   }
+
+  if (i.customId.startsWith('rb_pg_stats_') || i.customId.startsWith('rb_pg_main_')) {
+    const page = i.customId.startsWith('rb_pg_stats_') ? 2 : 1;
+    if (!i.deferred && !i.replied) await i.deferUpdate();
+    const built = await buildProfilGuildePayload(i, { hub: i.guildId, gRow: gFresh, page });
+    if (built.error) {
+      return i.followUp({ content: built.error, ephemeral: true }).catch(() => {});
+    }
+    return i.editReply(built.payload).catch(() => {});
+  }
+
   if (i.customId.startsWith('rb_pg_list_')) {
     if (!i.deferred && !i.replied) await i.deferUpdate();
     const rows = db
