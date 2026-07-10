@@ -139,6 +139,8 @@ function grantVoiceMinutes(guildId, userId, minutes) {
  * @param {import('discord.js').Client} client
  */
 function registerEarn(client) {
+  if (earnClients.has(client)) return;
+  earnClients.add(client);
   _earnClient = client;
   client.on('messageCreate', async (msg) => {
     try {
