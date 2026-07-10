@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const { buildBoutiquePayload } = require('../lib/shopV2Ui');
 const { d } = require('../lib/slashDesc');
+const { deferReplyEphemeral } = require('../lib/ephemeral');
 
 module.exports = {
   data: new SlashCommandBuilder().setName('boutique').setDescription(d('🛒', 'Boutique du jour — items, coffres et boosts.')),

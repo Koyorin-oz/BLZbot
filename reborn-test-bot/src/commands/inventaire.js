@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const { buildInventairePayload } = require('../lib/shopV2Ui');
 const { d } = require('../lib/slashDesc');
+const { deferReplyEphemeral } = require('../lib/ephemeral');
 
 module.exports = {
   data: new SlashCommandBuilder().setName('inventaire').setDescription(d('🎒', 'Consulte ton inventaire et utilise tes objets.')),
