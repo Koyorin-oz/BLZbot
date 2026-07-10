@@ -128,11 +128,50 @@ function commandsAreEqual(remote, local) {
     return normalizeSlashCommandPayload(remote) === normalizeSlashCommandPayload(local);
 }
 
+/** Commandes admin utilitaires — déployées en GU guilde (évite la limite 100 global + visible tout de suite). */
+const GUILD_ONLY_NORMAL_SLASH = new Set(['setup-lobby', 'stats-voc-panel']);
+
 /**
- * Slash REBORN sur la/les guilde(s) GUILD_ID (+ BLZ_MAIN_GUILD_ID) — visible tout de suite (pas d’attente global).
+ * Crée ou met à jour des slash sur chaque guilde du bot (sans écraser les autres commandes guilde).
  * @param {import('discord.js').Client} client
- * @param {Map<string, object>} rebornCommands
+ * @param {Map<string, object>} commandMap
  */
+async function upsertGuildSlashCommands(client, commandMap, { compact = false } = {}) {
+    if (!commandMap?.size) return { upserted: 0, errors: 0 };
+    const guildIds = getRebornDeployGuildIds(client);
+    let upserted = 0;
+    let errors = 0;
+    for (const gid of guildIds) {
+        let guild = client.guilds.cache.get(gid);
+        if (!guild) guild = await client.guilds.fetch(gid).catch(() => null);
+        if (!guild) continue;
+        let existing;
+        try {
+            existing = await guild.commands.fetch();
+        } catch (e) {
+            console.warn(`[niveau/deploy] guilde ${gid} fetch:`, e?.message || e);
+            errors += commandMap.size;
+            continue;
+        }
+        for (const [name, data] of commandMap.entries()) {
+            try {
+                const hit = existing.find((c) => c.name === name);
+                if (hit) {
+                    await guild.commands.edit(hit.id, data);
+                } else {
+                    await guild.commands.create(data);
+                }
+                upserted += 1;
+                if (!compact) console.log(`  [guild ${guild.id}] /${name} ok`);
+            } catch (e) {
+                errors += 1;
+                console.error(`[niveau/deploy] guilde /${name}:`, e?.message || e);
+            }
+        }
+    }
+    return { upserted, errors };
+}
+
 /** Guildes où pousser les slash REBORN : .env + chaque serveur où le bot est membre. */
 function getRebornDeployGuildIds(client) {
     const ids = new Set(getSlashDeployGuildIds());
