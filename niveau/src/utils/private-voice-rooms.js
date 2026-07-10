@@ -308,6 +308,7 @@ async function resolvePrivateRoomConfig(client, guild, opts = {}) {
                 };
             }
             lobbyChannelId = lobbyRes.id;
+            registerLobbyChannel(client, guild.id, lobbyChannelId);
             // Si pas de catégorie forcée dans .env, utilise celle du lobby (évite les IDs obsolètes).
             const envCat = String(process.env.PRIVATE_ROOM_CATEGORY_ID || '').trim();
             if ((!envCat || !/^\d{17,22}$/.test(envCat)) && lobbyRes.channel?.parentId) {
