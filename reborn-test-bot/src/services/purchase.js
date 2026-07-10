@@ -118,7 +118,7 @@ async function handlePurchase(interaction, parts) {
       users.resetCatmIfNewDay(uid, day);
       const { count } = users.getCatmState(uid);
       if (count >= CATM_DAILY_LIMIT) {
-        await interaction.reply({ content: `Limite journalière Coffre meilleur (**${CATM_DAILY_LIMIT}**/jour).` });
+        await replyEphemeral(interaction, { content: `Limite journalière Coffre meilleur (**${CATM_DAILY_LIMIT}**/jour).` });
         return;
       }
     }
