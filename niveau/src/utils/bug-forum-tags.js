@@ -146,12 +146,8 @@ async function handleBugTagButton(interaction) {
 
   if (isFinalBugTag(tagId)) {
     await closeResolvedBugThread(thread, tagId);
-    await interaction.editReply({
-      content: `🏷️ Tag **${label}** appliqué, le signalement a été traité et le fil a été fermé.`,
-      flags: 64,
-    });
   } else {
-    await interaction.editReply({
+    await interaction.followUp({
       content: `🏷️ Tag **${label}** appliqué sur ce signalement.`,
       flags: 64,
     });
