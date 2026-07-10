@@ -344,7 +344,7 @@ async function handlePanelInteraction(interaction) {
       { backUserId: fromProfil ? interaction.user.id : null },
     );
     if (!b) {
-      return interaction.followUp({ content: 'Génération image indisponible (canvas).' });
+      return followUpEphemeral(interaction, { content: 'Génération image indisponible (canvas).' });
     }
     return interaction.editReply({ files: [b.file], components: [b.container], flags: b.flags });
   }
