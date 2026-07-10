@@ -740,6 +740,9 @@ async function handleLobbyJoin(client, oldState, newState) {
     if (!joinedLobby) return;
 
     const { guild, member } = newState;
+
+    await applyLobbyVoiceRestrictions(member);
+
     const sessions = ensureSessions(client);
     const key = sessionKey(guild.id, member.id);
     let session = sessions.get(key);
@@ -752,6 +755,7 @@ async function handleLobbyJoin(client, oldState, newState) {
         const existing = await guild.channels.fetch(session.voiceChannelId).catch(() => null);
         if (existing?.isVoiceBased?.()) {
             await member.voice.setChannel(existing).catch(() => null);
+            await releaseLobbyVoiceRestrictions(member);
             return;
         }
         session.voiceChannelId = null;
@@ -759,10 +763,14 @@ async function handleLobbyJoin(client, oldState, newState) {
 
     try {
         const created = await createPrivateVoice(client, member, cfg);
-        if (!created?.ok && created?.error !== 'perms' && created?.error !== 'category') {
-            logger.warn('[PRIVATE_ROOM] createPrivateVoice:', created?.error);
+        if (!created?.ok) {
+            await releaseLobbyVoiceRestrictions(member);
+            if (created?.error !== 'perms' && created?.error !== 'category') {
+                logger.warn('[PRIVATE_ROOM] createPrivateVoice:', created?.error);
+            }
         }
     } catch (e) {
+        await releaseLobbyVoiceRestrictions(member);
         logger.error('[PRIVATE_ROOM]', e?.message || e);
     }
 }
