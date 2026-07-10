@@ -371,11 +371,140 @@ async function renderGuildProfileV2({ guild, members, owner, warInfo, totalMembe
   ctx.textAlign = 'center';
   const footerTip =
     guild.reborn_footer ||
-    '💡 Utilisez les boutons ci-dessous pour voir la liste complète, les carrières ou les quêtes';
+    '💡 Boutons : liste complète des membres · page Stats pour la progression';
   ctx.fillText(truncateText(ctx, footerTip, 1100), W / 2, H - 20);
   ctx.textAlign = 'left';
 
   return canvas.toBuffer('image/png');
 }
 
-module.exports = { renderGuildProfileV2 };
+/**
+ * Page 2 — progression REBORN (ex-embed « Carrières » + `/guilde info`).
+ * @param {Object} opts
+ * @param {Object} opts.guild - Même objet que page 1 (reborn_mode)
+ * @param {Object} opts.owner - Chef { username }
+ * @param {Object} opts.stats - Détails progression
+ * @param {number} opts.totalMembers
+ */
+async function renderGuildProfileV2Stats({ guild, owner, stats, totalMembers }) {
+  const bg = await loadBackgroundAsset();
+  const canvas = createCanvas(W, H);
+  const ctx = canvas.getContext('2d');
+
+  ctx.drawImage(bg, 0, 0, W, H);
+  ctx.fillStyle = THEME.overlay;
+  ctx.fillRect(0, 0, W, H);
+
+  const titleFace = 'InterBold';
+  const textFace = 'Inter';
+
+  panel(ctx, 24, 24, 1152, 88, 24, THEME.header);
+  ctx.font = `700 34px ${titleFace}`;
+  ctx.fillStyle = THEME.accent;
+  ctx.fillText('📊 Progression & fiche', 48, 62);
+  ctx.font = `600 20px ${textFace}`;
+  ctx.fillStyle = THEME.sub;
+  const sub = truncateText(ctx, `${guild.name} · ${stats.guildId || guild.id}`, 900);
+  ctx.fillText(sub, 48, 92);
+
+  panel(ctx, 24, 128, 560, 300, 24);
+  ctx.font = `700 24px ${titleFace}`;
+  ctx.fillStyle = THEME.accent;
+  ctx.fillText('⚡ Économie guilde', 48, 168);
+  ctx.font = `400 17px ${textFace}`;
+  ctx.fillStyle = THEME.text;
+  const linesLeft = [
+    `GXP (guilde) : ${stats.gxpFormatted}`,
+    `Trésorerie : ${stats.treasuryFormatted} starss`,
+    `Niveau guilde : ${stats.guildLevel}`,
+    `Grade : ${stats.gradeLabel}${stats.nextGradeLabel ? ` → ${stats.nextGradeLabel}` : ''}`,
+    `Membres : ${totalMembers} / ${stats.memberCap}`,
+    `Chef : ${owner?.username || '—'}`,
+    `GRP chef (serveur) : ${stats.leaderGrpRank || '—'}`,
+  ];
+  let y = 200;
+  for (const line of linesLeft) {
+    ctx.fillText(truncateText(ctx, line, 500), 48, y);
+    y += 32;
+  }
+
+  panel(ctx, 604, 128, 572, 300, 24);
+  ctx.font = `700 24px ${titleFace}`;
+  ctx.fillStyle = THEME.accent;
+  ctx.fillText('🛡️ Protection & salon', 628, 168);
+  ctx.font = `400 17px ${textFace}`;
+  ctx.fillStyle = THEME.text;
+  y = 200;
+  const linesRight = [
+    `Anti-séparation : ${stats.sepProtected ? 'oui' : 'non'}`,
+    stats.sepReason ? `↳ ${stats.sepReason}` : null,
+    `Salon privé : ${stats.salonLabel}`,
+    `Dernier focus : ${stats.lastFocusLabel}`,
+    `ID guilde : ${stats.guildId || guild.id}`,
+  ].filter(Boolean);
+  for (const line of linesRight) {
+    ctx.fillStyle = line.startsWith('↳') ? THEME.sub : THEME.text;
+    ctx.fillText(truncateText(ctx, line, 520), 628, y);
+    y += 32;
+  }
+
+  panel(ctx, 24, 448, 1152, 200, 24);
+  ctx.font = `700 24px ${titleFace}`;
+  ctx.fillStyle = THEME.accent;
+  ctx.fillText('📝 Description', 48, 488);
+  ctx.font = `400 17px ${textFace}`;
+  ctx.fillStyle = THEME.text;
+  const desc = stats.description || 'Aucune description.';
+  const descLines = wrapCanvasLines(ctx, desc, 1080, 3);
+  y = 520;
+  for (const line of descLines) {
+    ctx.fillText(line, 48, y);
+    y += 28;
+  }
+
+  if (stats.rolesLines?.length) {
+    panel(ctx, 24, 668, 1152, 108, 24);
+    ctx.font = `700 22px ${titleFace}`;
+    ctx.fillStyle = THEME.accent;
+    ctx.fillText('🎭 Rôles internes', 48, 702);
+    ctx.font = `400 16px ${textFace}`;
+    ctx.fillStyle = THEME.sub;
+    const rolesPreview = stats.rolesLines.slice(0, 3).join('  ·  ');
+    ctx.fillText(truncateText(ctx, rolesPreview, 1080), 48, 738);
+    if (stats.rolesLines.length > 3) {
+      ctx.fillText(`+ ${stats.rolesLines.length - 3} autre(s) — /guilde perm_voir`, 48, 762);
+    }
+  }
+
+  ctx.font = `italic 14px ${textFace}`;
+  ctx.fillStyle = THEME.sub;
+  ctx.textAlign = 'center';
+  ctx.fillText('◀ Profil pour revenir à la vue membres · Quêtes perso : /quetes', W / 2, H - 20);
+  ctx.textAlign = 'left';
+
+  return canvas.toBuffer('image/png');
+}
+
+/** Découpe un texte en lignes pour le canvas (max lignes). */
+function wrapCanvasLines(ctx, text, maxWidth, maxLines = 4) {
+  const words = String(text).replace(/\s+/g, ' ').trim().split(' ');
+  const lines = [];
+  let cur = '';
+  for (const w of words) {
+    const test = cur ? `${cur} ${w}` : w;
+    if (ctx.measureText(test).width > maxWidth && cur) {
+      lines.push(cur);
+      cur = w;
+      if (lines.length >= maxLines) break;
+    } else {
+      cur = test;
+    }
+  }
+  if (cur && lines.length < maxLines) lines.push(cur);
+  if (lines.length === maxLines && words.length > lines.join(' ').split(' ').length) {
+    lines[maxLines - 1] = truncateText(ctx, lines[maxLines - 1], maxWidth - 20) + '…';
+  }
+  return lines.length ? lines : ['—'];
+}
+
+module.exports = { renderGuildProfileV2, renderGuildProfileV2Stats };
