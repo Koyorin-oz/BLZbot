@@ -1429,8 +1429,8 @@
         "required": false
       }
     ],
-    "name": "warn",
-    "description": "⚠️ Enregistre un avertissement staff (léger → critique).",
+    "name": "warn-passeport",
+    "description": "⚠️ Avertissement staff passeport (léger → critique, points de sécu).",
     "dm_permission": false,
     "type": 1
   }
