@@ -244,6 +244,33 @@ function familyMainName(family) {
   return map[family] || null;
 }
 
+function getFamilyRoleId(family) {
+  if (!family || family === 'vide') return null;
+  return FAMILY_ROLE_IDS[family] || null;
+}
+
+function rolesToKeepForTier(tier, cfg) {
+  const def = RANK_BY_KEY.get(tier) || RANKS_ASC[0];
+  const targetRoleId = cfg.find((c) => c.key === tier)?.roleId || null;
+  const familyRoleId = getFamilyRoleId(def.family);
+  const keep = new Set();
+  if (targetRoleId) keep.add(targetRoleId);
+  if (familyRoleId) keep.add(familyRoleId);
+  return { def, targetRoleId, familyRoleId, keep };
+}
+
+function rolesToRemoveForTier(tier, cfg) {
+  const { keep } = rolesToKeepForTier(tier, cfg);
+  const remove = new Set();
+  for (const c of cfg) {
+    if (c.roleId && !keep.has(c.roleId)) remove.add(c.roleId);
+  }
+  for (const fid of Object.values(FAMILY_ROLE_IDS)) {
+    if (fid && !keep.has(fid)) remove.add(fid);
+  }
+  return [...remove];
+}
+
 /** Vérifie que le membre n'a plus d'anciens rôles ranked et possède le bon rôle configuré. */
 function memberMatchesTier(member, tier, cfg) {
   const def = RANK_BY_KEY.get(tier) || RANKS_ASC[0];
