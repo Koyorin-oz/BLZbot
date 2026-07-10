@@ -9,7 +9,7 @@ module.exports = {
    * @param {import('discord.js').ChatInputCommandInteraction} interaction
    */
   async execute(interaction) {
-    await interaction.deferReply();
+    await deferReplyEphemeral(interaction);
     const p = await buildInventairePayload(interaction.user.id, interaction.user.username);
     return interaction.editReply({
       files: p.files,

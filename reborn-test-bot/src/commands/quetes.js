@@ -10,9 +10,9 @@ module.exports = {
     .setDescription(d('🎯', 'Quêtes quotidiennes, hebdomadaires et progression.')),
 
   async execute(interaction) {
-    if (!interaction.guildId) return interaction.reply({ content: 'Serveur uniquement.' });
+    if (!interaction.guildId) return replyEphemeral(interaction, { content: 'Serveur uniquement.' });
     users.getOrCreate(interaction.user.id, interaction.user.username);
-    await interaction.deferReply();
+    await deferReplyEphemeral(interaction);
     const payload = await buildQuetesPayload(interaction.user.id, 0, {
       displayName: interaction.member?.displayName || interaction.user.username,
       avatarUrl: interaction.user.displayAvatarURL({ extension: 'png', size: 256 }),
