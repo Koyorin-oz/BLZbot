@@ -273,18 +273,29 @@ function rolesToRemoveForTier(tier, cfg) {
 
 /** Vérifie que le membre n'a plus d'anciens rôles ranked et possède le bon rôle configuré. */
 function memberMatchesTier(member, tier, cfg) {
-  const def = RANK_BY_KEY.get(tier) || RANKS_ASC[0];
-  const targetRoleId = cfg.find((c) => c.key === tier)?.roleId || null;
+  const { def, targetRoleId, familyRoleId, keep } = rolesToKeepForTier(tier, cfg);
   const currentNorm = normalizeRankName(def.label);
   const expectedMainNorm =
     def.family && def.family !== 'vide' ? normalizeRankName(familyMainName(def.family)) : null;
 
   for (const c of cfg) {
-    if (!c.roleId || c.key === tier) continue;
+    if (!c.roleId || keep.has(c.roleId)) continue;
     if (member.roles.cache.has(c.roleId)) return false;
+  }
+  for (const fid of Object.values(FAMILY_ROLE_IDS)) {
+    if (!fid || keep.has(fid)) continue;
+    if (member.roles.cache.has(fid)) return false;
   }
 
   if (tier !== 'vide' && targetRoleId && !member.roles.cache.has(targetRoleId)) {
+    return false;
+  }
+  if (
+    tier !== 'vide' &&
+    familyRoleId &&
+    familyRoleId !== targetRoleId &&
+    !member.roles.cache.has(familyRoleId)
+  ) {
     return false;
   }
 
