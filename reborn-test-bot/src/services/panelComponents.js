@@ -230,7 +230,7 @@ async function handlePanelInteraction(interaction) {
   if (interaction.customId === 'rb:inv:use') {
     const v = pick.get(interaction.user.id, interaction.message.id);
     if (!v || !v.startsWith('i:')) {
-      return interaction.reply({ content: 'Sélectionne d’abord un item dans le menu.' });
+      return replyEphemeral(interaction, { content: 'Sélectionne d’abord un item dans le menu.' });
     }
     const itemId = v.slice(2);
     const itemEffects = require('./itemEffects');
