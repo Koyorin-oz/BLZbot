@@ -105,20 +105,67 @@ function mapRebornGuildForCanvas(g, { cap, treasury, gxp, grade, next, sep, tota
     reborn_grade_line: `Grade ${gradeLabel}${nextLabel ? ` → ${nextLabel}` : ' (max)'}`,
     reborn_salon_hint: g.salon_channel_id ? 'Actif' : `Non débloqué (grade ${label(pg.SALON_MIN_GRADE)})`,
     reborn_extras: `Anti-séparation: ${sep.protected ? 'oui' : 'non'} · ID \`${g.id}\`${g.description ? ` · ${String(g.description).slice(0, 80)}` : ''}`,
-    reborn_footer: 'REBORN · Utilise les boutons pour la liste, les carrières et les quêtes',
+    reborn_footer: 'REBORN · Liste complète ou page Stats ci-dessous',
   };
+}
+
+function buildStatsForCanvas(g, hub, { treasury, gxp, grade, next, sep, totalMembers, cap }) {
+  const { grp } = gm.getMemberRow(hub, g.leader_id);
+  const rk = grpRankFromTotal(grp);
+  const roles = pg.listInternalRoles(g.id);
+  const rolesLines = roles.map((r) => `${r.role_label} (${r.user_id.slice(-6)})`);
+  return {
+    guildId: g.id,
+    gxpFormatted: gxp.toLocaleString('fr-FR'),
+    treasuryFormatted: treasury.toLocaleString('fr-FR'),
+    guildLevel: g.guild_level,
+    gradeLabel: grade,
+    nextGradeLabel: next ? label(next) : null,
+    memberCap: cap,
+    sepProtected: sep.protected,
+    sepReason: sep.protected ? sep.reason : null,
+    leaderGrpRank: rk ? label(rk) : '—',
+    salonLabel: g.salon_channel_id ? 'Actif' : `Non débloqué (grade ${label(pg.SALON_MIN_GRADE)})`,
+    lastFocusLabel: g.last_focus_ms ? new Date(g.last_focus_ms).toLocaleDateString('fr-FR') : 'Jamais',
+    description: g.description ? String(g.description).slice(0, 400) : null,
+    rolesLines,
+  };
+}
+
+function buildProfilGuildeButtons(guildId, page) {
+  if (page === 2) {
+    return new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId(`rb_pg_main_${guildId}`)
+        .setLabel('Profil')
+        .setEmoji('◀️')
+        .setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder()
+        .setCustomId(`rb_pg_list_${guildId}`)
+        .setLabel('Liste complète')
+        .setEmoji('📋')
+        .setStyle(ButtonStyle.Primary),
+    );
+  }
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`rb_pg_list_${guildId}`)
+      .setLabel('Liste complète')
+      .setEmoji('📋')
+      .setStyle(ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId(`rb_pg_stats_${guildId}`)
+      .setLabel('Stats')
+      .setEmoji('📊')
+      .setStyle(ButtonStyle.Secondary),
+  );
 }
 
 /**
  * Construit le payload `/profil-guilde` (canvas V5 + boutons REBORN).
- * Réutilisable depuis :
- *  - la commande slash `/profil-guilde`
- *  - le bouton « 🛡️ Guilde » du `/profil` (niveau) intercepté par REBORN
- *
- * Retourne `{ payload, error }`. Toutes les valeurs viennent de la base REBORN
- * (`player_guilds`), pour rester cohérentes avec `/guilde info`.
+ * @param {1|2} [opts.page]
  */
-async function buildProfilGuildePayload(interaction, { hub, gRow }) {
+async function buildProfilGuildePayload(interaction, { hub, gRow, page = 1 }) {
   const g = pg.getGuild(gRow.id);
   if (!g || g.hub_discord_id !== hub) {
     return { error: 'Guilde invalide.' };
