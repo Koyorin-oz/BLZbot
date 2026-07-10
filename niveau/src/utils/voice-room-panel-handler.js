@@ -212,6 +212,12 @@ async function handleVoiceRoomPanelButton(interaction) {
                 });
             }
             case 'delete': {
+                if (isProtectedLobbyChannel(channel, interaction.client, await resolvePrivateRoomConfig(interaction.client, guild, { requireLobby: false }))) {
+                    return interaction.reply({
+                        content: '❌ Impossible de supprimer le **salon lobby** (protégé).',
+                        flags: 64,
+                    });
+                }
                 await interaction.reply({ content: 'Salon en cours de suppression…', flags: 64 });
                 await channel.delete('Panneau vocal privé — suppression').catch((e) => {
                     logger.warn(`[PVR_PANEL] delete: ${e.message}`);
