@@ -283,7 +283,7 @@ async function handlePanelInteraction(interaction) {
   if (interaction.customId === 'rb:q:spawner') {
     const uid = interaction.user.id;
     if (!skillTree.weeklyEventSpawnerEntitled(uid)) {
-      return interaction.reply({ content: '❌ Réservé au palier 5 Événement (`/arbre`).' });
+      return replyEphemeral(interaction, { content: '❌ Réservé au palier 5 Événement (`/arbre`).' });
     }
     const u = users.getUser(uid);
     const last = u?.last_event_spawner_claim_ms || 0;
