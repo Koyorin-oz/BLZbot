@@ -645,18 +645,21 @@ async function applyDrop(interaction, userId, drop) {
     }
 }
 
-function resolveHackerChannelId() {
-    return (process.env.HACKER_CHANNEL || process.env.REBORN_HACKER_CHANNEL_ID || '1454484970843144391').trim();
+function resolveHackerChannelId(guildId) {
+    const { resolveHackerChannelId: resolve } = require('./blz-guild-channels');
+    const id = resolve(guildId);
+    if (id) return id;
+    return (process.env.HACKER_CHANNEL || process.env.REBORN_HACKER_CHANNEL_ID || '').trim() || null;
 }
 
-async function grantHackerChannelAccess(client, userId) {
-    const channelId = resolveHackerChannelId();
-    if (!client || !channelId) return;
+async function grantHackerChannelAccess(client, userId, guildId) {
+    const channelId = resolveHackerChannelId(guildId);
+    if (!client || !channelId || !guildId) return null;
     try {
         const channel = await client.channels.fetch(channelId).catch(() => null);
-        if (!channel?.permissionOverwrites) return;
+        if (!channel?.permissionOverwrites || channel.guildId !== guildId) return null;
         const existing = channel.permissionOverwrites.cache.get(userId);
-        if (existing?.allow?.has(PermissionFlagsBits.ViewChannel)) return;
+        if (existing?.allow?.has(PermissionFlagsBits.ViewChannel)) return channel;
         await channel.permissionOverwrites.edit(
             userId,
             {
@@ -666,9 +669,28 @@ async function grantHackerChannelAccess(client, userId) {
             },
             { reason: 'Accès salon secret hacker (coffre)' },
         );
+        return channel;
     } catch (error) {
         console.error(`Erreur accès salon hacker pour ${userId}:`, error);
+        return null;
     }
+}
+
+function formatHackerGrantMessage(client, guildId) {
+    const channelId = resolveHackerChannelId(guildId);
+    const lines = ['Vous avez gagné le rôle **Hackeur** !'];
+    if (!channelId || !guildId) {
+        lines.push('Accès salon secret hacker débloqué.');
+        return lines.join(' ');
+    }
+  // Sync check only — mention uniquement si le salon est sur ce serveur.
+    const ch = client?.channels?.cache?.get(channelId);
+    if (ch?.guildId === guildId) {
+        lines.push(`Accédez au salon secret <#${channelId}>.`);
+    } else {
+        lines.push('Accès salon secret hacker débloqué.');
+    }
+    return lines.join(' ');
 }
 
 async function assignRoleToCoffreUser(guild, userId, roleName) {
