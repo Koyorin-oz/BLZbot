@@ -245,6 +245,7 @@ async function resolveLobbyVoiceChannel(guild, preferredId) {
     for (const id of triedIds) {
         const ch = await guild.channels.fetch(id).catch(() => null);
         if (ch?.isVoiceBased?.()) {
+            registerLobbyChannel(guild.client, guild.id, ch.id);
             return { id: ch.id, channel: ch, ok: true, triedIds, source: 'id' };
         }
     }
