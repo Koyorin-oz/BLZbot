@@ -110,7 +110,7 @@ async function handlePurchase(interaction, parts) {
   if (kind === 'c') {
     const chest = CHEST_META[sub];
     if (!chest) {
-      await interaction.reply({ content: 'Coffre inconnu.' });
+      await replyEphemeral(interaction, { content: 'Coffre inconnu.' });
       return;
     }
     if (sub === 'catm') {
