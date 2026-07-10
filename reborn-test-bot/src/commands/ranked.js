@@ -77,7 +77,7 @@ module.exports = {
     if (sub === 'reclamer') {
       const got = rankedMilestones.checkAndClaim(interaction.user.id);
       if (got.length === 0) {
-        return interaction.reply({ content: 'Aucun palier nouveau à réclamer.' });
+        return replyEphemeral(interaction, { content: 'Aucun palier nouveau à réclamer.' });
       }
       const lines = got.map(
         (g) =>
