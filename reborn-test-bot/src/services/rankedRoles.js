@@ -384,9 +384,8 @@ async function syncRankRoleForUser(client, hubDiscordId, userId) {
     };
   }
 
-  const targetRoleId = cfg.find((c) => c.key === tier)?.roleId || null;
-  const otherRoleIds = cfg.filter((c) => c.key !== tier && c.roleId).map((c) => c.roleId);
-  const def = RANK_BY_KEY.get(tier) || RANKS_ASC[0];
+  const { def, targetRoleId, familyRoleId, keep } = rolesToKeepForTier(tier, cfg);
+  const otherRoleIds = rolesToRemoveForTier(tier, cfg);
   const currentNorm = normalizeRankName(def.label);
   const expectedMainNorm =
     def.family && def.family !== 'vide' ? normalizeRankName(familyMainName(def.family)) : null;
@@ -401,6 +400,14 @@ async function syncRankRoleForUser(client, hubDiscordId, userId) {
       warnings.push(
         `rôle Discord non configuré pour ${def.label} (${tier}) — /admin-roles definir-ranked`,
       );
+    }
+    if (
+      familyRoleId &&
+      familyRoleId !== targetRoleId &&
+      !member.roles.cache.has(familyRoleId)
+    ) {
+      await member.roles.add(familyRoleId, 'Ranked RP rang auto (famille)');
+      changed = true;
     }
 
     for (const rid of otherRoleIds) {
