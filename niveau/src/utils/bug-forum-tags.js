@@ -120,7 +120,6 @@ function buildResolutionEmbed(tagId) {
 async function closeResolvedBugThread(thread, tagId) {
   await thread.send({ embeds: [buildResolutionEmbed(tagId)] });
   await thread.setArchived(true, "Signalement traité");
-  await thread.setLocked(true);
 }
 
 /**
