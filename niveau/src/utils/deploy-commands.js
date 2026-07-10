@@ -19,6 +19,7 @@ const DISCORD_APPLICATION_COMMAND_MAX = 100;
 /** Toujours tenter de (re)déployer ces noms — critiques REBORN / staff. */
 const REBORN_SLASH_PRIORITY_NAMES = [
     'deploy-slash',
+    'setup-lobby',
     'admin-roles',
     'salon-hacker',
     'itemindex',
