@@ -75,7 +75,7 @@ async function handlePurchase(interaction, parts) {
       const h = meta.diamondHolder();
       if (h && h !== uid) {
         users.addStars(uid, price);
-        await interaction.reply({ content: 'Le diamant est déjà possédé par un autre joueur.' });
+        await replyEphemeral(interaction, { content: 'Le diamant est déjà possédé par un autre joueur.' });
         return;
       }
       meta.setDiamondHolder(uid);
