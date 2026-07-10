@@ -371,41 +371,6 @@ async function handleRebornGuildButton(i) {
       components: [new ContainerBuilder().addTextDisplayComponents(listText)],
       flags: MessageFlags.IsComponentsV2,
     });
-  } else if (i.customId.startsWith('rb_pg_careers_')) {
-    if (!i.deferred && !i.replied) await i.deferUpdate();
-    const hub = i.guildId;
-    const nMem = db.prepare('SELECT COUNT(*) AS c FROM player_guild_members WHERE guild_id = ?').get(gFresh.id).c;
-    const { grp } = gm.getMemberRow(hub, gFresh.leader_id);
-    const rk = grpRankFromTotal(grp);
-    const treasuryB = BigInt(gFresh.treasury || '0');
-    const gxpB = BigInt(gFresh.gxp || '0');
-    const statsText = [
-      `# 🎓 Carrières & progression — ${gFresh.name}`,
-      '### REBORN (guilde joueur)',
-      `• **ID** \`${gFresh.id}\` · **Grade** ${label(gFresh.grade || '') || '—'}`,
-      `• **GXP (guilde)** ${gxpB.toLocaleString('fr-FR')} · **Trésorerie** ${treasuryB.toLocaleString('fr-FR')} starss`,
-      `• **Niveau guilde** ${gFresh.guild_level} · **Membres** ${nMem} / **${gFresh.member_cap}**`,
-      `• **Anti-séparation** : ${gFresh.anti_separation ? 'oui' : 'non'} · Dernier focus (ms) : \`${gFresh.last_focus_ms || 0}\``,
-      `• **GRP chef** (indicatif serveur) : ${rk || '—'}`,
-    ].join('\n');
-    const td = new TextDisplayBuilder().setContent(statsText);
-    await i.followUp({
-      components: [new ContainerBuilder().addTextDisplayComponents(td)],
-      flags: MessageFlags.IsComponentsV2,
-    });
-  } else if (i.customId.startsWith('rb_pg_quests_')) {
-    if (!i.deferred && !i.replied) await i.deferUpdate();
-    const questText = new TextDisplayBuilder().setContent(
-      [
-        `# 📜 Quêtes — ${gFresh.name}`,
-        '• **REBORN** : pas de « quêtes de guilde » spécifiques sur ce build.',
-        '• **Quêtes perso** : `/quetes` (panneau unifié).',
-      ].join('\n'),
-    );
-    await i.followUp({
-      components: [new ContainerBuilder().addTextDisplayComponents(questText)],
-      flags: MessageFlags.IsComponentsV2,
-    });
   }
 }
 
