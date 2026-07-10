@@ -209,7 +209,7 @@ async function useItem(userId, itemId, ctx = {}) {
       users.addInventory(userId, id, 1);
       return { ok: false, error: accessResult.error };
     }
-    return { ok: true, message: formatGrantMessage(accessResult) };
+    return { ok: true, message: formatGrantMessage(accessResult, { guildId: ctx.guildId }) };
   }
 
   // Items « décoratifs » (planète, étoile, baleine…) : pas d'effet direct,

@@ -14,6 +14,7 @@ const {
   PermissionFlagsBits,
 } = require('discord.js');
 const cfg = require('../config');
+const { resolveChannelIdForGuild } = require('../services/hackerAccess');
 const meta = require('../services/meta');
 const users = require('../services/users');
 const catalog = require('../reborn/catalog');
