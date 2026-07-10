@@ -37,6 +37,7 @@ const { Client, GatewayIntentBits, Partials } = require('discord.js');
 const { handleMessageCreate, handleInteractionCreate } = require('./handlers.js');
 const utils = require('./utils.js');
 const config = require('./config.js');
+const rebornIntegration = require(path.join(__dirname, '..', 'niveau', 'src', 'utils', 'reborn-integration'));
 
 const activeThreads = new Map();
 
