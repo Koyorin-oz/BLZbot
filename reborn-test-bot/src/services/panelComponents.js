@@ -352,7 +352,7 @@ async function handlePanelInteraction(interaction) {
   const pm = interaction.customId.match(/^rb:ps:(card|txt):(\d+)$/);
   if (pm) {
     if (!interaction.guild) {
-      return interaction.reply({ content: 'Serveur uniquement.' });
+      return replyEphemeral(interaction, { content: 'Serveur uniquement.' });
     }
     const kind = pm[1];
     const viewId = pm[2];
