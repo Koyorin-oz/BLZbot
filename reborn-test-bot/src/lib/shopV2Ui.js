@@ -16,6 +16,7 @@ const { getItem } = require('../reborn/catalog');
 const { summaryForItemId, summaryChest, summaryBoost, emojiForItemId } = require('../reborn/shopSummaries');
 const { BOOST_ROW_PRICE, CHEST_CLASSIC, CHEST_CATM, CHEST_CATL, CHEST_CATS } = require('../reborn/constants');
 const { getBlzAttachment, getBoutiqueAttachment } = require('./blzBackground');
+const { v2Ephemeral } = require('./ephemeral');
 
 function fmt(n) {
   return BigInt(n).toLocaleString('fr-FR');
