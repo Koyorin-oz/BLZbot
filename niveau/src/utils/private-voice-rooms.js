@@ -655,6 +655,7 @@ async function createPrivateVoice(client, member, cfg) {
         await member.voice.setChannel(channel).catch((e) => {
             logger.warn(`[PRIVATE_ROOM] Impossible de déplacer le membre: ${e.message}`);
         });
+        await releaseLobbyVoiceRestrictions(member);
     }
 
     if (panelWhere.where === 'voice' || panelWhere.where === 'voice-rest') {
