@@ -677,12 +677,13 @@ async function createPrivateVoice(client, member, cfg) {
 async function deleteIfOwnerEmpty(client, channel) {
     if (!channel?.isVoiceBased?.()) return;
 
-    const meta = getPrivateRoomVoiceMeta(client, channel.id);
-    if (!meta || meta.guildId !== channel.guild.id) return;
-
     const cfg = await resolvePrivateRoomConfig(client, channel.guild, { requireLobby: false });
     if (!cfg.enabled) return;
+    if (isProtectedLobbyChannel(channel, client, cfg)) return;
     if (String(channel.parentId || '') !== String(cfg.voiceCategoryId)) return;
+
+    const meta = getPrivateRoomVoiceMeta(client, channel.id);
+    if (!meta || meta.guildId !== channel.guild.id) return;
 
     const humans = channel.members.filter((m) => !m.user.bot).size;
     if (humans > 0) return;
