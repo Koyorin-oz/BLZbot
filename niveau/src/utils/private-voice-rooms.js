@@ -10,6 +10,168 @@ const DEFAULT_LOBBY_CHANNEL_ID = '1524760611765096498';
 /** Catégorie Discord où créer les vocaux privés (surcharge : PRIVATE_ROOM_CATEGORY_ID dans le .env). */
 const DEFAULT_VOICE_CATEGORY_ID = '1388968406664871986';
 
+/** Nom affiché du salon lobby s’il doit être créé. */
+const DEFAULT_LOBBY_CHANNEL_NAME =
+    process.env.PRIVATE_ROOM_LOBBY_NAME?.trim() || '➕ ・ Crée ton vocal !';
+
+function ensureLobbyRegistry(client) {
+    if (!client.privateRoomLobbyByGuild) {
+        client.privateRoomLobbyByGuild = new Map();
+    }
+    return client.privateRoomLobbyByGuild;
+}
+
+function registerLobbyChannel(client, guildId, channelId) {
+    if (!client || !guildId || !channelId) return;
+    ensureLobbyRegistry(client).set(String(guildId), String(channelId));
+}
+
+function isLobbyChannelName(name) {
+    const compact = normChannelName(name).replace(/[^a-z0-9+]+/g, '');
+    if (/cre.{0,10}ton.{0,10}voc/i.test(compact)) return true;
+    const n = normChannelName(name);
+    return (
+        n.includes('crée ton vocal') ||
+        n.includes('cree ton vocal') ||
+        n.includes('crée ton vocale') ||
+        n.includes('lobby vocal')
+    );
+}
+
+/**
+ * Le lobby ne doit JAMAIS être traité comme un vocal privé supprimable.
+ */
+function isProtectedLobbyChannel(channel, client, cfg) {
+    if (!channel?.isVoiceBased?.()) return false;
+    const guildId = channel.guild?.id;
+    if (!guildId) return false;
+
+    const registered = ensureLobbyRegistry(client).get(String(guildId));
+    if (registered && String(channel.id) === String(registered)) return true;
+
+    const cfgLobby = cfg?.lobbyChannelId || getConfig().lobbyChannelId;
+    if (cfgLobby && String(channel.id) === String(cfgLobby)) return true;
+
+    const envLobby = String(process.env.PRIVATE_ROOM_LOBBY_CHANNEL_ID || '').trim();
+    if (envLobby && String(channel.id) === envLobby) return true;
+
+    if (String(channel.id) === DEFAULT_LOBBY_CHANNEL_ID) return true;
+
+    return isLobbyChannelName(channel.name);
+}
+
+function buildLobbyOverwrites(guild) {
+    const rows = [
+        {
+            id: guild.id,
+            allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.Connect],
+            deny: [
+                PermissionFlagsBits.Speak,
+                PermissionFlagsBits.Stream,
+                PermissionFlagsBits.UseVAD,
+            ],
+        },
+    ];
+    const botId = guild.client?.user?.id;
+    if (botId) {
+        rows.push({
+            id: botId,
+            allow: [
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.Connect,
+                PermissionFlagsBits.ManageChannels,
+                PermissionFlagsBits.MoveMembers,
+                PermissionFlagsBits.MuteMembers,
+                PermissionFlagsBits.DeafenMembers,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.EmbedLinks,
+                PermissionFlagsBits.ReadMessageHistory,
+                PermissionFlagsBits.AttachFiles,
+            ],
+        });
+    }
+    return rows;
+}
+
+async function applyLobbyPermissions(channel, guild) {
+    if (!channel?.isVoiceBased?.()) return;
+    try {
+        await channel.permissionOverwrites.set(buildLobbyOverwrites(guild), 'BLZbot — permissions lobby vocal');
+    } catch (e) {
+        logger.warn(`[PRIVATE_ROOM] applyLobbyPermissions: ${e?.message || e}`);
+    }
+}
+
+/**
+ * Trouve ou crée le salon lobby dans la catégorie donnée (jamais supprimé par le bot).
+ * @returns {Promise<import('discord.js').VoiceChannel>}
+ */
+async function ensureLobbyChannel(guild, categoryId = DEFAULT_VOICE_CATEGORY_ID) {
+    const me = guild.members.me ?? (await guild.members.fetchMe().catch(() => null));
+    if (!me?.permissions.has(PermissionFlagsBits.ManageChannels)) {
+        throw new Error('Le bot a besoin de la permission **Gérer les salons**.');
+    }
+
+    const parent = await guild.channels.fetch(categoryId).catch(() => null);
+    if (!parent || parent.type !== ChannelType.GuildCategory) {
+        throw new Error(`Catégorie introuvable : \`${categoryId}\``);
+    }
+
+    await ensureGuildChannelsCached(guild);
+
+    const preferredId = String(process.env.PRIVATE_ROOM_LOBBY_CHANNEL_ID || DEFAULT_LOBBY_CHANNEL_ID).trim();
+    const resolved = await resolveLobbyVoiceChannel(guild, preferredId);
+    let lobby = resolved.ok ? resolved.channel : findLobbyByName(guild);
+
+    if (lobby) {
+        if (String(lobby.parentId) !== String(categoryId)) {
+            await lobby.setParent(categoryId, { lockPermissions: false });
+        }
+        await applyLobbyPermissions(lobby, guild);
+        registerLobbyChannel(guild.client, guild.id, lobby.id);
+        return lobby;
+    }
+
+    lobby = await guild.channels.create({
+        name: DEFAULT_LOBBY_CHANNEL_NAME.slice(0, 100),
+        type: ChannelType.GuildVoice,
+        parent: categoryId,
+        permissionOverwrites: buildLobbyOverwrites(guild),
+        reason: 'BLZbot — création salon lobby vocaux privés',
+    });
+    registerLobbyChannel(guild.client, guild.id, lobby.id);
+    logger.info(`[PRIVATE_ROOM] Lobby créé : ${lobby.name} (${lobby.id}) dans catégorie ${categoryId}`);
+    return lobby;
+}
+
+async function releaseLobbyVoiceRestrictions(member) {
+    if (!member?.voice?.channelId) return;
+    try {
+        await member.voice.setMute(false);
+    } catch {
+        /* ignore */
+    }
+    try {
+        await member.voice.setDeaf(false);
+    } catch {
+        /* ignore */
+    }
+}
+
+async function applyLobbyVoiceRestrictions(member) {
+    if (!member?.voice?.channelId) return;
+    try {
+        await member.voice.setMute(true);
+    } catch {
+        /* ignore */
+    }
+    try {
+        await member.voice.setDeaf(true);
+    } catch {
+        /* ignore */
+    }
+}
+
 function normChannelName(s) {
     return String(s || '')
         .toLowerCase()
