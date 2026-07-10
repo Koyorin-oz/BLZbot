@@ -654,60 +654,92 @@ function scheduleSlashSyncFromOrchestrator() {
   if (disabled) return;
 
   const delay = Math.max(5000, parseInt(process.env.BLZ_AUTO_DEPLOY_SLASH_DELAY_MS || '25000', 10));
+  const retryMs = Math.max(60000, parseInt(process.env.BLZ_AUTO_DEPLOY_SLASH_RETRY_MS || '180000', 10));
+  const timeoutMs = Math.max(120000, parseInt(process.env.BLZ_DEPLOY_TIMEOUT_MS || '600000', 10));
   const deployScript = path.join(REPO_ROOT, 'scripts', 'run-deploy-all.js');
   blzLine(
     'maintemp',
     `deploy auto dans ${Math.round(delay / 1000)}s`,
   );
 
-  const runDeployOnce = (attemptLabel) => {
-    blzLine('maintemp', `deploy ${attemptLabel}…`);
-    const deployEnv = {
-      ...process.env,
-      BLZ_COMPACT_LOG: '1',
-      DOTENV_CONFIG_QUIET: 'true',
-      LOG_LEVEL: process.env.BLZ_CHILD_LOG_LEVEL || 'ERROR',
-    };
-    let outBuf = '';
-    let errBuf = '';
-    const proc = spawn(process.execPath, [deployScript], {
-      cwd: REPO_ROOT,
-      env: deployEnv,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    const flushLines = (buf, isErr) => {
-      const parts = buf.split('\n');
-      const rest = parts.pop() ?? '';
-      for (const part of parts) {
-        if (!part.trim()) continue;
-        if (isErr) emitChildLine('deploy', part);
-        else emitChildLine('deploy', part);
-      }
-      return rest;
-    };
-    proc.stdout.on('data', (chunk) => {
-      outBuf += chunk.toString();
-      outBuf = flushLines(outBuf, false);
-    });
-    proc.stderr.on('data', (chunk) => {
-      errBuf += chunk.toString();
-      errBuf = flushLines(errBuf, true);
-    });
-    proc.on('close', (code) => {
-      if (outBuf.trim()) emitChildLine('deploy', outBuf);
-      if (errBuf.trim()) emitChildLine('deploy', errBuf);
-      if (code === 0) blzLine('maintemp', `deploy ${attemptLabel} ok`);
-      else blzError('maintemp', `deploy ${attemptLabel} code ${code}`);
-    });
-    proc.on('error', (err) => {
-      blzError('maintemp', `deploy ${attemptLabel}`, err);
-    });
-  };
+  let deployInProgress = false;
 
-  setTimeout(() => {
-    runDeployOnce('1');
-    const retryMs = Math.max(60000, parseInt(process.env.BLZ_AUTO_DEPLOY_SLASH_RETRY_MS || '180000', 10));
-    setTimeout(() => runDeployOnce('2 (secours)'), retryMs);
+  const runDeployOnce = (attemptLabel) =>
+    new Promise((resolve) => {
+      if (deployInProgress) {
+        blzWarn('maintemp', `deploy ${attemptLabel} ignoré — déjà en cours`);
+        resolve(false);
+        return;
+      }
+      deployInProgress = true;
+      blzLine('maintemp', `deploy ${attemptLabel}…`);
+      const deployEnv = {
+        ...process.env,
+        BLZ_COMPACT_LOG: '1',
+        DOTENV_CONFIG_QUIET: 'true',
+        LOG_LEVEL: process.env.BLZ_CHILD_LOG_LEVEL || 'ERROR',
+      };
+      let outBuf = '';
+      let errBuf = '';
+      let settled = false;
+      const finish = (ok) => {
+        if (settled) return;
+        settled = true;
+        deployInProgress = false;
+        resolve(ok);
+      };
+      const proc = spawn(process.execPath, [deployScript], {
+        cwd: REPO_ROOT,
+        env: deployEnv,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      const killTimer = setTimeout(() => {
+        blzError('maintemp', `deploy ${attemptLabel} timeout (${Math.round(timeoutMs / 1000)}s) — arrêt forcé`);
+        try {
+          proc.kill('SIGTERM');
+        } catch {
+          /* noop */
+        }
+      }, timeoutMs);
+      const flushLines = (buf) => {
+        const parts = buf.split('\n');
+        const rest = parts.pop() ?? '';
+        for (const part of parts) {
+          if (!part.trim()) continue;
+          emitChildLine('deploy', part);
+        }
+        return rest;
+      };
+      proc.stdout.on('data', (chunk) => {
+        outBuf += chunk.toString();
+        outBuf = flushLines(outBuf);
+      });
+      proc.stderr.on('data', (chunk) => {
+        errBuf += chunk.toString();
+        errBuf = flushLines(errBuf);
+      });
+      proc.on('close', (code) => {
+        clearTimeout(killTimer);
+        if (outBuf.trim()) emitChildLine('deploy', outBuf);
+        if (errBuf.trim()) emitChildLine('deploy', errBuf);
+        if (code === 0) blzLine('maintemp', `deploy ${attemptLabel} ok`);
+        else blzError('maintemp', `deploy ${attemptLabel} code ${code}`);
+        finish(code === 0);
+      });
+      proc.on('error', (err) => {
+        clearTimeout(killTimer);
+        blzError('maintemp', `deploy ${attemptLabel}`, err);
+        finish(false);
+      });
+    });
+
+  setTimeout(async () => {
+    const firstOk = await runDeployOnce('1');
+    if (!firstOk) {
+      setTimeout(() => {
+        runDeployOnce('2 (secours)').catch(() => {});
+      }, retryMs);
+    }
   }, delay);
 }
 
