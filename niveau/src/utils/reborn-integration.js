@@ -210,6 +210,7 @@ function bootstrap(client) {
   }
   const dbPath = initEnvironment();
   logger.info(`[reborn] BDD : ${dbPath}`);
+  _rankSyncClient = client;
   rt.registerEarn(client);
   rt.registerReadyTasks(client);
   client.once('clientReady', async () => {
