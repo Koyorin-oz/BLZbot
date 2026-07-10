@@ -160,6 +160,15 @@ function collectRebornSlashMap() {
   return map;
 }
 
+/** @param {import('discord.js').Client} client */
+function registerEarnGateway(client) {
+  const rt = getRuntime();
+  if (!rt) return false;
+  initEnvironment();
+  rt.registerEarn(client);
+  return true;
+}
+
 /**
  * @param {import('discord.js').Client} client
  */

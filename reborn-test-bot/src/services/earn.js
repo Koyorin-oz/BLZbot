@@ -75,7 +75,27 @@ function loyalCampGrpMultBp(hubDiscordId, userId) {
   return skillTree.loyalGrpBonusBp(g.leader_id);
 }
 
-function grantVoiceMinutes(guildId, userId, minutes) {
+/** @type {WeakSet<import('discord.js').Client>} */
+const earnClients = new WeakSet();
+
+function computeGrpGain(baseGrp, userId, hubDiscordId) {
+  const grpBp = skillTree.guildGrpMultBp(userId);
+  const focus = grpFocusMultForUser(hubDiscordId, userId);
+  const loyalBp = loyalCampGrpMultBp(hubDiscordId, userId);
+  let grpGain = (baseGrp * BigInt(grpBp) * focus * BigInt(loyalBp)) / 10_000_000_000n;
+  grpGain = indexBonuses.applyBp(userId, grpGain, 'grpBp');
+  if (grpGain === 0n && baseGrp > 0n && focus >= 100n) grpGain = 1n;
+  return grpGain;
+}
+
+function grantGrpForActivity(hubDiscordId, userId, baseGrp) {
+  if (baseGrp <= 0n) return;
+  grpSeason.maybeResetMonthlyGrp(hubDiscordId);
+  const grpGain = computeGrpGain(baseGrp, userId, hubDiscordId);
+  if (grpGain > 0n) gm.addGrp(hubDiscordId, userId, grpGain);
+  const after = gm.getMemberRow(hubDiscordId, userId);
+  grpSeason.recordGrpPeaksIfNeeded(hubDiscordId, userId, after.grp);
+}
   if (minutes <= 0n) return;
   if (economyState.isPaused()) return;
   users.getOrCreate(userId, '');
