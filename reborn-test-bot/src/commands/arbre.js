@@ -80,7 +80,7 @@ module.exports = {
     if (sub === 'voir') {
       // Le rendu canvas + fetch de l’avatar Discord peut dépasser les 3 s.
       // On défère immédiatement pour éviter `Unknown interaction` (10062).
-      await interaction.deferReply();
+      await deferReplyEphemeral(interaction);
       const b = await buildArbreContainer(
         uid,
         interaction.member?.displayName || interaction.user.username,
