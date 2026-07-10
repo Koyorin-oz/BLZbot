@@ -40,6 +40,7 @@ const BUTTON_DEFS = [
 ];
 
 const MANAGED_TAG_IDS = BUTTON_DEFS.map((def) => TAG[def.key]);
+const FINAL_TAG_IDS = [TAG.dejaSignale, TAG.corriger];
 const BUTTON_PREFIX = "bug_tag:";
 
 function isBugTrackerGuild(guildId) {
@@ -99,6 +100,29 @@ function tagLabelForId(tagId) {
   return def?.label || "Tag";
 }
 
+function isFinalBugTag(tagId) {
+  return FINAL_TAG_IDS.includes(tagId);
+}
+
+function buildResolutionEmbed(tagId) {
+  const isFixed = tagId === TAG.corriger;
+  return new EmbedBuilder()
+    .setTitle(isFixed ? "✅ Signalement traité" : "✅ Signalement déjà signalé")
+    .setDescription(
+      isFixed
+        ? "Ce signalement a été marqué comme corrigé. Le fil est maintenant fermé."
+        : "Ce signalement a été marqué comme déjà signalé. Le fil est maintenant fermé.",
+    )
+    .setColor(isFixed ? 0x2ecc71 : 0x3498db)
+    .setTimestamp();
+}
+
+async function closeResolvedBugThread(thread, tagId) {
+  await thread.send({ embeds: [buildResolutionEmbed(tagId)] });
+  await thread.setArchived(true, "Signalement traité");
+  await thread.setLocked(true);
+}
+
 /**
  * @param {import('discord.js').ButtonInteraction} interaction
  */
@@ -119,10 +143,19 @@ async function handleBugTagButton(interaction) {
   await interaction.deferUpdate();
   await toggleForumTag(thread, tagId);
   const label = tagLabelForId(tagId);
-  await interaction.followUp({
-    content: `🏷️ Tag **${label}** appliqué sur ce signalement.`,
-    flags: 64,
-  });
+
+  if (isFinalBugTag(tagId)) {
+    await closeResolvedBugThread(thread, tagId);
+    await interaction.followUp({
+      content: `🏷️ Tag **${label}** appliqué, le signalement a été traité et le fil a été fermé.`,
+      flags: 64,
+    });
+  } else {
+    await interaction.followUp({
+      content: `🏷️ Tag **${label}** appliqué sur ce signalement.`,
+      flags: 64,
+    });
+  }
   return true;
 }
 
