@@ -62,7 +62,7 @@ async function handlePurchase(interaction, parts) {
     }
     const item = getItem(row.item_id);
     if (!item) {
-      await interaction.reply({ content: 'Item inconnu.' });
+      await replyEphemeral(interaction, { content: 'Item inconnu.' });
       return;
     }
     const price = discountedPrice(uid, BigInt(row.price));
