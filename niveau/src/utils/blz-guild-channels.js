@@ -47,11 +47,33 @@ function resolveStreakChannelId(guildId) {
     return resolveChannelIdForGuild(guildId, 'STREAK_CHANNEL', 'TEST_STREAK_CHANNEL');
 }
 
+function resolveHackerChannelId(guildId) {
+    const fromGuild = resolveChannelIdForGuild(guildId, 'HACKER_CHANNEL', 'TEST_HACKER_CHANNEL');
+    if (fromGuild) return fromGuild;
+    if (!isBlzTestGuild(guildId)) {
+        const reborn = String(process.env.REBORN_HACKER_CHANNEL_ID || '').trim();
+        if (/^\d{17,22}$/.test(reborn)) return reborn;
+    }
+    return null;
+}
+
+function resolveHackerRoleIdForGuild(guildId) {
+    if (isBlzTestGuild(guildId)) {
+        const t = String(process.env.TEST_HACKER_ROLE_ID || '').trim();
+        if (/^\d{17,22}$/.test(t)) return t;
+        return null;
+    }
+    const p = String(process.env.REBORN_HACKER_ROLE_ID || process.env.HACKER_ROLE_ID || '').trim();
+    return /^\d{17,22}$/.test(p) ? p : null;
+}
+
 module.exports = {
     resolveTutorialChannelId,
     resolveLevelUpChannelId,
     resolveRankUpChannelId,
     resolveStreakChannelId,
+    resolveHackerChannelId,
+    resolveHackerRoleIdForGuild,
     resolveChannelIdForGuild,
     BLZ_TEST_TUTORIAL_CHANNEL_DEFAULT,
 };
