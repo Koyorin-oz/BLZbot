@@ -50,12 +50,7 @@ module.exports = {
         .setDescription(d("🚪", "Quitter ta guilde (pas le chef).")),
     )
     .addSubcommand((sc) =>
-      sc.setName("info").setDescription(d("ℹ️", "Infos sur ta guilde")),
-    )
-    .addSubcommand((sc) =>
-      sc
-        .setName("liste")
-        .setDescription(d("📜", "Liste des guildes sur ce serveur")),
+      sc.setName("liste").setDescription(d("📜", "Liste des guildes sur ce serveur")),
     )
     .addSubcommand((sc) =>
       sc
