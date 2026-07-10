@@ -89,7 +89,7 @@ const {
   ApplicationCommandOptionType
 } = require('discord.js');
 const derankUrgence = require('./derank-urgence.js');
-const { applyGlobalLogPolicy, isCompact, blzLine, blzError, emitChildLine } = require(path.join(
+const { applyGlobalLogPolicy, isCompact, blzLine, blzError, blzWarn, emitChildLine } = require(path.join(
   __dirname,
   '..',
   'blz-log.js'

@@ -2297,6 +2297,9 @@ async function archiveOldThreads(client) {
   try {
     const guilds = client.guilds.cache;
     for (const guild of guilds.values()) {
+      if (!guild?.threads?.fetchActive) {
+        continue;
+      }
       const { threads } = await guild.threads.fetchActive();
       for (const thread of threads.values()) {
         const lastMessage = thread.lastMessageId ? await thread.messages.fetch(thread.lastMessageId).catch(() => null) : null;
