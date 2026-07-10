@@ -204,7 +204,7 @@ module.exports = {
     .setDescription(d('🎁', 'Réclame ta récompense journalière (carte illustrée).')),
 
   async execute(interaction) {
-    await interaction.deferReply();
+    await deferReplyEphemeral(interaction);
 
     if (require('../services/economyState').isPaused()) {
       return interaction.editReply({
