@@ -764,69 +764,48 @@ async function handleChatbotMessage(message, client) {
     try {
         await message.channel.sendTyping().catch(() => {});
 
-        let system = loadPrompt(isHard ? 'hard' : 'normal');
-        system = `${system}\n\n${buildSpeakerContext(message)}`;
-        const emojiBit = await buildGuildEmojiAppendix(message.guild);
-        if (emojiBit) system = `${system}\n\n---\n${emojiBit}`;
+        let system = isHard ? buildHardApiSystem(message) : loadPrompt('normal');
+        if (!isHard) {
+            system = `${system}\n\n${buildSpeakerContext(message)}`;
+            const emojiBit = await buildGuildEmojiAppendix(message.guild);
+            if (emojiBit) system = `${system}\n\n---\n${emojiBit}`;
+        }
 
         const userName = message.member?.displayName || message.author.username;
         const userText = userTextEarly;
 
-        if (isHard && needsWebSearch(userText)) {
+        if (isHard && needsWebSearch(userText) && String(process.env.IA_HARD_WEB_SEARCH || '0').trim() === '1') {
             const webBit = await fetchWebContextForQuery(userText);
             if (webBit) system += webBit;
         }
 
-        const history = await buildHistory(message, client, isHard ? 2 : 6);
+        const history = await buildHistory(message, client, isHard ? 4 : 6);
 
         const messages = [
             { role: 'system', content: system },
             ...history,
             {
                 role: 'user',
-                content: `${userName} [${message.author.id}]: ${userText}`,
+                content: isHard ? `${userName}: ${userText}` : `${userName} [${message.author.id}]: ${userText}`,
             },
         ];
 
-        const temperature = isHard ? 0.82 : 0.6;
+        const temperature = isHard ? 0.9 : 0.6;
 
         let reply = '';
-        let lastErr;
         let usedModel = '';
-        const models = getModelsToTry(isHard);
-        for (let i = 0; i < models.length; i++) {
-            const model = models[i];
-            try {
-                reply = await groqChatCompletion(model, messages, {
-                    temperature,
-                    isHard,
-                    maxTokens: maxTokensForModel(model, isHard),
-                });
-                if (reply) {
-                    usedModel = model;
-                    break;
-                }
-                const emptyErr = new Error(`Réponse vide (${model}).`);
-                emptyErr.code = 'EMPTY_REPLY';
-                lastErr = emptyErr;
-                console.warn(`[ia chatbot] réponse vide — ${model}`);
-            } catch (e) {
-                lastErr = e;
-                console.error(`[ia chatbot] ${model}:`, collectErrorText(e).slice(0, 200));
-                const st = pickHttpStatus(e);
-                if (st === 401 || st === 403) break;
-                if (i < models.length - 1) continue;
-            }
+        try {
+            const result = await requestChatCompletion(messages, { temperature, isHard });
+            reply = result.text;
+            usedModel = result.model;
+        } catch (e) {
+            console.error('[ia chatbot] toutes APIs:', collectErrorText(e).slice(0, 200));
         }
-        if (!reply) {
-            console.warn('[ia chatbot] retry prompt minimal (llama-3.1-8b-instant)');
-            reply = await groqSimpleRetry(userText, userName, isHard);
-            if (reply) usedModel = 'llama-3.1-8b-instant (retry)';
-        }
+
         if (!reply) {
             if (isHard) {
-                console.warn('[ia chatbot] fallback local hard (Groq indisponible ou filtre)');
-                reply = pickHardLocalFallback(userText, channelId);
+                console.warn('[ia chatbot] fallback local Simbot (APIs indisponibles)');
+                reply = generateSimbotLocalReply(userText, channelId);
             } else if (lastErr) {
                 throw lastErr;
             } else {
