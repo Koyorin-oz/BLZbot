@@ -189,6 +189,81 @@ function listConfiguredRoles(hubId) {
 /** Cache du dernier rang appliqué pour éviter le spam API. */
 const lastAppliedTier = new Map(); // key: `${hubId}:${userId}` -> tier
 
+/** Rôles « famille » de l'ancien système niveau (ex. rôle « Or » en plus de « Or II »). */
+const MAIN_RANK_NAMES = [
+  'Plastique',
+  'Bronze',
+  'Argent',
+  'Or',
+  'Diamant',
+  'Émeraude',
+  'Rubis',
+  'Légendaire',
+  'Mythique',
+  'MASTER',
+  'GOAT',
+  'STAR',
+];
+
+function normalizeRankName(s) {
+  return String(s || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+const RANK_LABELS_NORM = new Set(RANKS_ASC.map((r) => normalizeRankName(r.label)));
+
+function familyMainName(family) {
+  const map = {
+    plastique: 'Plastique',
+    bronze: 'Bronze',
+    argent: 'Argent',
+    or: 'Or',
+    diamant: 'Diamant',
+    emeraude: 'Émeraude',
+    rubis: 'Rubis',
+    legendaire: 'Légendaire',
+    mythique: 'Mythique',
+    master: 'MASTER',
+    goat: 'GOAT',
+    star: 'STAR',
+  };
+  return map[family] || null;
+}
+
+/** Vérifie que le membre n'a plus d'anciens rôles ranked et possède le bon rôle configuré. */
+function memberMatchesTier(member, tier, cfg) {
+  const def = RANK_BY_KEY.get(tier) || RANKS_ASC[0];
+  const targetRoleId = cfg.find((c) => c.key === tier)?.roleId || null;
+  const currentNorm = normalizeRankName(def.label);
+  const expectedMainNorm =
+    def.family && def.family !== 'vide' ? normalizeRankName(familyMainName(def.family)) : null;
+
+  for (const c of cfg) {
+    if (!c.roleId || c.key === tier) continue;
+    if (member.roles.cache.has(c.roleId)) return false;
+  }
+
+  if (tier !== 'vide' && targetRoleId && !member.roles.cache.has(targetRoleId)) {
+    return false;
+  }
+
+  for (const role of member.roles.cache.values()) {
+    const n = normalizeRankName(role.name);
+    if (RANK_LABELS_NORM.has(n) && n !== currentNorm) return false;
+    if (
+      expectedMainNorm &&
+      MAIN_RANK_NAMES.some((m) => normalizeRankName(m) === n) &&
+      n !== expectedMainNorm
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /**
  * Synchronise le rôle Discord du joueur en fonction de son RP courant.
  * Ne fait rien si aucun rôle n'est configuré sur le hub.
@@ -203,12 +278,8 @@ async function syncRankRoleForUser(client, hubDiscordId, userId) {
   const rp = users.getPoints(userId);
   const tier = tierForRp(rp);
   const cacheKey = `${hubDiscordId}:${userId}`;
-  if (lastAppliedTier.get(cacheKey) === tier) {
-    return { ok: true, tier, changed: false };
-  }
-  // Vérifier qu'au moins un rôle est configuré (sinon abandon silencieux).
   const cfg = listConfiguredRoles(hubDiscordId);
-  if (!cfg.some((c) => c.roleId)) return { ok: true, tier, changed: false };
+  const hasConfiguredRoles = cfg.some((c) => c.roleId);
   let guild;
   try {
     guild = client.guilds.cache.get(hubDiscordId) || (await client.guilds.fetch(hubDiscordId));
@@ -220,25 +291,101 @@ async function syncRankRoleForUser(client, hubDiscordId, userId) {
   try {
     member = guild.members.cache.get(userId) || (await guild.members.fetch(userId));
   } catch {
-    // Le joueur n'est plus sur le serveur — on ne pollue pas les logs.
     return { ok: false, error: 'membre absent' };
   }
+
+  if (
+    lastAppliedTier.get(cacheKey) === tier &&
+    memberMatchesTier(member, tier, cfg)
+  ) {
+    return { ok: true, tier, changed: false };
+  }
+
+  if (!hasConfiguredRoles) {
+    // Pas de mapping meta : on retire quand même les anciens rôles nommés (système niveau).
+    const def = RANK_BY_KEY.get(tier) || RANKS_ASC[0];
+    const currentNorm = normalizeRankName(def.label);
+    const expectedMainNorm =
+      def.family && def.family !== 'vide' ? normalizeRankName(familyMainName(def.family)) : null;
+    let changed = false;
+    const warnings = [];
+    for (const role of [...member.roles.cache.values()]) {
+      const n = normalizeRankName(role.name);
+      const staleSub = RANK_LABELS_NORM.has(n) && n !== currentNorm;
+      const staleMain =
+        expectedMainNorm &&
+        MAIN_RANK_NAMES.some((m) => normalizeRankName(m) === n) &&
+        n !== expectedMainNorm;
+      if (!staleSub && !staleMain) continue;
+      try {
+        await member.roles.remove(role, 'Ranked RP rang auto (legacy)');
+        changed = true;
+      } catch (e) {
+        warnings.push(`${role.name}: ${e?.message || e}`);
+      }
+    }
+    if (memberMatchesTier(member, tier, cfg)) {
+      lastAppliedTier.set(cacheKey, tier);
+    }
+    return {
+      ok: warnings.length === 0,
+      tier,
+      changed,
+      error: warnings.length ? warnings.join('; ') : undefined,
+    };
+  }
+
   const targetRoleId = cfg.find((c) => c.key === tier)?.roleId || null;
   const otherRoleIds = cfg.filter((c) => c.key !== tier && c.roleId).map((c) => c.roleId);
+  const def = RANK_BY_KEY.get(tier) || RANKS_ASC[0];
+  const currentNorm = normalizeRankName(def.label);
+  const expectedMainNorm =
+    def.family && def.family !== 'vide' ? normalizeRankName(familyMainName(def.family)) : null;
   const oldTier = lastAppliedTier.get(cacheKey);
   let changed = false;
+  const warnings = [];
   try {
     if (targetRoleId && !member.roles.cache.has(targetRoleId)) {
       await member.roles.add(targetRoleId, 'Ranked RP rang auto');
       changed = true;
+    } else if (tier !== 'vide' && !targetRoleId) {
+      warnings.push(
+        `rôle Discord non configuré pour ${def.label} (${tier}) — /admin-roles definir-ranked`,
+      );
     }
+
     for (const rid of otherRoleIds) {
-      if (member.roles.cache.has(rid)) {
-        await member.roles.remove(rid, 'Ranked RP rang auto').catch(() => {});
+      if (!member.roles.cache.has(rid)) continue;
+      try {
+        await member.roles.remove(rid, 'Ranked RP rang auto');
         changed = true;
+      } catch (e) {
+        warnings.push(`remove role ${rid}: ${e?.message || e}`);
       }
     }
-    lastAppliedTier.set(cacheKey, tier);
+
+    for (const role of [...member.roles.cache.values()]) {
+      const n = normalizeRankName(role.name);
+      const staleSub = RANK_LABELS_NORM.has(n) && n !== currentNorm;
+      const staleMain =
+        expectedMainNorm &&
+        MAIN_RANK_NAMES.some((m) => normalizeRankName(m) === n) &&
+        n !== expectedMainNorm;
+      if (!staleSub && !staleMain) continue;
+      if (targetRoleId && role.id === targetRoleId) continue;
+      try {
+        await member.roles.remove(role, 'Ranked RP rang auto (legacy)');
+        changed = true;
+      } catch (e) {
+        warnings.push(`${role.name}: ${e?.message || e}`);
+      }
+    }
+
+    if (memberMatchesTier(member, tier, cfg)) {
+      lastAppliedTier.set(cacheKey, tier);
+    } else if (warnings.length) {
+      console.warn(`[rankedRoles] sync incomplet ${userId} → ${tier}: ${warnings.join('; ')}`);
+    }
 
     if (
       changed &&
@@ -246,7 +393,7 @@ async function syncRankRoleForUser(client, hubDiscordId, userId) {
       oldTier !== tier &&
       rankIndex(tier) > rankIndex(oldTier)
     ) {
-      const newLabel = RANK_BY_KEY.get(tier)?.label || tier;
+      const newLabel = def.label || tier;
       try {
         const ranksPath = require('path').join(__dirname, '..', '..', '..', 'niveau', 'src', 'utils', 'ranks');
         const { sendRankUpNotification } = require(ranksPath);
@@ -256,7 +403,13 @@ async function syncRankRoleForUser(client, hubDiscordId, userId) {
       }
     }
 
-    return { ok: true, tier, changed, oldTier: oldTier || null };
+    return {
+      ok: warnings.length === 0,
+      tier,
+      changed,
+      oldTier: oldTier || null,
+      error: warnings.length ? warnings.join('; ') : undefined,
+    };
   } catch (e) {
     return { ok: false, error: `roles: ${e?.message || e}` };
   }
