@@ -320,7 +320,7 @@ async function handlePanelInteraction(interaction) {
       { backUserId: fromProfil ? uid : null },
     );
     if (!b) {
-      return interaction.followUp({
+      return followUpEphemeral(interaction, {
         content: `✅ **${BR_LABEL[br] || br}** → **${r.newStep}** / 5 (canvas indisponible)`,
       });
     }
