@@ -816,12 +816,18 @@ async function rebuildPrivateRoomRegistry(client, guild) {
 
 module.exports = {
     DEFAULT_LOBBY_CHANNEL_ID,
+    DEFAULT_VOICE_CATEGORY_ID,
+    DEFAULT_LOBBY_CHANNEL_NAME,
     getConfig,
     resolvePrivateRoomConfig,
+    ensureLobbyChannel,
+    isProtectedLobbyChannel,
+    registerLobbyChannel,
     handleLobbyJoin,
     deleteIfOwnerEmpty,
     rebuildPrivateRoomRegistry,
     ensureSessions,
     buildOverwrites,
+    buildLobbyOverwrites,
     getPrivateRoomVoiceMeta,
 };
