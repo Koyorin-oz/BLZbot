@@ -108,6 +108,34 @@ function resetCacheFor(userId) {
   }
 }
 
+const pendingSync = new Set(); // userId
+
+function queueEventRoleSync(userId) {
+  if (userId) pendingSync.add(userId);
+}
+
+async function flushEventRoleSyncQueue(client) {
+  if (!client || pendingSync.size === 0) return;
+  const eventsSO = require('./eventsSO');
+  const uids = [...pendingSync];
+  pendingSync.clear();
+  for (const userId of uids) {
+    try {
+      eventsSO.checkAndClaim(userId);
+      resetCacheFor(userId);
+      const keys = eventsSO.claimedRoleKeys(userId);
+      if (!keys.length) continue;
+      for (const guild of client.guilds.cache.values()) {
+        const member = await guild.members.fetch(userId).catch(() => null);
+        if (!member) continue;
+        await syncEventRolesForUser(client, guild.id, userId, keys);
+      }
+    } catch (e) {
+      console.warn('[eventRoles] flush', userId, e?.message || e);
+    }
+  }
+}
+
 module.exports = {
   getRoleId,
   setRoleId,
@@ -115,4 +143,7 @@ module.exports = {
   createRoles,
   syncEventRolesForUser,
   resetCacheFor,
+  queueEventRoleSync,
+  flushEventRoleSyncQueue,
+  EVENT_ROLE_IDS,
 };

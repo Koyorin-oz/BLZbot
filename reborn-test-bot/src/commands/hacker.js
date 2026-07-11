@@ -23,6 +23,7 @@ const { isOwner } = require('../lib/owners');
 const { hasHackerSalonAccess } = require('../services/hackerAccess');
 const { renderHackerLootCard, renderHackerStatusCard } = require('../lib/canvasHacker');
 const { d } = require('../lib/slashDesc');
+const { deferReplyEphemeral, replyEphemeral, v2Ephemeral } = require('../lib/ephemeral');
 
 const HACKER_SALON_BUTTON_ID = 'rb:hacker:claim';
 

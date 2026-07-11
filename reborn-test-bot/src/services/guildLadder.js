@@ -26,12 +26,15 @@ function ladderForHub(hubDiscordId) {
     )
     .all(hubDiscordId);
   const grpStmt = db.prepare(
-    "SELECT COALESCE(SUM(CAST(grp AS INTEGER)),0) AS total FROM guild_member_gxp WHERE guild_id = ?",
+    `SELECT COALESCE(SUM(CAST(gmg.grp AS INTEGER)), 0) AS total
+     FROM player_guild_members pgm
+     INNER JOIN guild_member_gxp gmg ON gmg.user_id = pgm.user_id AND gmg.guild_id = ?
+     WHERE pgm.guild_id = ?`,
   );
   const memStmt = db.prepare('SELECT COUNT(*) AS c FROM player_guild_members WHERE guild_id = ?');
   const out = [];
   for (const g of guilds) {
-    const totalGrp = B(grpStmt.get(g.id)?.total ?? 0);
+    const totalGrp = B(grpStmt.get(hubDiscordId, g.id)?.total ?? 0);
     const members = memStmt.get(g.id)?.c ?? 0;
     out.push({
       ...g,

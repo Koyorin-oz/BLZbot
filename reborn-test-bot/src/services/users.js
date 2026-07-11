@@ -174,6 +174,15 @@ function addInventory(userId, itemId, qty = 1) {
   } catch {
     /* ignore */
   }
+  try {
+    const eventsSO = require('./eventsSO');
+    const eventRoles = require('./eventRoles');
+    const { newly } = eventsSO.checkAndClaim(userId);
+    if (newly.length) eventRoles.resetCacheFor(userId);
+    eventRoles.queueEventRoleSync(userId);
+  } catch {
+    /* ignore */
+  }
 }
 
 function getInventory(userId) {

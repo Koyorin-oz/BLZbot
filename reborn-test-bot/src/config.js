@@ -15,8 +15,9 @@ if (!String(process.env.REBORN_TEST_BOT_TOKEN || '').trim()) {
   require('dotenv').config({ path: monorepoRootEnv, override: true });
 }
 
-/** Aucune limite artificielle côté bot (cooldowns, caps internes désactivés). */
-const TEST_NO_LIMITS = true;
+/** Aucune limite artificielle côté bot (cooldowns, caps internes). Mettre `REBORN_TEST_NO_LIMITS=1` en sandbox uniquement. */
+const TEST_NO_LIMITS =
+  String(process.env.REBORN_TEST_NO_LIMITS || process.env.BLZ_TEST_NO_LIMITS || '0').trim() === '1';
 
 const token = (process.env.REBORN_TEST_BOT_TOKEN || '').trim();
 const clientId = (process.env.REBORN_TEST_BOT_CLIENT_ID || '').trim();
