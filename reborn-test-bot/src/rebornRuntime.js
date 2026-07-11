@@ -202,7 +202,7 @@ async function handleEventButton(interaction, client) {
     return;
   }
 
-  // Actions boutique.
+  // Actions boutique — feedback en message éphémère (visible uniquement par le joueur).
   await interaction.deferUpdate();
   let note = '';
   if (value === 'buychest') {
