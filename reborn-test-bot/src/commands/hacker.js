@@ -143,6 +143,12 @@ async function handleHackerSalonButton(interaction) {
   const rarity = itemDef?.rarity || 'Rare';
   users.addInventory(uid, loot.itemId, 1);
   meta.set(key, String(now));
+  try {
+    const eventRoles = require('../services/eventRoles');
+    eventRoles.queueEventRoleSync(uid);
+  } catch {
+    /* ignore */
+  }
 
   const buf = await renderHackerLootCard({
     guildName: interaction.guild.name,
