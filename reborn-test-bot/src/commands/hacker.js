@@ -100,7 +100,7 @@ async function v2Edit(interaction, { fileName, buffer, container }) {
   return interaction.editReply({
     files: [file],
     components: [container],
-    flags: MessageFlags.IsComponentsV2,
+    flags: v2Ephemeral(),
   });
 }
 
