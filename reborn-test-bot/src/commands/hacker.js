@@ -109,11 +109,10 @@ async function v2Edit(interaction, { fileName, buffer, container }) {
  */
 async function handleHackerSalonButton(interaction) {
   if (!interaction.guild) {
-    await interaction.reply({ content: 'Utilise ce bouton dans un salon du serveur.', ephemeral: true });
-    return;
+    return replyEphemeral(interaction, { content: 'Utilise ce bouton dans un salon du serveur.' });
   }
 
-  await interaction.deferReply();
+  await deferReplyEphemeral(interaction);
 
   const uid = interaction.user.id;
   users.getOrCreate(uid, interaction.user.username);
