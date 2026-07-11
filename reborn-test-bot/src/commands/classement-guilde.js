@@ -172,9 +172,8 @@ module.exports = {
 
     collector.on('collect', async (i) => {
       if (i.user.id !== interaction.user.id) {
-        return i.reply({
+        return replyEphemeral(i, {
           content: "Seul l'auteur peut changer le type. Lance `/classement-guilde` pour le tien.",
-          ephemeral: true,
         });
       }
       if (i.customId !== 'rb_classement_guilde_type') return;
