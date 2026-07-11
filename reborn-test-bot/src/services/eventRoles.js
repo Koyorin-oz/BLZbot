@@ -74,7 +74,6 @@ async function syncEventRolesForUser(client, hubDiscordId, userId, claimedRoleKe
   if (!wanted.length) return { ok: true, changed: false };
   const sig = wanted.map((w) => w.rk).sort().join(',');
   const cacheKey = `${hubDiscordId}:${userId}`;
-  if (lastApplied.get(cacheKey) === sig) return { ok: true, changed: false };
   let guild;
   try {
     guild = client.guilds.cache.get(hubDiscordId) || (await client.guilds.fetch(hubDiscordId));
