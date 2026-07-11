@@ -155,13 +155,14 @@ module.exports = {
 
   async execute(interaction) {
     const hub = interaction.guildId;
-    if (!hub) return interaction.reply({ content: 'Sur un serveur uniquement.' });
+    if (!hub) return replyEphemeral(interaction, { content: 'Sur un serveur uniquement.' });
     users.getOrCreate(interaction.user.id, interaction.user.username);
     let currentType = interaction.options.getString('type') || 'grp';
     if (currentType === 'guildes') currentType = 'grp';
     if (!TYPES[currentType]) currentType = 'grp';
     const embed = buildEmbed(currentType, hub, interaction.user.id);
-    await interaction.reply({ embeds: [embed], components: [buildSelect(currentType)] });
+    await deferReplyEphemeral(interaction);
+    await interaction.editReply({ embeds: [embed], components: [buildSelect(currentType)] });
     const msg = await interaction.fetchReply();
 
     const collector = msg.createMessageComponentCollector({
