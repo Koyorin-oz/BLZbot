@@ -9,6 +9,7 @@ const users = require('../services/users');
 const playerGuilds = require('../services/playerGuilds');
 const ladder = require('../services/guildLadder');
 const { d } = require('../lib/slashDesc');
+const { deferReplyEphemeral, replyEphemeral } = require('../lib/ephemeral');
 
 function escGuildName(name) {
   return String(name || 'Sans nom').replace(/\\/g, '\\\\').replace(/\*/g, '\\*');
