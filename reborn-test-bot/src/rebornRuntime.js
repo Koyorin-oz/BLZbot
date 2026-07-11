@@ -148,6 +148,15 @@ function registerReadyTasks(client) {
 
   setInterval(() => {
     try {
+      const { flushEventRoleSyncQueue } = require('./services/eventRoles');
+      flushEventRoleSyncQueue(client).catch(() => {});
+    } catch (e) {
+      console.error('[reborn event roles flush]', e);
+    }
+  }, 15_000);
+
+  setInterval(() => {
+    try {
       require('./services/eventsSO').tick(client).catch(() => {});
     } catch (e) {
       console.error('[reborn events spawn tick]', e);
