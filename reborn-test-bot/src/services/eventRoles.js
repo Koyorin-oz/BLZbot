@@ -10,10 +10,9 @@ const meta = require('./meta');
 const { allRoleEntries } = require('../reborn/eventConfig');
 
 /**
- * IDs de rôles Discord fournis manuellement (le bot ne crée plus de rôle).
- * Colle ici l'ID du rôle Discord que TU as créé pour chaque quête d'event.
- * Prioritaire sur la config en base.
- * @type {Record<string, string>}
+ * Rôles event Espace / Océan — colle les IDs Discord ici (ou `/event-admin` / meta).
+ * Espace : meteore, galaxien (3 quasars + …), lumineux (3 quasars OU 20 étoiles), egocentrique (The Univers).
+ * Océan  : eau, perdu, marin, roi (Megalodon).
  */
 const EVENT_ROLE_IDS = {
   meteore: '1515122668360171722',
