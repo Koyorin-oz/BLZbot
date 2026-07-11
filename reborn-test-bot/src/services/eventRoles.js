@@ -87,6 +87,10 @@ async function syncEventRolesForUser(client, hubDiscordId, userId, claimedRoleKe
   } catch {
     return { ok: false, error: 'member' };
   }
+  if (lastApplied.get(cacheKey) === sig) {
+    const allHave = wanted.every((w) => member.roles.cache.has(w.roleId));
+    if (allHave) return { ok: true, changed: false };
+  }
   let changed = false;
   try {
     for (const w of wanted) {
