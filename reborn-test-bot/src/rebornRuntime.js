@@ -234,7 +234,10 @@ async function handleEventButton(interaction, client) {
       note = r.error;
     }
   }
-  await interaction.editReply(buildEventPanel(eventKey, uid, 'shop', note));
+  await interaction.editReply(buildEventPanel(eventKey, uid, 'shop'));
+  if (note) {
+    await interaction.followUp({ content: note, flags: 64 }).catch(() => {});
+  }
 }
 
 /**
