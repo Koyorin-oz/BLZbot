@@ -148,19 +148,25 @@ async function sendStreakAnnouncement(client, userId, newStreak, reward) {
         const user = getOrCreateUser(userId, 'Unknown');
         const shouldPing = user.notify_streak !== 0;
 
-        // Construire le message
-        let message = `Bravo <@${userId}> qui a maintenant une streak de ${newStreak} jours !`;
+        // Construire l'embed
+        const message = `<@${userId}>`;
+        const embed = new EmbedBuilder()
+            .setAuthor({ name: user.username, iconURL: user.displayAvatarURL() })
+            .setTitle("Nouvelle Streak")
+            .setDescription(`Bravo <@${userId}> qui a maintenant une streak de **${newStreak} jours** !`)
+            .setColor(0xffa500);
 
         // Ajouter la récompense si elle existe (streak >= 10)
         if (reward.stars > 0) {
-            message += `\nTu viens de gagner **${reward.stars.toLocaleString()} ⭐**`;
+            embed.addFields({ name: "Récompense", value: `Tu viens de gagner **${reward.stars.toLocaleString()} starss**` });
         } else if (reward.item) {
             const itemName = reward.item === 'coffre_normal' ? '1 Coffre Bonus' : reward.item;
-            message += `\nTu viens de gagner **${itemName}**`;
+            embed.addFields({ name: "Récompense", value: `Tu viens de gagner **${itemName}**` });
         }
 
         await channel.send({
             content: message,
+            embeds: [embed],
             allowedMentions: shouldPing ? undefined : { parse: [] }
         });
         logger.info(`Annonce de streak envoyée pour ${userId} (${newStreak} jours)`);
