@@ -3,6 +3,7 @@ const schedule = require('node-schedule');
 const db = require('../database/database');
 const { grantResources } = require('./db-users');
 const logger = require('./logger');
+const { EmbedBuilder } = require('discord.js');
 
 let _warnedStreakChannel = false;
 
