@@ -152,7 +152,7 @@ async function sendStreakAnnouncement(client, userId, newStreak, reward) {
         // Construire l'embed
         const message = `<@${userId}>`;
         const embed = new EmbedBuilder()
-            .setAuthor({ name: user.username, iconURL: user.displayAvatarURL() })
+            .setAuthor({ name: user.username, iconURL: user.Client?.avatarURL() || undefined })
             .setTitle("Nouvelle Streak")
             .setDescription(`Bravo <@${userId}> qui a maintenant une streak de **${newStreak} jours** !`)
             .setColor(0xffa500);
