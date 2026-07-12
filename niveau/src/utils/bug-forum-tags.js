@@ -110,8 +110,8 @@ function buildResolutionEmbed(tagId) {
     .setTitle(isFixed ? "✅ Signalement traité" : "✅ Signalement déjà signalé")
     .setDescription(
       isFixed
-        ? "Ce signalement a été marqué comme corrigé. Le fil est maintenant fermé."
-        : "Ce signalement a été marqué comme déjà signalé. Le fil est maintenant fermé.",
+        ? `Ce signalement a été marqué comme corrigé par <@${interaction.user.id}>. Le fil est maintenant fermé.`
+        : `Ce signalement a été marqué comme déjà signalé par <@${interaction.user.id}>. Le fil est maintenant fermé.`,
     )
     .setColor(isFixed ? 0x2ecc71 : 0x3498db)
     .setTimestamp();
