@@ -53,6 +53,7 @@ function tradeAllowed(aStars, aInv, bStars, bInv, aEvent = 0n, bEvent = 0n) {
       ].join('\n'),
     };
   }
+  return { ok: true };
 }
 
 function genId() {
