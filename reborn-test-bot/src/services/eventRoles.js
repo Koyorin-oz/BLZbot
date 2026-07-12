@@ -16,14 +16,14 @@ const { allRoleEntries } = require('../reborn/eventConfig');
  * @type {Record<string, string>}
  */
 const EVENT_ROLE_IDS = {
-  meteore: '',
-  galaxien: '',
-  lumineux: '',
-  egocentrique: '',
-  eau: '',
-  perdu: '',
-  marin: '',
-  roi: '',
+  meteore: '1515122668360171722',
+  galaxien: '1515122669421465762',
+  lumineux: '1515122672567062528',
+  egocentrique: '1515122832676229240',
+  eau: '1515122840066855002',
+  perdu: '1515122842516062308',
+  marin: '1515122844894499039',
+  roi: '1515123490548613140',
 };
 
 function metaKey(hubId, roleKey) {
