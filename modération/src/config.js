@@ -235,7 +235,7 @@ module.exports = {
         LINK_REGLEMENT_CHANNEL_ID: '1454477663703011439',
         /** Salon ⁠🪢・tickets */
         /** Salon support où se trouve le panneau « Créer un ticket » (lien bienvenue). */
-        LINK_TICKETS_CHANNEL_ID: '1496896791465955338',
+        LINK_TICKETS_CHANNEL_ID: '1454477715494404212',
         /** Couleur de la barre latérale du container Components V2 (hex) */
         ACCENT_COLOR: BLZ_EMBED_STRIP_HEX,
         /**
