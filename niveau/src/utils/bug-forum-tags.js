@@ -18,6 +18,7 @@ const TAG = {
   enCoursKoyorin: "1493284236122390618",
   enCoursRoxxor: "1493292230570545382",
   dejaSignale: "1524529509624184864",
+  signalementRejete: "1525846693327667241",
 };
 
 /** Tags « en cours » retirés par /bug-corriger. */
@@ -37,10 +38,11 @@ const BUTTON_DEFS = [
   },
   { key: "dejaSignale", label: "Déjà signalé", style: ButtonStyle.Secondary },
   { key: "corriger", label: "Corrigé", style: ButtonStyle.Success },
+  { key: "signalementRejete", label: "Signalement rejeté", style: ButtonStyle.Danger },
 ];
 
 const MANAGED_TAG_IDS = BUTTON_DEFS.map((def) => TAG[def.key]);
-const FINAL_TAG_IDS = [TAG.dejaSignale, TAG.corriger];
+const FINAL_TAG_IDS = [TAG.dejaSignale, TAG.corriger, TAG.signalementRejete];
 const BUTTON_PREFIX = "bug_tag:";
 
 function isBugTrackerGuild(guildId) {
@@ -106,14 +108,17 @@ function isFinalBugTag(tagId) {
 
 function buildResolutionEmbed(tagId) {
   const isFixed = tagId === TAG.corriger;
+  const isRejected = tagId === TAG.signalementRejete;
   return new EmbedBuilder()
-    .setTitle(isFixed ? "✅ Signalement traité" : "✅ Signalement déjà signalé")
+    .setTitle(isFixed ? "✅ Signalement traité" : isRejected ? "❌ Signalement rejeté" : "✅ Signalement déjà signalé")
     .setDescription(
       isFixed
         ? `Ce signalement a été marqué comme corrigé par <@${interaction.user.id}>. Le fil est maintenant fermé.`
-        : `Ce signalement a été marqué comme déjà signalé par <@${interaction.user.id}>. Le fil est maintenant fermé.`,
+        : isRejected
+          ? `Ce signalement a été marqué comme rejeté par <@${interaction.user.id}>. Le fil est maintenant fermé.`
+          : `Ce signalement a été marqué comme déjà signalé par <@${interaction.user.id}>. Le fil est maintenant fermé.`,
     )
-    .setColor(isFixed ? 0x2ecc71 : 0x3498db)
+    .setColor(isFixed ? 0x2ecc71 : isRejected ? 0xe74c3c : 0x3498db)
     .setTimestamp();
 }
 
