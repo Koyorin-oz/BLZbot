@@ -26,22 +26,15 @@ const EN_COURS_TAG_IDS = [TAG.enCours, TAG.enCoursKoyorin, TAG.enCoursRoxxor];
 
 const BUTTON_DEFS = [
   { key: "enCours", label: "En cours", style: ButtonStyle.Primary },
-  {
-    key: "enCoursKoyorin",
-    label: "En cours - Koyorin",
-    style: ButtonStyle.Secondary,
-  },
-  {
-    key: "enCoursRoxxor",
-    label: "En cours - Roxxor",
-    style: ButtonStyle.Secondary,
-  },
   { key: "dejaSignale", label: "Déjà signalé", style: ButtonStyle.Secondary },
   { key: "corriger", label: "Corrigé", style: ButtonStyle.Success },
-  { key: "signalementRejete", label: "Signalement rejeté", style: ButtonStyle.Danger },
+  { key: "signalementRejete", label: "Signalement rejeté", style: ButtonStyle.Danger, },
 ];
 
-const MANAGED_TAG_IDS = BUTTON_DEFS.map((def) => TAG[def.key]);
+// Inclure aussi les variantes spécifiques (Koyorin/Roxxor) parmi les tags gérés.
+const MANAGED_TAG_IDS = [
+  ...new Set([...BUTTON_DEFS.map((def) => TAG[def.key]), ...EN_COURS_TAG_IDS]),
+];
 const FINAL_TAG_IDS = [TAG.dejaSignale, TAG.corriger, TAG.signalementRejete];
 const BUTTON_PREFIX = "bug_tag:";
 
@@ -110,7 +103,13 @@ function buildResolutionEmbed(tagId) {
   const isFixed = tagId === TAG.corriger;
   const isRejected = tagId === TAG.signalementRejete;
   return new EmbedBuilder()
-    .setTitle(isFixed ? "✅ Signalement traité" : isRejected ? "❌ Signalement rejeté" : "✅ Signalement déjà signalé")
+    .setTitle(
+      isFixed
+        ? "✅ Signalement traité"
+        : isRejected
+          ? "❌ Signalement rejeté"
+          : "✅ Signalement déjà signalé",
+    )
     .setDescription(
       isFixed
         ? `Ce signalement a été marqué comme corrigé par <@${interaction.user.id}>. Le fil est maintenant fermé.`
@@ -146,11 +145,24 @@ async function handleBugTagButton(interaction) {
   }
 
   await interaction.deferUpdate();
-  await toggleForumTag(thread, tagId);
-  const label = tagLabelForId(tagId);
 
-  if (isFinalBugTag(tagId)) {
-    await closeResolvedBugThread(thread, tagId);
+  // Si le bouton pressé est le bouton "En cours", choisir la variante
+  // spécifique selon l'utilisateur (Koyorin ou Roxxor) sinon laisser
+  // le tag générique.
+  let appliedTagId = tagId;
+  if (tagId === TAG.enCours) {
+    const uid = String(interaction.user.id);
+    if (uid === "1278372257483456603") appliedTagId = TAG.enCoursKoyorin;
+    else if (uid === "1057705135515639859") appliedTagId = TAG.enCoursRoxxor;
+    else appliedTagId = TAG.enCours;
+  }
+
+  await toggleForumTag(thread, appliedTagId);
+
+  const label = tagId === TAG.enCours ? "En cours" : tagLabelForId(tagId);
+
+  if (isFinalBugTag(appliedTagId)) {
+    await closeResolvedBugThread(thread, appliedTagId);
   } else {
     await interaction.followUp({
       content: `🏷️ Tag **${label}** appliqué sur ce signalement.`,
