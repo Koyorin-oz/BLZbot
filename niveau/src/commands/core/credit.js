@@ -6,7 +6,7 @@ const logger = require('../../utils/logger');
 const developers = [
     {
         name: 'Koyorin',
-        id: '965984018216665099',
+        id: '1278372257483456603',
         role: 'Lead développeur et superviseur du projet',
         description: 'Le cerveau derrière le projet, responsable de la majeure partie du code et de la vision globale du bot.',
         emoji: '👑'
