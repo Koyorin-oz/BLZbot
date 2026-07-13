@@ -48,7 +48,7 @@ module.exports = {
 
                         developers.forEach(dev => {
                             selectMenu.addOptions({
-                                label: devName,
+                                label: dev.name,
                                 description: dev.role,
                                 value: dev.id,
                                 emoji: dev.emoji
