@@ -34,6 +34,7 @@ module.exports = {
                 const dev = developers.find(d => d.id === devId);
                 const user = await interaction.client.users.fetch(dev.id);
                 const avatar = user.displayAvatarURL({ size: 256, extension: 'png' });
+                const realName = user.find(d => d.id === dev.id)?.username || dev.name;
 
                 const container = new ContainerBuilder()
                     .setAccentColor(BLZ_EMBED_STRIP_INT)
@@ -61,7 +62,7 @@ module.exports = {
                         section
                             .addTextDisplayComponents((textDisplay) =>
                                 textDisplay.setContent(`
-**${dev.emoji} <@${dev.id}> (\`@${dev.name}\`)**
+**${dev.emoji} <@${dev.id}> (\`@${realName}\`)**
 *${dev.role}*
 
 **Description**
