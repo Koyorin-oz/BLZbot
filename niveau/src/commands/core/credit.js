@@ -14,7 +14,7 @@ const developers = [
     {
         name: 'Roxxor',
         id: '1057705135515639859',
-        description: 'La différence entre moi et Koyorin ? Ma beauté naturelle.',
+        description: 'Derrière mon image de chaussette, je suis un développeur passionné ! Mais aussi un célibataire accompli <:FancyPepe:1259914147752317019>',
         role: 'Développeur',
         emoji: '👨‍💻'
     }
