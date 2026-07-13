@@ -1,17 +1,23 @@
-const db = require('../db');
-const users = require('./users');
-const cfg = require('../config');
-const { getItem } = require('../reborn/catalog');
-const { NEXT_REQUIREMENTS, grpRankFromTotal, nextGrade, label, rankAtLeast } = require('../reborn/grades');
+const db = require("../db");
+const users = require("./users");
+const cfg = require("../config");
+const { getItem } = require("../reborn/catalog");
+const {
+  NEXT_REQUIREMENTS,
+  grpRankFromTotal,
+  nextGrade,
+  label,
+  rankAtLeast,
+} = require("../reborn/grades");
 
 /** Niveau joueur minimum pour créer une guilde. */
 const GUILD_MIN_LEVEL = 0; // seuil désactivé (création libre — évite désync niveau legacy / REBORN)
 /** Grade de guilde minimum pour débloquer le salon privé. */
-const SALON_MIN_GRADE = 'or';
+const SALON_MIN_GRADE = "or";
 
 function B(s) {
   try {
-    return BigInt(s || '0');
+    return BigInt(s || "0");
   } catch {
     return 0n;
   }
@@ -50,7 +56,7 @@ function effectiveMemberCap(g) {
   const base = memberCapForGuildLevel(g.guild_level || 1);
   let bonus = 0;
   try {
-    const skillTree = require('./skillTree');
+    const skillTree = require("./skillTree");
     bonus = skillTree.guildMemberCapBonus(g.leader_id);
   } catch {
     /* ignore */
@@ -64,7 +70,7 @@ const GUILD_INVITE_TTL_MS = 5 * 60 * 1000;
 
 function parsePermsJson(raw) {
   try {
-    const o = JSON.parse(raw || '{}');
+    const o = JSON.parse(raw || "{}");
     return { ...DEFAULT_PERMS, ...o };
   } catch {
     return { ...DEFAULT_PERMS };
@@ -76,7 +82,11 @@ function permsJsonString(p) {
 }
 
 function memberRow(guildId, userId) {
-  return db.prepare('SELECT * FROM player_guild_members WHERE guild_id = ? AND user_id = ?').get(guildId, userId);
+  return db
+    .prepare(
+      "SELECT * FROM player_guild_members WHERE guild_id = ? AND user_id = ?",
+    )
+    .get(guildId, userId);
 }
 
 function canDepositToTreasury(guildId, userId) {
@@ -135,7 +145,9 @@ function isSubLeader(guildId, userId) {
 
 function listSubLeaders(guildId) {
   return db
-    .prepare('SELECT user_id FROM player_guild_members WHERE guild_id = ? AND is_sub_leader = 1')
+    .prepare(
+      "SELECT user_id FROM player_guild_members WHERE guild_id = ? AND is_sub_leader = 1",
+    )
     .all(guildId)
     .map((r) => r.user_id);
 }
@@ -149,55 +161,72 @@ function listSubLeaders(guildId) {
  */
 function setSubLeader(guildId, leaderId, targetId, value) {
   const g = getGuild(guildId);
-  if (!g) return { ok: false, error: 'Guilde introuvable.' };
-  if (g.leader_id !== leaderId) return { ok: false, error: 'Seul le chef peut nommer des sous-chefs.' };
-  if (targetId === leaderId) return { ok: false, error: 'Le chef ne peut pas être son propre sous-chef.' };
-  if (!memberRow(guildId, targetId)) return { ok: false, error: 'Cible pas membre de la guilde.' };
+  if (!g) return { ok: false, error: "Guilde introuvable." };
+  if (g.leader_id !== leaderId)
+    return { ok: false, error: "Seul le chef peut nommer des sous-chefs." };
+  if (targetId === leaderId)
+    return {
+      ok: false,
+      error: "Le chef ne peut pas être son propre sous-chef.",
+    };
+  if (!memberRow(guildId, targetId))
+    return { ok: false, error: "Cible pas membre de la guilde." };
   if (value) {
     const current = listSubLeaders(guildId);
     if (current.includes(targetId)) return { ok: true, already: true };
     if (current.length >= SUB_LEADER_CAP) {
-      return { ok: false, error: `Limite atteinte (${SUB_LEADER_CAP} sous-chefs max). Rétrograde quelqu'un avant.` };
+      return {
+        ok: false,
+        error: `Limite atteinte (${SUB_LEADER_CAP} sous-chefs max). Rétrograde quelqu'un avant.`,
+      };
     }
   }
-  db.prepare('UPDATE player_guild_members SET is_sub_leader = ? WHERE guild_id = ? AND user_id = ?').run(
-    value ? 1 : 0,
-    guildId,
-    targetId,
-  );
+  db.prepare(
+    "UPDATE player_guild_members SET is_sub_leader = ? WHERE guild_id = ? AND user_id = ?",
+  ).run(value ? 1 : 0, guildId, targetId);
   return { ok: true };
 }
 
 function getGuild(guildId) {
   let id = guildId;
-  if (/^\d+$/.test(String(id || ''))) id = `niv_${id}`;
+  if (/^\d+$/.test(String(id || ""))) id = `niv_${id}`;
   // Si guilde pontée, on rafraîchit depuis niveau avant de lire.
-  if (String(id).startsWith('niv_')) {
+  if (String(id).startsWith("niv_")) {
     try {
-      const bridge = require('./niveauGuildBridge');
+      const bridge = require("./niveauGuildBridge");
       bridge.refreshBridgedGuild(id);
-    } catch { /* optional */ }
+    } catch {
+      /* optional */
+    }
   }
-  return db.prepare('SELECT * FROM player_guilds WHERE id = ?').get(id);
+  return db.prepare("SELECT * FROM player_guilds WHERE id = ?").get(id);
 }
 
 function getMembershipInHub(userId, hubDiscordId) {
   // On synchronise toujours depuis niveau avant de lire (best-effort).
   try {
-    const bridge = require('./niveauGuildBridge');
+    const bridge = require("./niveauGuildBridge");
     bridge.bridgeMembership(userId, hubDiscordId);
-  } catch { /* optional */ }
-  return db
-    .prepare(
-      `SELECT m.*, g.* FROM player_guild_members m
+  } catch {
+    /* optional */
+  }
+  return (
+    db
+      .prepare(
+        `SELECT m.*, g.* FROM player_guild_members m
        JOIN player_guilds g ON g.id = m.guild_id
        WHERE m.user_id = ? AND g.hub_discord_id = ?`,
-    )
-    .get(userId, hubDiscordId) || null;
+      )
+      .get(userId, hubDiscordId) || null
+  );
 }
 
 function memberCount(guildId) {
-  return db.prepare('SELECT COUNT(*) AS c FROM player_guild_members WHERE guild_id = ?').get(guildId).c;
+  return db
+    .prepare(
+      "SELECT COUNT(*) AS c FROM player_guild_members WHERE guild_id = ?",
+    )
+    .get(guildId).c;
 }
 
 /**
@@ -207,123 +236,171 @@ function memberCount(guildId) {
 function createGuild(hubDiscordId, leaderId, leaderName, name, options = {}) {
   users.getOrCreate(leaderId, leaderName);
   if (getMembershipInHub(leaderId, hubDiscordId)) {
-    return { ok: false, error: 'Tu es déjà dans une guilde sur ce serveur.' };
+    return { ok: false, error: "Tu es déjà dans une guilde sur ce serveur." };
   }
-  const safeName = String(name || 'Guilde').slice(0, 80);
+  const safeName = String(name || "Guilde").slice(0, 80);
   const now = Date.now();
   // Stratégie de fusion : on tente d'abord de créer la guilde côté niveau ;
   // en cas de succès, l'ID REBORN est dérivé pour rester pontée.
   let id = genId();
   let bridgedNiveauId = null;
   try {
-    const bridge = require('./niveauGuildBridge');
-    bridgedNiveauId = bridge.createNiveauGuild(safeName, leaderId, '🛡️');
+    const bridge = require("./niveauGuildBridge");
+    bridgedNiveauId = bridge.createNiveauGuild(safeName, leaderId, "🛡️");
     if (bridgedNiveauId) id = bridge.rebornIdFromNiveau(bridgedNiveauId);
-  } catch { /* optional */ }
+  } catch {
+    /* optional */
+  }
   db.prepare(
     `INSERT INTO player_guilds (id, hub_discord_id, name, leader_id, created_ms, member_cap, gxp, guild_level, grade, treasury, anti_separation, last_focus_ms)
      VALUES (?, ?, ?, ?, ?, ?, '0', 1, '', '0', 0, 0)`,
   ).run(id, hubDiscordId, safeName, leaderId, now, 5);
   db.prepare(
-    'INSERT INTO player_guild_members (guild_id, user_id, joined_ms, perms_json) VALUES (?, ?, ?, ?)',
+    "INSERT INTO player_guild_members (guild_id, user_id, joined_ms, perms_json) VALUES (?, ?, ?, ?)",
   ).run(id, leaderId, now, permsJsonString(LEADER_PERMS));
   return { ok: true, guildId: id };
 }
 
 function createPendingInvite(hubDiscordId, guildId, inviterId, targetId) {
   const g = getGuild(guildId);
-  if (!g || g.hub_discord_id !== hubDiscordId) return { ok: false, error: 'Guilde introuvable sur ce serveur.' };
+  if (!g || g.hub_discord_id !== hubDiscordId)
+    return { ok: false, error: "Guilde introuvable sur ce serveur." };
   if (!canInviteMembers(guildId, inviterId)) {
-    return { ok: false, error: 'Réservé au chef ou permission « invitations ».' };
+    return {
+      ok: false,
+      error: "Réservé au chef ou permission « invitations ».",
+    };
   }
-  if (getMembershipInHub(targetId, hubDiscordId)) return { ok: false, error: 'Cette personne est déjà dans une guilde.' };
+  if (getMembershipInHub(targetId, hubDiscordId))
+    return { ok: false, error: "Cette personne est déjà dans une guilde." };
   const n = memberCount(g.id);
   const cap = effectiveMemberCap(g);
-  if (n >= cap) return { ok: false, error: 'Cette guilde a atteint la limite de membres.' };
+  if (n >= cap)
+    return { ok: false, error: "Cette guilde a atteint la limite de membres." };
   const inviteId = `${Date.now()}${Math.random().toString(36).slice(2, 10)}`;
   const now = Date.now();
   db.prepare(
     `INSERT INTO guild_invites (id, hub_discord_id, guild_id, inviter_id, target_id, created_ms, expires_ms, status)
      VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
-  ).run(inviteId, hubDiscordId, g.id, inviterId, targetId, now, now + GUILD_INVITE_TTL_MS);
+  ).run(
+    inviteId,
+    hubDiscordId,
+    g.id,
+    inviterId,
+    targetId,
+    now,
+    now + GUILD_INVITE_TTL_MS,
+  );
   return { ok: true, inviteId };
 }
 
 function getPendingInvite(inviteId) {
-  return db.prepare('SELECT * FROM guild_invites WHERE id = ?').get(inviteId) || null;
+  return (
+    db.prepare("SELECT * FROM guild_invites WHERE id = ?").get(inviteId) || null
+  );
 }
 
 function cancelPendingInvite(inviteId) {
-  db.prepare("UPDATE guild_invites SET status = 'cancelled' WHERE id = ?").run(inviteId);
+  db.prepare("UPDATE guild_invites SET status = 'cancelled' WHERE id = ?").run(
+    inviteId,
+  );
   return { ok: true };
 }
 
-function acceptGuildInvite(inviteId, targetId, username = '') {
+function acceptGuildInvite(inviteId, targetId, username = "") {
   const invite = getPendingInvite(inviteId);
-  if (!invite) return { ok: false, error: 'Invitation introuvable.' };
-  if (invite.target_id !== targetId) return { ok: false, error: 'Cette invitation ne te concerne pas.' };
-  if (invite.status !== 'pending') return { ok: false, error: 'Invitation déjà traitée.' };
+  if (!invite) return { ok: false, error: "Invitation introuvable." };
+  if (invite.target_id !== targetId)
+    return { ok: false, error: "Cette invitation ne te concerne pas." };
+  if (invite.status !== "pending")
+    return { ok: false, error: "Invitation déjà traitée." };
   if (Date.now() > invite.expires_ms) {
-    db.prepare("UPDATE guild_invites SET status = 'expired' WHERE id = ?").run(inviteId);
-    return { ok: false, error: 'Invitation expirée.' };
+    db.prepare("UPDATE guild_invites SET status = 'expired' WHERE id = ?").run(
+      inviteId,
+    );
+    return { ok: false, error: "Invitation expirée." };
   }
-  const r = joinGuild(invite.hub_discord_id, targetId, username, invite.guild_id);
+  const r = joinGuild(
+    invite.hub_discord_id,
+    targetId,
+    username,
+    invite.guild_id,
+  );
   if (!r.ok) {
-    db.prepare("UPDATE guild_invites SET status = 'failed' WHERE id = ?").run(inviteId);
+    db.prepare("UPDATE guild_invites SET status = 'failed' WHERE id = ?").run(
+      inviteId,
+    );
     return { ok: false, error: r.error };
   }
-  db.prepare("UPDATE guild_invites SET status = 'accepted' WHERE id = ?").run(inviteId);
+  db.prepare("UPDATE guild_invites SET status = 'accepted' WHERE id = ?").run(
+    inviteId,
+  );
   return { ok: true };
 }
 
 function declineGuildInvite(inviteId, targetId) {
   const invite = getPendingInvite(inviteId);
-  if (!invite) return { ok: false, error: 'Invitation introuvable.' };
-  if (invite.target_id !== targetId) return { ok: false, error: 'Cette invitation ne te concerne pas.' };
-  if (invite.status !== 'pending') return { ok: false, error: 'Invitation déjà traitée.' };
+  if (!invite) return { ok: false, error: "Invitation introuvable." };
+  if (invite.target_id !== targetId)
+    return { ok: false, error: "Cette invitation ne te concerne pas." };
+  if (invite.status !== "pending")
+    return { ok: false, error: "Invitation déjà traitée." };
   if (Date.now() > invite.expires_ms) {
-    db.prepare("UPDATE guild_invites SET status = 'expired' WHERE id = ?").run(inviteId);
-    return { ok: false, error: 'Invitation expirée.' };
+    db.prepare("UPDATE guild_invites SET status = 'expired' WHERE id = ?").run(
+      inviteId,
+    );
+    return { ok: false, error: "Invitation expirée." };
   }
-  db.prepare("UPDATE guild_invites SET status = 'declined' WHERE id = ?").run(inviteId);
+  db.prepare("UPDATE guild_invites SET status = 'declined' WHERE id = ?").run(
+    inviteId,
+  );
   return { ok: true };
 }
 
 function joinGuild(hubDiscordId, userId, username, guildId) {
   const g = getGuild(guildId);
-  if (!g || g.hub_discord_id !== hubDiscordId) return { ok: false, error: 'Guilde introuvable sur ce serveur.' };
-  if (getMembershipInHub(userId, hubDiscordId)) return { ok: false, error: 'Tu es déjà dans une guilde.' };
+  if (!g || g.hub_discord_id !== hubDiscordId)
+    return { ok: false, error: "Guilde introuvable sur ce serveur." };
+  if (getMembershipInHub(userId, hubDiscordId))
+    return { ok: false, error: "Tu es déjà dans une guilde." };
   const n = memberCount(g.id);
   const cap = effectiveMemberCap(g);
-  if (n >= cap) return { ok: false, error: 'Guilde pleine.' };
+  if (n >= cap) return { ok: false, error: "Guilde pleine." };
   users.getOrCreate(userId, username);
-  db.prepare('INSERT INTO player_guild_members (guild_id, user_id, joined_ms, perms_json) VALUES (?, ?, ?, ?)').run(
-    g.id,
-    userId,
-    Date.now(),
-    permsJsonString(DEFAULT_PERMS),
-  );
+  db.prepare(
+    "INSERT INTO player_guild_members (guild_id, user_id, joined_ms, perms_json) VALUES (?, ?, ?, ?)",
+  ).run(g.id, userId, Date.now(), permsJsonString(DEFAULT_PERMS));
   // Propage côté niveau si guilde pontée.
   try {
-    const bridge = require('./niveauGuildBridge');
+    const bridge = require("./niveauGuildBridge");
     const nivId = bridge.niveauIdFromReborn(g.id);
     if (nivId) bridge.addNiveauMember(nivId, userId);
-  } catch { /* optional */ }
+  } catch {
+    /* optional */
+  }
   return { ok: true };
 }
 
 function leaveGuild(hubDiscordId, userId) {
   const row = getMembershipInHub(userId, hubDiscordId);
-  if (!row) return { ok: false, error: 'Pas dans une guilde.' };
+  if (!row) return { ok: false, error: "Pas dans une guilde." };
   if (row.leader_id === userId) {
-    return { ok: false, error: 'Chef : utilise `/guilde transferer_chef` puis `/guilde quitter`, ou `/guilde dissoudre`.' };
+    return {
+      ok: false,
+      error:
+        "Chef : utilise `/guilde transferer_chef` puis `/guilde quitter`, ou `/guilde dissoudre`.",
+    };
   }
-  db.prepare('DELETE FROM player_guild_members WHERE guild_id = ? AND user_id = ?').run(row.guild_id, userId);
+  db.prepare(
+    "DELETE FROM player_guild_members WHERE guild_id = ? AND user_id = ?",
+  ).run(row.guild_id, userId);
   // Propage côté niveau si guilde pontée.
   try {
-    const bridge = require('./niveauGuildBridge');
+    const bridge = require("./niveauGuildBridge");
     if (bridge.isBridged(row.guild_id)) bridge.removeNiveauMember(userId);
-  } catch { /* optional */ }
+  } catch {
+    /* optional */
+  }
   return { ok: true };
 }
 
@@ -333,27 +410,21 @@ function addGuildGxp(guildId, delta) {
   const next = B(g.gxp) + delta;
   const gl = guildLevelFromTotalGxp(next);
   const cap = effectiveMemberCap({ ...g, guild_level: gl });
-  db.prepare('UPDATE player_guilds SET gxp = ?, guild_level = ?, member_cap = ? WHERE id = ?').run(
-    next.toString(),
-    gl,
-    cap,
-    guildId,
-  );
+  db.prepare(
+    "UPDATE player_guilds SET gxp = ?, guild_level = ?, member_cap = ? WHERE id = ?",
+  ).run(next.toString(), gl, cap, guildId);
 }
 
 function setGuildGxp(guildId, total) {
   const g = getGuild(guildId);
-  if (!g) return { ok: false, error: 'Guilde introuvable.' };
-  const next = typeof total === 'bigint' ? total : B(total);
-  if (next < 0n) return { ok: false, error: 'Montant GXP négatif interdit.' };
+  if (!g) return { ok: false, error: "Guilde introuvable." };
+  const next = typeof total === "bigint" ? total : B(total);
+  if (next < 0n) return { ok: false, error: "Montant GXP négatif interdit." };
   const gl = guildLevelFromTotalGxp(next);
   const cap = effectiveMemberCap({ ...g, guild_level: gl });
-  db.prepare('UPDATE player_guilds SET gxp = ?, guild_level = ?, member_cap = ? WHERE id = ?').run(
-    next.toString(),
-    gl,
-    cap,
-    guildId,
-  );
+  db.prepare(
+    "UPDATE player_guilds SET gxp = ?, guild_level = ?, member_cap = ? WHERE id = ?",
+  ).run(next.toString(), gl, cap, guildId);
   return { ok: true, gxp: next, guildLevel: gl, memberCap: cap };
 }
 
@@ -369,26 +440,45 @@ function treasuryView(guildId) {
 }
 
 function treasuryDeposit(guildId, userId, amount) {
-  if (amount <= 0n) return { ok: false, error: 'Montant invalide.' };
-  if (!canDepositToTreasury(guildId, userId)) return { ok: false, error: 'Pas autorisé à déposer (permission « dépôt »).' };
-  const m = db.prepare('SELECT * FROM player_guild_members WHERE guild_id = ? AND user_id = ?').get(guildId, userId);
-  if (!m) return { ok: false, error: 'Pas membre.' };
-  if (users.getStars(userId) < amount) return { ok: false, error: 'Pas assez de starss.' };
+  if (amount <= 0n) return { ok: false, error: "Montant invalide." };
+  if (!canDepositToTreasury(guildId, userId))
+    return {
+      ok: false,
+      error: "Pas autorisé à déposer (permission « dépôt »).",
+    };
+  const m = db
+    .prepare(
+      "SELECT * FROM player_guild_members WHERE guild_id = ? AND user_id = ?",
+    )
+    .get(guildId, userId);
+  if (!m) return { ok: false, error: "Pas membre." };
+  if (users.getStars(userId) < amount)
+    return { ok: false, error: "Pas assez de starss." };
   users.addStars(userId, -amount);
   const g = getGuild(guildId);
   const t = B(g.treasury) + amount;
-  db.prepare('UPDATE player_guilds SET treasury = ? WHERE id = ?').run(t.toString(), guildId);
+  db.prepare("UPDATE player_guilds SET treasury = ? WHERE id = ?").run(
+    t.toString(),
+    guildId,
+  );
   return { ok: true };
 }
 
 function treasuryWithdraw(guildId, userId, amount) {
   const g = getGuild(guildId);
-  if (!g) return { ok: false, error: 'Guilde introuvable.' };
-  if (!canWithdrawTreasury(guildId, userId)) return { ok: false, error: 'Pas autorisé à retirer (chef ou permission « retrait »).' };
-  if (amount <= 0n) return { ok: false, error: 'Montant invalide.' };
+  if (!g) return { ok: false, error: "Guilde introuvable." };
+  if (!canWithdrawTreasury(guildId, userId))
+    return {
+      ok: false,
+      error: "Pas autorisé à retirer (chef ou permission « retrait »).",
+    };
+  if (amount <= 0n) return { ok: false, error: "Montant invalide." };
   const t = B(g.treasury);
-  if (t < amount) return { ok: false, error: 'Trésorerie insuffisante.' };
-  db.prepare('UPDATE player_guilds SET treasury = ? WHERE id = ?').run((t - amount).toString(), guildId);
+  if (t < amount) return { ok: false, error: "Trésorerie insuffisante." };
+  db.prepare("UPDATE player_guilds SET treasury = ? WHERE id = ?").run(
+    (t - amount).toString(),
+    guildId,
+  );
   users.addStars(userId, amount);
   return { ok: true };
 }
@@ -405,74 +495,120 @@ function countRarity(userId, rarity) {
 
 function tryBuyNextGrade(hubDiscordId, userId) {
   const row = getMembershipInHub(userId, hubDiscordId);
-  if (!row) return { ok: false, error: 'Pas dans une guilde.' };
-  if (row.leader_id !== userId) return { ok: false, error: 'Seul le chef peut acheter un grade.' };
+  if (!row) return { ok: false, error: "Pas dans une guilde." };
+  if (row.leader_id !== userId)
+    return { ok: false, error: "Seul le chef peut acheter un grade." };
   const g = getGuild(row.guild_id);
-  const cur = g.grade || '';
+  const cur = g.grade || "";
   const nxt = nextGrade(cur);
-  if (!nxt) return { ok: false, error: 'Grade max atteint (Star).' };
+  if (!nxt) return { ok: false, error: "Grade max atteint (Star)." };
   const req = NEXT_REQUIREMENTS[nxt];
-  if (!req) return { ok: false, error: 'Grade inconnu.' };
-  const gm = require('./guildMember');
+  if (!req) return { ok: false, error: "Grade inconnu." };
+  const gm = require("./guildMember");
   const grpTotal = gm.getMemberRow(hubDiscordId, userId).grp;
   const peakRank = grpRankFromTotal(grpTotal);
   if (!rankAtLeast(peakRank, req.minGrpRank)) {
     return {
       ok: false,
-      error: `Rang GR insuffisant : besoin **${req.minGrpRank}**, actuel **${peakRank || 'aucun'}**.`,
+      error: `Rang GR insuffisant : besoin **${req.minGrpRank}**, actuel **${peakRank || "aucun"}**.`,
     };
   }
   if (users.getStars(userId) < req.stars) {
-    return { ok: false, error: `Il manque des starss (besoin **${req.stars.toLocaleString('fr-FR')}**).` };
+    return {
+      ok: false,
+      error: `Il manque des starss (besoin **${req.stars.toLocaleString("fr-FR")}**).`,
+    };
   }
-  if (countRarity(userId, 'Mythique') < req.mythic) {
-    return { ok: false, error: `Items mythiques insuffisants (${req.mythic} requis).` };
+  if (countRarity(userId, "Mythique") < req.mythic) {
+    return {
+      ok: false,
+      error: `Items mythiques insuffisants (${req.mythic} requis).`,
+    };
   }
-  if (countRarity(userId, 'Goatesque') < req.crystal) {
-    return { ok: false, error: `Crystals / items goatesques insuffisants (${req.crystal} requis).` };
+  if (countRarity(userId, "Goatesque") < req.crystal) {
+    return {
+      ok: false,
+      error: `Crystals / items goatesques insuffisants (${req.crystal} requis).`,
+    };
   }
   if (req.needDiamond) {
-    const h = require('./meta').diamondHolder();
-    const hasDiamItem = countRarity(userId, 'Staresque') >= 1 || users.getInventory(userId).some((r) => r.item_id === 'diamant' && r.qty > 0);
+    const h = require("./meta").diamondHolder();
+    const hasDiamItem =
+      countRarity(userId, "Staresque") >= 1 ||
+      users
+        .getInventory(userId)
+        .some((r) => r.item_id === "diamant" && r.qty > 0);
     if (h !== userId && !hasDiamItem) {
-      return { ok: false, error: 'Il faut être détenteur du **Diamant** ou avoir l’item en inventaire / un item staresque.' };
+      return {
+        ok: false,
+        error:
+          "Il faut être détenteur du **Diamant** ou avoir l’item en inventaire / un item staresque.",
+      };
     }
   }
   users.addStars(userId, -req.stars);
-  const anti = nxt === 'star' ? 1 : g.anti_separation || 0;
-  db.prepare('UPDATE player_guilds SET grade = ?, anti_separation = ? WHERE id = ?').run(nxt, anti, g.id);
+  const anti = nxt === "star" ? 1 : g.anti_separation || 0;
+  db.prepare(
+    "UPDATE player_guilds SET grade = ?, anti_separation = ? WHERE id = ?",
+  ).run(nxt, anti, g.id);
   return { ok: true, grade: nxt, label: label(nxt) };
 }
 
 function listGuildsOnHub(hubDiscordId) {
   // Pont : importer toutes les guildes niveau (idempotent) avant de lister.
   try {
-    const bridge = require('./niveauGuildBridge');
+    const bridge = require("./niveauGuildBridge");
     bridge.importAllNiveauGuilds(hubDiscordId);
-  } catch { /* optional */ }
-  return db.prepare('SELECT id, name, leader_id, member_cap, guild_level, grade, treasury FROM player_guilds WHERE hub_discord_id = ? ORDER BY created_ms DESC').all(hubDiscordId);
+  } catch {
+    /* optional */
+  }
+  return db
+    .prepare(
+      "SELECT id, name, leader_id, member_cap, guild_level, grade, treasury FROM player_guilds WHERE hub_discord_id = ? ORDER BY created_ms DESC",
+    )
+    .all(hubDiscordId);
 }
 
-function useFocus(hubDiscordId, attackerGuildId, targetGuildId, mode, actorUserId) {
+function useFocus(
+  hubDiscordId,
+  attackerGuildId,
+  targetGuildId,
+  mode,
+  actorUserId,
+) {
   const now = Date.now();
   const CD = 168 * 60 * 60 * 1000;
   const COST = 500_000n;
   const att = getGuild(attackerGuildId);
   const tgt = getGuild(targetGuildId);
   if (!actorUserId || !canLaunchFocus(attackerGuildId, actorUserId)) {
-    return { ok: false, error: 'Pas autorisé à lancer un focus (chef ou permission « focus »).' };
+    return {
+      ok: false,
+      error: "Pas autorisé à lancer un focus (chef ou permission « focus »).",
+    };
   }
-  if (!att || !tgt || att.hub_discord_id !== hubDiscordId || tgt.hub_discord_id !== hubDiscordId) {
-    return { ok: false, error: 'Guildes invalides.' };
+  if (
+    !att ||
+    !tgt ||
+    att.hub_discord_id !== hubDiscordId ||
+    tgt.hub_discord_id !== hubDiscordId
+  ) {
+    return { ok: false, error: "Guildes invalides." };
   }
   if (att.focus_disabled) {
-    return { ok: false, error: 'Focus **désactivé** pour cette guilde par un administrateur.' };
+    return {
+      ok: false,
+      error: "Focus **désactivé** pour cette guilde par un administrateur.",
+    };
   }
   if (tgt.focus_disabled) {
-    return { ok: false, error: 'La cible est **protégée** : focus désactivé.' };
+    return { ok: false, error: "La cible est **protégée** : focus désactivé." };
   }
   // Anti-abus doc / checklist : plafond de lancements / 24 h par guilde attaquante (hors CD 7 j).
-  const dailyCap = parseInt(String(process.env.FOCUS_MAX_PER_ATTACKER_GUILD_PER_DAY || '3').trim(), 10);
+  const dailyCap = parseInt(
+    String(process.env.FOCUS_MAX_PER_ATTACKER_GUILD_PER_DAY || "3").trim(),
+    10,
+  );
   if (dailyCap > 0) {
     const since = now - 24 * 60 * 60 * 1000;
     const row = db
@@ -488,8 +624,13 @@ function useFocus(hubDiscordId, attackerGuildId, targetGuildId, mode, actorUserI
       };
     }
   }
-  if (now - (att.last_focus_ms || 0) < CD) return { ok: false, error: 'Focus en cooldown (7 j).' };
-  if (B(att.treasury) < COST) return { ok: false, error: '500 000 starss requis en trésorerie de guilde.' };
+  if (now - (att.last_focus_ms || 0) < CD)
+    return { ok: false, error: "Focus en cooldown (7 j)." };
+  if (B(att.treasury) < COST)
+    return {
+      ok: false,
+      error: "500 000 starss requis en trésorerie de guilde.",
+    };
   // Trace dans staff_audit (best-effort).
   try {
     db.prepare(
@@ -499,91 +640,133 @@ function useFocus(hubDiscordId, attackerGuildId, targetGuildId, mode, actorUserI
       hubDiscordId,
       attackerGuildId,
       targetGuildId,
-      'focus.use',
+      "focus.use",
       `mode=${mode} actor=${actorUserId}`,
       now,
     );
-  } catch { /* table absente : on ignore */ }
-  db.prepare('UPDATE player_guilds SET treasury = ?, last_focus_ms = ? WHERE id = ?').run(
-    (B(att.treasury) - COST).toString(),
-    now,
-    attackerGuildId,
-  );
-  const gm = require('./guildMember');
-  const members = db.prepare('SELECT user_id FROM player_guild_members WHERE guild_id = ?').all(targetGuildId);
-  if (mode === '1') {
+  } catch {
+    /* table absente : on ignore */
+  }
+  db.prepare(
+    "UPDATE player_guilds SET treasury = ?, last_focus_ms = ? WHERE id = ?",
+  ).run((B(att.treasury) - COST).toString(), now, attackerGuildId);
+  const gm = require("./guildMember");
+  const members = db
+    .prepare("SELECT user_id FROM player_guild_members WHERE guild_id = ?")
+    .all(targetGuildId);
+  if (mode === "1") {
     for (const { user_id } of members) {
       gm.addGrp(hubDiscordId, user_id, -500n);
     }
-  } else if (mode === '2') {
+  } else if (mode === "2") {
     const share = -3000n / BigInt(Math.max(1, members.length));
     for (const { user_id } of members) {
       gm.addGrp(hubDiscordId, user_id, share);
     }
-  } else if (mode === '3') {
-    require('./meta').set(`grp_half_${targetGuildId}`, String(now + 2 * 3600000));
+  } else if (mode === "3") {
+    require("./meta").set(
+      `grp_half_${targetGuildId}`,
+      String(now + 2 * 3600000),
+    );
   }
   return { ok: true };
 }
 
 function kickMember(hubDiscordId, guildId, actorId, targetId) {
   const g = getGuild(guildId);
-  if (!g || g.hub_discord_id !== hubDiscordId) return { ok: false, error: 'Guilde invalide.' };
-  if (g.leader_id === targetId) return { ok: false, error: 'Impossible d’expulser le chef.' };
-  if (!memberRow(guildId, targetId)) return { ok: false, error: 'Cible pas dans cette guilde.' };
-  if (!canKickMember(guildId, actorId)) return { ok: false, error: 'Pas autorisé à expulser (chef ou permission « kick »).' };
-  db.prepare('DELETE FROM player_guild_members WHERE guild_id = ? AND user_id = ?').run(guildId, targetId);
+  if (!g || g.hub_discord_id !== hubDiscordId)
+    return { ok: false, error: "Guilde invalide." };
+  if (g.leader_id === targetId)
+    return { ok: false, error: "Impossible d’expulser le chef." };
+  if (!memberRow(guildId, targetId))
+    return { ok: false, error: "Cible pas dans cette guilde." };
+  if (!canKickMember(guildId, actorId))
+    return {
+      ok: false,
+      error: "Pas autorisé à expulser (chef ou permission « kick »).",
+    };
+  db.prepare(
+    "DELETE FROM player_guild_members WHERE guild_id = ? AND user_id = ?",
+  ).run(guildId, targetId);
   return { ok: true };
 }
 
 function transferLeadership(hubDiscordId, guildId, leaderId, newLeaderId) {
   const g = getGuild(guildId);
-  if (!g || g.hub_discord_id !== hubDiscordId) return { ok: false, error: 'Guilde invalide.' };
-  if (g.leader_id !== leaderId) return { ok: false, error: 'Seul le chef peut transférer.' };
-  if (newLeaderId === leaderId) return { ok: false, error: 'Cible invalide.' };
-  if (!memberRow(guildId, newLeaderId)) return { ok: false, error: 'Le nouveau chef doit être membre de la guilde.' };
-  db.prepare('UPDATE player_guilds SET leader_id = ? WHERE id = ?').run(newLeaderId, guildId);
-  db.prepare('UPDATE player_guild_members SET perms_json = ? WHERE guild_id = ? AND user_id = ?').run(
-    permsJsonString(LEADER_PERMS),
-    guildId,
+  if (!g || g.hub_discord_id !== hubDiscordId)
+    return { ok: false, error: "Guilde invalide." };
+  if (g.leader_id !== leaderId)
+    return { ok: false, error: "Seul le chef peut transférer." };
+  if (newLeaderId === leaderId) return { ok: false, error: "Cible invalide." };
+  if (!memberRow(guildId, newLeaderId))
+    return {
+      ok: false,
+      error: "Le nouveau chef doit être membre de la guilde.",
+    };
+  db.prepare("UPDATE player_guilds SET leader_id = ? WHERE id = ?").run(
     newLeaderId,
-  );
-  db.prepare('UPDATE player_guild_members SET perms_json = ? WHERE guild_id = ? AND user_id = ?').run(
-    permsJsonString(DEFAULT_PERMS),
     guildId,
-    leaderId,
   );
+  db.prepare(
+    "UPDATE player_guild_members SET perms_json = ? WHERE guild_id = ? AND user_id = ?",
+  ).run(permsJsonString(LEADER_PERMS), guildId, newLeaderId);
+  db.prepare(
+    "UPDATE player_guild_members SET perms_json = ? WHERE guild_id = ? AND user_id = ?",
+  ).run(permsJsonString(DEFAULT_PERMS), guildId, leaderId);
+  try {
+    const bridge = require("./niveauGuildBridge");
+    const rebornGuildId = g.id || guildId;
+    if (bridge.isBridged(rebornGuildId)) {
+      bridge.setNiveauGuildOwner(rebornGuildId, newLeaderId);
+    }
+  } catch (e) {
+    console.warn(
+      "[playerGuilds] transferLeadership bridge sync failed:",
+      e?.message || e,
+    );
+  }
   return { ok: true };
 }
 
 function dissolveGuild(hubDiscordId, guildId, leaderId) {
   const g = getGuild(guildId);
-  if (!g || g.hub_discord_id !== hubDiscordId) return { ok: false, error: 'Guilde invalide.' };
-  if (g.leader_id !== leaderId) return { ok: false, error: 'Seul le chef peut dissoudre.' };
-  db.prepare('DELETE FROM player_guild_members WHERE guild_id = ?').run(guildId);
-  db.prepare('DELETE FROM player_guilds WHERE id = ?').run(guildId);
+  if (!g || g.hub_discord_id !== hubDiscordId)
+    return { ok: false, error: "Guilde invalide." };
+  if (g.leader_id !== leaderId)
+    return { ok: false, error: "Seul le chef peut dissoudre." };
+  db.prepare("DELETE FROM player_guild_members WHERE guild_id = ?").run(
+    guildId,
+  );
+  db.prepare("DELETE FROM player_guilds WHERE id = ?").run(guildId);
   // Si guilde pontée niveau, on dissout aussi côté niveau pour cohérence.
   try {
-    const bridge = require('./niveauGuildBridge');
+    const bridge = require("./niveauGuildBridge");
     const nivId = bridge.niveauIdFromReborn(guildId);
     if (nivId) bridge.dissolveNiveauGuild(nivId);
-  } catch { /* optional */ }
+  } catch {
+    /* optional */
+  }
   return { ok: true };
 }
 
 /** Active/désactive le focus pour une guilde (admin). */
 function setFocusDisabled(guildId, disabled) {
   const g = getGuild(guildId);
-  if (!g) return { ok: false, error: 'Guilde introuvable.' };
-  db.prepare('UPDATE player_guilds SET focus_disabled = ? WHERE id = ?').run(disabled ? 1 : 0, guildId);
+  if (!g) return { ok: false, error: "Guilde introuvable." };
+  db.prepare("UPDATE player_guilds SET focus_disabled = ? WHERE id = ?").run(
+    disabled ? 1 : 0,
+    guildId,
+  );
   return { ok: true };
 }
 
 /** Réinitialise le cooldown focus (admin). */
 function resetFocusCooldown(guildId) {
   const g = getGuild(guildId);
-  if (!g) return { ok: false, error: 'Guilde introuvable.' };
-  db.prepare('UPDATE player_guilds SET last_focus_ms = 0 WHERE id = ?').run(guildId);
+  if (!g) return { ok: false, error: "Guilde introuvable." };
+  db.prepare("UPDATE player_guilds SET last_focus_ms = 0 WHERE id = ?").run(
+    guildId,
+  );
   return { ok: true };
 }
 
@@ -598,19 +781,27 @@ function getMemberPerms(guildId, userId) {
 // ─── Rôles internes custom (étiquette libre par membre) ─────────────────────
 function getInternalRole(guildId, userId) {
   const r = db
-    .prepare('SELECT role_label FROM guild_internal_roles WHERE guild_id = ? AND user_id = ?')
+    .prepare(
+      "SELECT role_label FROM guild_internal_roles WHERE guild_id = ? AND user_id = ?",
+    )
     .get(guildId, userId);
-  return r?.role_label || '';
+  return r?.role_label || "";
 }
 
 function setInternalRole(guildId, leaderId, targetUserId, label) {
   const g = getGuild(guildId);
-  if (!g || g.leader_id !== leaderId) return { ok: false, error: 'Chef uniquement.' };
-  if (!memberRow(guildId, targetUserId)) return { ok: false, error: 'Cible pas membre de la guilde.' };
-  const lbl = String(label || '').slice(0, 32).trim();
+  if (!g || g.leader_id !== leaderId)
+    return { ok: false, error: "Chef uniquement." };
+  if (!memberRow(guildId, targetUserId))
+    return { ok: false, error: "Cible pas membre de la guilde." };
+  const lbl = String(label || "")
+    .slice(0, 32)
+    .trim();
   if (lbl.length === 0) {
-    db.prepare('DELETE FROM guild_internal_roles WHERE guild_id = ? AND user_id = ?').run(guildId, targetUserId);
-    return { ok: true, label: '' };
+    db.prepare(
+      "DELETE FROM guild_internal_roles WHERE guild_id = ? AND user_id = ?",
+    ).run(guildId, targetUserId);
+    return { ok: true, label: "" };
   }
   db.prepare(
     `INSERT INTO guild_internal_roles (guild_id, user_id, role_label) VALUES (?, ?, ?)
@@ -621,28 +812,35 @@ function setInternalRole(guildId, leaderId, targetUserId, label) {
 
 function listInternalRoles(guildId) {
   return db
-    .prepare('SELECT user_id, role_label FROM guild_internal_roles WHERE guild_id = ?')
+    .prepare(
+      "SELECT user_id, role_label FROM guild_internal_roles WHERE guild_id = ?",
+    )
     .all(guildId);
 }
 
 function setMemberPerm(guildId, leaderId, targetUserId, key, value) {
   const g = getGuild(guildId);
-  if (!g || g.leader_id !== leaderId) return { ok: false, error: 'Chef uniquement.' };
-  if (targetUserId === leaderId) return { ok: false, error: 'Le chef a déjà toutes les permissions.' };
+  if (!g || g.leader_id !== leaderId)
+    return { ok: false, error: "Chef uniquement." };
+  if (targetUserId === leaderId)
+    return { ok: false, error: "Le chef a déjà toutes les permissions." };
   const m = memberRow(guildId, targetUserId);
-  if (!m) return { ok: false, error: 'Membre introuvable.' };
+  if (!m) return { ok: false, error: "Membre introuvable." };
   // La perm `focus` a été retirée — c'est désormais le statut « sous-chef »
   // qui donne le droit de lancer un focus (cf. `/guilde sous-chef ajouter`).
-  const allowed = new Set(['depot', 'retrait', 'kick', 'roles']);
-  if (!allowed.has(key)) return { ok: false, error: 'Clé inconnue (utilisez `/guilde sous-chef ajouter` pour le focus).' };
+  const allowed = new Set(["depot", "retrait", "kick", "roles"]);
+  if (!allowed.has(key))
+    return {
+      ok: false,
+      error:
+        "Clé inconnue (utilisez `/guilde sous-chef ajouter` pour le focus).",
+    };
   const v = value ? 1 : 0;
   const cur = parsePermsJson(m.perms_json);
   cur[key] = v;
-  db.prepare('UPDATE player_guild_members SET perms_json = ? WHERE guild_id = ? AND user_id = ?').run(
-    permsJsonString(cur),
-    guildId,
-    targetUserId,
-  );
+  db.prepare(
+    "UPDATE player_guild_members SET perms_json = ? WHERE guild_id = ? AND user_id = ?",
+  ).run(permsJsonString(cur), guildId, targetUserId);
   return { ok: true, perms: cur };
 }
 
@@ -652,8 +850,8 @@ function setMemberPerm(guildId, leaderId, targetUserId, key, value) {
  * @returns {boolean}
  */
 function canOpenSalon(guild) {
-  const { ORDER } = require('../reborn/grades');
-  const cur = ORDER.indexOf(guild?.grade || '');
+  const { ORDER } = require("../reborn/grades");
+  const cur = ORDER.indexOf(guild?.grade || "");
   const need = ORDER.indexOf(SALON_MIN_GRADE);
   return cur >= 0 && need >= 0 && cur >= need;
 }

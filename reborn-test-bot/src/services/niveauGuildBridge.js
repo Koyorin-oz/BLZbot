@@ -1,5 +1,5 @@
-const path = require('path');
-const db = require('../db');
+const path = require("path");
+const db = require("../db");
 
 /**
  * Pont entre le système de guildes **niveau** (table `guilds` / `guild_members`
@@ -44,13 +44,48 @@ function invalidateBridgeCache() {
   memberSyncCache.clear();
 }
 
+function setNiveauGuildOwner(rebornGuildId, newOwnerId) {
+  const nivId = niveauIdFromReborn(rebornGuildId);
+  if (!nivId) return false;
+  const niv = loadNiveau();
+  if (!niv) return false;
+  try {
+    if (typeof niv.changeGuildOwner === "function") {
+      niv.changeGuildOwner(nivId, newOwnerId);
+    } else if (typeof niv.updateGuildOwnerAndSubChiefs === "function") {
+      niv.updateGuildOwnerAndSubChiefs(nivId, newOwnerId, []);
+    } else {
+      return false;
+    }
+    invalidateBridgeCache();
+    return true;
+  } catch (e) {
+    console.warn("[niveauGuildBridge] setNiveauGuildOwner:", e?.message || e);
+    return false;
+  }
+}
+
 function loadNiveau() {
   if (loadAttempted) return niveauDbGuilds;
   loadAttempted = true;
   try {
-    niveauDbGuilds = require(path.join(__dirname, '..', '..', '..', 'niveau', 'src', 'utils', 'db-guilds'));
+    niveauDbGuilds = require(
+      path.join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "niveau",
+        "src",
+        "utils",
+        "db-guilds",
+      ),
+    );
   } catch (e) {
-    console.warn('[niveauGuildBridge] niveau db-guilds indisponible :', e?.message || e);
+    console.warn(
+      "[niveauGuildBridge] niveau db-guilds indisponible :",
+      e?.message || e,
+    );
     niveauDbGuilds = null;
   }
   return niveauDbGuilds;
@@ -61,22 +96,25 @@ function rebornIdFromNiveau(niveauId) {
 }
 
 function niveauIdFromReborn(rebornId) {
-  if (!rebornId || !String(rebornId).startsWith('niv_')) return null;
+  if (!rebornId || !String(rebornId).startsWith("niv_")) return null;
   const raw = String(rebornId).slice(4);
   const n = Number(raw);
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
 function isBridged(rebornId) {
-  return /^niv_\d+$/.test(String(rebornId || ''));
+  return /^niv_\d+$/.test(String(rebornId || ""));
 }
 
 function fetchNiveauGuild(niveauId) {
   const niv = loadNiveau();
   if (!niv) return null;
   try {
-    if (typeof niv.getGuildById === 'function') return niv.getGuildById(niveauId);
-  } catch { /* ignore */ }
+    if (typeof niv.getGuildById === "function")
+      return niv.getGuildById(niveauId);
+  } catch {
+    /* ignore */
+  }
   return null;
 }
 
@@ -84,10 +122,15 @@ function fetchNiveauMembers(niveauId) {
   const niv = loadNiveau();
   if (!niv) return [];
   try {
-    if (typeof niv.getGuildMembersWithDetails === 'function') {
-      return niv.getGuildMembersWithDetails(niveauId).map((m) => m.id || m.user_id).filter(Boolean);
+    if (typeof niv.getGuildMembersWithDetails === "function") {
+      return niv
+        .getGuildMembersWithDetails(niveauId)
+        .map((m) => m.id || m.user_id)
+        .filter(Boolean);
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return [];
 }
 
@@ -103,7 +146,9 @@ function importNiveauGuild(hubDiscordId, niveauGuild, niveauMembers) {
   const now = Date.now();
   const memberCap = Math.max(5, Number(niveauGuild.member_slots) || 5);
   const treasury = String(BigInt(niveauGuild.treasury || 0));
-  const existing = db.prepare('SELECT id FROM player_guilds WHERE id = ?').get(rebornId);
+  const existing = db
+    .prepare("SELECT id FROM player_guilds WHERE id = ?")
+    .get(rebornId);
   if (!existing) {
     db.prepare(
       `INSERT INTO player_guilds
@@ -114,13 +159,13 @@ function importNiveauGuild(hubDiscordId, niveauGuild, niveauMembers) {
     ).run(
       rebornId,
       hubDiscordId,
-      niveauGuild.name || 'Guilde',
+      niveauGuild.name || "Guilde",
       niveauGuild.owner_id,
       memberCap,
       treasury,
       Math.max(1, Number(niveauGuild.level) || 1),
       Number(niveauGuild.created_at) || now,
-      niveauGuild.channel_id || '',
+      niveauGuild.channel_id || "",
     );
   } else {
     // Re-sync miroir (sans écraser les champs spécifiques REBORN : gxp, grade,
@@ -136,7 +181,7 @@ function importNiveauGuild(hubDiscordId, niveauGuild, niveauMembers) {
            guild_level = MAX(guild_level, ?)
        WHERE id = ?`,
     ).run(
-      niveauGuild.name || 'Guilde',
+      niveauGuild.name || "Guilde",
       niveauGuild.owner_id,
       hubDiscordId,
       memberCap,
@@ -149,7 +194,9 @@ function importNiveauGuild(hubDiscordId, niveauGuild, niveauMembers) {
   if (Array.isArray(niveauMembers)) {
     const wanted = new Set(niveauMembers.filter(Boolean));
     if (niveauGuild.owner_id) wanted.add(niveauGuild.owner_id);
-    const current = db.prepare('SELECT user_id FROM player_guild_members WHERE guild_id = ?').all(rebornId);
+    const current = db
+      .prepare("SELECT user_id FROM player_guild_members WHERE guild_id = ?")
+      .all(rebornId);
     const have = new Set(current.map((r) => r.user_id));
     const insMember = db.prepare(
       `INSERT OR IGNORE INTO player_guild_members (guild_id, user_id, joined_ms, perms_json)
@@ -161,10 +208,14 @@ function importNiveauGuild(hubDiscordId, niveauGuild, niveauMembers) {
     // Le chef est toujours conservé ; les autres ne sont ajoutés que sous le cap.
     let cap = Infinity;
     try {
-      const pg = require('./playerGuilds');
-      const gRow = db.prepare('SELECT * FROM player_guilds WHERE id = ?').get(rebornId);
+      const pg = require("./playerGuilds");
+      const gRow = db
+        .prepare("SELECT * FROM player_guilds WHERE id = ?")
+        .get(rebornId);
       cap = pg.effectiveMemberCap(gRow) || Infinity;
-    } catch { /* en cas d'échec, on ne bloque pas la synchro */ }
+    } catch {
+      /* en cas d'échec, on ne bloque pas la synchro */
+    }
     let count = have.size;
     for (const uid of wanted) {
       if (have.has(uid)) continue;
@@ -173,7 +224,9 @@ function importNiveauGuild(hubDiscordId, niveauGuild, niveauMembers) {
       insMember.run(rebornId, uid, now, isLeader ? leaderPerms : memberPerms);
       count += 1;
     }
-    const delMember = db.prepare('DELETE FROM player_guild_members WHERE guild_id = ? AND user_id = ?');
+    const delMember = db.prepare(
+      "DELETE FROM player_guild_members WHERE guild_id = ? AND user_id = ?",
+    );
     for (const uid of have) {
       if (!wanted.has(uid)) delMember.run(rebornId, uid);
     }
@@ -220,7 +273,9 @@ function bridgeMembership(userId, hubDiscordId) {
          WHERE user_id = ?
            AND guild_id IN (SELECT id FROM player_guilds WHERE id LIKE 'niv_%' AND hub_discord_id = ?)`,
       ).run(userId, hubDiscordId);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     _cache(memberSyncCache, cacheKey);
     return null;
   }
@@ -244,16 +299,24 @@ function refreshBridgedGuild(rebornId) {
   if (!g) {
     // niveau guild deleted → cleanup REBORN bridge
     try {
-      const row = db.prepare('SELECT hub_discord_id FROM player_guilds WHERE id = ?').get(rebornId);
+      const row = db
+        .prepare("SELECT hub_discord_id FROM player_guilds WHERE id = ?")
+        .get(rebornId);
       if (row) {
-        db.prepare('DELETE FROM player_guild_members WHERE guild_id = ?').run(rebornId);
-        db.prepare('DELETE FROM player_guilds WHERE id = ?').run(rebornId);
+        db.prepare("DELETE FROM player_guild_members WHERE guild_id = ?").run(
+          rebornId,
+        );
+        db.prepare("DELETE FROM player_guilds WHERE id = ?").run(rebornId);
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     _cache(guildSyncCache, rebornId);
     return;
   }
-  const row = db.prepare('SELECT hub_discord_id FROM player_guilds WHERE id = ?').get(rebornId);
+  const row = db
+    .prepare("SELECT hub_discord_id FROM player_guilds WHERE id = ?")
+    .get(rebornId);
   if (!row) return;
   const members = fetchNiveauMembers(g.id);
   const list = members.length ? members : [g.owner_id];
@@ -281,19 +344,25 @@ function importAllNiveauGuilds(hubDiscordId) {
     }
     // Cleanup : guildes pontées REBORN dont la source niveau a disparu.
     const orphans = db
-      .prepare("SELECT id FROM player_guilds WHERE hub_discord_id = ? AND id LIKE 'niv_%'")
+      .prepare(
+        "SELECT id FROM player_guilds WHERE hub_discord_id = ? AND id LIKE 'niv_%'",
+      )
       .all(hubDiscordId);
     for (const { id } of orphans) {
       const nivId = niveauIdFromReborn(id);
       if (nivId == null || !liveNiveauIds.has(Number(nivId))) {
         try {
-          db.prepare('DELETE FROM player_guild_members WHERE guild_id = ?').run(id);
-          db.prepare('DELETE FROM player_guilds WHERE id = ?').run(id);
-        } catch { /* ignore */ }
+          db.prepare("DELETE FROM player_guild_members WHERE guild_id = ?").run(
+            id,
+          );
+          db.prepare("DELETE FROM player_guilds WHERE id = ?").run(id);
+        } catch {
+          /* ignore */
+        }
       }
     }
   } catch (e) {
-    console.warn('[niveauGuildBridge] importAll:', e?.message || e);
+    console.warn("[niveauGuildBridge] importAll:", e?.message || e);
   }
   return count;
 }
@@ -303,21 +372,28 @@ function importAllNiveauGuilds(hubDiscordId) {
  * guilde — on la propage à niveau pour que `/profil` la voie aussi).
  * Retourne l'ID niveau créé, ou null.
  */
-function createNiveauGuild(name, ownerId, emoji = '🛡️') {
+function createNiveauGuild(name, ownerId, emoji = "🛡️") {
   const niv = loadNiveau();
   if (!niv?.createGuild || !niv?.addMemberToGuild) return null;
   try {
-    const existing = typeof niv.getGuildByName === 'function' ? niv.getGuildByName(name) : null;
+    const existing =
+      typeof niv.getGuildByName === "function"
+        ? niv.getGuildByName(name)
+        : null;
     if (existing) {
       invalidateBridgeCache();
       return existing.id;
     }
     const id = niv.createGuild(name, ownerId, emoji);
-    try { niv.addMemberToGuild(ownerId, id); } catch { /* maybe already inside */ }
+    try {
+      niv.addMemberToGuild(ownerId, id);
+    } catch {
+      /* maybe already inside */
+    }
     invalidateBridgeCache();
     return id || null;
   } catch (e) {
-    console.warn('[niveauGuildBridge] createNiveauGuild:', e?.message || e);
+    console.warn("[niveauGuildBridge] createNiveauGuild:", e?.message || e);
     return null;
   }
 }
@@ -353,18 +429,18 @@ function dissolveNiveauGuild(niveauId) {
   const niv = loadNiveau();
   if (!niv) return false;
   try {
-    if (typeof niv.dissolveGuild === 'function') {
+    if (typeof niv.dissolveGuild === "function") {
       niv.dissolveGuild(niveauId);
       invalidateBridgeCache();
       return true;
     }
-    if (typeof niv.deleteGuild === 'function') {
+    if (typeof niv.deleteGuild === "function") {
       niv.deleteGuild(niveauId);
       invalidateBridgeCache();
       return true;
     }
   } catch (e) {
-    console.warn('[niveauGuildBridge] dissolveNiveauGuild:', e?.message || e);
+    console.warn("[niveauGuildBridge] dissolveNiveauGuild:", e?.message || e);
   }
   return false;
 }
@@ -382,4 +458,5 @@ module.exports = {
   removeNiveauMember,
   dissolveNiveauGuild,
   invalidateBridgeCache,
+  setNiveauGuildOwner,
 };
