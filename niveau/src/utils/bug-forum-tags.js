@@ -28,11 +28,7 @@ const BUTTON_DEFS = [
   { key: "enCours", label: "En cours", style: ButtonStyle.Primary },
   { key: "dejaSignale", label: "Déjà signalé", style: ButtonStyle.Secondary },
   { key: "corriger", label: "Corrigé", style: ButtonStyle.Success },
-  {
-    key: "signalementRejete",
-    label: "Signalement rejeté",
-    style: ButtonStyle.Danger,
-  },
+  { key: "signalementRejete", label: "Signalement rejeté", style: ButtonStyle.Danger, },
 ];
 
 // Inclure aussi les variantes spécifiques (Koyorin/Roxxor) parmi les tags gérés.
