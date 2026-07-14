@@ -152,7 +152,7 @@ async function handleBugTagButton(interaction) {
   let appliedTagId = tagId;
   if (tagId === TAG.enCours) {
     const uid = String(interaction.user.id);
-    if (tagId !== TAG.enCours) appliedTagId = TAG.enCours;
+    if (appliedTagId !== TAG.enCours) appliedTagId = TAG.enCours;
     else if (uid === "1278372257483456603") appliedTagId = TAG.enCoursKoyorin;
     else if (uid === "1057705135515639859") appliedTagId = TAG.enCoursRoxxor;
     else appliedTagId = TAG.enCours;
