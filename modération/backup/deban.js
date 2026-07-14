@@ -768,8 +768,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
         // Vérification des conditions
         const joinDate = member.joinedAt;
-        const oneMonthInMs = 30 * 24 * 60 * 60 * 1000;
-        const hasBeenOneMonth = (new Date() - joinDate) > oneMonthInMs;
+        const oneWeekInMs = 7 * 24 * 60 * 60 * 1000;
+        const hasBeenOneWeek = (new Date() - joinDate) > oneWeekInMs;
 
         // NOTE : La vérification du nombre de messages n'est pas possible directement.
         // Vous devrez implémenter un système de comptage de messages externe (par exemple, dans une base de données).
@@ -779,9 +779,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
         let conditionsMet = true;
         let errorMessage = "Vous ne remplissez pas les conditions pour postuler :\n";
         
-        if (!hasBeenOneMonth) {
+        if (!hasBeenOneWeek) {
             conditionsMet = false;
-            errorMessage += "- Vous devez être sur le serveur depuis plus d'un mois.\n";
+            errorMessage += "- Vous devez être sur le serveur depuis plus d'une semaine.\n";
         }
         if (!hasSent100Messages) {
             conditionsMet = false;
