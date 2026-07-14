@@ -147,13 +147,13 @@ async function handleBugTagButton(interaction) {
 
   await interaction.deferUpdate();
 
-  // Si le bouton pressé est le bouton "En cours", choisir la variante
-  // spécifique selon l'utilisateur (Koyorin ou Roxxor) sinon laisser
-  // le tag générique.
+
+
   let appliedTagId = tagId;
   if (tagId === TAG.enCours) {
     const uid = String(interaction.user.id);
-    if (uid === "1278372257483456603") appliedTagId = TAG.enCoursKoyorin;
+    if (tagId !== TAG.enCours) appliedTagId = TAG.enCours;
+    else if (uid === "1278372257483456603") appliedTagId = TAG.enCoursKoyorin;
     else if (uid === "1057705135515639859") appliedTagId = TAG.enCoursRoxxor;
     else appliedTagId = TAG.enCours;
   }
