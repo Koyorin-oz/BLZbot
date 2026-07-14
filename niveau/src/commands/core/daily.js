@@ -232,6 +232,7 @@ module.exports = {
                 logger.error('Erreur handler:', handlerError);
                 await interaction.editReply({
                     content: '❌ Erreur critique.',
+                    flags: MessageFlags.Ephemeral,
                 }).catch(() => {});
             }
         }
