@@ -13,7 +13,7 @@ const meta = require('../services/meta');
 const cfg = require('../config');
 const { totalToLevelState, T_START, MAX_LEVEL } = require('../reborn/xpCurve');
 const { d } = require('../lib/slashDesc');
-const { deferReplyEphemeral, replyEphemeral } = require('../lib/ephemeral');
+const { deferReplyEphemeral, replyEphemeral, editReplyEphemeral, withEphemeral } = require('../lib/ephemeral');
 
 const { renderDailyCard } = require(path.join(
   __dirname,

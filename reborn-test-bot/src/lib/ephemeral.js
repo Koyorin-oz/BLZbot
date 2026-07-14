@@ -25,6 +25,10 @@ function deferReplyEphemeral(interaction, opts = {}) {
   return interaction.deferReply(withEphemeral(opts));
 }
 
+function editReplyEphemeral(interaction, opts = {}) {
+  return interaction.editReply(withEphemeral(opts));
+}
+
 module.exports = {
   EPHEMERAL,
   withEphemeral,
@@ -32,4 +36,5 @@ module.exports = {
   replyEphemeral,
   followUpEphemeral,
   deferReplyEphemeral,
+  editReplyEphemeral,
 };
