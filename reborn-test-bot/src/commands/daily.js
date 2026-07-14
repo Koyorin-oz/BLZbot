@@ -267,7 +267,7 @@ module.exports = {
               footerBrand: 'BLZstarss',
             });
           } catch {
-            return interaction.editReply({
+            return editReplyEphemeral(interaction, {
               content: `⏳ **Prochain daily** : **${remainingTime}** · *Double Daily* indisponible (objet / limite 24h).`,
             });
           }
