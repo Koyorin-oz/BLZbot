@@ -162,6 +162,7 @@ module.exports = {
                         logger.error('Erreur rendu canvas daily:', renderError);
                         return interaction.editReply({
                             content: `✅ Récompense obtenue: **${reward.name}** !`,
+                            flags: MessageFlags.Ephemeral,
                         });
                     }
 
