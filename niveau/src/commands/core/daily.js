@@ -211,6 +211,7 @@ module.exports = {
                         logger.error('Erreur rendu canvas daily (cooldown):', renderError);
                         return interaction.editReply({
                             content: `⏳ Réessayez dans **${msToTime(remainingTime)}**.`,
+                            flags: MessageFlags.Ephemeral,
                         });
                     }
 
