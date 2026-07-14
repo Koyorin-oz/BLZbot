@@ -42,21 +42,24 @@ module.exports = {
         // Récupérer les usernames des prêteurs avec timeout
         const choices = await Promise.all(loans.map(async (loan) => {
             try {
-                // Utiliser le cache si disponible
                 if (!userCache[loan.lenderId]) {
                     const lender = await interaction.client.users.fetch(loan.lenderId);
                     userCache[loan.lenderId] = lender.username;
                 }
 
+                const totalDue = computeLoanTotalWithInterest(loan);
+                const remaining = Math.max(0, totalDue - (loan.repaid_amount || 0));
+
                 return {
-                    name: `${userCache[loan.lenderId]} - ${loan.amount} starss`,
-                    value: loan.id.toString()
+                    name: `${userCache[loan.lenderId]} — ${remaining.toLocaleString('fr-FR')} ⭐ restants`,
+                    value: loan.id.toString(),
                 };
             } catch (e) {
-                // Fallback sur l'ID si fetch échoue
+                const totalDue = computeLoanTotalWithInterest(loan);
+                const remaining = Math.max(0, totalDue - (loan.repaid_amount || 0));
                 return {
-                    name: `ID ${loan.lenderId} - ${loan.amount} starss`,
-                    value: loan.id.toString()
+                    name: `ID ${loan.lenderId} — ${remaining.toLocaleString('fr-FR')} ⭐ restants`,
+                    value: loan.id.toString(),
                 };
             }
         }));
