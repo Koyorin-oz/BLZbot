@@ -19,7 +19,7 @@ module.exports = {
 
             // Vérifier que l'utilisateur a le rôle VIP pour accéder à la commande
             const isVip = ALL_VIP_IDS.some(id => member.roles.cache.has(id));
-            if (!isVip && member.user.id !== 1057705135515639859) { // Roxxor
+            if (!isVip) {
                 return interaction.reply({
                     content: '❌ Tu dois avoir le rôle **VIP** pour utiliser cette commande.',
                     ephemeral: true
