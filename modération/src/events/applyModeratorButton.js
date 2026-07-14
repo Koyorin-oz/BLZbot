@@ -12,7 +12,7 @@ module.exports = {
         // Vérification des conditions (version backup)
         const joinDate = member.joinedAt;
         const oneWeekInMs = 7 * 24 * 60 * 60 * 1000;
-        const hasBeenOneWeek = (new Date() - joinDate) > oneWeekInMs;
+        const hasBeenOneWeek = joinDate && (Date.now() - joinDate.getTime()) > oneWeekInMs;
         
         if (!hasBeenOneWeek) {
             return interaction.reply({
