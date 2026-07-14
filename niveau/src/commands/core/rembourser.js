@@ -104,20 +104,20 @@ module.exports = {
             }
 
             getOrCreateUser(borrower.id, borrower.username);
-            const { getEffectiveStars, moveLoanStars } = require('../../utils/loan-system');
             const borrowerStars = getEffectiveStars(borrower.id, borrower.username);
 
             if (borrowerStars < amount) {
                 return interaction.reply({ content: `Vous n'avez que **${borrowerStars}** starss, vous ne pouvez pas rembourser **${amount}** starss.`, ephemeral: true });
             }
 
-            // Calculer le montant total à rembourser (principal + intérêt).
-            // Math.round pour rester cohérent avec getTotalDebt / pénalités de retard.
-            const totalWithInterest = Math.round(loan.amount * (1 + loan.interest / 100));
-
-            // Calcul de la dette restante : montant total - ce qui a déjà été remboursé
+            const totalWithInterest = computeLoanTotalWithInterest(loan);
             const alreadyRepaid = loan.repaid_amount || 0;
             const remainingDebt = totalWithInterest - alreadyRepaid;
+
+            if (remainingDebt <= 0) {
+                markLoanRepaidStmt.run(totalWithInterest, loanId);
+                return interaction.reply({ content: 'Cette dette est déjà entièrement remboursée.', ephemeral: true });
+            }
 
             // Récupérer le prêteur
             let lender;
