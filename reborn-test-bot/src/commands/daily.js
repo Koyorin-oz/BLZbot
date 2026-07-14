@@ -336,7 +336,7 @@ module.exports = {
         new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000)),
       ]);
     } catch {
-      return interaction.editReply({
+      return editReplyEphemeral(interaction, {
         content: `⏳ **Prochain daily** : **${remainingTime}**${ddc > 0 ? ` · *Double daily* : **${ddc}**` : ''}`,
       });
     }
