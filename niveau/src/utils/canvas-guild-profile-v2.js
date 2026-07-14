@@ -252,7 +252,7 @@ async function renderGuildProfileV2({ guild, members, owner, warInfo, totalMembe
     // Revenu passif
     ctx.font = `400 16px ${textFace}`;
     ctx.fillStyle = THEME.sub;
-    const dailyIncome = guild.level * 100 * (guild.treasury_multiplier_purchased || 1);
+    const dailyIncome = require('./guild/guild-treasury').calculateDailyIncome(guild);
     ctx.fillText(`📈 Revenu: ${dailyIncome.toLocaleString('fr-FR')} starss/jour`, 470, 285);
     
     // Total généré

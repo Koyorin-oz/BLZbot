@@ -114,32 +114,77 @@ function calculateDailyIncome(guild) {
     return baseIncome * multiplier;
 }
 
+function getParisDateString(date = new Date()) {
+    return new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Europe/Paris',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).format(date);
+}
+
+function parseDateString(dateString) {
+    const [year, month, day] = String(dateString).split('-').map((part) => parseInt(part, 10));
+    return new Date(Date.UTC(year, month - 1, day));
+}
+
+function getBotSetting(key) {
+    const row = db.prepare('SELECT value FROM bot_settings WHERE key = ?').get(key);
+    return row ? row.value : null;
+}
+
+function setBotSetting(key, value) {
+    db.prepare('INSERT OR REPLACE INTO bot_settings (key, value) VALUES (?, ?)').run(key, String(value));
+}
+
+function getLastTreasuryDailyIncomeDate() {
+    return getBotSetting('treasury_daily_income_last_applied_date');
+}
+
+function setLastTreasuryDailyIncomeDate(dateString) {
+    setBotSetting('treasury_daily_income_last_applied_date', dateString);
+}
+
+function getDaysBetweenParisDates(fromDateString, toDateString) {
+    const from = parseDateString(fromDateString);
+    const to = parseDateString(toDateString);
+    const diffMs = to.getTime() - from.getTime();
+    return Math.max(0, Math.floor(diffMs / 86400000));
+}
+
 /**
  * Applique le revenu passif quotidien à toutes les guildes
  */
-function applyDailyIncome(client) {
+function applyDailyIncome({ log = true } = {}) {
     const guilds = db.prepare('SELECT * FROM guilds WHERE upgrade_level >= 2').all();
 
     let totalApplied = 0;
+    let totalStarss = 0;
+
     for (const guild of guilds) {
         const income = calculateDailyIncome(guild);
 
         try {
             // Calculer combien on peut ajouter sans dépasser la capacité
             const remainingCapacity = guild.treasury_capacity - guild.treasury;
-            
+
             if (remainingCapacity <= 0) {
-                logger.info(`Trésorerie de ${guild.name} pleine (${guild.treasury}/${guild.treasury_capacity}), revenu passif non appliqué`);
+                if (log) {
+                    logger.info(`Trésorerie de ${guild.name} pleine (${guild.treasury}/${guild.treasury_capacity}), revenu passif non appliqué`);
+                }
             } else {
                 // Ajouter le minimum entre le revenu et la place restante
                 const amountToAdd = Math.min(income, remainingCapacity);
                 addToTreasury(guild.id, amountToAdd, true); // bypassWarCheck = true pour le revenu passif
-                totalApplied++;
-                
-                if (amountToAdd < income) {
-                    logger.info(`Revenu passif partiel appliqué: ${amountToAdd}/${income} starss pour ${guild.name} (capacité maximale atteinte)`);
-                } else {
-                    logger.info(`Revenu passif appliqué: ${income} starss pour ${guild.name}`);
+                totalApplied += 1;
+                totalStarss += amountToAdd;
+
+                if (log) {
+                    if (amountToAdd < income) {
+                        logger.info(`Revenu passif partiel appliqué: ${amountToAdd}/${income} starss pour ${guild.name} (capacité maximale atteinte)`);
+                    } else {
+                        logger.info(`Revenu passif appliqué: ${income} starss pour ${guild.name}`);
+                    }
                 }
             }
         } catch (error) {
@@ -147,7 +192,42 @@ function applyDailyIncome(client) {
         }
     }
 
-    logger.info(`Revenu passif appliqué à ${totalApplied} guildes`);
+    if (log) {
+        logger.info(`Revenu passif appliqué à ${totalApplied} guildes (${totalStarss.toLocaleString('fr-FR')} starss au total)`);
+    }
+
+    return { totalApplied, totalStarss };
+}
+
+function catchUpDailyIncome() {
+    const todayParis = getParisDateString();
+    const lastAppliedDate = getLastTreasuryDailyIncomeDate();
+
+    if (!lastAppliedDate) {
+        setLastTreasuryDailyIncomeDate(todayParis);
+        logger.info(`✅ Suivi du revenu de trésorerie initialisé à ${todayParis} (premier démarrage).`);
+        return;
+    }
+
+    const missingDays = getDaysBetweenParisDates(lastAppliedDate, todayParis);
+    if (missingDays <= 0) {
+        logger.info(`✅ Revenu de trésorerie déjà appliqué pour aujourd'hui (${todayParis}).`);
+        return;
+    }
+
+    logger.info(`⏳ Revenu de trésorerie manquant détecté : ${missingDays} jour(s) à rattraper (de ${lastAppliedDate} à ${todayParis}).`);
+
+    for (let daysToCatchUp = 1; daysToCatchUp <= missingDays; daysToCatchUp += 1) {
+        const targetDate = new Date(parseDateString(lastAppliedDate).getTime() + 86400000 * daysToCatchUp);
+        const targetDateString = getParisDateString(targetDate);
+        logger.info(`🏰 Application du revenu de trésorerie manqué pour le ${targetDateString}...`);
+        applyDailyIncome({ log: true });
+        setLastTreasuryDailyIncomeDate(targetDateString);
+    }
+}
+
+function markDailyIncomeAppliedToday() {
+    setLastTreasuryDailyIncomeDate(getParisDateString());
 }
 
 /**
@@ -165,5 +245,7 @@ module.exports = {
     distributeTreasuryEqually,
     calculateDailyIncome,
     applyDailyIncome,
+    catchUpDailyIncome,
+    markDailyIncomeAppliedToday,
     canAffordFromTreasury
 };
