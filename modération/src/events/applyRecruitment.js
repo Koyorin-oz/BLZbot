@@ -159,35 +159,9 @@ function buildRecruitmentEmbeds(interaction, { specialite, step1, whyYou, reason
 
     const fullText = blocks.join('\n');
     const title = `📄 Candidature ${specialite.charAt(0).toUpperCase() + specialite.slice(1)} — ${interaction.user.tag}`;
-    const MAX_DESC = 4090;
-    const embeds = [];
+    const parts = chunkText(fullText);
 
-    if (fullText.length <= MAX_DESC) {
-        embeds.push(
-            new EmbedBuilder()
-                .setTitle(title.substring(0, 256))
-                .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
-                .setDescription(fullText)
-                .setColor('#0099ff')
-                .setTimestamp(),
-        );
-        return embeds;
-    }
-
-    const parts = [];
-    let current = '';
-    for (const line of fullText.split('\n')) {
-        const next = current ? `${current}\n${line}` : line;
-        if (next.length > MAX_DESC && current.length > 0) {
-            parts.push(current);
-            current = line;
-        } else {
-            current = next;
-        }
-    }
-    if (current.trim()) parts.push(current);
-
-    parts.forEach((part, index) => {
+    return parts.map((part, index) => {
         const embed = new EmbedBuilder()
             .setDescription(part)
             .setColor('#0099ff');
@@ -199,10 +173,8 @@ function buildRecruitmentEmbeds(interaction, { specialite, step1, whyYou, reason
         if (index === parts.length - 1) {
             embed.setFooter({ text: 'Fin de la candidature' }).setTimestamp();
         }
-        embeds.push(embed);
+        return ensureEmbedDescription(embed);
     });
-
-    return embeds;
 }
 
 module.exports = {
