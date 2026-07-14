@@ -191,8 +191,15 @@ async function handleVipRoleModal(interaction) {
                     iconApplied = true;
                 }
             } catch (iconError) {
-                logger.warn(`[VIP-Role] Impossible d'appliquer l'icône au rôle (le serveur doit être boost niveau 2+ ou le format n'est pas supporté):`, iconError.message);
-                iconFailureMessage = 'Impossible d’appliquer l’icône. Assure-toi que le serveur est boost niveau 2+ et que le format est supporté.';
+                logger.warn(`[VIP-Role] Impossible d'appliquer l'icône au rôle:`, iconError.message);
+                const lowerMsg = String(iconError.message || '').toLowerCase();
+                if (lowerMsg.includes('boost') || lowerMsg.includes('tier 2') || lowerMsg.includes('premium')) {
+                    iconFailureMessage = 'Impossible d’appliquer l’icône : le serveur n’est pas boosté au niveau 2 requis pour les icônes de rôle.';
+                } else if (lowerMsg.includes('image') || lowerMsg.includes('format') || lowerMsg.includes('unsupported') || lowerMsg.includes('png') || lowerMsg.includes('jpeg') || lowerMsg.includes('webp')) {
+                    iconFailureMessage = 'Impossible d’appliquer l’icône : le format de l’image n’est pas supporté. Utilise une image JPG, PNG ou un WEBP.';
+                } else {
+                    iconFailureMessage = 'Impossible d’appliquer l’icône. Assure-toi que le serveur est boost niveau 2+ et que le format est supporté.';
+                }
             }
         }
 
