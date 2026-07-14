@@ -28,7 +28,11 @@ const BUTTON_DEFS = [
   { key: "enCours", label: "En cours", style: ButtonStyle.Primary },
   { key: "dejaSignale", label: "Déjà signalé", style: ButtonStyle.Secondary },
   { key: "corriger", label: "Corrigé", style: ButtonStyle.Success },
-  { key: "signalementRejete", label: "Signalement rejeté", style: ButtonStyle.Danger, },
+  {
+    key: "signalementRejete",
+    label: "Signalement rejeté",
+    style: ButtonStyle.Danger,
+  },
 ];
 
 // Inclure aussi les variantes spécifiques (Koyorin/Roxxor) parmi les tags gérés.
@@ -99,9 +103,10 @@ function isFinalBugTag(tagId) {
   return FINAL_TAG_IDS.includes(tagId);
 }
 
-function buildResolutionEmbed(tagId) {
+function buildResolutionEmbed(tagId, userId) {
   const isFixed = tagId === TAG.corriger;
   const isRejected = tagId === TAG.signalementRejete;
+  const mention = userId ? `<@${userId}>` : "un membre du staff";
   return new EmbedBuilder()
     .setTitle(
       isFixed
@@ -112,17 +117,17 @@ function buildResolutionEmbed(tagId) {
     )
     .setDescription(
       isFixed
-        ? `Ce signalement a été marqué comme corrigé par <@${interaction.user.id}>. Le fil est maintenant fermé.`
+        ? `Ce signalement a été marqué comme corrigé par ${mention}. Le fil est maintenant fermé.`
         : isRejected
-          ? `Ce signalement a été marqué comme rejeté par <@${interaction.user.id}>. Le fil est maintenant fermé.`
-          : `Ce signalement a été marqué comme déjà signalé par <@${interaction.user.id}>. Le fil est maintenant fermé.`,
+          ? `Ce signalement a été marqué comme rejeté par ${mention}. Le fil est maintenant fermé.`
+          : `Ce signalement a été marqué comme déjà signalé par ${mention}. Le fil est maintenant fermé.`,
     )
     .setColor(isFixed ? 0x2ecc71 : isRejected ? 0xe74c3c : 0x3498db)
     .setTimestamp();
 }
 
-async function closeResolvedBugThread(thread, tagId) {
-  await thread.send({ embeds: [buildResolutionEmbed(tagId)] });
+async function closeResolvedBugThread(thread, tagId, userId) {
+  await thread.send({ embeds: [buildResolutionEmbed(tagId, userId)] });
   await thread.setArchived(true, "Signalement traité");
   await thread.setLocked(true);
 }
@@ -162,7 +167,7 @@ async function handleBugTagButton(interaction) {
   const label = tagId === TAG.enCours ? "En cours" : tagLabelForId(tagId);
 
   if (isFinalBugTag(appliedTagId)) {
-    await closeResolvedBugThread(thread, appliedTagId);
+    await closeResolvedBugThread(thread, appliedTagId, interaction.user.id);
   } else {
     await interaction.followUp({
       content: `🏷️ Tag **${label}** appliqué sur ce signalement.`,
