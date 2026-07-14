@@ -49,6 +49,7 @@ async function sendDailyCanvasReply(interaction, pngBuffer) {
     const message = await interaction.editReply({
         files: [file],
         components: [buildCloseRow()],
+        flags: MessageFlags.Ephemeral,
     });
 
     const collector = message.createMessageComponentCollector({
