@@ -28,15 +28,15 @@ module.exports = {
         // Vérifier si l'utilisateur a un bypass valide
         const hasBypass = recruitmentManager && recruitmentManager.hasValidBypass(userId);
 
-        // Vérification : 1 mois d'ancienneté (ignorée si bypass)
+        // Vérification : 1 semaine d'ancienneté (ignorée si bypass)
         if (!hasBypass) {
             const joinDate = member.joinedAt;
-            const oneMonthInMs = 30 * 24 * 60 * 60 * 1000;
-            const hasBeenOneMonth = (new Date() - joinDate) > oneMonthInMs;
+            const oneWeekInMs = 7 * 24 * 60 * 60 * 1000;
+            const hasBeenOneWeek = (new Date() - joinDate) > oneWeekInMs;
 
-            if (!hasBeenOneMonth) {
+            if (!hasBeenOneWeek) {
                 return interaction.reply({
-                    content: "❌ Vous ne remplissez pas les conditions pour postuler :\n- Vous devez être sur le serveur depuis plus d'un mois.",
+                    content: "❌ Vous ne remplissez pas les conditions pour postuler :\n- Vous devez être sur le serveur depuis plus d'une semaine.",
                     ephemeral: true
                 });
             }
