@@ -48,6 +48,13 @@ function moveLoanStars(userId, delta, username) {
     return false;
 }
 
+/** Montant total dû (principal + intérêts), arrondi comme /rembourser. */
+function computeLoanTotalWithInterest(loan) {
+    const amount = Number(loan?.amount) || 0;
+    const interest = Number(loan?.interest) || 0;
+    return Math.round(amount * (1.0 + interest / 100.0));
+}
+
 /**
  * Calcule la dette totale d'un utilisateur (incluant les intérêts).
  * @param {string} userId - L'ID de l'utilisateur emprunteur.
@@ -58,8 +65,8 @@ function getTotalDebt(userId) {
     const loans = query.all(userId);
 
     return loans.reduce((total, loan) => {
-        const amountWithInterest = Math.round(loan.amount * (1.0 + (loan.interest || 0) / 100.0));
-        return total + (amountWithInterest - (loan.repaid_amount || 0));
+        const amountWithInterest = computeLoanTotalWithInterest(loan);
+        return total + Math.max(0, amountWithInterest - (loan.repaid_amount || 0));
     }, 0);
 }
 
@@ -88,28 +95,44 @@ function getClosestDebtDeadline(userId) {
     return `Temps restant: ${hours}h ${minutes}m`;
 }
 
+const markLoanRepaidStmt = db.prepare('UPDATE loans SET repaid = 1, repaid_amount = ? WHERE id = ? AND repaid = 0');
+const markLoanPartialStmt = db.prepare('UPDATE loans SET repaid_amount = ? WHERE id = ? AND repaid = 0');
+
 /**
  * Vérifie et traite les prêts arrivés à échéance.
  */
 async function checkOverdueLoans(client) {
+    const nowIso = new Date().toISOString();
     const getOverdueLoansStmt = db.prepare('SELECT * FROM loans WHERE accepted = 1 AND repaid = 0 AND expiresAt < ?');
-    const overdueLoans = getOverdueLoansStmt.all(new Date().toISOString());
+    const overdueLoans = getOverdueLoansStmt.all(nowIso);
 
     for (const loan of overdueLoans) {
-        logger.info(`Processing overdue loan: ${loan.id}`);
+        const totalWithInterest = computeLoanTotalWithInterest(loan);
+        const alreadyRepaid = Number(loan.repaid_amount) || 0;
+        const remaining = Math.max(0, totalWithInterest - alreadyRepaid);
 
-        // Calcul de la pénalité : (montant + intérêts) X2
-        const totalWithInterest = Math.round(loan.amount * (1.0 + (loan.interest || 0) / 100.0));
-        const penaltyAmount = totalWithInterest * 2; // X2 en cas de retard
+        // Déjà remboursé (ex. /rembourser juste avant l'échéance) — fermer sans pénalité
+        if (remaining <= 0) {
+            const closed = markLoanRepaidStmt.run(totalWithInterest, loan.id);
+            if (closed.changes > 0) {
+                logger.info(`[Loan] Prêt ${loan.id} déjà soldé (${alreadyRepaid}/${totalWithInterest}) — fermé sans pénalité.`);
+            }
+            continue;
+        }
 
-        // Appliquer la pénalité (l'emprunteur paie, le prêteur reçoit) sur le
-        // portefeuille réel (REBORN si actif, sinon niveau).
+        const penaltyAmount = remaining * 2;
+        logger.info(`Processing overdue loan ${loan.id} — reste ${remaining}, pénalité ${penaltyAmount}`);
+
+        // Marquer AVANT le transfert pour éviter double pénalité au redémarrage
+        const locked = markLoanRepaidStmt.run(penaltyAmount, loan.id);
+        if (locked.changes === 0) {
+            logger.warn(`[Loan] Prêt ${loan.id} déjà traité, skip pénalité.`);
+            continue;
+        }
+
         moveLoanStars(loan.borrowerId, -penaltyAmount);
         moveLoanStars(loan.lenderId, penaltyAmount);
         void grantResources;
-
-        const updateLoanStmt = db.prepare('UPDATE loans SET repaid = 1, repaid_amount = ? WHERE id = ?');
-        updateLoanStmt.run(penaltyAmount, loan.id);
 
         const { getOrCreateUser } = require('./db-users');
 
@@ -118,7 +141,12 @@ async function checkOverdueLoans(client) {
             const borrowerData = getOrCreateUser(loan.borrowerId, borrower.username);
 
             if (borrowerData.notify_debt_reminder !== 0) {
-                await borrower.send(`⚠️ Vous n'avez pas remboursé votre prêt à temps ! Vous avez été pénalisé de **${penaltyAmount.toLocaleString('fr-FR')}** starss (X2). Dette initiale : ${totalWithInterest.toLocaleString('fr-FR')} starss.`);
+                const partialNote = alreadyRepaid > 0
+                    ? `\n*(Remboursement partiel déjà reçu : ${alreadyRepaid.toLocaleString('fr-FR')} starss)*`
+                    : '';
+                await borrower.send(
+                    `⚠️ Vous n'avez pas remboursé votre prêt à temps ! Vous avez été pénalisé de **${penaltyAmount.toLocaleString('fr-FR')}** starss (×2 sur le reste dû). Dette restante avant pénalité : ${remaining.toLocaleString('fr-FR')} starss.${partialNote}`,
+                );
             }
         } catch (err) {
             logger.error(`Failed to send overdue message to borrower ${loan.borrowerId}`, err);
@@ -126,17 +154,20 @@ async function checkOverdueLoans(client) {
 
         try {
             const lender = await client.users.fetch(loan.lenderId);
-            await lender.send(`✅ L'emprunteur n'a pas remboursé votre prêt à temps. Vous avez reçu **${penaltyAmount.toLocaleString('fr-FR')}** starss en dédommagement (X2) !`);
+            await lender.send(
+                `✅ L'emprunteur n'a pas remboursé votre prêt à temps. Vous avez reçu **${penaltyAmount.toLocaleString('fr-FR')}** starss en dédommagement (×2 sur le reste dû de ${remaining.toLocaleString('fr-FR')} starss) !`,
+            );
         } catch (err) {
             logger.error(`Failed to send overdue message to lender ${loan.lenderId}`, err);
         }
     }
 }
 
-module.exports = { 
+module.exports = {
     checkOverdueLoans,
     getTotalDebt,
     getClosestDebtDeadline,
     getEffectiveStars,
-    moveLoanStars
+    moveLoanStars,
+    computeLoanTotalWithInterest,
 };

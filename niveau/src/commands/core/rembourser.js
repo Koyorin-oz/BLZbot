@@ -4,6 +4,10 @@ const { getOrCreateUser } = require('../../utils/db-users');
 const { adjustWarInitialValues } = require('../../utils/guild/guild-wars');
 const logger = require('../../utils/logger');
 const { handleCommandError } = require('../../utils/error-handler');
+const { getEffectiveStars, moveLoanStars, computeLoanTotalWithInterest } = require('../../utils/loan-system');
+
+const markLoanRepaidStmt = db.prepare('UPDATE loans SET repaid = 1, repaid_amount = ? WHERE id = ? AND repaid = 0');
+const markLoanPartialStmt = db.prepare('UPDATE loans SET repaid_amount = ? WHERE id = ? AND repaid = 0');
 
 module.exports = {
     data: new SlashCommandBuilder()
