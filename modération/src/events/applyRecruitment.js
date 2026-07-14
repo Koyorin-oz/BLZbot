@@ -596,12 +596,13 @@ module.exports = {
 
             const [firstEmbed, ...otherEmbeds] = embeds;
             const sentMessage = await recruitmentChannel.send({
-                embeds: [firstEmbed],
+                embeds: [ensureEmbedDescription(firstEmbed)],
                 components: [row],
             });
 
-            for (const embed of otherEmbeds) {
-                await recruitmentChannel.send({ embeds: [embed] });
+            for (let i = 0; i < otherEmbeds.length; i += 10) {
+                const batch = otherEmbeds.slice(i, i + 10).map(ensureEmbedDescription);
+                await recruitmentChannel.send({ embeds: batch });
             }
 
             await recruitmentChannel.send({

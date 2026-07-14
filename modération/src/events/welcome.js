@@ -215,6 +215,22 @@ async function handleMemberJoin(member) {
       return;
     }
 
+    logWelcomeMemberMeta(member);
+
+    try {
+      const payload = await buildWelcomeMessage(member);
+      await channel.send({
+        components: payload.components,
+        flags: payload.flags,
+        allowedMentions: payload.allowedMentions,
+      });
+    } catch (messageError) {
+      console.error(
+        "❌ [Welcome] Erreur lors de l'envoi du message de bienvenue:",
+        messageError,
+      );
+    }
+
     if (CONFIG.MEMBER_ROLE_ID) {
       try {
         const role = member.guild.roles.cache.get(CONFIG.MEMBER_ROLE_ID);
@@ -224,11 +240,6 @@ async function handleMemberJoin(member) {
             "Attribution automatique aux nouveaux arrivants",
           );
           console.log(`✅ Rôle membre attribué à ${member.user.tag}`);
-        } else {
-          console.error(
-            "❌ [Welcome] Rôle membre introuvable:",
-            CONFIG.MEMBER_ROLE_ID,
-          );
         }
       } catch (roleError) {
         console.error(
