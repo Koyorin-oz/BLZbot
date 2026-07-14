@@ -171,6 +171,7 @@ module.exports = {
                     logger.error('Erreur claim daily:', claimError);
                     await interaction.editReply({
                         content: '❌ Une erreur est survenue.',
+                        flags: MessageFlags.Ephemeral,
                     });
                 }
             } else {
@@ -218,6 +219,7 @@ module.exports = {
                     logger.error('Erreur cooldown daily:', cooldownError);
                     await interaction.editReply({
                         content: '❌ Une erreur est survenue.',
+                        flags: MessageFlags.Ephemeral,
                     });
                 }
             }
