@@ -26,7 +26,11 @@ const EN_COURS_TAG_IDS = [TAG.enCours, TAG.enCoursKoyorin, TAG.enCoursRoxxor];
 
 const BUTTON_DEFS = [
   { key: "enCours", label: "En cours", style: ButtonStyle.Primary },
-  { key: "signalementRejete", label: "Signalement rejeté", style: ButtonStyle.Danger, },
+  {
+    key: "signalementRejete",
+    label: "Signalement rejeté",
+    style: ButtonStyle.Danger,
+  },
   { key: "dejaSignale", label: "Déjà signalé", style: ButtonStyle.Secondary },
   { key: "corriger", label: "Corrigé", style: ButtonStyle.Success },
 ];
@@ -147,15 +151,15 @@ async function handleBugTagButton(interaction) {
 
   await interaction.deferUpdate();
 
-
-
   let appliedTagId = tagId;
   if (tagId === TAG.enCours) {
     const uid = String(interaction.user.id);
-    if (appliedTagId !== TAG.enCours) appliedTagId = TAG.enCours;
-    else if (uid === "1278372257483456603") appliedTagId = TAG.enCoursKoyorin;
-    else if (uid === "1057705135515639859") appliedTagId = TAG.enCoursRoxxor;
-    else appliedTagId = TAG.enCours;
+    const currentTags = thread.appliedTags || [];
+    // Si le fil contient déjà une variante spécifique, on remet le tag générique
+    if ( currentTags.includes(TAG.enCoursKoyorin) || currentTags.includes(TAG.enCoursRoxxor) ) { appliedTagId = TAG.enCours;
+    } else if (uid === "1278372257483456603") { appliedTagId = TAG.enCoursKoyorin;
+    } else if (uid === "1057705135515639859") { appliedTagId = TAG.enCoursRoxxor;
+    } else { appliedTagId = TAG.enCours; }
   }
 
   await toggleForumTag(thread, appliedTagId);
