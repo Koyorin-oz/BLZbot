@@ -268,6 +268,16 @@ class DatabaseManager {
                         active INTEGER DEFAULT 1
                     )`);
 
+                    // Brouillons candidature (étape 1 → 2, survit aux redémarrages)
+                    this.databases.staffProfile.run(`CREATE TABLE IF NOT EXISTS recruitment_drafts (
+                        userId TEXT PRIMARY KEY,
+                        specialite TEXT NOT NULL,
+                        step1_json TEXT NOT NULL,
+                        questions_json TEXT,
+                        autoReject INTEGER DEFAULT 0,
+                        updated_at INTEGER NOT NULL
+                    )`);
+
                     // Table des chances de candidatures/modo tests
                     this.databases.staffProfile.run(`CREATE TABLE IF NOT EXISTS staff_chances (
                         userId TEXT PRIMARY KEY,
