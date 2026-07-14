@@ -89,6 +89,39 @@ function safeText(text) {
     return str;
 }
 
+/** Découpe un texte long en morceaux valides pour embed.description (max 4096). */
+function chunkText(text, maxLen = 4090) {
+    const str = String(text || '').trim();
+    if (!str) return ['[Non renseigné]'];
+
+    const chunks = [];
+    let i = 0;
+    while (i < str.length) {
+        let end = Math.min(i + maxLen, str.length);
+        if (end < str.length) {
+            const slice = str.slice(i, end);
+            const lastNl = slice.lastIndexOf('\n');
+            if (lastNl > 200) end = i + lastNl + 1;
+        }
+        const piece = str.slice(i, end).trim();
+        if (piece.length > 0) chunks.push(piece);
+        const next = end > i ? end : i + maxLen;
+        i = next;
+    }
+
+    return chunks.length > 0 ? chunks : ['[Non renseigné]'];
+}
+
+function ensureEmbedDescription(embed) {
+    const desc = embed.data?.description;
+    if (!desc || String(desc).trim().length === 0) {
+        embed.setDescription('…');
+    } else if (String(desc).length > 4096) {
+        embed.setDescription(String(desc).slice(0, 4096));
+    }
+    return embed;
+}
+
 function buildRecruitmentEmbeds(interaction, { specialite, step1, whyYou, reasoning, questions }) {
     const blocks = [
         `**Âge :** ${safeText(step1.age)}`,
