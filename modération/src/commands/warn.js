@@ -58,7 +58,7 @@ module.exports = {
         }
         if (!(await deferEphemeral(interaction))) return;
 
-        const utilisateur = interaction.options.getUser('utilisateur');
+        const utilisateur = interaction.options.getUser('utilisateur') || interaction.options.getUser('membre');
         if (!utilisateur) {
             const legacyStaffWarn =
                 interaction.options.getString('degre') != null ||
