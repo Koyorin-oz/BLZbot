@@ -79,7 +79,7 @@ module.exports = {
 
     async execute(interaction) {
         try {
-            await interaction.deferReply();
+            await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
             const userId = interaction.user.id;
             let user = getOrCreateUser(userId, interaction.user.username);
