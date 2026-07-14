@@ -174,6 +174,7 @@ async function handleVipRoleModal(interaction) {
 
         // --- Appliquer l'icône si fournie ---
         let iconApplied = false;
+        let iconFailureMessage = null;
         if (roleIcon) {
             try {
                 if (iconBuffer && iconType === 'buffer') {
@@ -191,7 +192,7 @@ async function handleVipRoleModal(interaction) {
                 }
             } catch (iconError) {
                 logger.warn(`[VIP-Role] Impossible d'appliquer l'icône au rôle (le serveur doit être boost niveau 2+ ou le format n'est pas supporté):`, iconError.message);
-                roleIcon = null;
+                iconFailureMessage = 'Impossible d’appliquer l’icône. Assure-toi que le serveur est boost niveau 2+ et que le format est supporté.';
             }
         }
 
@@ -231,11 +232,11 @@ async function handleVipRoleModal(interaction) {
             .addFields(
                 { name: '📝 Nom', value: roleName, inline: true },
                 { name: '🎨 Couleur', value: roleColor, inline: true },
-                { name: '🖼️ Icône', value: iconApplied ? (roleIcon || '✅') : '*Aucune*', inline: true }
+                { name: '🖼️ Icône', value: iconApplied ? '✅ Icône appliquée' : (roleIcon ? '❌ Icône non appliquée' : 'Aucune icône fournie'), inline: true }
             );
 
-        if (!iconApplied && roleIcon) {
-            embed.addFields({ name: '⚠️ Icône', value: 'Impossible d’appliquer l’icône. Assure-toi que le serveur est boost niveau 2+ et que le format est supporté.', inline: false });
+        if (iconFailureMessage) {
+            embed.addFields({ name: '⚠️ Icône', value: iconFailureMessage, inline: false });
         }
 
         embed.setFooter({ text: 'Utilise /role-vip à nouveau pour modifier ton rôle' })
