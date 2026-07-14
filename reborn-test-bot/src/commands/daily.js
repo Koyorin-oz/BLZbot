@@ -207,7 +207,7 @@ module.exports = {
     await deferReplyEphemeral(interaction);
 
     if (require('../services/economyState').isPaused()) {
-      return interaction.editReply({
+      return editReplyEphemeral(interaction, {
         content: 'L’économie du serveur est en pause. Le daily est temporairement indisponible.',
       });
     }
