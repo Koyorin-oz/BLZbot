@@ -80,7 +80,7 @@ client.on('messageCreate', async message => {
   const hasRole  = message.member.roles.cache.has(requiredRoleId);
   const isSpecial = message.author.id === specialUserId;
   if (!hasRole && !isSpecial) {
-    return message.reply("Vous n'avez pas la permission d'utiliser cette commande.");
+    return;
   }
 
   if (message.channel.parentId === excludedCategoryId) {
