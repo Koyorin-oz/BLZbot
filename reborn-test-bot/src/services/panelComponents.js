@@ -243,7 +243,11 @@ async function handlePanelInteraction(interaction) {
     await interaction.deferUpdate();
     const p = await buildInventairePayload(interaction.user.id, interaction.user.username);
     await interaction.editReply({ files: p.files, components: p.components, flags: p.flags });
-    return followUpEphemeral(interaction, { content: r.message || '✅ Item utilisé.' });
+    const lootLine = r.message || '✅ Item utilisé.';
+    const isChest = itemId.startsWith('coffre_');
+    return followUpEphemeral(interaction, {
+      content: isChest ? `🎁 **Coffre ouvert**\n${lootLine}` : lootLine,
+    });
   }
 
   // ─── Panel Quêtes ──────────────────────────────────────────────────────────
