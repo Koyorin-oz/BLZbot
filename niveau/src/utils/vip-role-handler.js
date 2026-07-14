@@ -28,28 +28,32 @@ async function handleVipRoleModal(interaction) {
         try {
             // Extraction via la donnée brute de l'interaction
             const raw = interaction.toJSON ? interaction.toJSON() : interaction;
-            let rawData = interaction.data || raw.data || {};
-            
+            const rawData = interaction.data || raw.data || raw || {};
+            const components = rawData.components || rawData.data?.components || [];
+            const resolved = rawData.resolved || rawData.data?.resolved || {};
+
             // Chercher l'attachment via resolved
-            if (rawData.components && rawData.resolved && rawData.resolved.attachments) {
+            if (components.length > 0 && resolved.attachments) {
                 let fileId = null;
-                for (const row of rawData.components) {
+                for (const row of components) {
                     const comps = row.components || (row.component ? [row.component] : []);
                     for (const comp of comps) {
-                        if (comp.custom_id === 'vip_role_icon_upload' && comp.type === 19 && comp.values && comp.values.length > 0) {
-                            fileId = comp.values[0];
+                        if (comp.custom_id === 'vip_role_icon_upload' && comp.type === 19) {
+                            fileId = Array.isArray(comp.values) && comp.values.length > 0
+                                ? comp.values[0]
+                                : comp.value || null;
                             break;
                         }
                     }
                     if (fileId) break;
                 }
-                
+
                 if (fileId) {
-                    const att = rawData.resolved.attachments[fileId];
+                    const att = resolved.attachments[fileId] || resolved.attachments[fileId.toString()];
                     if (att) {
                         uploadedIconUrl = att.url;
                         uploadedIconSize = att.size || 0;
-                        uploadedIconType = att.content_type;
+                        uploadedIconType = att.content_type || att.contentType || null;
                     }
                 }
             }
@@ -169,22 +173,25 @@ async function handleVipRoleModal(interaction) {
         logger.info(`[VIP-Role] Rôle "${roleName}" (${role.id}) créé pour ${interaction.user.tag}`);
 
         // --- Appliquer l'icône si fournie ---
+        let iconApplied = false;
         if (roleIcon) {
             try {
                 if (iconBuffer && iconType === 'buffer') {
                     await role.setIcon(iconBuffer, `Icône VIP pour ${interaction.user.tag}`);
                     logger.info(`[VIP-Role] Icône compressée appliquée au rôle ${role.name}`);
+                    iconApplied = true;
                 } else if (roleIcon.startsWith('http://') || roleIcon.startsWith('https://')) {
                     await role.setIcon(roleIcon, `Icône VIP pour ${interaction.user.tag}`);
                     logger.info(`[VIP-Role] Icône URL appliquée au rôle ${role.name}`);
+                    iconApplied = true;
                 } else {
-                    // Essayer comme emoji Unicode
                     await role.setIcon(roleIcon, `Icône VIP pour ${interaction.user.tag}`);
                     logger.info(`[VIP-Role] Emoji appliqué au rôle ${role.name}`);
+                    iconApplied = true;
                 }
             } catch (iconError) {
-                logger.warn(`[VIP-Role] Impossible d'appliquer l'icône au rôle (le serveur doit être boost niveau 2+):`, iconError.message);
-                // On continue, le rôle est créé sans icône
+                logger.warn(`[VIP-Role] Impossible d'appliquer l'icône au rôle (le serveur doit être boost niveau 2+ ou le format n'est pas supporté):`, iconError.message);
+                roleIcon = null;
             }
         }
 
@@ -224,9 +231,14 @@ async function handleVipRoleModal(interaction) {
             .addFields(
                 { name: '📝 Nom', value: roleName, inline: true },
                 { name: '🎨 Couleur', value: roleColor, inline: true },
-                { name: '🖼️ Icône', value: roleIcon || '*Aucune*', inline: true }
-            )
-            .setFooter({ text: 'Utilise /role-vip à nouveau pour modifier ton rôle' })
+                { name: '🖼️ Icône', value: iconApplied ? (roleIcon || '✅') : '*Aucune*', inline: true }
+            );
+
+        if (!iconApplied && roleIcon) {
+            embed.addFields({ name: '⚠️ Icône', value: 'Impossible d’appliquer l’icône. Assure-toi que le serveur est boost niveau 2+ et que le format est supporté.', inline: false });
+        }
+
+        embed.setFooter({ text: 'Utilise /role-vip à nouveau pour modifier ton rôle' })
             .setTimestamp();
 
         return interaction.editReply({ embeds: [embed] });
