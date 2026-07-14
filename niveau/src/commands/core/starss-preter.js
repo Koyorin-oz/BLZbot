@@ -76,15 +76,10 @@ module.exports = {
                 return interaction.editReply({ content: 'L\'emprunteur a déjà le maximum de **10 dettes** en cours. Il ne peut pas emprunter plus.' });
             }
 
-            // Vérifier la dette totale de l'emprunteur
-            const getTotalDebtStmt = db.prepare(`
-                SELECT COALESCE(SUM(amount), 0) as total FROM loans 
-                WHERE borrowerId = ? AND accepted = 1 AND repaid = 0
-            `);
-            const totalDebt = getTotalDebtStmt.get(borrower.id);
+            const currentDebt = getTotalDebt(borrower.id);
 
-            if (totalDebt.total + amount > 5_000_000) {
-                return interaction.editReply({ content: `La dette totale de l'emprunteur ne peut pas dépasser **5,000,000** starss. Actuellement: ${totalDebt.total.toLocaleString('fr-FR')} starss.` });
+            if (currentDebt + amount > 5_000_000) {
+                return interaction.editReply({ content: `La dette totale de l'emprunteur ne peut pas dépasser **5,000,000** starss. Actuellement: ${currentDebt.toLocaleString('fr-FR')} starss.` });
             }
 
             const expiresAt = new Date(Date.now() + durationMs);
