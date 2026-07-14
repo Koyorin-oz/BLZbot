@@ -217,7 +217,7 @@ class RecruitmentManager {
             .setDescription(
                 'Postes ouverts ci-dessous.\n\n' +
                     '**Avant de postuler :**\n' +
-                    '• Sur le serveur depuis au moins **1 mois**.\n' +
+                    '• Sur le serveur depuis au moins **1 semaine**.\n' +
                     '• **2 candidatures** max (reset tous les 6 mois).\n' +
                     '• Réponses sérieuses et honnêtes.'
             )
