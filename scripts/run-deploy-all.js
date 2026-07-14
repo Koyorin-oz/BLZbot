@@ -88,6 +88,7 @@ async function main() {
         'deploy',
         'Terminé — Ctrl+Maj+R dans Discord si le menu / ne se met pas à jour.',
     );
+    process.exit(0);
 }
 
 main().catch((err) => {

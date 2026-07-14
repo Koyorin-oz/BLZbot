@@ -206,29 +206,13 @@ async function handleMemberJoin(member) {
   }
 
   const w = CONFIG.WELCOME;
+  if (!w.ENABLED) return;
+  if (CONFIG.MAIN_GUILD_ID && member.guild.id !== CONFIG.MAIN_GUILD_ID) return;
 
   try {
     const channel = member.guild.channels.cache.get(w.CHANNEL_ID);
     if (!channel) {
-      console.error(
-        "❌ [Welcome] Salon de bienvenue introuvable:", w.CHANNEL_ID,
-      );
-    } else {
-      logWelcomeMemberMeta(member);
-
-      try {
-        const payload = await buildWelcomeMessage(member);
-        await channel.send({
-          components: payload.components,
-          flags: payload.flags,
-          allowedMentions: payload.allowedMentions,
-        });
-      } catch (messageError) {
-        console.error(
-          "❌ [Welcome] Erreur lors de l'envoi du message de bienvenue:",
-          messageError,
-        );
-      }
+      return;
     }
 
     if (CONFIG.MEMBER_ROLE_ID) {
