@@ -128,90 +128,87 @@ module.exports = {
             }
 
             if (amount > remainingDebt) {
-                // Si trop donné, rembourser juste ce qu'il faut
                 const finalAmount = remainingDebt;
 
-                // Transfert sur le portefeuille réel (REBORN si actif, sinon niveau)
+                const locked = markLoanRepaidStmt.run(totalWithInterest, loanId);
+                if (locked.changes === 0) {
+                    return interaction.reply({ content: 'Cette dette a déjà été remboursée.', ephemeral: true });
+                }
+
                 const usedReborn = moveLoanStars(borrower.id, -finalAmount, borrower.username);
                 getOrCreateUser(loan.lenderId, lender.username);
                 moveLoanStars(loan.lenderId, finalAmount, lender.username);
 
-                // Ajuster les valeurs initiales de guerre uniquement si le solde niveau a bougé
                 if (!usedReborn) {
                     adjustWarInitialValues(borrower.id, { stars: -finalAmount });
                     adjustWarInitialValues(loan.lenderId, { stars: finalAmount });
                 }
 
-                // Marquer comme remboursé
-                const updateLoanStmt = db.prepare('UPDATE loans SET repaid = ?, repaid_amount = ? WHERE id = ?');
-                updateLoanStmt.run(1, totalWithInterest, loanId);
-
-                // Check Quests
                 const { checkQuestProgress } = require('../../utils/quests');
                 checkQuestProgress(interaction.client, 'LOAN_REPAID', borrower);
                 checkQuestProgress(interaction.client, 'LOAN_REPAID_BIG', borrower, { repayAmount: totalWithInterest });
 
                 await interaction.reply({
-                    content: `✅ Vous avez remboursé **${finalAmount}** starss (au lieu de ${amount}). Dette complètement remboursée!`,
-                    ephemeral: true
+                    content: `✅ Vous avez remboursé **${finalAmount.toLocaleString('fr-FR')}** starss (au lieu de ${amount.toLocaleString('fr-FR')}). Dette complètement remboursée !`,
+                    ephemeral: true,
                 });
 
-                // Notifier le prêteur
                 try {
-                    await lender.send(`✅ ${borrower.username} a remboursé sa dette de **${finalAmount}** starss!`);
+                    await lender.send(`✅ ${borrower.username} a remboursé sa dette de **${finalAmount.toLocaleString('fr-FR')}** starss !`);
                 } catch (error) {
                     logger.error(`Impossible d'envoyer un DM au prêteur ${loan.lenderId}:`, error.message);
                 }
 
                 logger.info(`${borrower.username} a remboursé ${finalAmount} starss à ${lender.username}.`);
             } else {
-                // Rembourser le montant spécifié (partiel ou exact) sur le portefeuille réel
+                const newRepaidAmount = alreadyRepaid + amount;
+                const isFullyRepaid = newRepaidAmount >= totalWithInterest;
+
+                if (isFullyRepaid) {
+                    const locked = markLoanRepaidStmt.run(totalWithInterest, loanId);
+                    if (locked.changes === 0) {
+                        return interaction.reply({ content: 'Cette dette a déjà été remboursée.', ephemeral: true });
+                    }
+                } else {
+                    const locked = markLoanPartialStmt.run(newRepaidAmount, loanId);
+                    if (locked.changes === 0) {
+                        return interaction.reply({ content: 'Cette dette a déjà été remboursée.', ephemeral: true });
+                    }
+                }
+
                 const usedReborn = moveLoanStars(borrower.id, -amount, borrower.username);
                 getOrCreateUser(loan.lenderId, lender.username);
                 moveLoanStars(loan.lenderId, amount, lender.username);
 
-                // Ajuster les valeurs initiales de guerre uniquement si le solde niveau a bougé
                 if (!usedReborn) {
                     adjustWarInitialValues(borrower.id, { stars: -amount });
                     adjustWarInitialValues(loan.lenderId, { stars: amount });
                 }
 
-                // Vérifier si complètement remboursé
-                const newRepaidAmount = alreadyRepaid + amount;
-                const isFullyRepaid = newRepaidAmount >= totalWithInterest;
-
                 if (isFullyRepaid) {
-                    const updateLoanStmt = db.prepare('UPDATE loans SET repaid = ?, repaid_amount = ? WHERE id = ?');
-                    updateLoanStmt.run(1, totalWithInterest, loanId);
-
-                    // Check Quests
                     const { checkQuestProgress } = require('../../utils/quests');
                     checkQuestProgress(interaction.client, 'LOAN_REPAID', borrower);
                     checkQuestProgress(interaction.client, 'LOAN_REPAID_BIG', borrower, { repayAmount: totalWithInterest });
 
                     await interaction.reply({
-                        content: `✅ Vous avez remboursé **${amount}** starss. Dette complètement remboursée!`,
-                        ephemeral: true
+                        content: `✅ Vous avez remboursé **${amount.toLocaleString('fr-FR')}** starss. Dette complètement remboursée !`,
+                        ephemeral: true,
                     });
 
                     try {
-                        await lender.send(`✅ ${borrower.username} a remboursé sa dette complètement (**${totalWithInterest}** starss au total)!`);
+                        await lender.send(`✅ ${borrower.username} a remboursé sa dette complètement (**${totalWithInterest.toLocaleString('fr-FR')}** starss au total) !`);
                     } catch (error) {
                         logger.error(`Impossible d'envoyer un DM au prêteur ${loan.lenderId}:`, error.message);
                     }
                 } else {
-                    // Mise à jour du montant remboursé partiellement
-                    const updateLoanStmt = db.prepare('UPDATE loans SET repaid_amount = ? WHERE id = ?');
-                    updateLoanStmt.run(newRepaidAmount, loanId);
-
                     const remaining = totalWithInterest - newRepaidAmount;
                     await interaction.reply({
-                        content: `✅ Vous avez remboursé **${amount}** starss. Il vous reste **${remaining}** starss à rembourser.`,
-                        ephemeral: true
+                        content: `✅ Vous avez remboursé **${amount.toLocaleString('fr-FR')}** starss. Il vous reste **${remaining.toLocaleString('fr-FR')}** starss à rembourser.`,
+                        ephemeral: true,
                     });
 
                     try {
-                        await lender.send(`${borrower.username} a remboursé **${amount}** starss. Il en reste **${remaining}** à rembourser.`);
+                        await lender.send(`${borrower.username} a remboursé **${amount.toLocaleString('fr-FR')}** starss. Il en reste **${remaining.toLocaleString('fr-FR')}** à rembourser.`);
                     } catch (error) {
                         logger.error(`Impossible d'envoyer un DM au prêteur ${loan.lenderId}:`, error.message);
                     }
