@@ -173,7 +173,7 @@ function buildCloseRow() {
 
 async function sendDailyCanvasReply(interaction, pngBuffer) {
   const file = new AttachmentBuilder(pngBuffer, { name: 'daily.png' });
-  const message = await interaction.editReply({
+  const message = await editReplyEphemeral(interaction, {
     files: [file],
     components: [buildCloseRow()],
   });
