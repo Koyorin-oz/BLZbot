@@ -26,9 +26,9 @@ const EN_COURS_TAG_IDS = [TAG.enCours, TAG.enCoursKoyorin, TAG.enCoursRoxxor];
 
 const BUTTON_DEFS = [
   { key: "enCours", label: "En cours", style: ButtonStyle.Primary },
+  { key: "signalementRejete", label: "Signalement rejeté", style: ButtonStyle.Danger, },
   { key: "dejaSignale", label: "Déjà signalé", style: ButtonStyle.Secondary },
   { key: "corriger", label: "Corrigé", style: ButtonStyle.Success },
-  { key: "signalementRejete", label: "Signalement rejeté", style: ButtonStyle.Danger, },
 ];
 
 // Inclure aussi les variantes spécifiques (Koyorin/Roxxor) parmi les tags gérés.
