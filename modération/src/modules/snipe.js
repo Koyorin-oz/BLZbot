@@ -111,7 +111,7 @@ class SnipeManager {
      */
     async handleSnipeCommand(message, arg) {
         if (!this.hasPermission(message)) {
-            return message.reply("Vous n'avez pas la permission d'utiliser cette commande.");
+            return;
         }
 
         if (!this.isAllowedInChannel(message)) {
@@ -281,7 +281,7 @@ class SnipeManager {
      */
     async handleEsnipeCommand(message) {
         if (!this.hasPermission(message)) {
-            return message.reply("Vous n'avez pas la permission d'utiliser cette commande.");
+            return;
         }
 
         if (!this.isAllowedInChannel(message)) {
