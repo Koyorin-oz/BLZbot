@@ -1,18 +1,7 @@
-
 const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, ContainerBuilder, TextDisplayBuilder, MessageFlags } = require('discord.js');
 const { startGame, getGame, updateGame, endGame } = require('../../utils/minigame-system');
 const { getOrCreateUser, grantResources, updateUserItemQuantity } = require('../../utils/db-users');
-const db = require('../../database/database');
-
-// Helper pour vérifier la dette totale
-function getTotalDebt(userId) {
-    const stmt = db.prepare(`
-        SELECT COALESCE(SUM(amount), 0) as total FROM loans 
-        WHERE borrowerId = ? AND accepted = 1 AND repaid = 0
-    `);
-    const result = stmt.get(userId);
-    return result.total;
-}
+const { getTotalDebt } = require('../../utils/loan-system');
 
 module.exports = {
     data: new SlashCommandBuilder()

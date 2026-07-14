@@ -53,7 +53,7 @@ module.exports = {
             }
 
             getOrCreateUser(lender.id, lender.username);
-            const { getEffectiveStars } = require('../../utils/loan-system');
+            const { getEffectiveStars, getTotalDebt } = require('../../utils/loan-system');
             const lenderStars = getEffectiveStars(lender.id, lender.username);
 
             if (lenderStars < amount) {

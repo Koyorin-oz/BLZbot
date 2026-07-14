@@ -96,7 +96,6 @@ function getClosestDebtDeadline(userId) {
 }
 
 const markLoanRepaidStmt = db.prepare('UPDATE loans SET repaid = 1, repaid_amount = ? WHERE id = ? AND repaid = 0');
-const markLoanPartialStmt = db.prepare('UPDATE loans SET repaid_amount = ? WHERE id = ? AND repaid = 0');
 
 /**
  * Vérifie et traite les prêts arrivés à échéance.
