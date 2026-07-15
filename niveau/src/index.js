@@ -48,6 +48,7 @@ const {
 } = require('./utils/command-loader');
 const { registerClientReady } = require('./bootstrap/client-ready');
 const { startScheduler: startMemberStatsVoiceScheduler, loadState: loadMemberStatsVoiceState } = require('./utils/member-stats-voice');
+const { startTreasuryIncomeScheduler } = require('./utils/guild/treasury-scheduler');
 
 initializeSharesSystem();
 
@@ -99,6 +100,7 @@ for (const file of eventFiles) {
 }
 
 registerClientReady(client, { isHalloweenActive });
+startTreasuryIncomeScheduler();
 
 const deployCommands = require('./utils/deploy-commands');
 

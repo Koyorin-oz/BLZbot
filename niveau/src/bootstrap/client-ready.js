@@ -263,33 +263,6 @@ function registerClientReady(client, { isHalloweenActive }) {
         }
     });
 
-    // --- Planification du revenu de trésorerie à minuit (heure de Paris, UTC+1/+2) ---
-    const {
-        applyDailyIncome,
-        catchUpDailyIncome,
-        markDailyIncomeAppliedToday,
-    } = require('../utils/guild/guild-treasury');
-
-    catchUpDailyIncome();
-
-    function scheduleMidnightTreasuryIncome() {
-        const msUntilMidnight = msUntilNextMidnightParis();
-        const hoursRemaining = Math.floor(msUntilMidnight / 1000 / 60 / 60);
-        const minutesRemaining = Math.floor((msUntilMidnight / 1000 / 60) % 60);
-
-        logger.info(`⏰ Revenu de trésorerie planifié dans ${hoursRemaining}h${minutesRemaining}min (à minuit heure de Paris)`);
-
-        setTimeout(() => {
-            logger.info('🏰 Minuit (Paris) ! Application du revenu de trésorerie des guildes...');
-            applyDailyIncome();
-            markDailyIncomeAppliedToday();
-
-            scheduleMidnightTreasuryIncome();
-        }, msUntilMidnight);
-    }
-
-    scheduleMidnightTreasuryIncome();
-
     // Note: La vérification des guerres terminées est gérée par guild-wars.js (checkAndEndWars) toutes les 60s
     // war-system.js n'est plus utilisé ici pour éviter les doublons
 
