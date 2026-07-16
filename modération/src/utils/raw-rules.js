@@ -12,4 +12,24 @@ const RAW_RULES = [
   "**Gestion des embrouilles :** Les disputes sont interdites. On s'en fout de qui a raison : **tous les participants seront sanctionnés**. <:_triste:1289517443084980314>",
 ];
 
-module.exports = { RAW_RULES };
+const RULE_CHOICES = RAW_RULES.map((rule, index) => ({
+  name: rule.length > 100 ? `${rule.substring(0, 97)}...` : rule,
+  value: `${index}`,
+}));
+
+function getRuleByIndex(index) {
+  return RAW_RULES[index] ?? null;
+}
+
+function getAutocompleteChoices(focusedValue) {
+  return RULE_CHOICES.filter((choice) =>
+    choice.name.toLowerCase().includes(focusedValue),
+  ).slice(0, 25);
+}
+
+module.exports = {
+  RAW_RULES,
+  RULE_CHOICES,
+  getRuleByIndex,
+  getAutocompleteChoices,
+};

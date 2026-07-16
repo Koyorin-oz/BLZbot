@@ -3,7 +3,7 @@ const CONFIG = require('../config.js');
 const { getModeratorTitleWithArticle } = require('../utils/helpers');
 const { denyUnlessCanMod } = require('../utils/mod-access');
 const { deferEphemeral } = require('../utils/interaction-ack');
-const { RAW_RULES } = require('../utils/raw-rules');
+const { RAW_RULES, getRuleByIndex, getAutocompleteChoices } = require('../utils/raw-rules');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -27,13 +27,7 @@ module.exports = {
 
     async autocomplete(interaction) {
         const focusedValue = interaction.options.getFocused().toLowerCase();
-        const filtered = RAW_RULES
-            .filter((rule) => rule.toLowerCase().includes(focusedValue))
-            .slice(0, 25)
-            .map((rule) => ({
-                name: rule.length > 100 ? `${rule.substring(0, 97)}...` : rule,
-                value: rule,
-            }));
+        const filtered = getAutocompleteChoices(focusedValue);
 
         await interaction.respond(filtered);
     },
@@ -57,8 +51,12 @@ module.exports = {
             });
         }
 
-        const regle = interaction.options.getString('regle');
+        let regle = interaction.options.getString('regle');
         const raisonExtra = interaction.options.getString('raison');
+        if (/^\d+$/.test(regle)) {
+            const mappedRule = getRuleByIndex(Number(regle));
+            if (mappedRule) regle = mappedRule;
+        }
         const finalReason = raisonExtra ? `${regle} - ${raisonExtra}` : regle;
         const modérateur = interaction.member;
 

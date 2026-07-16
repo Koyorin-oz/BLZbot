@@ -2,7 +2,7 @@ const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const CONFIG = require('../config.js');
 const { getModeratorTitleWithArticle } = require('../utils/helpers.js');
 const { denyUnlessCanMod } = require('../utils/mod-access');
-const { RAW_RULES } = require('../utils/raw-rules');
+const { RAW_RULES, getRuleByIndex, getAutocompleteChoices } = require('../utils/raw-rules');
 const {
     buildPostSanctionDmEmbed,
     moderatorLabelForDm,
@@ -33,13 +33,7 @@ module.exports = {
 
     async autocomplete(interaction) {
         const focusedValue = interaction.options.getFocused().toLowerCase();
-        const filtered = RAW_RULES
-            .filter((rule) => rule.toLowerCase().includes(focusedValue))
-            .slice(0, 25)
-            .map((rule) => ({
-                name: rule.length > 100 ? `${rule.substring(0, 97)}...` : rule,
-                value: rule,
-            }));
+        const filtered = getAutocompleteChoices(focusedValue);
 
         await interaction.respond(filtered);
     },
@@ -52,8 +46,12 @@ module.exports = {
 
         const utilisateur = interaction.options.getUser('utilisateur');
         const raison = interaction.options.getString('raison');
-        const regle = interaction.options.getString('regle');
+        let regle = interaction.options.getString('regle');
         const modérateur = interaction.member;
+        if (/^\d+$/.test(regle)) {
+            const mappedRule = getRuleByIndex(Number(regle));
+            if (mappedRule) regle = mappedRule;
+        }
 
         // Construire la raison finale
         let finalReason = '';
