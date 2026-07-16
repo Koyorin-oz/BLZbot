@@ -44,12 +44,21 @@ const ITEMS = [
   { id: 'coffre_submerge', name: 'Coffre submergé', rarity: 'Epique', kind: 'consumable' },
 ];
 
-const byId = new Map(ITEMS.map((i) => [i.id, i]));
-
 function priceFor(item) {
   if (item.price != null) return item.price;
   return RARITY_PRICE_STARSS[item.rarity] ?? 10_000n;
 }
+
+// Trier le catalogue par prix croissant automatiquement.
+ITEMS.sort((a, b) => {
+  const priceA = priceFor(a);
+  const priceB = priceFor(b);
+  if (priceA < priceB) return -1;
+  if (priceA > priceB) return 1;
+  return a.id.localeCompare(b.id);
+});
+
+const byId = new Map(ITEMS.map((i) => [i.id, i]));
 
 function getItem(id) {
   return byId.get(id) || null;
