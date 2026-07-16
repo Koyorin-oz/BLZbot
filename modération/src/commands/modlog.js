@@ -72,7 +72,8 @@ function buildPages(historique, targetUser, totalsByType, sanctions, staffWarns)
     );
 
     currentPage.forEach((item) => {
-      const date = new Date(item.date).toLocaleString("fr-FR");
+      const date = Math.floor(new Date(item.date).getTime() / 1000);
+      const formattedDate = `<t:${date}:f>`;
 
       if (item.type === "sanction") {
         const s = item.data;
@@ -82,7 +83,7 @@ function buildPages(historique, targetUser, totalsByType, sanctions, staffWarns)
         if (s.type === "Warn") emoji = "⚠️";
         if (s.type === "Kick") emoji = "👢";
 
-        let content = `### ${emoji} ${s.type} — ${date}\n`;
+        let content = `### ${emoji} ${s.type} — ${formattedDate}\n`;
         content += `> **Raison:** ${s.reason || "Aucune"}\n`;
 
         if (s.type === "Warn") {
@@ -99,8 +100,8 @@ function buildPages(historique, targetUser, totalsByType, sanctions, staffWarns)
         content += `> **ID:** \`${s.id}\``;
 
         if (s.pendingDeletion) {
-          const deleteDate = new Date(s.deletionDate).toLocaleDateString("fr-FR");
-          content += `\n> ⚠️ **SUPPRESSION PROGRAMMÉE** le ${deleteDate}`;
+          const deleteDate = Math.floor(new Date(s.deletionDate).getTime() / 1000);
+          content += `\n> ⚠️ **SUPPRESSION PROGRAMMÉE** le <t:${deleteDate}:f>`;
         }
 
         container.addTextDisplayComponents(
@@ -111,7 +112,7 @@ function buildPages(historique, targetUser, totalsByType, sanctions, staffWarns)
         const n = item.data;
         const modId = `<@${n.moderatorId}>`;
         const content =
-          `### 📝 Note — ${date}\n` +
+          `### 📝 Note — ${formattedDate}\n` +
           `> **Contenu:** ${n.note}\n` +
           `> **Par:** ${modId}\n` +
           `> **ID:** \`${n.id}\``;
@@ -124,7 +125,7 @@ function buildPages(historique, targetUser, totalsByType, sanctions, staffWarns)
         const w = item.data;
         const modId = `<@${w.moderatorId}>`;
         const content =
-          `### 🛡️ Warn Staff — ${date}\n` +
+          `### 🛡️ Warn Staff — ${formattedDate}\n` +
           `> **Raison:** ${w.reason}\n` +
           `> **Modérateur:** ${modId}\n` +
           `> **ID:** \`${w.id}\``;
