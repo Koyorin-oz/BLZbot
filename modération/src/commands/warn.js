@@ -3,6 +3,7 @@ const CONFIG = require('../config.js');
 const { getModeratorTitleWithArticle } = require('../utils/helpers');
 const { denyUnlessCanMod } = require('../utils/mod-access');
 const { deferEphemeral } = require('../utils/interaction-ack');
+const { RAW_RULES } = require('../utils/raw-rules');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -24,31 +25,17 @@ module.exports = {
         )
         .toJSON(),
 
-    async autocomplete(interaction, { dbManager }) {
+    async autocomplete(interaction) {
         const focusedValue = interaction.options.getFocused().toLowerCase();
-        const dbRules = dbManager.getRulesDb();
-        dbRules.all('SELECT rules FROM reglements', [], (err, rows) => {
-            if (err) return interaction.respond([]);
-            const allRules = [];
-            for (const row of rows) {
-                try {
-                    const rules = JSON.parse(row.rules || '[]');
-                    for (const rule of rules) {
-                        if (!allRules.find((r) => r.title === rule.title)) allRules.push(rule);
-                    }
-                } catch {
-                    /* ignore */
-                }
-            }
-            const filtered = allRules
-                .filter((rule) => rule.title.toLowerCase().includes(focusedValue))
-                .slice(0, 25)
-                .map((rule) => ({
-                    name: rule.title.length > 100 ? `${rule.title.substring(0, 97)}...` : rule.title,
-                    value: rule.title,
-                }));
-            interaction.respond(filtered);
-        });
+        const filtered = RAW_RULES
+            .filter((rule) => rule.toLowerCase().includes(focusedValue))
+            .slice(0, 25)
+            .map((rule) => ({
+                name: rule.length > 100 ? `${rule.substring(0, 97)}...` : rule,
+                value: rule,
+            }));
+
+        await interaction.respond(filtered);
     },
 
     async execute(interaction, { dbManager }) {

@@ -2,6 +2,7 @@ const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const CONFIG = require('../config.js');
 const { getModeratorTitleWithArticle } = require('../utils/helpers.js');
 const { denyUnlessCanMod } = require('../utils/mod-access');
+const { RAW_RULES } = require('../utils/raw-rules');
 const {
     buildPostSanctionDmEmbed,
     moderatorLabelForDm,
@@ -30,37 +31,17 @@ module.exports = {
                 .setAutocomplete(true))
         .toJSON(),
 
-    async autocomplete(interaction, { dbManager }) {
+    async autocomplete(interaction) {
         const focusedValue = interaction.options.getFocused().toLowerCase();
-        const dbRules = dbManager.getRulesDb();
+        const filtered = RAW_RULES
+            .filter((rule) => rule.toLowerCase().includes(focusedValue))
+            .slice(0, 25)
+            .map((rule) => ({
+                name: rule.length > 100 ? `${rule.substring(0, 97)}...` : rule,
+                value: rule,
+            }));
 
-        dbRules.all('SELECT rules FROM reglements', [], (err, rows) => {
-            if (err) {
-                console.error('Erreur autocomplete règles:', err);
-                return interaction.respond([]);
-            }
-
-            const allRules = [];
-            rows.forEach(row => {
-                try {
-                    const rules = JSON.parse(row.rules);
-                    rules.forEach(rule => {
-                        allRules.push({
-                            name: `${rule.number}. ${rule.title}`,
-                            value: `${rule.number}. ${rule.title}`
-                        });
-                    });
-                } catch (e) {
-                    console.error('Erreur parse rules:', e);
-                }
-            });
-
-            const filtered = allRules.filter(rule =>
-                rule.name.toLowerCase().includes(focusedValue)
-            ).slice(0, 25);
-
-            interaction.respond(filtered);
-        });
+        await interaction.respond(filtered);
     },
 
     async execute(interaction, { dbManager }) {

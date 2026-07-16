@@ -3,6 +3,7 @@ const { parseDuration, msToReadableTime, getModeratorTitleWithArticle } = requir
 const { deferEphemeral } = require('../utils/interaction-ack');
 const { denyUnlessCanMod } = require('../utils/mod-access');
 const CONFIG = require('../config.js');
+const { RAW_RULES } = require('../utils/raw-rules');
 const {
     buildPostSanctionDmEmbed,
     moderatorLabelForDm,
@@ -47,43 +48,17 @@ module.exports = {
                 .setRequired(false))
         .toJSON(),
 
-    async autocomplete(interaction, { dbManager }) {
+    async autocomplete(interaction) {
         const focusedValue = interaction.options.getFocused().toLowerCase();
-        const dbRules = dbManager.getRulesDb();
+        const filtered = RAW_RULES
+            .filter((rule) => rule.toLowerCase().includes(focusedValue))
+            .slice(0, 25)
+            .map((rule) => ({
+                name: rule.length > 100 ? `${rule.substring(0, 97)}...` : rule,
+                value: rule,
+            }));
 
-        // Récupérer toutes les règles depuis tous les règlements
-        dbRules.all('SELECT rules FROM reglements', [], (err, rows) => {
-            if (err) {
-                console.error('Erreur autocomplete règles:', err);
-                return interaction.respond([]);
-            }
-
-            // Extraire toutes les règles de tous les règlements
-            const allRules = [];
-            for (const row of rows) {
-                try {
-                    const rules = JSON.parse(row.rules || '[]');
-                    for (const rule of rules) {
-                        if (!allRules.find(r => r.title === rule.title)) {
-                            allRules.push(rule);
-                        }
-                    }
-                } catch (e) {
-                    console.error('Erreur parsing règles:', e);
-                }
-            }
-
-            // Filtrer et répondre
-            const filtered = allRules
-                .filter(rule => rule.title.toLowerCase().includes(focusedValue))
-                .slice(0, 25)
-                .map(rule => ({
-                    name: rule.title.length > 100 ? rule.title.substring(0, 97) + '...' : rule.title,
-                    value: rule.title
-                }));
-
-            interaction.respond(filtered);
-        });
+        await interaction.respond(filtered);
     },
 
     async execute(interaction, { dbManager, config }) {
