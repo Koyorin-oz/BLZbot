@@ -320,6 +320,12 @@ module.exports = {
         if (oldMessage.author.bot) return;
         if (oldMessage.content === newMessage.content) return;
 
+        // Vérifier si le salon est dans la liste d'exclusion
+        if (CONFIG.EXCLUDED_LOG_CHANNELS && CONFIG.EXCLUDED_LOG_CHANNELS.includes(newMessage.channel.id)) {
+            console.log(`[LOG SKIP] Message update in excluded channel ${newMessage.channel.id} - not logging`);
+            return;
+        }
+
         await this.logger.log(
             newMessage.guild,
             '✏️ Message : Modifié',
