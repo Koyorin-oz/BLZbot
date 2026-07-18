@@ -520,6 +520,14 @@ client.on('interactionCreate', async interaction => {
             }
         }
 
+        // Modal /envoyer-message (contenu multi-ligne)
+        else if (interaction.customId === 'envoyer_message_modal') {
+            const envoyerMessage = require('./src/commands/envoyer-message');
+            if (envoyerMessage && envoyerMessage.handleModalSubmit) {
+                await envoyerMessage.handleModalSubmit(interaction);
+            }
+        }
+
         // Autres modals
         else {
             const modalHandler = require('./src/events/modalSubmit');
