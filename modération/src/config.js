@@ -44,6 +44,12 @@ module.exports = {
         process.env.SANCTION_FALLBACK_CHANNEL_ID || '1454490261714370758',
     /** Lien serveur support pour demande de débannissement (2e MP après ban). Surcharge : DEBAN_INVITE_URL */
     DEBAN_INVITE_URL: process.env.DEBAN_INVITE_URL || 'https://discord.gg/UJNZxzmmPV',
+    
+    // ==================== EXCLUSIONS DE LOGS ====================
+    /** Salons dont les logs (messages, éditions, suppressions) ne doivent PAS apparaître dans ALL_LOG_CHANNEL */
+    EXCLUDED_LOG_CHANNELS: [
+        '1454490731828740126', // Salon admin privé - empêcher les staff de voir les conversations admin
+    ],
 
     // ==================== MESSAGES ====================
     RECRUITMENT_MESSAGE_ID: '5',
