@@ -56,6 +56,12 @@ module.exports = (client, logger) => {
             // Ignorer les autres messages de bots
             if (message.author && message.author.bot) return;
 
+            // Vérifier si le salon est dans la liste d'exclusion
+            if (CONFIG.EXCLUDED_LOG_CHANNELS && CONFIG.EXCLUDED_LOG_CHANNELS.includes(message.channel.id)) {
+                console.log(`[LOG SKIP] Message deletion in excluded channel ${message.channel.id} - not logging`);
+                return;
+            }
+
             // Gestion des messages partiels (non cachés)
             if (message.partial) {
                 console.log(`[DEBUG] Message is partial. Logging with limited info.`);
@@ -108,6 +114,12 @@ module.exports = (client, logger) => {
             }
 
             if (newMessage.author.bot) return;
+
+            // Vérifier si le salon est dans la liste d'exclusion
+            if (CONFIG.EXCLUDED_LOG_CHANNELS && CONFIG.EXCLUDED_LOG_CHANNELS.includes(newMessage.channel.id)) {
+                console.log(`[LOG SKIP] Message update in excluded channel ${newMessage.channel.id} - not logging`);
+                return;
+            }
 
             // Si l'ancien message est partiel, on ne connaît pas l'ancien contenu
             const oldContent = oldMessage.partial ? '[Contenu inconnu (message ancien)]' : (oldMessage.content || '[Vide]');
