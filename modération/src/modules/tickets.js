@@ -46,10 +46,10 @@ function canCreateTicket(userId, config) {
     if (lastCreation) {
         const timeSince = Date.now() - lastCreation;
         if (timeSince < config.COOLDOWN_MS) {
-            const remaining = Math.ceil((config.COOLDOWN_MS - timeSince) / 60000);
+            const timestamp = Math.floor((lastCreation + config.COOLDOWN_MS) / 1000);
             return {
                 canCreate: false,
-                reason: `Tu dois attendre encore ${remaining} minute(s) avant de créer un nouveau ticket.`
+                reason: `Tu pourras créer de nouveau un ticket <t:${timestamp}:R>. En cas d'abus, des sanctions pourront être prises.`
             };
         }
     }
