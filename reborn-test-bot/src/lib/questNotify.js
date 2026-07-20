@@ -74,7 +74,7 @@ async function notifyQuestUnlocks(client, userId, unlocked) {
                     embeds: [
                         {
                             author: { name: user.username, icon_url: user.displayAvatarURL() },
-                            title: 'Succès Déverrouillé !',
+                            title: 'Nouveau Succès',
                             description: `**${quest.name}**\n- ${quest.description}`,
                             color: 0x3498db,
                             footer: { text: `Rareté: ${quest.rarity} | Récompense : ${rewardText}` },

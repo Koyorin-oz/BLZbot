@@ -45,7 +45,7 @@ function buildQuestUnlockEmbed(user, quest, rewardText) {
             name: user.username || user.tag || 'Joueur',
             iconURL: typeof user.displayAvatarURL === 'function' ? user.displayAvatarURL() : undefined,
         })
-        .setTitle('Succès Déverrouillé !')
+        .setTitle('Nouveau Succès')
         .setDescription(formatQuestDescription(quest))
         .setColor(RARITY_COLORS[rarity] ?? 0x5865f2)
         .setFooter({ text: formatQuestRewardFooter(quest, rewardText) });

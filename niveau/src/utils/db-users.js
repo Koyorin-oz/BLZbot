@@ -355,7 +355,7 @@ async function grantResources(client, userId, { xp = 0, points = 0, stars = 0, s
                             : undefined;
                         const embed = new EmbedBuilder()
                             .setAuthor({ name: announceMember.user.username, iconURL: authorIconUrl })
-                            .setTitle('Niveau atteint !')
+                            .setTitle('Nouveau Niveau')
                             .setDescription(`🎉 Bravo à ${announceMember} qui passe au niveau **${currentUserData.level}** !`)
                             .setColor(0x00aaff)
                             .setTimestamp();
@@ -459,7 +459,7 @@ async function setLevel(userId, level, client = null) {
                             : undefined;
                         const embed = new EmbedBuilder()
                             .setAuthor({ name: announceMember.user.username, iconURL: authorIconUrl })
-                            .setTitle('Niveau atteint !')
+                            .setTitle('Nouveau Niveau')
                             .setDescription(`🎉 Bravo à ${announceMember} qui passe au niveau **${effectiveLevel}** !`)
                             .setColor(0x00aaff)
                             .setTimestamp();
@@ -504,7 +504,7 @@ async function setLevel(userId, level, client = null) {
                         : undefined;
                     const embed = new EmbedBuilder()
                         .setAuthor({ name: announceMember.user.username, iconURL: authorIconUrl })
-                        .setTitle('Niveau atteint !')
+                        .setTitle('Nouveau Niveau')
                         .setDescription(`🎉 Bravo à ${announceMember} qui passe au niveau **${level}** !`)
                         .setColor(0x00aaff)
                         .setTimestamp();
