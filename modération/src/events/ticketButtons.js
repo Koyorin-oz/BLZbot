@@ -530,7 +530,7 @@ async function handleCloseConfirm(interaction, client) {
         const closedEmbed = new EmbedBuilder()
             .setTitle('Ticket fermé')
             .setDescription(
-                `Ce ticket a été fermé par ${interaction.user.tag}.\n` +
+                `Ce ticket a été fermé par <@${interaction.user.id}>.\n` +
                 `L'utilisateur <@${ticket.owner}> ne peut plus voir ce canal.`
             )
             .setColor('#FF6B6B')
