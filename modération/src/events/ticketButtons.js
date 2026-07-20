@@ -1423,7 +1423,7 @@ async function handleTogglePrivate(interaction) {
         )
 
     await thread.send({
-        components: [embedPrivateThreadV2],
+        components: [embedPrivateThread],
         flags: MessageFlags.IsComponentsV2,
     });
 
