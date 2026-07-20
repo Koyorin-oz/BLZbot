@@ -1378,7 +1378,9 @@ async function handleTogglePrivate(interaction) {
     });
     
     const embedPrivateThread = new ContainerBuilder()
-        .setAccentColor(CONFIG.TICKETS.EMBED_COLOR || BLZ_EMBED_STRIP_HEX)
+        .setAccentColor(
+            parseInt((CONFIG.TICKETS.EMBED_COLOR || BLZ_EMBED_STRIP_HEX).replace("#", ""), 16)
+        )
 
         .addTextDisplayComponents((textDisplay) =>
             textDisplay.setContent(
