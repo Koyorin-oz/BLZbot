@@ -1348,7 +1348,7 @@ async function handleTogglePrivate(interaction) {
     // Vérifier les permissions staff
     if (!interaction.member.permissions.has(PermissionsBitField.Flags.ModerateMembers)) {
         return interaction.reply({
-            content: '❌ Tu n\'as pas la permission de retirer des utilisateurs.',
+            content: '❌ Tu n\'as pas la permission de créer un fil staff.',
             ephemeral: true
         });
     }
