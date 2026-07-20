@@ -1389,7 +1389,7 @@ async function handleTogglePrivate(interaction) {
 
     await thread.send({
         content: staffPing,
-        embed: [embedPrivateThread]
+        embeds: [embedPrivateThread]
     });
 
     await interaction.reply({
