@@ -10,7 +10,9 @@ const {
     ChannelType,
     ModalBuilder,
     UserSelectMenuBuilder,
-    AttachmentBuilder
+    AttachmentBuilder,
+    ContainerBuilder,
+    MessageFlags
 } = require('discord.js');
 const path = require('path');
 const CONFIG = require('../config.js');
@@ -1374,22 +1376,53 @@ async function handleTogglePrivate(interaction) {
         autoArchiveDuration: 1440, // 24h
         reason: `Fil staff créé par ${interaction.user.tag}.`
     });
+    
+    const embedPrivateThread = new ContainerBuilder()
+        .setAccentColor(CONFIG.TICKETS.EMBED_COLOR || BLZ_EMBED_STRIP_HEX)
 
-    const embedPrivateThread = new EmbedBuilder()
-        .setTitle("Discussion staff privé")
-        .setDescription(
-            `Ce fil est réservé au staff.\n` +
-            `Il a été créé le <t:${timestamp}:F> par <@${interaction.user.id}>.\n\n` +
-            `Utilisez-le pour discuter du ticket sans que le membre puisse voir vos messages.\n` +
-            `-# ⚠️ **NE PAS PING LE MEMBRE**. Sinon cela lui donnera l'accès au salon.`
+        .addTextDisplayComponents((textDisplay) =>
+            textDisplay.setContent(
+                `-# ${staffPing}`
+            )
         )
-        .setColor(CONFIG.TICKETS.EMBED_COLOR || BLZ_EMBED_STRIP_HEX);
+
+        .addSeparatorComponents((separator) => separator)
+
+        .addSectionComponents(section =>
+            section
+                .addTextDisplayComponents(text =>
+                    text.setContent(
+                        `Ce fil est réservé au staff.\n` +
+                        `Il a été créé le <t:${timestamp}:F> par <@${interaction.user.id}>.`
+                    )
+                )
+                .setThumbnailAccessory(accessory =>
+                    accessory.setURL(interaction.user.displayAvatarURL({
+                        extension: 'png',
+                        size: 256
+                    }))
+                )
+        )
+
+        .addTextDisplayComponents((textDisplay) =>
+            textDisplay.setContent(
+                `Utilisez-le pour discuter du ticket sans que le membre puisse voir vos messages.`
+            )
+        )
+
+        .addSeparatorComponents((separator) => separator)
+
+        .addTextDisplayComponents((textDisplay) =>
+            textDisplay.setContent(
+                `-# ⚠️ **NE PAS PING LE MEMBRE**. Sinon cela lui donnera l'accès au salon.`
+            )
+        )
 
     const staffPing = buildRolePingContent(getStaffRoleIdsForTier(config, tier));
 
     await thread.send({
-        content: staffPing,
-        embeds: [embedPrivateThread]
+        components: [embedPrivateThreadV2],
+        flags: MessageFlags.IsComponentsV2,
     });
 
     await interaction.reply({
