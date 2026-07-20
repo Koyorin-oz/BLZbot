@@ -8,6 +8,7 @@ const { calculateGuildBoosts } = require('./guild/guild-boosters');
 const { collectBlzGuildIds, forEachMemberInBlzGuilds } = require('./blz-multi-guild');
 const { economyGuildId } = require('./economy-scope');
 const { resolveLevelUpChannelId } = require('./blz-guild-channels');
+const { EmbedBuilder } = require('discord.js');
 
 const BOOSTED_ROLE_IDS = ['1170361439345704962', '1323305704932507648'];
 
@@ -349,9 +350,19 @@ async function grantResources(client, userId, { xp = 0, points = 0, stars = 0, s
                         const userForNotify = getUserStmt.get(userId);
                         const notify = userForNotify ? userForNotify.notify_level_up : 1;
                         const shouldPing = notify !== 0;
+                        const authorIconUrl = typeof announceMember.displayAvatarURL === 'function'
+                            ? announceMember.displayAvatarURL({ extension: 'png', size: 128 })
+                            : undefined;
+                        const embed = new EmbedBuilder()
+                            .setAuthor({ name: announceMember.user.username, iconURL: authorIconUrl })
+                            .setTitle('Niveau atteint !')
+                            .setDescription(`🎉 Bravo à ${announceMember} qui passe au niveau **${currentUserData.level}** !`)
+                            .setColor(0x00aaff)
+                            .setTimestamp();
 
                         levelUpChannel.send({
-                            content: `🎉 Bravo à ${announceMember} qui passe au niveau **${currentUserData.level}** !`,
+                            content: `<@${announceMember.id}>`,
+                            embeds: [embed],
                             allowedMentions: shouldPing ? undefined : { parse: [] }
                         });
                     }
@@ -443,8 +454,19 @@ async function setLevel(userId, level, client = null) {
                         ? await client.channels.fetch(levelChId).catch(() => null)
                         : null;
                     if (levelUpChannel) {
+                        const authorIconUrl = typeof announceMember.displayAvatarURL === 'function'
+                            ? announceMember.displayAvatarURL({ extension: 'png', size: 128 })
+                            : undefined;
+                        const embed = new EmbedBuilder()
+                            .setAuthor({ name: announceMember.user.username, iconURL: authorIconUrl })
+                            .setTitle('Niveau atteint !')
+                            .setDescription(`🎉 Bravo à ${announceMember} qui passe au niveau **${effectiveLevel}** !`)
+                            .setColor(0x00aaff)
+                            .setTimestamp();
+
                         levelUpChannel.send({
-                            content: `🎉 Bravo à ${announceMember} qui passe au niveau **${effectiveLevel}** !`,
+                            content: `<@${announceMember.id}>`,
+                            embeds: [embed],
                             allowedMentions: { parse: [] },
                         });
                     }
@@ -477,9 +499,19 @@ async function setLevel(userId, level, client = null) {
                     const user = getUserStmt.get(userId);
                     const notify = user ? user.notify_level_up : 1;
                     const shouldPing = notify !== 0;
+                    const authorIconUrl = typeof announceMember.displayAvatarURL === 'function'
+                        ? announceMember.displayAvatarURL({ extension: 'png', size: 128 })
+                        : undefined;
+                    const embed = new EmbedBuilder()
+                        .setAuthor({ name: announceMember.user.username, iconURL: authorIconUrl })
+                        .setTitle('Niveau atteint !')
+                        .setDescription(`🎉 Bravo à ${announceMember} qui passe au niveau **${level}** !`)
+                        .setColor(0x00aaff)
+                        .setTimestamp();
 
                     levelUpChannel.send({
-                        content: `🎉 Bravo à ${announceMember} qui passe au niveau **${level}** !`,
+                        content: `<@${announceMember.id}>`,
+                        embeds: [embed],
                         allowedMentions: shouldPing ? undefined : { parse: [] }
                     });
                 }

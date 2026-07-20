@@ -1,4 +1,4 @@
-const { Colors } = require('discord.js');
+const { Colors, EmbedBuilder } = require('discord.js');
 const logger = require('../utils/logger');
 const roleConfig = require('../config/role.config.json');
 
@@ -244,9 +244,19 @@ async function updateUserRank(client, userId) {
                         const { getOrCreateUser } = require('./db-users');
                         const userData = getOrCreateUser(userId, member.user.username);
                         const shouldPing = userData.notify_rank_up !== 0;
+                        const authorIconUrl = typeof member.displayAvatarURL === 'function'
+                            ? member.displayAvatarURL({ extension: 'png', size: 128 })
+                            : undefined;
+                        const embed = new EmbedBuilder()
+                            .setAuthor({ name: member.user.username, iconURL: authorIconUrl })
+                            .setTitle('Nouveau rang')
+                            .setDescription(`👑 Félicitations à ${member} qui vient de passer au rang **${newRank.name}** !`)
+                            .setColor(0xffd700)
+                            .setTimestamp();
 
                         await rankUpChannel.send({
-                            content: `👑 Félicitations à ${member} qui vient de passer au rang **${newRank.name}** !`,
+                            content: `<@${member.id}>`,
+                            embeds: [embed],
                             allowedMentions: shouldPing ? undefined : { parse: [] }
                         });
                         logger.info(`Notification envoyée avec succès pour ${member.user.username}.`);
@@ -286,8 +296,18 @@ async function sendRankUpNotification(client, guildId, userId, member, newRankNa
         const { getOrCreateUser } = require('./db-users');
         const userData = getOrCreateUser(userId, member.user.username);
         const shouldPing = userData.notify_rank_up !== 0;
+        const authorIconUrl = typeof member.displayAvatarURL === 'function'
+            ? member.displayAvatarURL({ extension: 'png', size: 128 })
+            : undefined;
+        const embed = new EmbedBuilder()
+            .setAuthor({ name: member.user.username, iconURL: authorIconUrl })
+            .setTitle('Nouveau rang')
+            .setDescription(`👑 Félicitations à ${member} qui vient de passer au rang **${newRankName}** !`)
+            .setColor(0xffd700)
+            .setTimestamp();
         await rankUpChannel.send({
-            content: `👑 Félicitations à ${member} qui vient de passer au rang **${newRankName}** !`,
+            content: `<@${member.id}>`,
+            embeds: [embed],
             allowedMentions: shouldPing ? undefined : { parse: [] },
         });
     } catch (e) {
