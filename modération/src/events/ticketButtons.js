@@ -1375,23 +1375,13 @@ async function handleTogglePrivate(interaction) {
         reason: `Fil staff créé par ${interaction.user.tag}, le <t:${timestamp}:F>`
     });
 
-    // Ajoute automatiquement les rôles staffPing
-    const roleIds = getStaffRoleIdsForTier(config, tier);
-
-    for (const roleId of roleIds) {
-        const role = interaction.guild.roles.cache.get(roleId);
-        if (!role) continue;
-
-        for (const member of role.members.values()) {
-            await thread.members.add(member.id).catch(() => {});
-        }
-    }
-
     const Embed = new EmbedBuilder()
         .setTitle("Discussion staff privé")
         .setDescription(
-            `Ce fil est réservé au staff.\n\n` +
-            `Utilisez-le pour discuter du ticket sans que le membre puisse voir vos messages.`
+            `Ce fil est réservé au staff.\n` +
+            `Il a été créé le <t:${timestamp}:F> par <@${interaction.user.id}>.\n\n` +
+            `Utilisez-le pour discuter du ticket sans que le membre puisse voir vos messages.\n` +
+            `-# ⚠️ **NE PAS PING LE MEMBRE**. Sinon cela lui donnera l'accès au salon.`
         )
         .setColor(CONFIG.TICKETS.EMBED_COLOR);
 
