@@ -397,6 +397,10 @@ async function handleCreateTicket(interaction) {
                 .setLabel('Retirer')
                 .setStyle(ButtonStyle.Secondary),
             new ButtonBuilder()
+                .setCustomId('ticket_private')
+                .setLabel('Fil staff')
+                .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
                 .setCustomId('ticket_close')
                 .setLabel('Fermer')
                 .setStyle(ButtonStyle.Danger)
