@@ -135,6 +135,7 @@ async function createBridgedTicketFromSupport(interaction, config, client, tier)
     const rowMain = new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('ticket_add').setLabel('Ajouter').setStyle(ButtonStyle.Success),
         new ButtonBuilder().setCustomId('ticket_remove').setLabel('Retirer').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('ticket_private').setLabel('Fil staff').setStyle(ButtonStyle.Primary),
         new ButtonBuilder().setCustomId('ticket_close').setLabel('Fermer').setStyle(ButtonStyle.Danger)
     );
 
@@ -213,6 +214,9 @@ async function handleTicketButton(interaction, client) {
             break;
         case 'ticket_remove':
             await handleRemoveUser(interaction);
+            break;
+        case 'ticket_private':
+            await handleTogglePrivate(interaction);
             break;
     }
 }
@@ -1313,6 +1317,85 @@ async function handleRemoveUser(interaction) {
         content: '👤 **Sélectionne l\'utilisateur à retirer du ticket :**',
         components: [row],
         ephemeral: true
+    });
+}
+
+async function handleTogglePrivate(interaction) {
+    if (!ticketManager.isTicketChannel(interaction.channel)) {
+        return interaction.reply({
+            content: '❌ Cette commande ne peut être utilisée que dans un ticket.',
+            ephemeral: true
+        });
+    }
+
+    const ticketId = ticketManager.getTicketIdFromChannel(interaction.channel);
+    const ticket = ticketManager.getTicket(ticketId);
+
+    if (!ticket) {
+        return interaction.reply({
+            content: '❌ Ticket introuvable.',
+            ephemeral: true
+        });
+    }
+
+    const tier = ticket.ticketType;
+    const config = CONFIG.TICKETS;
+
+    // Vérifier les permissions staff
+    if (!interaction.member.permissions.has(PermissionsBitField.Flags.ModerateMembers)) {
+        return interaction.reply({
+            content: '❌ Tu n\'as pas la permission de retirer des utilisateurs.',
+            ephemeral: true
+        });
+    }
+
+    // Vérifie qu'un fil n'existe pas déjà
+    const existing = interaction.channel.threads.cache.find(
+        t => t.name === '🛡️・staff'
+    );
+
+    if (existing) {
+        return interaction.reply({
+            content: `❌ Un fil staff existe déjà : ${existing}.`,
+            ephemeral: true
+        });
+    }
+
+    const timestamp = Math.floor(Date.now() / 1000);
+
+    // Créer un fil staff privé accessible uniquement par les staffPing
+    const thread = await interaction.channel.threads.create({
+        name: '🛡️・staff',
+        type: ChannelType.PrivateThread,
+        autoArchiveDuration: 1440, // 24h
+        reason: `Fil staff créé par ${interaction.user.tag}, le <t:${timestamp}:F>`
+    });
+
+    // Ajoute automatiquement les rôles staffPing
+    const roleIds = getStaffRoleIdsForTier(config, tier);
+
+    for (const roleId of roleIds) {
+        const role = interaction.guild.roles.cache.get(roleId);
+        if (!role) continue;
+
+        for (const member of role.members.values()) {
+            await thread.members.add(member.id).catch(() => {});
+        }
+    }
+
+    const Embed = new EmbedBuilder()
+        .setTitle("Discussion staff privé")
+        .setDescription(
+            `Ce fil est réservé au staff.\n\n` +
+            `Utilisez-le pour discuter du ticket sans que le membre puisse voir vos messages.`
+        )
+        .setColor(CONFIG.TICKETS.EMBED_COLOR);
+
+    const staffPing = buildRolePingContent(getStaffRoleIdsForTier(config, tier));
+
+    await thread.send({
+        content: staffPing,
+        embed: Embed
     });
 }
 
