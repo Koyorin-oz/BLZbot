@@ -249,7 +249,7 @@ async function updateUserRank(client, userId) {
                             : undefined;
                         const embed = new EmbedBuilder()
                             .setAuthor({ name: member.user.username, iconURL: authorIconUrl })
-                            .setTitle('Nouveau rang')
+                            .setTitle('Nouveau Rang')
                             .setDescription(`👑 Félicitations à ${member} qui vient de passer au rang **${newRank.name}** !`)
                             .setColor(0xffd700)
                             .setTimestamp();
@@ -301,7 +301,7 @@ async function sendRankUpNotification(client, guildId, userId, member, newRankNa
             : undefined;
         const embed = new EmbedBuilder()
             .setAuthor({ name: member.user.username, iconURL: authorIconUrl })
-            .setTitle('Nouveau rang')
+            .setTitle('Nouveau Rang')
             .setDescription(`👑 Félicitations à ${member} qui vient de passer au rang **${newRankName}** !`)
             .setColor(0xffd700)
             .setTimestamp();
