@@ -1391,6 +1391,11 @@ async function handleTogglePrivate(interaction) {
         content: staffPing,
         embed: [embedPrivateThread]
     });
+
+    await interaction.reply({
+        content: `✅ Le fil staff a correctement été créé : ${thread}`,
+        ephemeral: true
+    })
 }
 
 module.exports = {
