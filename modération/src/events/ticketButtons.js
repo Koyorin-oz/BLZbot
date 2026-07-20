@@ -1383,7 +1383,7 @@ async function handleTogglePrivate(interaction) {
             `Utilisez-le pour discuter du ticket sans que le membre puisse voir vos messages.\n` +
             `-# ⚠️ **NE PAS PING LE MEMBRE**. Sinon cela lui donnera l'accès au salon.`
         )
-        .setColor(CONFIG.TICKETS.EMBED_COLOR);
+        .setColor(CONFIG.TICKETS.EMBED_COLOR || BLZ_EMBED_STRIP_HEX);
 
     const staffPing = buildRolePingContent(getStaffRoleIdsForTier(config, tier));
 
