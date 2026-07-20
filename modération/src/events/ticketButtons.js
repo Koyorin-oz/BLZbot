@@ -1377,6 +1377,8 @@ async function handleTogglePrivate(interaction) {
         reason: `Fil staff créé par ${interaction.user.tag}.`
     });
     
+    const staffPing = buildRolePingContent(getStaffRoleIdsForTier(config, tier));
+    
     const embedPrivateThread = new ContainerBuilder()
         .setAccentColor(
             parseInt((CONFIG.TICKETS.EMBED_COLOR || BLZ_EMBED_STRIP_HEX).replace("#", ""), 16)
@@ -1419,8 +1421,6 @@ async function handleTogglePrivate(interaction) {
                 `-# ⚠️ **NE PAS PING LE MEMBRE**. Sinon cela lui donnera l'accès au salon.`
             )
         )
-
-    const staffPing = buildRolePingContent(getStaffRoleIdsForTier(config, tier));
 
     await thread.send({
         components: [embedPrivateThreadV2],
