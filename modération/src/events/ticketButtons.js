@@ -1332,6 +1332,8 @@ async function handleTogglePrivate(interaction) {
         });
     }
 
+    const timestamp = Math.floor(Date.now() / 1000);
+
     const ticketId = ticketManager.getTicketIdFromChannel(interaction.channel);
     const ticket = ticketManager.getTicket(ticketId);
 
@@ -1365,14 +1367,12 @@ async function handleTogglePrivate(interaction) {
         });
     }
 
-    const timestamp = Math.floor(Date.now() / 1000);
-
     // Créer un fil staff privé accessible uniquement par les staffPing
     const thread = await interaction.channel.threads.create({
         name: '🛡️・staff',
         type: ChannelType.PrivateThread,
         autoArchiveDuration: 1440, // 24h
-        reason: `Fil staff créé par ${interaction.user.tag}, le <t:${timestamp}:F>`
+        reason: `Fil staff créé par ${interaction.user.tag}.`
     });
 
     const embedPrivateThread = new EmbedBuilder()
