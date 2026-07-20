@@ -375,8 +375,7 @@ async function handleCreateTicket(interaction) {
         const ticketEmbed = new EmbedBuilder()
             .setTitle(`Ticket ${tierLabel(tier)} #${ticketId}`)
             .setDescription(
-                `Ticket **${tierLabel(tier)}** ouvert.\n` +
-                `Staff pingé : ${staffPing || '—'}\n\n` +
+                `Ticket **${tierLabel(tier)}** ouvert.\n\n` +
                 'Explique ta demande dans ce salon.'
             )
             .setColor(config.EMBED_COLOR || BLZ_EMBED_STRIP_HEX)
