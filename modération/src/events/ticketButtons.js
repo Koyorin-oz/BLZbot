@@ -1375,7 +1375,7 @@ async function handleTogglePrivate(interaction) {
         reason: `Fil staff créé par ${interaction.user.tag}, le <t:${timestamp}:F>`
     });
 
-    const Embed = new EmbedBuilder()
+    const embedPrivateThread = new EmbedBuilder()
         .setTitle("Discussion staff privé")
         .setDescription(
             `Ce fil est réservé au staff.\n` +
@@ -1389,7 +1389,7 @@ async function handleTogglePrivate(interaction) {
 
     await thread.send({
         content: staffPing,
-        embed: [Embed]
+        embed: [embedPrivateThread]
     });
 }
 
