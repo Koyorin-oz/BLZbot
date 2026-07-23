@@ -86,8 +86,6 @@ const PUITS_REWARDS_FREE = [
     { id: 'x2_exp', type: 'boost', boostType: 'xp', amount: 1, name: 'x2 EXP', weight: 3, emoji: '⚡' },
     { id: 'x2_starss', type: 'boost', boostType: 'starss', amount: 1, name: 'x2 Starss', weight: 3, emoji: '💰' },
     { id: 'x2_rp', type: 'boost', boostType: 'points', amount: 1, name: 'x2 RP', weight: 1, emoji: '✨' },
-    // Rôle exclusif du mois
-    { id: 'role_exclusif', type: 'role', roleKey: 'monthly_exclusive', amount: 1, name: 'Rôle Exclusif (Marsien)', weight: 1, emoji: '🏷️' },
 ];
 
 /**
@@ -340,11 +338,6 @@ async function applyTirageRewards(client, userId, rewards) {
                     db.prepare('UPDATE users SET stars_boost_until = ? WHERE id = ?').run(boostEnd, userId);
                 }
                 messages.push(`${reward.emoji} **${reward.name}** (1h)`);
-                break;
-
-            case 'role':
-                // Les rôles exclusifs sont gérés côté commande (assignation Discord)
-                messages.push(`${reward.emoji} **${reward.name}**`);
                 break;
 
             default:
