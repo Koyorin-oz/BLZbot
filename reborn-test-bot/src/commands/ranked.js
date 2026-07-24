@@ -64,7 +64,7 @@ module.exports = {
         const items = (m.items || [])
           .map((it) => `${it.qty > 1 ? `${it.qty}× ` : ''}\`${it.id}\``)
           .join(', ');
-        const status = m.claimed ? '✅' : m.reached ? '◆' : '○';
+        const status = m.claimed ? '✅' : m.reached ? '❎' : '🔴';
         return `${status} **${m.rp.toLocaleString('fr-FR')} RP** — ${m.label} : +${m.stars.toLocaleString('fr-FR')} starss${items ? ` · ${items}` : ''}`;
       });
       const body = new TextDisplayBuilder().setContent(
