@@ -67,10 +67,24 @@ module.exports = {
         const status = m.claimed ? '✅' : m.reached ? '❎' : '🔴';
         return `${status} **${m.rp.toLocaleString('fr-FR')} RP** — ${m.label} : +${m.stars.toLocaleString('fr-FR')} starss${items ? ` · ${items}` : ''}`;
       });
+
+      const rp = users.getPoints(uid);
+      const rank = rankedRoles.rankForRp(rp);
+      const roleId = rankedRoles.getRoleIdForTier(interaction.guildId, rank.key);
+      const currentRankLine = roleId
+        ? `Ton palier actuel : <@&${roleId}>`
+        : `Ton palier actuel : **${rank.label}** (rôle non configuré)`;
+
       const body = new TextDisplayBuilder().setContent(
         ['# Paliers ranked', '', lines.join('\n')].join('\n'),
       );
-      const c = new ContainerBuilder().addTextDisplayComponents(body);
+      const footer = new TextDisplayBuilder().setContent(currentRankLine);
+
+      const c = new ContainerBuilder()
+        .addTextDisplayComponents(body)
+        .addSeparatorComponents((separator) => separator)
+        .addTextDisplayComponents(footer);
+
       return replyEphemeral(interaction, { components: [c], flags: v2Ephemeral() });
     }
 
