@@ -5,6 +5,7 @@ const {
     ChannelType,
     AttachmentBuilder,
 } = require('discord.js');
+const CONFIG = require('../config.js');
 const { denyUnlessCanMod } = require('../utils/mod-access');
 
 /** Types de salons acceptés comme destination. */
@@ -327,11 +328,54 @@ module.exports = {
 
             const messageUrl = sent?.url || `https://discord.com/channels/${targetChannel.guild.id}/${targetChannel.id}/${sent.id}`;
 
+            try {
+                const modLogChannel = await interaction.guild.channels.fetch(CONFIG.STAFF_WARN_CHANNEL_ID).catch(() => null);
+                if (modLogChannel && modLogChannel.isTextBased?.()) {
+                    const channelLabel = typeof targetChannel.toString === 'function'
+                        ? targetChannel.toString()
+                        : `${targetChannel.name || targetChannel.id}`;
+                    const messagePreview = normalizeText(rawMessage, 400);
+                    const attachmentNames = attachments.length > 0
+                        ? attachments.map((a) => a.name || a.url).join(', ')
+                        : null;
+
+                    const logLines = [
+                        `✅ **Message envoyé** par <@${interaction.user.id}> (${interaction.user.tag})`,
+                        `**Salon cible:** ${channelLabel} (${targetChannel.id})`,
+                        `**Type:** ${useEmbed ? 'Embed' : 'Texte brut'}`,
+                    ];
+
+                    if (messagePreview) {
+                        logLines.push(`**Contenu:** ${messagePreview}`);
+                    }
+                    if (useEmbed && embedTitle) {
+                        logLines.push(`**Titre embed:** ${embedTitle}`);
+                    }
+                    if (useEmbed && embedAuthor) {
+                        logLines.push(`**Auteur embed:** ${embedAuthor}`);
+                    }
+                    if (attachments.length > 0) {
+                        logLines.push(`**Fichiers joints:** ${attachments.length}${attachmentNames ? ` (${attachmentNames})` : ''}`);
+                    }
+                    if (embedImage) {
+                        logLines.push(`**Image embed:** ${embedImage.name || embedImage.url}`);
+                    }
+                    if (embedThumbnail) {
+                        logLines.push(`**Miniature embed:** ${embedThumbnail.name || embedThumbnail.url}`);
+                    }
+                    logLines.push(`🔗 [Lien du message](${messageUrl})`);
+
+                    await modLogChannel.send({ content: logLines.join('\n') });
+                }
+            } catch (logError) {
+                console.error('[envoyer-message] Erreur lors de l’envoi du log modérateur :', logError);
+            }
+
             await interaction.editReply({
                 content:
                     `✅ Message envoyé dans ${targetChannel} ${useEmbed ? '(embed)' : '(texte brut)'}` +
                     (attachments.length > 0 ? ` avec **${attachments.length}** fichier(s) joint(s)` : '') +
-                    `.\n🔗 ${messageUrl}`,
+                    `.\n🔗 [Lien du message](${messageUrl})`,
             });
         } catch (error) {
             console.error('[envoyer-message] Erreur:', error);
