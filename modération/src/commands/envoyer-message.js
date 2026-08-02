@@ -329,7 +329,7 @@ module.exports = {
             const messageUrl = sent?.url || `https://discord.com/channels/${targetChannel.guild.id}/${targetChannel.id}/${sent.id}`;
 
             try {
-                const modLogChannel = await interaction.guild.channels.fetch(CONFIG.STAFF_WARN_CHANNEL_ID).catch(() => null);
+                const modLogChannel = await interaction.guild.channels.fetch(CONFIG.LOGS_CHANNEL_ID).catch(() => null);
                 if (modLogChannel && modLogChannel.isTextBased?.()) {
                     const channelLabel = typeof targetChannel.toString === 'function'
                         ? targetChannel.toString()
@@ -340,30 +340,11 @@ module.exports = {
                         : null;
 
                     const logLines = [
-                        `✅ **Message envoyé** par <@${interaction.user.id}> (${interaction.user.tag})`,
-                        `**Salon cible:** ${channelLabel} (${targetChannel.id})`,
-                        `**Type:** ${useEmbed ? 'Embed' : 'Texte brut'}`,
+                        `**Message envoyé** par <@${interaction.user.id}> (${interaction.user.tag} \`${interaction.user.id}\`)`,
+                        `**Salon cible:** <#${targetChannel.id}> (${channelLabel} \`${targetChannel.id}\`)`,
                     ];
 
-                    if (messagePreview) {
-                        logLines.push(`**Contenu:** ${messagePreview}`);
-                    }
-                    if (useEmbed && embedTitle) {
-                        logLines.push(`**Titre embed:** ${embedTitle}`);
-                    }
-                    if (useEmbed && embedAuthor) {
-                        logLines.push(`**Auteur embed:** ${embedAuthor}`);
-                    }
-                    if (attachments.length > 0) {
-                        logLines.push(`**Fichiers joints:** ${attachments.length}${attachmentNames ? ` (${attachmentNames})` : ''}`);
-                    }
-                    if (embedImage) {
-                        logLines.push(`**Image embed:** ${embedImage.name || embedImage.url}`);
-                    }
-                    if (embedThumbnail) {
-                        logLines.push(`**Miniature embed:** ${embedThumbnail.name || embedThumbnail.url}`);
-                    }
-                    logLines.push(`🔗 [Lien du message](${messageUrl})`);
+                    logLines.push(`🔗 [Voir le message](${messageUrl})`);
 
                     await modLogChannel.send({ content: logLines.join('\n') });
                 }
@@ -373,9 +354,7 @@ module.exports = {
 
             await interaction.editReply({
                 content:
-                    `✅ Message envoyé dans ${targetChannel} ${useEmbed ? '(embed)' : '(texte brut)'}` +
-                    (attachments.length > 0 ? ` avec **${attachments.length}** fichier(s) joint(s)` : '') +
-                    `.\n🔗 [Lien du message](${messageUrl})`,
+                    `✅ [Message bien envoyé !](${messageUrl})`,
             });
         } catch (error) {
             console.error('[envoyer-message] Erreur:', error);
