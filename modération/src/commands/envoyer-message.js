@@ -329,7 +329,7 @@ module.exports = {
             const messageUrl = sent?.url || `https://discord.com/channels/${targetChannel.guild.id}/${targetChannel.id}/${sent.id}`;
 
             try {
-                const modLogChannel = await interaction.guild.channels.fetch(CONFIG.LOGS_CHANNEL_ID).catch(() => null);
+                const modLogChannel = await interaction.guild.channels.fetch(CONFIG.ALL_LOG_CHANNEL_ID).catch(() => null);
                 if (modLogChannel && modLogChannel.isTextBased?.()) {
                     const channelLabel = typeof targetChannel.toString === 'function'
                         ? targetChannel.toString()
@@ -340,8 +340,8 @@ module.exports = {
                         : null;
 
                     const logLines = [
-                        `**Message envoyé** par <@${interaction.user.id}> (${interaction.user.tag} \`${interaction.user.id}\`)`,
-                        `**Salon cible:** <#${targetChannel.id}> (${channelLabel} \`${targetChannel.id}\`)`,
+                        `**Message envoyé** par <@${interaction.user.id}> (\`${interaction.user.id}\`)`,
+                        `**Salon cible:** ${channelLabel} (\`${targetChannel.id}\`)`,
                     ];
 
                     logLines.push(`🔗 [Voir le message](${messageUrl})`);
