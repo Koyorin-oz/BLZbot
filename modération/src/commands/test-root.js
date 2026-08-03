@@ -21,8 +21,8 @@ const { stripHexToInt } = require(
 
 /**
  * Prototype bienvenue Components V2 — `/test-root`
- * Permet de tester emoji, texte et salons cliquables (même hors serveur / bot absent)
- * via des liens Discord `channels/guildId/channelId` + labels custom.
+ * Les éléments cliquables = les **boutons Link** sous le message
+ * (id + nom + emoji + éventuel serveur distant), pas les mentions dans le texte.
  */
 
 function parseAccentColor(hex) {
