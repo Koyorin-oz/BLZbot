@@ -170,7 +170,7 @@ module.exports = {
         o
           .setName('texte')
           .setDescription(
-            'Corps. Placeholders: {m} {serveur} {salon1} {salon2} {salon3}',
+            'Corps (pas les boutons). {m} {serveur} {salon1..3} = noms plain',
           )
           .setRequired(false)
           .setMaxLength(600),
