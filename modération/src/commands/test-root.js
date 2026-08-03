@@ -245,11 +245,12 @@ module.exports = {
     const serverName = interaction.guild?.name || 'ce serveur';
     const mention = member || targetUser;
 
-    const salonLinks = salons.map(salonMarkdownLink);
+    // Texte = libellés non cliquables. Les seuls clics = boutons Link sous le message.
+    const salonLabels = salons.map(salonPlainLabel);
     const defaultBody =
       `➜ Nous sommes ravis de te voir arriver sur le serveur **${serverName}** !\n` +
-      (salonLinks.length
-        ? `➜ N'hésite pas à aller faire un tour dans ${salonLinks.join(' et ')} si t'as besoin d'aide.\n`
+      (salonLabels.length
+        ? `➜ N'hésite pas à aller faire un tour dans ${salonLabels.join(' et ')} si t'as besoin d'aide.\n`
         : '') +
       `➜ Passe un agréable séjour ici ! 🔥`;
 
@@ -258,9 +259,9 @@ module.exports = {
       .replace(/\\n/g, '\n')
       .replace(/\{m\}/gi, `${mention}`)
       .replace(/\{serveur\}/gi, serverName)
-      .replace(/\{salon1\}/gi, salonLinks[0] || '`salon1 manquant`')
-      .replace(/\{salon2\}/gi, salonLinks[1] || '`salon2 manquant`')
-      .replace(/\{salon3\}/gi, salonLinks[2] || '`salon3 manquant`');
+      .replace(/\{salon1\}/gi, salonLabels[0] || '`salon1 manquant`')
+      .replace(/\{salon2\}/gi, salonLabels[1] || '`salon2 manquant`')
+      .replace(/\{salon3\}/gi, salonLabels[2] || '`salon3 manquant`');
 
     const customTitle = interaction.options.getString('titre')?.trim();
     const titleLine = customTitle
