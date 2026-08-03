@@ -423,42 +423,7 @@ module.exports = {
 
         try {
             await interaction.deferReply({ ephemeral: true });
-<<<<<<< HEAD
-            const sent = await targetChannel.send(payload);
-
-            const messageUrl = sent?.url || `https://discord.com/channels/${targetChannel.guild.id}/${targetChannel.id}/${sent.id}`;
-
-            try {
-                const modLogChannel = await interaction.guild.channels.fetch(CONFIG.ALL_LOG_CHANNEL_ID).catch(() => null);
-                if (modLogChannel && modLogChannel.isTextBased?.()) {
-                    const channelLabel = typeof targetChannel.toString === 'function'
-                        ? targetChannel.toString()
-                        : `${targetChannel.name || targetChannel.id}`;
-                    const messagePreview = normalizeText(rawMessage, 400);
-                    const attachmentNames = attachments.length > 0
-                        ? attachments.map((a) => a.name || a.url).join(', ')
-                        : null;
-
-                    const logLines = [
-                        `**Message envoyé** par <@${interaction.user.id}> (\`${interaction.user.id}\`)`,
-                        `**Salon cible:** ${channelLabel} (\`${targetChannel.id}\`)`,
-                    ];
-
-                    logLines.push(`🔗 [Voir le message](${messageUrl})`);
-
-                    await modLogChannel.send({ content: logLines.join('\n') });
-                }
-            } catch (logError) {
-                console.error('[envoyer-message] Erreur lors de l’envoi du log modérateur :', logError);
-            }
-
-            await interaction.editReply({
-                content:
-                    `✅ [Message bien envoyé !](${messageUrl})`,
-            });
-=======
             await sendPreparedMessage(interaction, draft, messageText);
->>>>>>> df2267bb (sync(cursor): 2026-07-18 20:04:46)
         } catch (error) {
             console.error('[envoyer-message] Erreur:', error);
             const code = error?.code ? ` (code ${error.code})` : '';
