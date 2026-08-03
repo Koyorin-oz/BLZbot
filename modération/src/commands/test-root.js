@@ -105,9 +105,9 @@ function readSalonSlot(interaction, n, fallbackGuildId) {
   };
 }
 
-function salonMarkdownLink(salon) {
-  const label = [salon.emojiMd, salon.nom].filter(Boolean).join(' ').trim();
-  return `[${label || salon.nom}](${salon.url})`;
+/** Libellé plain dans le texte (pas de lien — les boutons sous le message sont cliquables). */
+function salonPlainLabel(salon) {
+  return [salon.emojiMd, salon.nom].filter(Boolean).join(' ').trim() || salon.nom;
 }
 
 function addSalonOptions(builder, n) {
@@ -115,27 +115,27 @@ function addSalonOptions(builder, n) {
     .addStringOption((o) =>
       o
         .setName(`salon${n}_id`)
-        .setDescription(`ID du salon #${n} (même si bot absent / autre serveur)`)
+        .setDescription(`ID salon bouton #${n} (même si bot absent / autre serveur)`)
         .setRequired(false),
     )
     .addStringOption((o) =>
       o
         .setName(`salon${n}_nom`)
-        .setDescription(`Nom affiché du salon #${n} (ex: Règlement)`)
+        .setDescription(`Label du bouton #${n} (ex: Règlement)`)
         .setRequired(false)
         .setMaxLength(80),
     )
     .addStringOption((o) =>
       o
         .setName(`salon${n}_emoji`)
-        .setDescription(`Emoji bouton/lien #${n} (👋 ou <:nom:id>)`)
+        .setDescription(`Emoji du bouton #${n} (📋 ou <:nom:id>)`)
         .setRequired(false)
         .setMaxLength(80),
     )
     .addStringOption((o) =>
       o
         .setName(`salon${n}_serveur`)
-        .setDescription(`ID serveur du salon #${n} (si autre serveur)`)
+        .setDescription(`ID serveur du bouton #${n} (si autre serveur)`)
         .setRequired(false),
     );
 }
