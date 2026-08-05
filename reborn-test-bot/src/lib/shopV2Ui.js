@@ -7,19 +7,30 @@ const {
   ButtonStyle,
   StringSelectMenuBuilder,
   MessageFlags,
-} = require('discord.js');
-const users = require('../services/users');
-const shop = require('../services/shop');
-const skillTree = require('../services/skillTree');
-const shopExtras = require('../services/shopExtras');
-const { getItem } = require('../reborn/catalog');
-const { summaryForItemId, summaryChest, summaryBoost, emojiForItemId } = require('../reborn/shopSummaries');
-const { BOOST_ROW_PRICE, CHEST_CLASSIC, CHEST_CATM, CHEST_CATL, CHEST_CATS } = require('../reborn/constants');
-const { getBlzAttachment, getBoutiqueAttachment } = require('./blzBackground');
-const { v2Ephemeral } = require('./ephemeral');
+} = require("discord.js");
+const users = require("../services/users");
+const shop = require("../services/shop");
+const skillTree = require("../services/skillTree");
+const shopExtras = require("../services/shopExtras");
+const { getItem } = require("../reborn/catalog");
+const {
+  summaryForItemId,
+  summaryChest,
+  summaryBoost,
+  emojiForItemId,
+} = require("../reborn/shopSummaries");
+const {
+  BOOST_ROW_PRICE,
+  CHEST_CLASSIC,
+  CHEST_CATM,
+  CHEST_CATL,
+  CHEST_CATS,
+} = require("../reborn/constants");
+const { getBlzAttachment, getBoutiqueAttachment } = require("./blzBackground");
+const { v2Ephemeral } = require("./ephemeral");
 
 function fmt(n) {
-  return BigInt(n).toLocaleString('fr-FR');
+  return BigInt(n).toLocaleString("fr-FR");
 }
 
 /**
@@ -36,30 +47,34 @@ async function buildBoutiquePayload(uid, username) {
   const blz = getBoutiqueAttachment();
   const container = new ContainerBuilder();
   if (blz) {
-    const gallery = new MediaGalleryBuilder().addItems({ media: { url: blz.mediaUrl } });
+    const gallery = new MediaGalleryBuilder().addItems({
+      media: { url: blz.mediaUrl },
+    });
     container.addMediaGalleryComponents(gallery);
   }
 
-  const shopTier = skillTree.step(uid, 'shop');
+  const shopTier = skillTree.step(uid, "shop");
   const discountPct = Math.round(skillTree.shopDiscountFrac(uid) * 100);
   const lines = [
-    '# ⭐ Boutique',
-    'Bienvenue ! Ici tu peux acheter des items du **jour**, des **coffres** et des **boosts 1h** avec tes **Starss**.',
-    '➜ **Choisis un article** dans le menu déroulant, puis clique sur **Acheter**.',
-    '',
+    "# ⭐ Boutique",
+    "Bienvenue ! Ici tu peux acheter des items du **jour**, des **coffres** et des **boosts 1h** avec tes **Starss**.",
+    "➜ **Choisis un article** dans le menu déroulant, puis clique sur **Acheter**.",
+    "",
     `**Starss = ${fmt(bal)}**`,
   ];
   if (shopTier >= 1) {
     const free = shopExtras.freeResetAvailable(uid);
     lines.push(
       `**Arbre Boutique** : tier **${shopTier}/5** ${
-        discountPct > 0 ? `· remise **−${discountPct}%**` : ''
-      } ${shopTier >= 2 ? '· ×2 contenu coffres' : ''} ${
-        shopTier >= 3 ? '· rotation midi Paris' : ''
-      } ${shopTier >= 5 ? '· **Coffre légendaire gratuit / 3h**' : ''}`.replace(/\s+/g, ' ').trim(),
+        discountPct > 0 ? `· remise **−${discountPct}%**` : ""
+      } ${shopTier >= 2 ? "· ×2 contenu coffres" : ""} ${
+        shopTier >= 3 ? "· rotation midi Paris" : ""
+      } ${shopTier >= 5 ? "· **Coffre légendaire gratuit / 3h**" : ""}`
+        .replace(/\s+/g, " ")
+        .trim(),
     );
     lines.push(
-      `Reset boutique : ${free ? '**gratuit dispo cette semaine**' : 'consomme 1× *Reset boutique*'}.`,
+      `Reset boutique : ${free ? "**gratuit dispo cette semaine**" : "consomme 1× *Reset boutique*"}.`,
     );
   }
   if (shopTier >= 5) {
@@ -69,10 +84,12 @@ async function buildBoutiquePayload(uid, username) {
       const mins = Math.ceil(left / 60000);
       lines.push(`*Prochain Coffre légendaire gratuit dans ~**${mins} min**.*`);
     } else {
-      lines.push('*✨ **Coffre légendaire gratuit prêt à réclamer** (bouton ci-dessous).*');
+      lines.push(
+        "*✨ **Coffre légendaire gratuit prêt à réclamer** (bouton ci-dessous).*",
+      );
     }
   }
-  const text = new TextDisplayBuilder().setContent(lines.join('\n'));
+  const text = new TextDisplayBuilder().setContent(lines.join("\n"));
   container.addTextDisplayComponents(text);
 
   const options = [];
@@ -90,74 +107,98 @@ async function buildBoutiquePayload(uid, username) {
   const priceLine = (n) => `${fmt(n)} ⭐`;
   options.push(
     {
-      label: 'Coffre classique',
-      value: 'c:classic',
-      description: `${priceLine(CHEST_CLASSIC)} — ${summaryChest('classic')}`.slice(0, 100),
+      label: "Coffre classique",
+      value: "c:classic",
+      description:
+        `${priceLine(CHEST_CLASSIC)} — ${summaryChest("classic")}`.slice(
+          0,
+          100,
+        ),
     },
     {
-      label: 'Coffre meilleur',
-      value: 'c:catm',
-      description: `Lim. jour — ${priceLine(CHEST_CATM)} — ${summaryChest('catm')}`.slice(0, 100),
+      label: "Coffre meilleur",
+      value: "c:catm",
+      description:
+        `Lim. jour — ${priceLine(CHEST_CATM)} — ${summaryChest("catm")}`.slice(
+          0,
+          100,
+        ),
     },
     {
-      label: 'Coffre légendaire',
-      value: 'c:catl',
-      description: `${priceLine(CHEST_CATL)} — ${summaryChest('catl')}`.slice(0, 100),
+      label: "Coffre légendaire",
+      value: "c:catl",
+      description: `${priceLine(CHEST_CATL)} — ${summaryChest("catl")}`.slice(
+        0,
+        100,
+      ),
     },
     {
-      label: 'Coffre starss',
-      value: 'c:cats',
-      description: `${priceLine(CHEST_CATS)} — ${summaryChest('cats')}`.slice(0, 100),
+      label: "Coffre starss",
+      value: "c:cats",
+      description: `${priceLine(CHEST_CATS)} — ${summaryChest("cats")}`.slice(
+        0,
+        100,
+      ),
     },
     {
-      label: 'Boost ×2 XP — 1h',
-      value: 'b:xp',
-      description: `${priceLine(BOOST_ROW_PRICE)} — ${summaryBoost('xp')}`.slice(0, 100),
+      label: "Boost ×2 XP — 1h",
+      value: "b:xp",
+      description:
+        `${priceLine(BOOST_ROW_PRICE)} — ${summaryBoost("xp")}`.slice(0, 100),
     },
     {
-      label: 'Boost ×2 GXP — 1h',
-      value: 'b:gxp',
-      description: `${priceLine(BOOST_ROW_PRICE)} — ${summaryBoost('gxp')}`.slice(0, 100),
+      label: "Boost ×2 GXP — 1h",
+      value: "b:gxp",
+      description:
+        `${priceLine(BOOST_ROW_PRICE)} — ${summaryBoost("gxp")}`.slice(0, 100),
     },
     {
-      label: 'Boost ×2 Starss — 1h',
-      value: 'b:starss',
-      description: `${priceLine(BOOST_ROW_PRICE)} — ${summaryBoost('starss')}`.slice(0, 100),
+      label: "Boost ×2 Starss — 1h",
+      value: "b:starss",
+      description:
+        `${priceLine(BOOST_ROW_PRICE)} — ${summaryBoost("starss")}`.slice(
+          0,
+          100,
+        ),
     },
   );
   if (options.length > 25) options.length = 25;
 
   const select = new StringSelectMenuBuilder()
-    .setCustomId('rb:shop:sel')
-    .setPlaceholder('Choisir un article')
+    .setCustomId("rb:shop:sel")
+    .setPlaceholder("Choisir un article")
     .addOptions(options);
   const row0 = new ActionRowBuilder().addComponents(select);
   const row1 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
-      .setCustomId('rb:shop:go')
-      .setLabel('Acheter')
+      .setCustomId("rb:shop:go")
+      .setLabel("Acheter")
       .setStyle(ButtonStyle.Success)
-      .setEmoji('💸'),
+      .setEmoji("💸"),
     new ButtonBuilder()
-      .setCustomId('rb:shop:reset')
-      .setLabel('Reset slots')
+      .setCustomId("rb:shop:reset")
+      .setLabel("Reset slots")
       .setStyle(ButtonStyle.Primary)
-      .setEmoji('♻️'),
+      .setEmoji("♻️"),
     new ButtonBuilder()
-      .setCustomId('rb:shop:re')
-      .setLabel('Rafraîchir')
+      .setCustomId("rb:shop:re")
+      .setLabel("Rafraîchir")
       .setStyle(ButtonStyle.Secondary)
-      .setEmoji('🔄'),
+      .setEmoji("🔄"),
   );
   container.addActionRowComponents(row0, row1);
   if (shopTier >= 5) {
     const ready = Date.now() >= shopExtras.nextCatlReadyMs(uid);
     const row2 = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
-        .setCustomId('rb:shop:claim_catl')
-        .setLabel(ready ? 'Réclamer Coffre légendaire gratuit' : 'Coffre légendaire — en cooldown')
+        .setCustomId("rb:shop:claim_catl")
+        .setLabel(
+          ready
+            ? "Réclamer Coffre légendaire gratuit"
+            : "Coffre légendaire — en cooldown",
+        )
         .setStyle(ready ? ButtonStyle.Success : ButtonStyle.Secondary)
-        .setEmoji('🎁')
+        .setEmoji("🎁")
         .setDisabled(!ready),
     );
     container.addActionRowComponents(row2);
@@ -178,22 +219,21 @@ async function buildInventairePayload(uid, username) {
   const container = new ContainerBuilder();
   if (!rows.length) {
     const td = new TextDisplayBuilder().setContent(
-      ['# 🎒 Inventaire', "Tu n'as **aucun** objet pour le moment. Passe à la **boutique** pour en acheter !"].join('\n'),
+      [
+        "# 🎒 Inventaire",
+        "Tu n'as **aucun** objet pour le moment. Passe à la **boutique** pour en acheter !",
+      ].join("\n"),
     );
     container.addTextDisplayComponents(td);
   } else {
-    const time = new Date().toLocaleString('fr-FR', {
-      timeZone: 'Europe/Paris',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    const timestamp = Math.floor(Date.now() / 1000);
 
     const td = new TextDisplayBuilder().setContent(
       [
-        '# 🎒 Ton inventaire',
-        'Même principe que la boutique : parcours la liste, sélectionne un item pour lire le détail, **rafraîchis** si besoin.',
-        `Dernière mise à jour *${time}*`,
-      ].join('\n'),
+        "# 🎒 Ton inventaire",
+        "Même principe que la boutique : parcours la liste, sélectionne un item pour lire le détail, **rafraîchis** si besoin.",
+        `Dernière mise à jour <t:${timestamp}:t>`,
+      ].join("\n"),
     );
     container.addTextDisplayComponents(td);
     const options = rows.slice(0, 25).map((r) => {
@@ -208,21 +248,21 @@ async function buildInventairePayload(uid, username) {
       };
     });
     const select = new StringSelectMenuBuilder()
-      .setCustomId('rb:inv:sel')
-      .setPlaceholder('Choisir un item')
+      .setCustomId("rb:inv:sel")
+      .setPlaceholder("Choisir un item")
       .addOptions(options);
     const row0 = new ActionRowBuilder().addComponents(select);
     const row1 = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
-        .setCustomId('rb:inv:use')
-        .setLabel('Utiliser')
+        .setCustomId("rb:inv:use")
+        .setLabel("Utiliser")
         .setStyle(ButtonStyle.Success)
-        .setEmoji('✨'),
+        .setEmoji("✨"),
       new ButtonBuilder()
-        .setCustomId('rb:inv:re')
-        .setLabel('Rafraîchir')
+        .setCustomId("rb:inv:re")
+        .setLabel("Rafraîchir")
         .setStyle(ButtonStyle.Secondary)
-        .setEmoji('🔄'),
+        .setEmoji("🔄"),
     );
     container.addActionRowComponents(row0, row1);
   }
