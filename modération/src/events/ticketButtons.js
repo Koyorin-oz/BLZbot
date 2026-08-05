@@ -382,6 +382,7 @@ async function handleCreateTicket(interaction) {
             .setTitle(`Ticket ${tierLabel(tier)} #${ticketId}`)
             .setDescription(
                 `Ticket **${tierLabel(tier)}** ouvert.\n\n` +
+                `Bienvenue ${userId} sur ton ticket.\n` +
                 'Explique ta demande dans ce salon.'
             )
             .setColor(config.EMBED_COLOR || BLZ_EMBED_STRIP_HEX)
