@@ -182,7 +182,12 @@ async function buildInventairePayload(uid, username) {
     );
     container.addTextDisplayComponents(td);
   } else {
-    const time = new Date().toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const time = new Date().toLocaleString('fr-FR', {
+      timeZone: 'Europe/Paris',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
     const td = new TextDisplayBuilder().setContent(
       [
         '# 🎒 Ton inventaire',
