@@ -232,7 +232,7 @@ async function buildInventairePayload(uid, username) {
       [
         "# 🎒 Ton inventaire",
         "Même principe que la boutique : parcours la liste, sélectionne un item pour lire le détail, **rafraîchis** si besoin.",
-        `Dernière mise à jour <t:${timestamp}:t>`,
+        `Dernière mise à jour : <t:${timestamp}:t>`,
       ].join("\n"),
     );
     container.addTextDisplayComponents(td);
