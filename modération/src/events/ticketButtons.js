@@ -409,7 +409,7 @@ async function handleCreateTicket(interaction) {
         );
 
         const welcomeMsg = await ticketChannel.send({
-            content: staffPing,
+            content: `${staffPing} <@${userId}>`, 
             embeds: [ticketEmbed],
             components: [row],
         });
