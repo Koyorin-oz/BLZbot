@@ -49,7 +49,7 @@ function canCreateTicket(userId, config) {
             const timestamp = Math.floor((lastCreation + config.COOLDOWN_MS) / 1000);
             return {
                 canCreate: false,
-                reason: `Tu pourras créer de nouveau un ticket <t:${timestamp}:R>. En cas d'abus, des sanctions pourront être prises.`
+                reason: `Tu pourras de nouveau créer un ticket <t:${timestamp}:R>. En cas d'abus, des sanctions pourront être prises.`
             };
         }
     }
