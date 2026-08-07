@@ -113,7 +113,9 @@ async function handleProfil(interaction) {
         return pct > 0 ? `${p.name}: ${pct}%` : null;
     }).filter(Boolean);
 
-    embed.setFooter({ text: barParts.join(' | ') });
+    if (barParts.length > 0) {
+        embed.setFooter({ text: barParts.join(' | ') });
+    }
 
     await interaction.editReply({ embeds: [embed] });
 }
