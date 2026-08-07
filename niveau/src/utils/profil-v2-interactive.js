@@ -32,6 +32,10 @@ const { renderQuestsCardFiche2, renderAchievementsCardFiche2 } = require('./canv
  * @param {import('discord.js').ChatInputCommandInteraction} interaction
  */
 async function loadFiche2ProfileData(interaction) {
+    if (!interaction.guild || !interaction.guild.members) {
+        return { error: 'Cette commande doit être utilisée dans un serveur Discord.' };
+    }
+
     const targetUser = interaction.options.getUser('membre') || interaction.user;
     const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
     if (!member) {
