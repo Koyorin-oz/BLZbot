@@ -325,7 +325,7 @@ Pour upgrader une guilde au niveau N, la guilde doit avoir une valeur ≥ `N × 
 ### Fichiers
 
 - `utils/trophy-value-system.js` — Logique principale
-- `commands/valeur.js` — Commande slash
+- Affichage : `/classement` type valeur + profil guilde (`/valeur` retire)
 
 ---
 

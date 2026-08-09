@@ -778,6 +778,19 @@ async function handleChatbotMessage(message, client) {
             if (emojiBit) system = `${system}\n\n---\n${emojiBit}`;
         }
 
+        // docs commandes si la question match
+        try {
+            const utils = require('./utils.js');
+            if (typeof utils.getRelevantKnowledge === 'function') {
+                const kb = await utils.getRelevantKnowledge(userTextEarly);
+                if (kb) {
+                    system += `\n\n---\nInfos bot:\n${kb}`;
+                }
+            }
+        } catch (kbErr) {
+            console.warn('[ia chatbot] KB:', kbErr?.message || kbErr);
+        }
+
         const userName = message.member?.displayName || message.author.username;
         const userText = userTextEarly;
 

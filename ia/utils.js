@@ -3,6 +3,7 @@ const path = require('path');
 const axios = require('axios');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, TextInputBuilder, TextInputStyle, ModalBuilder, MessageFlags, TextDisplayBuilder, SectionBuilder, ContainerBuilder, ChannelType, ThreadAutoArchiveDuration } = require('discord.js');
 const config = require('./config.js');
+const knowledge = require('./knowledge.js');
 
 let userSettings = {};
 let quotas = {};
@@ -248,37 +249,53 @@ async function generateEmbedding(text) {
 }
 
 async function loadAndGenerateKnowledgeBaseEmbeddings() {
+  try {
+    knowledge.loadKnowledgeEntries({ knowledgeBaseFile: config.KNOWLEDGE_BASE_FILE });
+    log(`KB: ${knowledge.getKnowledgeEntryCount()} entrees`);
+  } catch (e) {
+    log(`Erreur KB: ${e?.message || e}`);
+  }
+
   if (!config.embeddingModel) {
-    log('Embeddings non configurés — RAG par similarité désactivé (Groq seul, sans modèle d’embedding).');
+    log('Pas d embeddings — recherche mots cles.');
     return;
   }
+
+  knowledgeBaseEmbeddings = [];
 
   if (fs.existsSync(config.KNOWLEDGE_BASE_EMBEDDINGS_FILE)) {
     fs.unlinkSync(config.KNOWLEDGE_BASE_EMBEDDINGS_FILE);
     log("Ancien fichier d'embeddings supprimé.");
   }
 
-  if (fs.existsSync(config.KNOWLEDGE_BASE_FILE)) {
-    try {
-      const knowledgeBaseRaw = fs.readFileSync(config.KNOWLEDGE_BASE_FILE, 'utf8');
-      const knowledgeBase = JSON.parse(knowledgeBaseRaw);
-      log(`Chargement de ${knowledgeBase.length} entrées depuis knowledge_base.json.`);
+  const entries = knowledge.getKnowledgeEntries();
+  if (!entries.length) {
+    log('Aucune entrée KB pour embeddings.');
+    return;
+  }
 
-      for (const entry of knowledgeBase) {
-        const embedding = await generateEmbedding(entry.content);
-        if (embedding) {
-          knowledgeBaseEmbeddings.push({ content: entry.content, embedding: embedding });
-        } else {
-          log(`Impossible de générer l'embedding pour l'entrée: ${entry.content.substring(0, 50)}...`);
-        }
+  try {
+    log(`Génération embeddings pour ${entries.length} entrées…`);
+    for (const entry of entries) {
+      const embedding = await generateEmbedding(entry.content);
+      if (embedding) {
+        knowledgeBaseEmbeddings.push({
+          title: entry.title,
+          content: entry.content,
+          embedding,
+        });
+      } else {
+        log(`Embedding impossible: ${entry.title.substring(0, 50)}…`);
       }
-      fs.writeFileSync(config.KNOWLEDGE_BASE_EMBEDDINGS_FILE, JSON.stringify(knowledgeBaseEmbeddings, null, 2), 'utf8');
-      log(`Base de connaissances embeddée et sauvegardée. ${knowledgeBaseEmbeddings.length} embeddings générés.`);
-    } catch (e) {
-      log(`Erreur lors du chargement/génération de la base de connaissances: ${e}`);
     }
-  } else {
-    log("Fichier knowledge_base.json non trouvé. Le RAG ne sera pas utilisé.");
+    fs.writeFileSync(
+      config.KNOWLEDGE_BASE_EMBEDDINGS_FILE,
+      JSON.stringify(knowledgeBaseEmbeddings, null, 2),
+      'utf8',
+    );
+    log(`Embeddings OK : ${knowledgeBaseEmbeddings.length} générés.`);
+  } catch (e) {
+    log(`Erreur embeddings KB: ${e}`);
   }
 }
 
@@ -298,35 +315,35 @@ function cosineSimilarity(vecA, vecB) {
 }
 
 async function getRelevantKnowledge(query) {
-  if (knowledgeBaseEmbeddings.length === 0) {
-    log("La base de connaissances des embeddings est vide.");
-    return "";
-  }
-
-  const queryEmbedding = await generateEmbedding(query);
-  if (!queryEmbedding) {
-    log("Impossible de générer l'embedding pour la requête.");
-    return "";
-  }
-
-  let mostSimilar = null;
-  let maxSimilarity = -1;
-
-  for (const entry of knowledgeBaseEmbeddings) {
-    const similarity = cosineSimilarity(queryEmbedding, entry.embedding);
-    if (similarity > maxSimilarity) {
-      maxSimilarity = similarity;
-      mostSimilar = entry.content;
+  // 1) Similarité vectorielle si dispo
+  if (knowledgeBaseEmbeddings.length > 0 && config.embeddingModel) {
+    const queryEmbedding = await generateEmbedding(query);
+    if (queryEmbedding) {
+      let mostSimilar = null;
+      let maxSimilarity = -1;
+      for (const entry of knowledgeBaseEmbeddings) {
+        const similarity = cosineSimilarity(queryEmbedding, entry.embedding);
+        if (similarity > maxSimilarity) {
+          maxSimilarity = similarity;
+          mostSimilar = entry.content;
+        }
+      }
+      if (maxSimilarity > 0.7 && mostSimilar) {
+        log(`KB embedding hit (Sim: ${maxSimilarity.toFixed(4)})`);
+        const kw = knowledge.searchKnowledge(query, { maxEntries: 2, maxChars: 2000 });
+        if (kw && !kw.includes(mostSimilar.slice(0, 80))) {
+          return `${mostSimilar}\n\n---\n\n${kw}`.slice(0, 4000);
+        }
+        return mostSimilar;
+      }
     }
   }
 
-  if (maxSimilarity > 0.7) {
-    log(`Connaissance pertinente trouvée (Sim: ${maxSimilarity.toFixed(4)}): ${mostSimilar.substring(0, 50)}...`);
-    return mostSimilar;
-  } else {
-    log(`Aucune connaissance pertinente trouvée (Max Sim: ${maxSimilarity.toFixed(4)}).`);
-    return "";
+  const hit = knowledge.searchKnowledge(query);
+  if (!hit) {
+    log('KB: rien de pertinent');
   }
+  return hit;
 }
 
 async function summarizeHistory(history, previousSummary) {

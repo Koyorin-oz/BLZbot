@@ -4,18 +4,25 @@ const indexProgress = require('./indexProgress');
 const quests = require('./quests');
 const gm = require('./guildMember');
 const pg = require('./playerGuilds');
+const { GRP_THRESHOLDS, GRP_RANK_KEYS } = require('../reborn/grades');
 
-/**
- * @typedef {object} TrophyDef
- * @property {string} id
- * @property {string} name
- * @property {string} desc
- * @property {string} [tier]
- * @property {number} [templeBonus]   nombre de points temple bonus à l'unlock (défaut 0)
- * @property {(ctx: Record<string, any>) => boolean} check
- */
+// mêmes seuils que /grp
+const GRP_TROPHY = {
+  argent: GRP_THRESHOLDS[GRP_RANK_KEYS.indexOf('argent')],
+  or: GRP_THRESHOLDS[GRP_RANK_KEYS.indexOf('or')],
+  diamant: GRP_THRESHOLDS[GRP_RANK_KEYS.indexOf('diamant')],
+};
 
-/** @type {TrophyDef[]} */
+function fmtBig(n) {
+  return (typeof n === 'bigint' ? n : BigInt(n || 0)).toLocaleString('fr-FR');
+}
+
+function grpProgressLine(ctx, need) {
+  const cur = ctx.grp_total || 0n;
+  const pct = need > 0n ? Number((cur * 100n) / need) : 100;
+  return `GRP ${fmtBig(cur)} / ${fmtBig(need)} (${Math.min(100, pct)}%)`;
+}
+
 const DEFS = [
   { id: 'premier_pas', tier: 'commun', name: 'Premier pas', desc: 'Envoyer au moins 1 message sur un serveur.', check: (c) => c.lifetime_msgs >= 1 },
   { id: 'bavard', tier: 'rare', name: 'Bavard', desc: '10 messages dans la même journée.', check: (c) => c.msgs_today >= 10 },
@@ -31,9 +38,30 @@ const DEFS = [
   { id: 'archiviste', tier: 'epique', name: 'Archiviste', desc: 'Index items ≥ 75 %.', check: (c) => c.index_pct >= 75 },
   { id: 'completionniste', tier: 'mythique', name: 'Complétionniste', desc: 'Index items 100 %.', check: (c) => c.index_pct >= 100 },
   { id: 'guilde_soldat', tier: 'commun', name: 'En guilde', desc: 'Être membre d’une guilde joueur sur ce serveur.', check: (c) => Boolean(c.in_player_guild) },
-  { id: 'grp_argent', tier: 'rare', name: 'GRP Argent', desc: 'Atteindre 5 000 GRP sur un serveur.', check: (c) => c.grp_total >= 5000n },
-  { id: 'grp_or', tier: 'epique', name: 'GRP Or', desc: 'Atteindre 25 000 GRP.', check: (c) => c.grp_total >= 25_000n },
-  { id: 'grp_diamant', tier: 'mythique', name: 'GRP Diamant', desc: 'Atteindre 100 000 GRP.', check: (c) => c.grp_total >= 100_000n },
+  {
+    id: 'grp_argent',
+    tier: 'rare',
+    name: 'GRP Argent',
+    desc: `Atteindre ${fmtBig(GRP_TROPHY.argent)} GRP (palier Argent).`,
+    check: (c) => c.grp_total >= GRP_TROPHY.argent,
+    progress: (c) => (c.grp_total >= GRP_TROPHY.argent ? null : grpProgressLine(c, GRP_TROPHY.argent)),
+  },
+  {
+    id: 'grp_or',
+    tier: 'epique',
+    name: 'GRP Or',
+    desc: `Atteindre ${fmtBig(GRP_TROPHY.or)} GRP (palier Or).`,
+    check: (c) => c.grp_total >= GRP_TROPHY.or,
+    progress: (c) => (c.grp_total >= GRP_TROPHY.or ? null : grpProgressLine(c, GRP_TROPHY.or)),
+  },
+  {
+    id: 'grp_diamant',
+    tier: 'mythique',
+    name: 'GRP Diamant',
+    desc: `Atteindre ${fmtBig(GRP_TROPHY.diamant)} GRP (palier Diamant).`,
+    check: (c) => c.grp_total >= GRP_TROPHY.diamant,
+    progress: (c) => (c.grp_total >= GRP_TROPHY.diamant ? null : grpProgressLine(c, GRP_TROPHY.diamant)),
+  },
   { id: 'voixdor', tier: 'epique', name: 'Voix d’or', desc: '60 minutes de vocal cumulées.', check: (c) => c.voice_minutes >= 60 },
   { id: 'maitre_vocal', tier: 'mythique', name: 'Maître vocal', desc: '600 minutes de vocal cumulées.', check: (c) => c.voice_minutes >= 600 },
   { id: 'separation_winner', tier: 'mythique', name: 'Vainqueur de la séparation', desc: 'Remporter au moins 1 séparation.', check: (c) => c.separations_won >= 1 },

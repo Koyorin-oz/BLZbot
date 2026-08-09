@@ -450,7 +450,7 @@ CONTEXTE SALON : salon « chatbot normal ». Ici tu restes correct et tu n'insul
 
         const imageGenerationGuide = "\n\n🔴 RÈGLES ABSOLUES - Format de réponse JSON (À RESPECTER STRICTEMENT):\nTu dois répondre UNIQUEMENT avec un objet JSON valide. RIEN D'AUTRE. PAS DE TEXTE AVANT OU APRÈS LE JSON.\n\nLe JSON doit contenir exactement ces 4 champs:\n{\n  \"text\": \"Ta réponse conversationnelle pour l'utilisateur (sans mention des autres champs)\",\n  \"generateImage\": true/false,\n  \"imagePrompt\": \"Prompt en français pour le générateur d'images (null si generateImage est false)\",\n  \"dangerousContent\": true/false (true si contenu dangereux/inapproprié/offensant/illégal)\n}\n\ngenerateImage : mets true pour toute demande d'image RAISONNABLE : meme, logo simple, illustration, fond d'écran, avatar stylisé, \"montre à quoi ressemble...\", dessin, etc. Refuse (false) si c'est TROP LOURD : vidéo longue, dizaines d'images, rendu pro 8K/16K, \"film entier\", production cinéma, batch massif — et explique brièvement dans text pourquoi.\nimagePrompt : description courte et claire (style, sujet, ambiance) ; null si pas d'image.\n\n⚠️ RAPPELS CRITIQUES:\n1. Retourne UNIQUEMENT du JSON valide. Rien avant, rien après.\n2. Le champ 'text' ne doit JAMAIS mentionner generateImage, imagePrompt ou dangerousContent.\n3. N'écris JAMAIS de texte explicatif, d'introduction ou de conclusion en dehors du JSON.\n4. Si aucune image n'est demandée ni utile, generateImage false et imagePrompt null.\n5. Vérifie que ton JSON est valide avant de l'envoyer.";
 
-        const markdownGuide = "\n\n📝 FORMATAGE DISCORD OBLIGATOIRE :\n- Utilise UNIQUEMENT le Markdown Discord standard (**gras**, *italique*, `code`, etc.).\n- N'utilise JAMAIS de LaTeX (comme $...$ ou \\[...\\]) car cela ne s'affiche pas sur Discord.\n- Pour les blocs de code, spécifie toujours le langage (ex: ```js ... ```).";
+        const markdownGuide = "\n\n📝 FORMATAGE DISCORD OBLIGATOIRE :\n- Utilise UNIQUEMENT le Markdown Discord standard (**gras**, *italique*, `code`, etc.).\n- N'utilise JAMAIS de LaTeX (comme $...$ ou \\[...\\]) car cela ne s'affiche pas sur Discord.\n- Pour les blocs de code, spécifie toujours le langage (ex: ```js ... ```).\n\nSi y a un bloc base de connaissances, sers t'en pour les questions commandes/niveaux. Invente pas de slash.";
 
         let replyContext = "";
         if (message.reference && message.reference.messageId) {
@@ -464,7 +464,7 @@ CONTEXTE SALON : salon « chatbot normal ». Ici tu restes correct et tu n'insul
             }
         }
 
-        const baseSystemPrompt = systemPrompt + markdownGuide + replyContext + "\n" + userInfo + "\n\n" + channelContext + (relevantKnowledge ? "\n\nInformations pertinentes de la base de connaissances:\n" + relevantKnowledge : "");
+        const baseSystemPrompt = systemPrompt + markdownGuide + replyContext + "\n" + userInfo + "\n\n" + channelContext + (relevantKnowledge ? "\n\nInfos bot (commandes / systemes / faq):\n" + relevantKnowledge : "");
         const fullSystemPrompt = baseSystemPrompt + imageGenerationGuide;
 
         const conversation = [
@@ -1170,9 +1170,9 @@ async function handleInteractionCreate(interaction, client, activeThreads) {
                 const channelContext = utils.getChannelContext(interaction.channel.id, user.id, includeGlobalContext);
                 const relevantKnowledge = await utils.getRelevantKnowledge(userPrompt);
 
-                const markdownGuide = "\n\n📝 FORMATAGE DISCORD OBLIGATOIRE :\n- Utilise UNIQUEMENT le Markdown Discord standard (**gras**, *italique*, `code`, etc.).\n- N'utilise JAMAIS de LaTeX (comme $...$ ou \\[...\\]) car cela ne s'affiche pas sur Discord.\n- Pour les blocs de code, spécifie toujours le langage (ex: ```js ... ```).";
+                const markdownGuide = "\n\n📝 FORMATAGE DISCORD OBLIGATOIRE :\n- Utilise UNIQUEMENT le Markdown Discord standard (**gras**, *italique*, `code`, etc.).\n- N'utilise JAMAIS de LaTeX (comme $...$ ou \\[...\\]) car cela ne s'affiche pas sur Discord.\n- Pour les blocs de code, spécifie toujours le langage (ex: ```js ... ```).\n\nSi y a un bloc base de connaissances, sers t'en pour les questions commandes/niveaux. Invente pas de slash.";
 
-                const baseSystemPrompt = systemPrompt + markdownGuide + "\n" + userInfo + "\n\n" + channelContext + (relevantKnowledge ? "\n\nInformations pertinentes de la base de connaissances:\n" + relevantKnowledge : "");
+                const baseSystemPrompt = systemPrompt + markdownGuide + "\n" + userInfo + "\n\n" + channelContext + (relevantKnowledge ? "\n\nInfos bot (commandes / systemes / faq):\n" + relevantKnowledge : "");
 
                 // 5. History Fetching (Correct Logic)
                 const isPrivateThread = activeThreads.has(interaction.channel.id);

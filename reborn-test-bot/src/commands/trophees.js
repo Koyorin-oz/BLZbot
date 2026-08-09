@@ -49,11 +49,13 @@ module.exports = {
     const total = trophies.DEFS.length;
     const done = trophies.DEFS.filter((t) => unlocked.has(t.id));
     const pending = trophies.DEFS.filter((t) => !unlocked.has(t.id));
+    const ctx = trophies.buildContext(uid, hub);
 
     const intro = new TextDisplayBuilder().setContent(
       [
         '# Trophées',
         `**${unlocked.size}** / **${total}** débloqués`,
+        `GRP actuel : **${ctx.grp_total.toLocaleString('fr-FR')}**`,
         '',
         '*Les critères se vérifient tout seuls ; `/trophees verifier` force une passe.*',
         '*`/trophees tirage`* : 1× / 24 h pour tenter d’en débloquer un au hasard.',
@@ -65,7 +67,12 @@ module.exports = {
     });
     const linesTodo = pending.map((t) => {
       const emoji = TIER_EMOJI[t.tier || 'commun'] || '⚪';
-      return `○ ${emoji} **${t.name}** — ${t.desc}`;
+      let line = `○ ${emoji} **${t.name}** — ${t.desc}`;
+      if (typeof t.progress === 'function') {
+        const p = t.progress(ctx);
+        if (p) line += `\n   └ ${p}`;
+      }
+      return line;
     });
     const blocDone = new TextDisplayBuilder().setContent(
       linesDone.length ? `**Obtenus**\n${linesDone.join('\n')}`.slice(0, 3800) : '**Obtenus** — *aucun pour l’instant.*',

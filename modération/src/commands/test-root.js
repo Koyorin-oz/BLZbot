@@ -20,9 +20,7 @@ const { stripHexToInt } = require(
 );
 
 /**
- * Prototype bienvenue Components V2 — `/test-root`
- * Les éléments cliquables = les **boutons Link** sous le message
- * (id + nom + emoji + éventuel serveur distant), pas les mentions dans le texte.
+ * /test-root — proto message de bienvenue (boutons en dessous)
  */
 
 function parseAccentColor(hex) {
@@ -105,7 +103,6 @@ function readSalonSlot(interaction, n, fallbackGuildId) {
   };
 }
 
-/** Libellé plain dans le texte (pas de lien — les boutons sous le message sont cliquables). */
 function salonPlainLabel(salon) {
   return [salon.emojiMd, salon.nom].filter(Boolean).join(' ').trim() || salon.nom;
 }
@@ -245,7 +242,6 @@ module.exports = {
     const serverName = interaction.guild?.name || 'ce serveur';
     const mention = member || targetUser;
 
-    // Texte = libellés non cliquables. Les seuls clics = boutons Link sous le message.
     const salonLabels = salons.map(salonPlainLabel);
     const defaultBody =
       `➜ Nous sommes ravis de te voir arriver sur le serveur **${serverName}** !\n` +

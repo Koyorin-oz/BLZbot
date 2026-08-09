@@ -1,67 +1,86 @@
 [
   {
     "title": "recuperation RP",
-    "content": "pour récuperer des RP (rank points), il faut soit envoyer des messages, soit mettre des réactions, soit être dans un salon vocal"
+    "content": "Pour gagner des RP (Rank Points) : envoyer des messages (anti-spam ~2s), mettre des réactions, ou être en vocal (pas seul dans le salon, et pas mute+sourd en même temps). Les RP déterminent le rang ranked (Plastique → GOAT). Voir aussi /profil et /classement type RP."
+  },
+  {
+    "title": "niveaux et XP",
+    "content": "L'XP fait monter le niveau. Gains via messages et vocal (mêmes conditions vocales que les RP). À chaque level up le rôle de niveau peut être mis à jour (Pleb, Paysans, Noble, Prince, Dirigeant, Roi, Empereur selon seuils). Commande utile : /profil."
+  },
+  {
+    "title": "starss et economie",
+    "content": "Les Starss sont la monnaie principale. /daily pour la récompense du jour, /boutique pour la boutique quotidienne, /payer pour envoyer des starss, /inventaire et /use pour les items. Les boosts XP/RP/Starss se trouvent en boutique."
+  },
+  {
+    "title": "commandes principales joueur",
+    "content": "Commandes fréquentes : /profil (profil + boutons quêtes/inventaire/guilde), /daily, /boutique, /inventaire, /use, /classement, /parametres, /payer, /echange (niv.25+), /puits, /marketplace, /battlepass, /creerguilde, /liste-guildes, /starss-preter, /rembourser, /minijeu. Ne pas inventer d'autres slash."
+  },
+  {
+    "title": "puits de combat",
+    "content": "Le Puits de Combat utilise des Points de Tirage (PT). Commandes : /puits afficher (voir PT et coûts), /puits tirer [nombre], /puits historique. Les PT se gagnent avec l'activité (messages/vocal selon le système)."
+  },
+  {
+    "title": "marketplace",
+    "content": "Marketplace P2P : /marketplace parcourir, vendre (item, quantité, prix — niv.25+), acheter [id], annuler [id], mes-annonces, rechercher [item]."
+  },
+  {
+    "title": "guildes",
+    "content": "Créer une guilde : /creerguilde (coût en starss + niveau requis, voir doc). Autres : /liste-guildes, /profil-guilde, /guilde-membre demander-rejoindre / quitter, /quetes-guilde, /tresorerie, /guerre pour les guerres de guildes. Gestion chef : invitations, upgrades, rôles custom selon niveau d'upgrade."
+  },
+  {
+    "title": "prets starss",
+    "content": "Proposer un prêt : /starss-preter [membre] [montant] [intérêt] [durée]. Rembourser : /rembourser. En cas de retard, le système applique des pénalités selon les règles des prêts."
   },
   {
     "title": "salons invisibles",
-    "content": "si vous ne trouvez pas de salon, cocher \"montrer tout les salons\" dans les paramêtres du serveur"
-  },
-
-  {
-    "title": "faire de la publicité",
-    "content": "vous ne pouvez mettre de la publicité que dans \"https://canary.discord.com/channels/1097110036192448656/1388993273875533824\"cependant la publicité est strictement interdite en dehors de ce salon. Toute infraction peut entraîner une sanction immédiate."
+    "content": "Si tu ne trouves pas un salon : paramètres du serveur Discord → afficher / montrer tous les salons."
   },
   {
-    "title": "blzbot ne répond pas",
-    "content": "en cas de bug avec blzbot, veuillez executer \"/bug\" avec le contenu du problème que vous avez rencontré."
+    "title": "faire de la publicite",
+    "content": "La publicité n'est autorisée que dans le salon dédié à la pub du serveur. Ailleurs c'est interdit et peut entraîner une sanction."
   },
   {
-    "title": "localisation du règlement du serveur",
-    "content": "le règlement est disponible dans le salon https://canary.discord.com/channels/1097110036192448656/1257317206937571350 . Il doit être lu et accepté pour participer au serveur."
+    "title": "blzbot ne repond pas",
+    "content": "En cas de bug avec BLZbot, utilise /bug avec une description du problème, ou ouvre un ticket support."
+  },
+  {
+    "title": "reglement du serveur",
+    "content": "Le règlement est dans le salon des règles (aussi accessible via les boutons du message de bienvenue : Règlement / Tickets). Il faut le lire et l'accepter pour participer correctement."
   },
   {
     "title": "meilleur bot",
-    "content": "le meilleur bot est sans aucun doute moi(BLZbot)."
+    "content": "Le meilleur bot est sans aucun doute moi (BLZbot)."
   },
   {
-    "title": "quel est le plus haut rank possible",
-    "content": "le rank le plus élevé est \"Master\"."
+    "title": "plus haut rank",
+    "content": "Le rang ranked le plus élevé est GOAT, puis les rangs post-GOAT (SUPER GOAT, THE GOAT, MAGNIFIQUE) selon les coefficients. Ce n'est pas « Master »."
   },
   {
     "title": "recevoir les annonces",
-    "content": "vous pouvez recevoir tout types d'annonce dans <id:customize>."
+    "content": "Tu peux gérer les rôles d'annonces via le menu de personnalisation Discord <id:customize>."
   },
   {
-    "title": "devenir modérateur",
-    "content": "Consultez le salon https://canary.discord.com/channels/1097110036192448656/1323247488525795338 pour savoir si le recrutements mdoératur est ouvert, vpus y trouverez également dans les messages épinglé les ocnditions."
+    "title": "devenir moderateur",
+    "content": "Consulte le salon de recrutement staff pour savoir si le recrutement est ouvert ; les conditions sont en général dans les messages épinglés."
   },
   {
-    "title": "comment faire une suggestion",
-    "content": "vous pouvez poster vos idées **en rapport avec le serveur discord ** dans le salon https://canary.discord.com/channels/1097110036192448656/1388999927593435156."
+    "title": "faire une suggestion",
+    "content": "Poste tes idées liées au serveur Discord dans le salon suggestions prévu à cet effet."
   },
   {
-    "title": "signification des rôles",
-    "content": "chaque rôle a une signification spécifique. Consultez le salon https://canary.discord.com/channels/1097110036192448656/1389163683304833157 pour en savoir plus."
-  },
-  {
-    "title": "problème de recuperation de RP",
-    "content": "assurez vous de ne pas avoir attent votre limite quotidienne, vous pouvez la voir via la commande \"/check\" du bot \"Ascend\"."
+    "title": "signification des roles",
+    "content": "Chaque rôle a une signification. Consulte le salon d'infos / rôles du serveur pour le détail."
   },
   {
     "title": "Qui est BLZ",
-    "content": "BLZstarss est un youtubeur de 90 000 abbonés qui est connu pour faire des vidéo critique"
+    "content": "BLZstarss est un YouTubeur (critique / contenu gaming / commu) et la figure du serveur Discord BLZstarss."
   },
   {
     "title": "contacter BLZ",
-    "content": "vous pouvez vous rendre dans le salon \"ticket\" et en faire un, cela vous mettera en contacte avec le staff de BLZstarss et eux pourront si nessesaire le contacter, cependant les idée pour des potentiels sujets de vidéo ne sont plus acceptés. "
+    "content": "Passe par un ticket support : le staff peut transmettre si nécessaire. Les idées de sujets vidéo ne sont en général plus acceptées via ce canal."
   },
   {
-    "title": "modification des paramêtres de BLZbot",
-    "content": "affin de modifier les paramêtres du bot, vous devez executer \"/ia-settings\"."
-  },
-  {
-    "title": "general",
-    "content": "le salon géneral se trouve ici : https://discordapp.com/channels/1097110036192448656/1388970340440473650."
+    "title": "parametres IA BLZbot",
+    "content": "Pour modifier certains paramètres liés à l'IA / préférences personnelles du bot, regarde les commandes /ia ou /parametres selon le contexte. Les réglages admin sont réservés au staff."
   }
 ]
