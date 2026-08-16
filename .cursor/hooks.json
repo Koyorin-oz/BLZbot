@@ -1,24 +1,4 @@
 {
   "version": 1,
-  "hooks": {
-    "afterFileEdit": [
-      {
-        "command": "node .cursor/hooks/git-auto-push.js",
-        "matcher": "Write|TabWrite",
-        "timeout": 180
-      }
-    ],
-    "afterTabFileEdit": [
-      {
-        "command": "node .cursor/hooks/git-auto-push.js",
-        "timeout": 180
-      }
-    ],
-    "stop": [
-      {
-        "command": "node .cursor/hooks/git-auto-push.js",
-        "timeout": 180
-      }
-    ]
-  }
+  "hooks": {}
 }

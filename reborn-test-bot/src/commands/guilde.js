@@ -387,7 +387,10 @@ module.exports = {
       }
       const r = pg.treasuryDeposit(m.guild_id, uid, amt);
       if (!r.ok) return interaction.reply({ content: r.error });
-      return interaction.reply({ content: "Dépôt effectué." });
+      const left = r.treasury != null ? r.treasury : pg.treasuryView(m.guild_id);
+      return interaction.reply({
+        content: `Dépôt effectué. Trésorerie : **${left.toLocaleString("fr-FR")}** starss.`,
+      });
     }
 
     if (sub === "tresor_retrait") {
@@ -401,7 +404,10 @@ module.exports = {
       }
       const r = pg.treasuryWithdraw(m.guild_id, uid, amt);
       if (!r.ok) return interaction.reply({ content: r.error });
-      return interaction.reply({ content: "Retrait effectué." });
+      const left = r.treasury != null ? r.treasury : pg.treasuryView(m.guild_id);
+      return interaction.reply({
+        content: `Retrait effectué. Trésorerie : **${left.toLocaleString("fr-FR")}** starss.`,
+      });
     }
 
     if (sub === "tresor_voir") {

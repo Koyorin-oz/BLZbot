@@ -66,11 +66,26 @@ const SHOP_CONFIG = {
 };
 
 function getItem(itemId) {
-    return ITEMS[itemId];
+    if (ITEMS[itemId]) return ITEMS[itemId];
+    try {
+        const { getRebornCatalogItem } = require('./reborn-integration');
+        return getRebornCatalogItem(itemId) || undefined;
+    } catch {
+        return undefined;
+    }
 }
 
 function getAllItems() {
-    return ITEMS;
+    const out = { ...ITEMS };
+    try {
+        const { getRebornCatalogItems } = require('./reborn-integration');
+        for (const it of getRebornCatalogItems()) {
+            if (!out[it.id]) out[it.id] = it;
+        }
+    } catch {
+        /* reborn off */
+    }
+    return out;
 }
 
 function getRarityValue(rarity) {

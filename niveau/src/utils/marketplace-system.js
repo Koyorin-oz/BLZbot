@@ -15,7 +15,7 @@
 
 const db = require('../database/database');
 const logger = require('./logger');
-const { getItem, ITEMS } = require('./items');
+const { getItem } = require('./items');
 
 // ==========================================
 // CONFIGURATION
@@ -34,6 +34,54 @@ const NON_SELLABLE_ITEMS = [
     'ami_chiant',     // Saint-Valentin
     'coeur_rouge',    // Saint-Valentin
 ];
+
+/** Inventaire / starss via REBORN si l'éco live est active. */
+function useRebornInv() {
+    try {
+        const { rebornEconomyActive } = require('./reborn-integration');
+        return Boolean(rebornEconomyActive());
+    } catch {
+        return false;
+    }
+}
+
+function ownedQty(userId, itemId) {
+    if (useRebornInv()) {
+        const { getRebornInventoryQty } = require('./reborn-integration');
+        const q = getRebornInventoryQty(userId, itemId);
+        if (q !== null && q !== undefined) return q;
+    }
+    const { checkUserInventory } = require('./db-users');
+    return checkUserInventory(userId, itemId);
+}
+
+function takeItem(userId, itemId, qty) {
+    if (useRebornInv()) {
+        const { removeRebornInventory } = require('./reborn-integration');
+        return removeRebornInventory(userId, itemId, qty);
+    }
+    const { removeUserItem } = require('./db-users');
+    removeUserItem(userId, itemId, qty);
+    return true;
+}
+
+function giveItem(userId, itemId, qty) {
+    if (useRebornInv()) {
+        const { addRebornInventory } = require('./reborn-integration');
+        return addRebornInventory(userId, itemId, qty);
+    }
+    const { addItemToInventory } = require('./db-users');
+    addItemToInventory(userId, itemId, qty);
+    return true;
+}
+
+function payStarss(fromId, toId, amount) {
+    const { getEffectiveStars, moveLoanStars } = require('./loan-system');
+    if (getEffectiveStars(fromId) < amount) return false;
+    moveLoanStars(fromId, -amount);
+    moveLoanStars(toId, amount);
+    return true;
+}
 
 // ==========================================
 // REQUÊTES PRÉPARÉES
@@ -164,20 +212,27 @@ function createListing(sellerId, itemId, quantity, priceAmount, priceType = 'sta
         return { success: false, message: '❌ Type de prix invalide. Utilisez "starss" ou "item".' };
     }
 
-    // Vérifier que le vendeur possède l'item
-    const { checkUserInventory } = require('./db-users');
-    const owned = checkUserInventory(sellerId, itemId);
+    // Vérifier que le vendeur possède l'item (inventaire REBORN si éco live)
+    const owned = ownedQty(sellerId, itemId);
     if (owned < quantity) {
         return { success: false, message: `❌ Vous ne possédez que **${owned}x ${item.name}** mais vous voulez en vendre **${quantity}**.` };
     }
 
     // Retirer l'item du vendeur (mis en escrow)
-    const { removeUserItem } = require('./db-users');
-    removeUserItem(sellerId, itemId, quantity);
+    if (!takeItem(sellerId, itemId, quantity)) {
+        return { success: false, message: `❌ Impossible de retirer **${quantity}x ${item.name}** de votre inventaire.` };
+    }
 
     // Créer l'annonce
     const expiresAt = now + LISTING_DURATION_MS;
-    const result = createListingStmt.run(sellerId, itemId, quantity, priceType, priceItemId, priceAmount, now, expiresAt);
+    let result;
+    try {
+        result = createListingStmt.run(sellerId, itemId, quantity, priceType, priceItemId, priceAmount, now, expiresAt);
+    } catch (e) {
+        giveItem(sellerId, itemId, quantity);
+        logger.error('[MARKETPLACE] createListing insert failed:', e?.message || e);
+        return { success: false, message: '❌ Erreur lors de la création de l\'annonce. Item rendu.' };
+    }
 
     logger.info(`[MARKETPLACE] Nouvelle annonce #${result.lastInsertRowid} par ${sellerId}: ${quantity}x ${itemId} pour ${priceAmount} ${priceType}`);
 
@@ -212,46 +267,34 @@ function buyListing(buyerId, listingId) {
         return { success: false, message: '❌ Vous ne pouvez pas acheter votre propre annonce. Utilisez `/marketplace annuler` pour la retirer.' };
     }
 
-    const { checkUserInventory, removeUserItem, addItemToInventory } = require('./db-users');
     const item = getItem(listing.item_id);
 
     // Vérifier que l'acheteur peut payer
     if (listing.price_type === 'starss') {
-        const buyer = db.prepare('SELECT stars FROM users WHERE id = ?').get(buyerId);
-        if (!buyer || buyer.stars < listing.price_amount) {
+        const { getEffectiveStars } = require('./loan-system');
+        if (getEffectiveStars(buyerId) < listing.price_amount) {
             return { success: false, message: `❌ Vous n'avez pas assez de Starss. Il vous faut **${listing.price_amount.toLocaleString('fr-FR')} Starss**.` };
         }
 
-        // Effectuer la transaction
-        db.transaction(() => {
-            // Prendre les starss de l'acheteur
-            db.prepare('UPDATE users SET stars = stars - ? WHERE id = ?').run(listing.price_amount, buyerId);
-            // Donner les starss au vendeur
-            db.prepare('UPDATE users SET stars = stars + ? WHERE id = ?').run(listing.price_amount, listing.seller_id);
-            // Donner l'item à l'acheteur
-            addItemToInventory(buyerId, listing.item_id, listing.quantity);
-            // Marquer comme vendu
-            buyListingStmt.run(buyerId, Date.now(), listingId);
-        })();
+        // Starss via REBORN (ou niveau), item via inventaire live
+        if (!payStarss(buyerId, listing.seller_id, listing.price_amount)) {
+            return { success: false, message: `❌ Vous n'avez pas assez de Starss. Il vous faut **${listing.price_amount.toLocaleString('fr-FR')} Starss**.` };
+        }
+        giveItem(buyerId, listing.item_id, listing.quantity);
+        buyListingStmt.run(buyerId, Date.now(), listingId);
     } else if (listing.price_type === 'item') {
-        // Vérifier que l'acheteur possède l'item demandé
-        const owned = checkUserInventory(buyerId, listing.price_item_id);
+        const owned = ownedQty(buyerId, listing.price_item_id);
         if (owned < listing.price_amount) {
             const priceItem = getItem(listing.price_item_id);
             return { success: false, message: `❌ Vous ne possédez que **${owned}x ${priceItem?.name || listing.price_item_id}** mais il en faut **${listing.price_amount}**.` };
         }
 
-        // Effectuer la transaction
-        db.transaction(() => {
-            // Prendre l'item de paiement de l'acheteur
-            removeUserItem(buyerId, listing.price_item_id, listing.price_amount);
-            // Donner l'item de paiement au vendeur
-            addItemToInventory(listing.seller_id, listing.price_item_id, listing.price_amount);
-            // Donner l'item vendu à l'acheteur
-            addItemToInventory(buyerId, listing.item_id, listing.quantity);
-            // Marquer comme vendu
-            buyListingStmt.run(buyerId, Date.now(), listingId);
-        })();
+        if (!takeItem(buyerId, listing.price_item_id, listing.price_amount)) {
+            return { success: false, message: '❌ Impossible de retirer l\'item de paiement de votre inventaire.' };
+        }
+        giveItem(listing.seller_id, listing.price_item_id, listing.price_amount);
+        giveItem(buyerId, listing.item_id, listing.quantity);
+        buyListingStmt.run(buyerId, Date.now(), listingId);
     }
 
     logger.info(`[MARKETPLACE] Vente #${listingId}: ${buyerId} achète ${listing.quantity}x ${listing.item_id} de ${listing.seller_id}`);
@@ -282,13 +325,8 @@ function cancelListing(sellerId, listingId) {
         return { success: false, message: '❌ Cette annonce n\'est plus active.' };
     }
 
-    // Rendre l'item au vendeur
-    const { addItemToInventory } = require('./db-users');
-
-    db.transaction(() => {
-        cancelListingStmt.run(listingId, sellerId);
-        addItemToInventory(sellerId, listing.item_id, listing.quantity);
-    })();
+    cancelListingStmt.run(listingId, sellerId);
+    giveItem(sellerId, listing.item_id, listing.quantity);
 
     const item = getItem(listing.item_id);
     logger.info(`[MARKETPLACE] Annonce #${listingId} annulée par ${sellerId}`);
@@ -364,7 +402,6 @@ function searchListingsByItem(itemId) {
  */
 function cleanupExpiredListings() {
     const now = Date.now();
-    const { addItemToInventory } = require('./db-users');
 
     const expired = db.prepare(`
         SELECT * FROM marketplace_listings 
@@ -372,14 +409,10 @@ function cleanupExpiredListings() {
     `).all(now);
 
     if (expired.length > 0) {
-        db.transaction(() => {
-            for (const listing of expired) {
-                // Rendre l'item au vendeur
-                addItemToInventory(listing.seller_id, listing.item_id, listing.quantity);
-                // Marquer comme expiré
-                db.prepare('UPDATE marketplace_listings SET status = ? WHERE id = ?').run('expired', listing.id);
-            }
-        })();
+        for (const listing of expired) {
+            giveItem(listing.seller_id, listing.item_id, listing.quantity);
+            db.prepare('UPDATE marketplace_listings SET status = ? WHERE id = ?').run('expired', listing.id);
+        }
 
         logger.info(`[MARKETPLACE] ${expired.length} annonce(s) expirée(s) nettoyée(s), items rendus.`);
     }

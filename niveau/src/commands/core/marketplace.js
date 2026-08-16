@@ -13,13 +13,24 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, ComponentType } = require('discord.js');
 const { getOrCreateUser } = require('../../utils/db-users');
 const { createListing, buyListing, cancelListing, getActiveListings, getUserListings, getAllUserListings, searchListingsByItem, getMarketplaceStats, isItemSellable, MAX_ACTIVE_LISTINGS, MIN_LEVEL_MARKETPLACE } = require('../../utils/marketplace-system');
-const { getItem, ITEMS } = require('../../utils/items');
+const { getItem, getAllItems } = require('../../utils/items');
 const { getUserInventory } = require('../../utils/db-users');
 const { handleCommandError } = require('../../utils/error-handler');
 
+function getLiveInventory(userId) {
+    try {
+        const { rebornEconomyActive, getRebornInventoryRows } = require('../../utils/reborn-integration');
+        if (rebornEconomyActive()) {
+            const rows = getRebornInventoryRows(userId);
+            if (rows) return rows;
+        }
+    } catch { /* fallback niveau */ }
+    return getUserInventory(userId);
+}
+
 // Items disponibles à la vente pour un utilisateur (basé sur son inventaire)
 function getSellableItemsForUser(userId) {
-    const inventory = getUserInventory(userId);
+    const inventory = getLiveInventory(userId);
     return inventory
         .filter(inv => inv.quantity > 0 && isItemSellable(inv.item_id))
         .map(inv => {
@@ -31,7 +42,7 @@ function getSellableItemsForUser(userId) {
 
 // Items disponibles (pour recherche, pas besoin d'inventaire)
 function getSellableItems() {
-    return Object.values(ITEMS)
+    return Object.values(getAllItems())
         .filter(item => isItemSellable(item.id))
         .map(item => ({ name: `${item.name} (${item.rarity || 'N/A'})`, value: item.id }));
 }

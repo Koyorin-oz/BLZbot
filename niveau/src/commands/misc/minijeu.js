@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, ContainerBuilder, TextDisplayBuilder, MessageFlags } = require('discord.js');
 const { startGame, getGame, updateGame, endGame } = require('../../utils/minigame-system');
-const { getOrCreateUser, grantResources, updateUserItemQuantity } = require('../../utils/db-users');
-const { getTotalDebt } = require('../../utils/loan-system');
+const { getOrCreateUser, updateUserItemQuantity } = require('../../utils/db-users');
+const { getTotalDebt, getEffectiveStars } = require('../../utils/loan-system');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -41,7 +41,7 @@ module.exports = {
                 }
 
                 const bet = interaction.options.getString('mise') || '0';
-                const player1 = getOrCreateUser(interaction.user.id, interaction.user.username);
+                getOrCreateUser(interaction.user.id, interaction.user.username);
 
                 // Vérifier la dette totale
                 const totalDebt = getTotalDebt(interaction.user.id);
@@ -56,8 +56,9 @@ module.exports = {
                     // C'est un objet, pas de vérification
                 } else if (bet !== '0') {
                     const betAmount = parseInt(bet);
-                    if (betAmount > player1.stars) {
-                        const errorText = new TextDisplayBuilder().setContent(`Vous n'avez que **${player1.stars}** starss, vous ne pouvez pas miser **${betAmount}** starss.`);
+                    const stars = getEffectiveStars(interaction.user.id, interaction.user.username);
+                    if (betAmount > stars) {
+                        const errorText = new TextDisplayBuilder().setContent(`Vous n'avez que **${stars.toLocaleString('fr-FR')}** starss, vous ne pouvez pas miser **${betAmount.toLocaleString('fr-FR')}** starss.`);
                         const container = new ContainerBuilder().addTextDisplayComponents(errorText);
                         return interaction.editReply({ components: [container], flags: 32768 });
                     }
@@ -101,7 +102,7 @@ module.exports = {
                 }
 
                 const bet = interaction.options.getString('mise') || '0';
-                const player1 = getOrCreateUser(interaction.user.id, interaction.user.username);
+                getOrCreateUser(interaction.user.id, interaction.user.username);
 
                 // Vérifier la dette totale
                 const totalDebt = getTotalDebt(interaction.user.id);
@@ -116,8 +117,9 @@ module.exports = {
                     // C'est un objet, pas de vérification
                 } else if (bet !== '0') {
                     const betAmount = parseInt(bet);
-                    if (betAmount > player1.stars) {
-                        const errorText = new TextDisplayBuilder().setContent(`Vous n'avez que **${player1.stars}** starss, vous ne pouvez pas miser **${betAmount}** starss.`);
+                    const stars = getEffectiveStars(interaction.user.id, interaction.user.username);
+                    if (betAmount > stars) {
+                        const errorText = new TextDisplayBuilder().setContent(`Vous n'avez que **${stars.toLocaleString('fr-FR')}** starss, vous ne pouvez pas miser **${betAmount.toLocaleString('fr-FR')}** starss.`);
                         const container = new ContainerBuilder().addTextDisplayComponents(errorText);
                         return interaction.editReply({ components: [container], flags: 32768 });
                     }
@@ -161,7 +163,7 @@ module.exports = {
                 }
 
                 const bet = interaction.options.getString('mise') || '0';
-                const player1 = getOrCreateUser(interaction.user.id, interaction.user.username);
+                getOrCreateUser(interaction.user.id, interaction.user.username);
 
                 // Vérifier la dette totale
                 const totalDebt = getTotalDebt(interaction.user.id);
@@ -176,8 +178,9 @@ module.exports = {
                     // C'est un objet, pas de vérification
                 } else if (bet !== '0') {
                     const betAmount = parseInt(bet);
-                    if (betAmount > player1.stars) {
-                        const errorText = new TextDisplayBuilder().setContent(`Vous n'avez que **${player1.stars}** starss, vous ne pouvez pas miser **${betAmount}** starss.`);
+                    const stars = getEffectiveStars(interaction.user.id, interaction.user.username);
+                    if (betAmount > stars) {
+                        const errorText = new TextDisplayBuilder().setContent(`Vous n'avez que **${stars.toLocaleString('fr-FR')}** starss, vous ne pouvez pas miser **${betAmount.toLocaleString('fr-FR')}** starss.`);
                         const container = new ContainerBuilder().addTextDisplayComponents(errorText);
                         return interaction.editReply({ components: [container], flags: 32768 });
                     }

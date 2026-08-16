@@ -503,6 +503,101 @@ function addRebornInventory(userId, itemId, qty = 1) {
   }
 }
 
+function removeRebornInventory(userId, itemId, qty = 1) {
+  const svc = getRebornUsersService();
+  if (!svc?.takeInventory) return false;
+  try {
+    const mapped = PUITS_ITEM_TO_REBORN[itemId] || itemId;
+    return Boolean(svc.takeInventory(userId, mapped, qty));
+  } catch (e) {
+    logger.warn('[reborn] removeRebornInventory:', e?.message || e);
+    return false;
+  }
+}
+
+function getRebornInventoryQty(userId, itemId) {
+  const svc = getRebornUsersService();
+  if (!svc?.getInventory) return null;
+  try {
+    const mapped = PUITS_ITEM_TO_REBORN[itemId] || itemId;
+    const rows = svc.getInventory(userId);
+    const hit = rows.find((r) => r.item_id === mapped);
+    return hit ? Number(hit.qty) || 0 : 0;
+  } catch (e) {
+    logger.warn('[reborn] getRebornInventoryQty:', e?.message || e);
+    return null;
+  }
+}
+
+/** Inventaire REBORN au format niveau `{ item_id, quantity }[]`. */
+function getRebornInventoryRows(userId) {
+  const svc = getRebornUsersService();
+  if (!svc?.getInventory) return null;
+  try {
+    return svc.getInventory(userId).map((r) => ({
+      item_id: r.item_id,
+      quantity: Number(r.qty) || 0,
+    }));
+  } catch (e) {
+    logger.warn('[reborn] getRebornInventoryRows:', e?.message || e);
+    return null;
+  }
+}
+
+function getRebornCatalogItem(itemId) {
+  if (!rebornEconomyActive()) return null;
+  try {
+    initEnvironment();
+    const { getItem, priceFor } = require(path.join(
+      REPO_ROOT,
+      'reborn-test-bot',
+      'src',
+      'reborn',
+      'catalog',
+    ));
+    const it = getItem(itemId);
+    if (!it) return null;
+    let price = 0;
+    try {
+      price = Number(priceFor(it));
+    } catch {
+      price = 0;
+    }
+    return {
+      id: it.id,
+      name: it.name,
+      rarity: it.rarity,
+      type: it.kind === 'boost' ? 'boost' : 'item',
+      kind: it.kind || 'consumable',
+      price: Number.isFinite(price) ? price : 0,
+      _reborn: true,
+    };
+  } catch (e) {
+    logger.warn('[reborn] getRebornCatalogItem:', e?.message || e);
+    return null;
+  }
+}
+
+function getRebornCatalogItems() {
+  if (!rebornEconomyActive()) return [];
+  try {
+    initEnvironment();
+    const { ITEMS: cat } = require(path.join(
+      REPO_ROOT,
+      'reborn-test-bot',
+      'src',
+      'reborn',
+      'catalog',
+    ));
+    return (cat || [])
+      .map((it) => getRebornCatalogItem(it.id))
+      .filter(Boolean);
+  } catch (e) {
+    logger.warn('[reborn] getRebornCatalogItems:', e?.message || e);
+    return [];
+  }
+}
+
 /**
  * IDs des top joueurs depuis la BDD REBORN (starss / niveau XP).
  * @param {'stars'|'level'} field
@@ -569,6 +664,11 @@ module.exports = {
   getRebornRankDisplay,
   resolveRankDisplay,
   addRebornInventory,
+  removeRebornInventory,
+  getRebornInventoryQty,
+  getRebornInventoryRows,
+  getRebornCatalogItem,
+  getRebornCatalogItems,
   PUITS_ITEM_TO_REBORN,
   getRebornTopUserIds,
   syncRebornRankRole,

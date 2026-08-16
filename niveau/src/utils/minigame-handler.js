@@ -1,9 +1,26 @@
 
 const { getGame, updateGame, endGame } = require('./minigame-system');
-const { getOrCreateUser, updateUserBalance, updateUserItemQuantity } = require('./db-users');
+const { updateUserItemQuantity } = require('./db-users');
 const { adjustWarInitialValues } = require('./guild/guild-wars');
+const { getEffectiveStars, moveLoanStars } = require('./loan-system');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, EmbedBuilder, ContainerBuilder, TextDisplayBuilder, MessageFlags } = require('discord.js');
 const { checkQuestProgress } = require('./quests');
+
+/** Transfert mise starss sur le vrai portefeuille (REBORN si actif). */
+function transferBetStars(loser, winner, amount) {
+    const loserBefore = getEffectiveStars(loser.id, loser.username);
+    const winnerBefore = getEffectiveStars(winner.id, winner.username);
+    const rebornL = moveLoanStars(loser.id, -amount, loser.username);
+    const rebornW = moveLoanStars(winner.id, amount, winner.username);
+    if (!rebornL) adjustWarInitialValues(loser.id, { stars: -amount });
+    if (!rebornW) adjustWarInitialValues(winner.id, { stars: amount });
+    return {
+        loserBefore,
+        winnerBefore,
+        loserAfter: getEffectiveStars(loser.id, loser.username),
+        winnerAfter: getEffectiveStars(winner.id, winner.username),
+    };
+}
 
 async function handleGameInteraction(interaction) {
     // Parse custom ID format: "action-gameId" or "action-gameId-choice"
@@ -38,10 +55,10 @@ async function handleGameInteraction(interaction) {
         // Vérifier que l'adversaire (player2) a assez de starss pour couvrir la mise
         const betAmount = parseInt(game.bet) || 0;
         if (betAmount > 0) {
-            const player2Data = getOrCreateUser(game.player2.id, game.player2.username);
-            if (player2Data.stars < betAmount) {
+            const p2Stars = getEffectiveStars(game.player2.id, game.player2.username);
+            if (p2Stars < betAmount) {
                 const errorText = new TextDisplayBuilder()
-                    .setContent(`❌ Vous n'avez que **${player2Data.stars.toLocaleString('fr-FR')}** starss. Vous ne pouvez pas accepter une mise de **${betAmount.toLocaleString('fr-FR')}** starss.`);
+                    .setContent(`❌ Vous n'avez que **${p2Stars.toLocaleString('fr-FR')}** starss. Vous ne pouvez pas accepter une mise de **${betAmount.toLocaleString('fr-FR')}** starss.`);
                 const container = new ContainerBuilder().addTextDisplayComponents(errorText);
                 return interaction.reply({ components: [container], flags: MessageFlags.IsComponentsV2, ephemeral: true });
             }
@@ -133,25 +150,17 @@ async function handleGameInteraction(interaction) {
                 const loserUser = winner === 'player1' ? game.player2 : game.player1;
 
                 // Handle bet
+                let betSnap = null;
                 if (isNaN(game.bet)) { // Item bet
                     updateUserItemQuantity(loserUser.id, game.bet, -1);
                     updateUserItemQuantity(winnerUser.id, game.bet, 1);
-                } else { // Starss bet - SANS multiplicateurs
-                    updateUserBalance(loserUser.id, { stars: -betAmount });
-                    updateUserBalance(winnerUser.id, { stars: betAmount });
-                    // Ajuster les valeurs de guerre pour éviter l'exploit de farming
-                    adjustWarInitialValues(loserUser.id, { stars: -betAmount });
-                    adjustWarInitialValues(winnerUser.id, { stars: betAmount });
+                } else if (betAmount > 0) {
+                    betSnap = transferBetStars(loserUser, winnerUser, betAmount);
                 }
 
                 // Créer l'affichage de fin (V2 TextDisplay)
                 let endContent = '';
-                if (betAmount > 0) {
-                    const p1Before = getOrCreateUser(winner === 'player1' ? loserUser.id : winnerUser.id).stars;
-                    const p2Before = getOrCreateUser(winner === 'player1' ? winnerUser.id : loserUser.id).stars;
-                    const p1After = getOrCreateUser(winner === 'player1' ? loserUser.id : winnerUser.id).stars;
-                    const p2After = getOrCreateUser(winner === 'player1' ? winnerUser.id : loserUser.id).stars;
-
+                if (betAmount > 0 && betSnap) {
                     endContent = `# 🎉 PIERRE-PAPIER-CISEAUX - FIN DE PARTIE 🎉\n` +
                         `**${game.player1.username} vs ${game.player2.username}**\n` +
                         `${winnerUser.username} a gagné!\n` +
@@ -160,9 +169,17 @@ async function handleGameInteraction(interaction) {
                         `${game.player1.username}: ${choiceDisplay[game.player1.choice]}\n` +
                         `${game.player2.username}: ${choiceDisplay[game.player2.choice]}\n\n` +
                         `### ${winnerUser.username} - GAGNANT\n` +
-                        `Avant: ${p2Before}\nGagné: +${betAmount}\nAprès: ${p2After}\n\n` +
+                        `Avant: ${betSnap.winnerBefore}\nGagné: +${betAmount}\nAprès: ${betSnap.winnerAfter}\n\n` +
                         `### ${loserUser.username} - PERDANT\n` +
-                        `Avant: ${p1Before}\nPerdu: -${betAmount}\nAprès: ${p1After}`;
+                        `Avant: ${betSnap.loserBefore}\nPerdu: -${betAmount}\nAprès: ${betSnap.loserAfter}`;
+                } else if (betAmount > 0) {
+                    endContent = `# 🎉 PIERRE-PAPIER-CISEAUX - FIN DE PARTIE 🎉\n` +
+                        `**${game.player1.username} vs ${game.player2.username}**\n` +
+                        `${winnerUser.username} a gagné!\n` +
+                        `Il vient de gagner ${betAmount} starss\n\n` +
+                        `### Résultats\n` +
+                        `${game.player1.username}: ${choiceDisplay[game.player1.choice]}\n` +
+                        `${game.player2.username}: ${choiceDisplay[game.player2.choice]}`;
                 } else {
                     endContent = `# 🎉 PIERRE-PAPIER-CISEAUX - FIN DE PARTIE 🎉\n` +
                         `**${winnerUser.username} a gagné!**\n\n` +
@@ -278,32 +295,24 @@ async function handleGameInteraction(interaction) {
             const betAmount = parseInt(game.bet) || 0;
 
             // Handle bet
+            let betSnap = null;
             if (isNaN(game.bet)) { // Item bet
                 updateUserItemQuantity(loserUser.id, game.bet, -1);
                 updateUserItemQuantity(winnerUser.id, game.bet, 1);
-            } else { // Starss bet - SANS multiplicateurs
-                updateUserBalance(loserUser.id, { stars: -betAmount });
-                updateUserBalance(winnerUser.id, { stars: betAmount });
-                // Ajuster les valeurs de guerre pour éviter l'exploit de farming
-                adjustWarInitialValues(loserUser.id, { stars: -betAmount });
-                adjustWarInitialValues(winnerUser.id, { stars: betAmount });
+            } else if (betAmount > 0) {
+                betSnap = transferBetStars(loserUser, winnerUser, betAmount);
             }
 
             // Créer l'affichage de fin (V2 TextDisplay)
             let endContent = '';
-            if (betAmount > 0) {
-                const p1Before = getOrCreateUser(winner === 'X' ? loserUser.id : winnerUser.id).stars;
-                const p2Before = getOrCreateUser(winner === 'X' ? winnerUser.id : loserUser.id).stars;
-                const p1After = getOrCreateUser(winner === 'X' ? loserUser.id : winnerUser.id).stars;
-                const p2After = getOrCreateUser(winner === 'X' ? winnerUser.id : loserUser.id).stars;
-
+            if (betAmount > 0 && betSnap) {
                 endContent = `# 🎉 MORPION - FIN DE PARTIE 🎉\n` +
                     `**${winnerUser.username} a gagné!**\n` +
                     `Il vient de gagner ${betAmount} starss\n\n` +
                     `### ${winnerUser.username} (❌) - GAGNANT\n` +
-                    `Avant: ${p2Before}\nGagné: +${betAmount}\nAprès: ${p2After}\n\n` +
+                    `Avant: ${betSnap.winnerBefore}\nGagné: +${betAmount}\nAprès: ${betSnap.winnerAfter}\n\n` +
                     `### ${loserUser.username} (⭕) - PERDANT\n` +
-                    `Avant: ${p1Before}\nPerdu: -${betAmount}\nAprès: ${p1After}`;
+                    `Avant: ${betSnap.loserBefore}\nPerdu: -${betAmount}\nAprès: ${betSnap.loserAfter}`;
             } else {
                 endContent = `# 🎉 MORPION - FIN DE PARTIE 🎉\n` +
                     `**${winnerUser.username} a gagné!**`;
@@ -584,33 +593,21 @@ async function handlePuissance4Reaction(reaction, user, client) {
         const winnerPlayer = winner === '🟡' ? targetGame.player1 : targetGame.player2;
         const loserPlayer = winner === '🟡' ? targetGame.player2 : targetGame.player1;
 
-        // Récupérer l'argent avant la mise
-        const p1Before = winner === '🟡' ? getOrCreateUser(loserPlayer.id).stars : getOrCreateUser(winnerPlayer.id).stars;
-        const p2Before = winner === '🟡' ? getOrCreateUser(winnerPlayer.id).stars : getOrCreateUser(loserPlayer.id).stars;
-
         // Handle bet
         const betAmount = parseInt(targetGame.bet) || 0;
+        let betSnap = null;
         if (isNaN(targetGame.bet)) {
             updateUserItemQuantity(loserPlayer.id, targetGame.bet, -1);
             updateUserItemQuantity(winnerPlayer.id, targetGame.bet, 1);
-        } else {
-            updateUserBalance(loserPlayer.id, { stars: -betAmount });
-            updateUserBalance(winnerPlayer.id, { stars: betAmount });
-            // Ajuster les valeurs de guerre pour éviter l'exploit de farming
-            adjustWarInitialValues(loserPlayer.id, { stars: -betAmount });
-            adjustWarInitialValues(winnerPlayer.id, { stars: betAmount });
+        } else if (betAmount > 0) {
+            betSnap = transferBetStars(loserPlayer, winnerPlayer, betAmount);
         }
-
-        // Récupérer l'argent après la mise
-        const p1After = getOrCreateUser(winner === '🟡' ? loserPlayer.id : winnerPlayer.id).stars;
-        const p2After = getOrCreateUser(winner === '🟡' ? winnerPlayer.id : loserPlayer.id).stars;
 
         // Créer l'affichage de fin (V2)
         const boardText = createPuissance4TextDisplay(targetGame, null);
         const boardContainer = new ContainerBuilder().addTextDisplayComponents(boardText);
 
-        // Vérifier s'il y a une mise
-        const hasBet = betAmount > 0;
+        const hasBet = betAmount > 0 && betSnap;
 
         let endContent;
         if (hasBet) {
@@ -618,9 +615,9 @@ async function handlePuissance4Reaction(reaction, user, client) {
                 `**${winnerPlayer.username} a gagné!**\n` +
                 `Il vient de gagner ${betAmount} starss\n\n` +
                 `### ${winnerPlayer.username} (🟡) - GAGNANT\n` +
-                `Avant: ${p2Before}\nGagné: +${betAmount}\nAprès: ${p2After}\n\n` +
+                `Avant: ${betSnap.winnerBefore}\nGagné: +${betAmount}\nAprès: ${betSnap.winnerAfter}\n\n` +
                 `### ${loserPlayer.username} (🔴) - PERDANT\n` +
-                `Avant: ${p1Before}\nPerdu: -${betAmount}\nAprès: ${p1After}`;
+                `Avant: ${betSnap.loserBefore}\nPerdu: -${betAmount}\nAprès: ${betSnap.loserAfter}`;
         } else {
             endContent = `# 🎉 PUISSANCE 4 - FIN DE PARTIE 🎉\n` +
                 `**${winnerPlayer.username} a gagné!**`;

@@ -29,9 +29,16 @@ module.exports = {
     .addSubcommand((sc) =>
       sc
         .setName('contribuer')
-        .setDescription('Ajouter un score à un event en cours')
+        .setDescription('Ajouter un score (coûte des starss)')
         .addStringOption((o) => o.setName('cle').setDescription('Clé event').setRequired(true))
-        .addIntegerOption((o) => o.setName('score').setDescription('Score à ajouter').setRequired(true).setMinValue(1)),
+        .addIntegerOption((o) =>
+          o
+            .setName('score')
+            .setDescription(`Pts (max ${events.MAX_SCORE_PER_CONTRIB}, ${events.STARSS_PER_SCORE}⭐/pt)`)
+            .setRequired(true)
+            .setMinValue(1)
+            .setMaxValue(events.MAX_SCORE_PER_CONTRIB),
+        ),
     )
     .addSubcommand((sc) =>
       sc
@@ -58,7 +65,7 @@ module.exports = {
       const r = events.startEvent(hub, t);
       if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
       return interaction.reply({
-        content: `🎉 **${r.name}** lancé. Clé : \`${r.key}\` — fin <t:${Math.floor(r.endsMs / 1000)}:R>.\nUtilise \`/event contribuer cle:${r.key} score:<n>\``,
+        content: `🎉 **${r.name}** lancé. Clé : \`${r.key}\` — fin <t:${Math.floor(r.endsMs / 1000)}:R>.\n\`/event contribuer\` → **${events.STARSS_PER_SCORE.toLocaleString('fr-FR')}** starss / pt (max ${events.MAX_SCORE_PER_CONTRIB.toLocaleString('fr-FR')} pts).`,
       });
     }
 
@@ -68,7 +75,10 @@ module.exports = {
       const r = events.contribute(hub, k, uid, score);
       if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
       return interaction.reply({
-        content: `+**${r.gained.toLocaleString('fr-FR')}** points (bonus arbre inclus). Voir \`/event classement cle:${k}\`.`,
+        content:
+          `+**${r.gained.toLocaleString('fr-FR')}** pts (bonus arbre inclus).\n` +
+          `Coût : **-${r.cost.toLocaleString('fr-FR')}** starss.\n` +
+          `Voir \`/event classement cle:${k}\`.`,
       });
     }
 

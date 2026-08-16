@@ -454,14 +454,31 @@ function treasuryDeposit(guildId, userId, amount) {
   if (!m) return { ok: false, error: "Pas membre." };
   if (users.getStars(userId) < amount)
     return { ok: false, error: "Pas assez de starss." };
-  users.addStars(userId, -amount);
   const g = getGuild(guildId);
+  if (!g) return { ok: false, error: "Guilde introuvable." };
   const t = B(g.treasury) + amount;
+
+  try {
+    const bridge = require("./niveauGuildBridge");
+    if (bridge.isBridged(guildId)) {
+      const push = bridge.pushTreasuryToNiveau(guildId, t);
+      if (!push.ok) return { ok: false, error: push.error || "Sync niveau échouée." };
+    }
+  } catch {
+    /* pure reborn ok */
+  }
+
+  users.addStars(userId, -amount);
   db.prepare("UPDATE player_guilds SET treasury = ? WHERE id = ?").run(
     t.toString(),
     guildId,
   );
-  return { ok: true };
+  try {
+    require("./niveauGuildBridge").invalidateBridgeCache();
+  } catch {
+    /* ignore */
+  }
+  return { ok: true, treasury: t };
 }
 
 function treasuryWithdraw(guildId, userId, amount) {
@@ -475,12 +492,29 @@ function treasuryWithdraw(guildId, userId, amount) {
   if (amount <= 0n) return { ok: false, error: "Montant invalide." };
   const t = B(g.treasury);
   if (t < amount) return { ok: false, error: "Trésorerie insuffisante." };
+  const next = t - amount;
+
+  try {
+    const bridge = require("./niveauGuildBridge");
+    if (bridge.isBridged(guildId)) {
+      const push = bridge.pushTreasuryToNiveau(guildId, next);
+      if (!push.ok) return { ok: false, error: push.error || "Sync niveau échouée." };
+    }
+  } catch {
+    /* pure reborn ok */
+  }
+
   db.prepare("UPDATE player_guilds SET treasury = ? WHERE id = ?").run(
-    (t - amount).toString(),
+    next.toString(),
     guildId,
   );
   users.addStars(userId, amount);
-  return { ok: true };
+  try {
+    require("./niveauGuildBridge").invalidateBridgeCache();
+  } catch {
+    /* ignore */
+  }
+  return { ok: true, treasury: next };
 }
 
 function countRarity(userId, rarity) {
@@ -650,6 +684,14 @@ function useFocus(
   db.prepare(
     "UPDATE player_guilds SET treasury = ?, last_focus_ms = ? WHERE id = ?",
   ).run((B(att.treasury) - COST).toString(), now, attackerGuildId);
+  try {
+    const bridge = require("./niveauGuildBridge");
+    if (bridge.isBridged(attackerGuildId)) {
+      bridge.pushTreasuryToNiveau(attackerGuildId, B(att.treasury) - COST);
+    }
+  } catch {
+    /* ignore */
+  }
   const gm = require("./guildMember");
   const members = db
     .prepare("SELECT user_id FROM player_guild_members WHERE guild_id = ?")

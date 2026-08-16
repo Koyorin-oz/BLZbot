@@ -6,11 +6,15 @@ const TYPES = {
   chasse: { name: 'Chasse aux étoiles', durationMs: 24 * 60 * 60 * 1000, baseScore: 10n },
   raid: { name: 'Raid Cosmique', durationMs: 12 * 60 * 60 * 1000, baseScore: 25n },
   marathon: { name: 'Marathon Stellaire', durationMs: 48 * 60 * 60 * 1000, baseScore: 5n },
-  // Extensions (même mécanique contribute / leaderboard / cloturer) — checklist REBORN.
   siege: { name: 'Siège stellaire', durationMs: 18 * 60 * 60 * 1000, baseScore: 15n },
   arene: { name: 'Arène flash', durationMs: 6 * 60 * 60 * 1000, baseScore: 30n },
   conquete: { name: 'Conquête galactique', durationMs: 36 * 60 * 60 * 1000, baseScore: 12n },
 };
+
+/** 1 pt de score (avant bonus arbre) = autant de starss. */
+const STARSS_PER_SCORE = 100n;
+/** Plafond par appel /event contribuer (anti-abus). */
+const MAX_SCORE_PER_CONTRIB = 10_000;
 
 function genKey(typeKey) {
   return `${typeKey}_${Date.now().toString(36)}`;
@@ -68,25 +72,50 @@ function endEvent(hubDiscordId, eventKey) {
 }
 
 /**
- * Contribution joueur (appelée depuis earn / commandes).
- * Applique les bonus arbre Événement (currency mult, défense, discount via shop).
+ * Contribution joueur : coûte des starss (anti free-score).
+ * `baseScore` = pts demandés avant bonus arbre.
  */
 function contribute(hubDiscordId, eventKey, userId, baseScore) {
   const ev = db
     .prepare('SELECT * FROM events_active WHERE hub_discord_id = ? AND event_key = ? AND ends_ms > ?')
     .get(hubDiscordId, eventKey, Date.now());
   if (!ev) return { ok: false, error: 'Événement non actif.' };
+
+  let raw;
+  try {
+    raw = BigInt(baseScore);
+  } catch {
+    return { ok: false, error: 'Score invalide.' };
+  }
+  if (raw < 1n) return { ok: false, error: 'Score invalide.' };
+  if (raw > BigInt(MAX_SCORE_PER_CONTRIB)) {
+    return {
+      ok: false,
+      error: `Max **${MAX_SCORE_PER_CONTRIB.toLocaleString('fr-FR')}** pts par contribution.`,
+    };
+  }
+
+  const cost = raw * STARSS_PER_SCORE;
+  const bal = users.getStars(userId);
+  if (bal < cost) {
+    return {
+      ok: false,
+      error: `Pas assez de starss (coût **${cost.toLocaleString('fr-FR')}**, tu as **${bal.toLocaleString('fr-FR')}**).`,
+    };
+  }
+  users.addStars(userId, -cost);
+
   const bp = skillTree.eventCurrencyMultBp(userId);
-  const eff = (BigInt(baseScore) * BigInt(bp)) / 10000n;
+  const eff = (raw * BigInt(bp)) / 10000n;
+  const scoreNum = Number(eff > BigInt(Number.MAX_SAFE_INTEGER) ? Number.MAX_SAFE_INTEGER : eff);
   db.prepare(
     `INSERT INTO event_participation (hub_discord_id, event_key, user_id, score, contributed_ms)
      VALUES (?, ?, ?, ?, ?)
      ON CONFLICT(hub_discord_id, event_key, user_id)
      DO UPDATE SET score = score + excluded.score, contributed_ms = excluded.contributed_ms`,
-  ).run(hubDiscordId, eventKey, userId, Number(eff), Date.now());
-  // L'event_currency persiste indépendamment (donne du fun cross-event).
+  ).run(hubDiscordId, eventKey, userId, scoreNum, Date.now());
   users.addEventCurrency(userId, eff);
-  return { ok: true, gained: eff };
+  return { ok: true, gained: eff, cost };
 }
 
 function leaderboard(hubDiscordId, eventKey, limit = 10) {
@@ -115,6 +144,8 @@ function applyChestDiscount(userId, price) {
 
 module.exports = {
   TYPES,
+  STARSS_PER_SCORE,
+  MAX_SCORE_PER_CONTRIB,
   startEvent,
   endEvent,
   activeEvents,

@@ -29,10 +29,11 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
-# Cursor : ignorer le cache local, mais garder hooks.json + hooks/ (auto-sync GitHub)
+# Cursor : cache ignore, hooks OFF (plus de sync), rules gardees
 .cursor/*
 !.cursor/hooks.json
 !.cursor/hooks/
+!.cursor/rules/
 .idea/
 *.swp
 

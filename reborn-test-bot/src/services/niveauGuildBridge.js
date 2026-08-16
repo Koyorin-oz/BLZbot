@@ -168,16 +168,14 @@ function importNiveauGuild(hubDiscordId, niveauGuild, niveauMembers) {
       niveauGuild.channel_id || "",
     );
   } else {
-    // Re-sync miroir (sans écraser les champs spécifiques REBORN : gxp, grade,
-    // anti_separation, last_focus_ms, salon_channel_id (si déjà setté), description).
-    // On met à jour `hub_discord_id` pour suivre le serveur courant.
+    // Re-sync miroir — on n'écrase PAS treasury : les dépôts /guilde tresor_depot
+    // vivent côté REBORN ; les écrire depuis niveau les faisait disparaître.
     db.prepare(
       `UPDATE player_guilds
        SET name = ?,
            leader_id = ?,
            hub_discord_id = ?,
            member_cap = MAX(member_cap, ?),
-           treasury = ?,
            guild_level = MAX(guild_level, ?)
        WHERE id = ?`,
     ).run(
@@ -185,7 +183,6 @@ function importNiveauGuild(hubDiscordId, niveauGuild, niveauMembers) {
       niveauGuild.owner_id,
       hubDiscordId,
       memberCap,
-      treasury,
       Math.max(1, Number(niveauGuild.level) || 1),
       rebornId,
     );
@@ -445,6 +442,56 @@ function dissolveNiveauGuild(niveauId) {
   return false;
 }
 
+/**
+ * Aligne la trésorerie niveau sur la valeur REBORN (après dépôt / retrait).
+ * Évite que le prochain sync / profil-guilde ne remette l'ancien montant.
+ */
+function pushTreasuryToNiveau(rebornId, treasuryBig) {
+  const nivId = niveauIdFromReborn(rebornId);
+  if (!nivId) return { ok: true };
+  try {
+    const niveauDb = require(path.join(
+      __dirname,
+      "..",
+      "..",
+      "..",
+      "niveau",
+      "src",
+      "database",
+      "database",
+    ));
+    const row = niveauDb
+      .prepare("SELECT id, treasury, treasury_capacity FROM guilds WHERE id = ?")
+      .get(nivId);
+    if (!row) return { ok: false, error: "Guilde niveau introuvable." };
+    let n;
+    try {
+      n = Number(treasuryBig);
+    } catch {
+      return { ok: false, error: "Montant trésorerie invalide." };
+    }
+    if (!Number.isFinite(n) || n < 0) {
+      return { ok: false, error: "Montant trésorerie invalide." };
+    }
+    const cap = Number(row.treasury_capacity) || 0;
+    if (cap > 0 && n > cap) {
+      return {
+        ok: false,
+        error: `Capacité de trésorerie dépassée (max ${cap.toLocaleString("fr-FR")}).`,
+      };
+    }
+    // Si capacité 0 (upgrade < 2), on écrit quand même pour que le dépôt REBORN tienne.
+    niveauDb
+      .prepare("UPDATE guilds SET treasury = ? WHERE id = ?")
+      .run(Math.floor(n), nivId);
+    invalidateBridgeCache();
+    return { ok: true };
+  } catch (e) {
+    console.warn("[niveauGuildBridge] pushTreasuryToNiveau:", e?.message || e);
+    return { ok: false, error: e?.message || "Sync trésorerie niveau échouée." };
+  }
+}
+
 module.exports = {
   bridgeMembership,
   importNiveauGuild,
@@ -459,4 +506,5 @@ module.exports = {
   dissolveNiveauGuild,
   invalidateBridgeCache,
   setNiveauGuildOwner,
+  pushTreasuryToNiveau,
 };

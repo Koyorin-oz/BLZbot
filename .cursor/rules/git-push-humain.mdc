@@ -1,0 +1,32 @@
+---
+description: Commits humains FR + push normal (jamais force push / sync cursor)
+alwaysApply: true
+---
+
+# Git = style Roxxor / koyorin (BLZbot)
+
+## Ce que Discord doit montrer
+
+Comme Roxxor / le screen OK :
+`[BLZbot:main] 1 new commit` + message casual FR
+
+**PAS** : `Branch main was force-pushed to …`
+
+## INTERDIT
+
+- **JAMAIS** `git push --force` / `--force-with-lease` sur `main` (sauf si koyorin le demande **explicitement**)
+- **JAMAIS** de commit `sync(cursor): …`
+- **JAMAIS** de commit/push auto (hook OFF — ne le réactive pas)
+
+## Quand il dit git push / commit
+
+1. `git add` les fichiers du lot
+2. **1** commit, message oral FR (ortho approximative OK)
+   - OK : `fix trophee grp or (seuils foires) + retire /valeur + docs ia pour les commandes`
+   - OK : `fix: rajouter un : dans l'inventaire`
+   - KO : `sync(cursor): …` / messages IA anglais
+3. `git push` **normal** (fast-forward) → Discord voit « 1 new commit »
+4. Si derrière origin : `git pull --rebase` puis push normal — **pas** de force
+5. Commit/push **seulement** si demandé
+
+Le hook `.cursor/hooks/git-auto-push.js` reste OFF.
