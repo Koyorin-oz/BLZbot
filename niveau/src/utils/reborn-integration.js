@@ -163,6 +163,25 @@ function collectRebornSlashMap() {
 /** @type {import('discord.js').Client|null} */
 let _rankSyncClient = null;
 
+function scheduleRebornLevelRoleSync(userId, level) {
+  if (!userId || !_rankSyncClient) return;
+  const lv = Math.max(1, Math.floor(Number(level) || 1));
+  const client = _rankSyncClient;
+  setTimeout(() => {
+    Promise.resolve()
+      .then(async () => {
+        const { forEachMemberInBlzGuilds } = require('./blz-multi-guild');
+        const { updateLevelRoles } = require('./level-roles');
+        await forEachMemberInBlzGuilds(client, userId, async (member) => {
+          await updateLevelRoles(member, lv);
+        });
+      })
+      .catch((e) => {
+        logger.warn('[reborn] scheduleRebornLevelRoleSync:', e?.message || e);
+      });
+  }, 0);
+}
+
 function scheduleRebornRankSync(userId) {
   if (!userId || !_rankSyncClient) return;
   const rr = getRebornRankedRoles();
@@ -339,6 +358,22 @@ function applyRebornProfileEconomy(user, userId, username) {
   return user;
 }
 
+/** Trésorerie REBORN d'une guilde niveau (id numérique). */
+function getRebornTreasuryForNiveauGuild(niveauGuildId) {
+  if (!rebornEconomyActive() || !niveauGuildId) return null;
+  try {
+    initEnvironment();
+    const pg = require(path.join(REPO_ROOT, 'reborn-test-bot', 'src', 'services', 'playerGuilds'));
+    const g = pg.getGuild(String(niveauGuildId));
+    if (!g || g.treasury == null) return null;
+    const n = Number(g.treasury);
+    return Number.isFinite(n) ? n : null;
+  } catch (e) {
+    logger.warn('[reborn] getRebornTreasuryForNiveauGuild:', e?.message || e);
+    return null;
+  }
+}
+
 function setRebornRp(userId, amount, username) {
   const svc = getRebornUsersService();
   if (!svc) return null;
@@ -453,7 +488,13 @@ function addRebornXp(userId, delta, username) {
   if (!svc) return null;
   try {
     svc.getOrCreate(userId, username || 'unknown');
-    return svc.addXp(userId, delta);
+    const before = getRebornLevelState(userId, username);
+    const result = svc.addXp(userId, delta);
+    const newLevel = result?.level ?? getRebornLevelState(userId, username)?.level;
+    if (newLevel && before && newLevel !== before.level) {
+      scheduleRebornLevelRoleSync(userId, newLevel);
+    }
+    return result;
   } catch (e) {
     logger.warn('[reborn] addRebornXp:', e?.message || e);
     return null;
@@ -648,11 +689,13 @@ module.exports = {
   bootstrap,
   registerEarnGateway,
   handleComponentInteraction,
+  scheduleRebornLevelRoleSync,
   getRebornEconomySnapshot,
   getRebornStars,
   getRebornRp,
   getRebornLevelState,
   applyRebornProfileEconomy,
+  getRebornTreasuryForNiveauGuild,
   setRebornRp,
   setRebornStars,
   addRebornXp,

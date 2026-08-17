@@ -19,7 +19,7 @@
 
 | Commande | Type | Description |
 |---|---|---|
-| `/profile [membre]` | 👤 | Affiche le profil (canvas). Boutons : 🎯 Quêtes, 🏆 Trophées, 📦 Inventaire, 🛡️ Guilde |
+| `/profil [membre]` | 👤 | Affiche le profil (canvas). Boutons : 🎯 Quêtes, 🏆 Trophées, 📦 Inventaire, 🛡️ Guilde |
 | `/classement [type]` | 👤 | Classements : stars, XP, RP, comptage, **valeur** 💎, événements |
 | `/parametres` | 👤 | Préférences de notifications (rank up, level up, streak, etc.) |
 

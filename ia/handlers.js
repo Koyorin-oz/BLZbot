@@ -450,7 +450,7 @@ CONTEXTE SALON : salon « chatbot normal ». Ici tu restes correct et tu n'insul
 
         const imageGenerationGuide = "\n\n🔴 RÈGLES ABSOLUES - Format de réponse JSON (À RESPECTER STRICTEMENT):\nTu dois répondre UNIQUEMENT avec un objet JSON valide. RIEN D'AUTRE. PAS DE TEXTE AVANT OU APRÈS LE JSON.\n\nLe JSON doit contenir exactement ces 4 champs:\n{\n  \"text\": \"Ta réponse conversationnelle pour l'utilisateur (sans mention des autres champs)\",\n  \"generateImage\": true/false,\n  \"imagePrompt\": \"Prompt en français pour le générateur d'images (null si generateImage est false)\",\n  \"dangerousContent\": true/false (true si contenu dangereux/inapproprié/offensant/illégal)\n}\n\ngenerateImage : mets true pour toute demande d'image RAISONNABLE : meme, logo simple, illustration, fond d'écran, avatar stylisé, \"montre à quoi ressemble...\", dessin, etc. Refuse (false) si c'est TROP LOURD : vidéo longue, dizaines d'images, rendu pro 8K/16K, \"film entier\", production cinéma, batch massif — et explique brièvement dans text pourquoi.\nimagePrompt : description courte et claire (style, sujet, ambiance) ; null si pas d'image.\n\n⚠️ RAPPELS CRITIQUES:\n1. Retourne UNIQUEMENT du JSON valide. Rien avant, rien après.\n2. Le champ 'text' ne doit JAMAIS mentionner generateImage, imagePrompt ou dangerousContent.\n3. N'écris JAMAIS de texte explicatif, d'introduction ou de conclusion en dehors du JSON.\n4. Si aucune image n'est demandée ni utile, generateImage false et imagePrompt null.\n5. Vérifie que ton JSON est valide avant de l'envoyer.";
 
-        const markdownGuide = "\n\n📝 FORMATAGE DISCORD OBLIGATOIRE :\n- Utilise UNIQUEMENT le Markdown Discord standard (**gras**, *italique*, `code`, etc.).\n- N'utilise JAMAIS de LaTeX (comme $...$ ou \\[...\\]) car cela ne s'affiche pas sur Discord.\n- Pour les blocs de code, spécifie toujours le langage (ex: ```js ... ```).\n\nSi y a un bloc base de connaissances, sers t'en pour les questions commandes/niveaux. Invente pas de slash.";
+        const markdownGuide = "\n\n📝 FORMATAGE DISCORD OBLIGATOIRE :\n- Utilise UNIQUEMENT le Markdown Discord standard (**gras**, *italique*, `code`, etc.).\n- N'utilise JAMAIS de LaTeX (comme $...$ ou \\[...\\]) car cela ne s'affiche pas sur Discord.\n- Pour les blocs de code, spécifie toujours le langage (ex: ```js ... ```).\n\nQuestions bot : sers-toi UNIQUEMENT du bloc Infos bot. Si c'est pas dedans, dis que tu sais pas. Invente JAMAIS une commande slash.";
 
         let replyContext = "";
         if (message.reference && message.reference.messageId) {
@@ -618,14 +618,11 @@ CONTEXTE SALON : salon « chatbot normal ». Ici tu restes correct et tu n'insul
                 // Si c'est une chaîne, essayer de la parser comme JSON
                 if (typeof aiResponse === 'string') {
                     // 1. Détection et extraction des balises <think> (AVANT le JSON)
-                    const thinkRegex = /<think>([\s\S]*?)<\/redacted_thinking>/i;
-                    const thinkMatch = aiResponse.match(thinkRegex);
-                    if (thinkMatch) {
+                    const extracted = utils.extractThinkTags(aiResponse);
+                    if (extracted.thoughts) {
                         hasThoughts = true;
-                        // On stocke la pensée
-                        thoughtsContent = thinkMatch[1].trim();
-                        // On retire la pensée de aiResponse pour laisser une chance au JSON propre
-                        aiResponse = aiResponse.replace(thinkRegex, '').trim();
+                        thoughtsContent = extracted.thoughts;
+                        aiResponse = extracted.text;
                         utils.log(`🧠 Pensée extraite via balises <think> (avant JSON)`);
                     }
 
@@ -646,8 +643,12 @@ CONTEXTE SALON : salon « chatbot normal ». Ici tu restes correct et tu n'insul
                 // Maintenant traiter la réponse parsée (text peut être "" : il faut quand même entrer dans la branche)
                 if (typeof parsedResponse === 'object' && parsedResponse !== null && typeof parsedResponse.text === 'string') {
                     // La réponse est du JSON structuré
+                    const rawText = (parsedResponse.text || '').trim();
                     responseContent =
-                        parsedResponse.text.trim() || "Une erreur est survenue lors de la requête API.";
+                        rawText ||
+                        thoughtsContent ||
+                        (typeof aiResponse === 'string' ? utils.stripThinkTags(aiResponse) : '') ||
+                        "J'ai rien de solide à répondre là, reformule.";
                     shouldGenerateImage = parsedResponse.generateImage === true;
                     imagePrompt = parsedResponse.imagePrompt || "";
                     isDangerousContent = parsedResponse.dangerousContent === true;
@@ -683,16 +684,13 @@ CONTEXTE SALON : salon « chatbot normal ». Ici tu restes correct et tu n'insul
                     utils.log(`📋 Réponse structurée traitée - Image: ${shouldGenerateImage ? 'Oui' : 'Non'}, Dangereux: ${isDangerousContent ? 'Oui' : 'Non'}, Pensées: ${hasThoughts ? 'Oui' : 'Non'}`);
                 } else if (typeof parsedResponse === 'string') {
                     // Réponse texte simple (fallback)
-                    responseContent = parsedResponse || "Une erreur est survenue lors de la requête API.";
+                    responseContent = parsedResponse || thoughtsContent || "J'ai rien de solide à répondre là, reformule.";
 
-                    // Détection des balises <think> (pour les modèles comme GPT-5 ou DeepSeek qui raisonnent dans le texte)
-                    const thinkRegex = /<think>([\s\S]*?)<\/redacted_thinking>/i;
-                    const thinkMatch = responseContent.match(thinkRegex);
-                    if (thinkMatch) {
+                    const extracted = utils.extractThinkTags(responseContent);
+                    if (extracted.thoughts) {
                         hasThoughts = true;
-                        thoughtsContent = thinkMatch[1].trim();
-                        // On retire la partie pensée de la réponse finale pour ne pas l'afficher en double ou en brut
-                        responseContent = responseContent.replace(thinkRegex, '').trim();
+                        thoughtsContent = extracted.thoughts;
+                        responseContent = extracted.text || thoughtsContent;
                         utils.log(`🧠 Pensée extraite via balises <think>`);
                     }
 
@@ -1170,7 +1168,7 @@ async function handleInteractionCreate(interaction, client, activeThreads) {
                 const channelContext = utils.getChannelContext(interaction.channel.id, user.id, includeGlobalContext);
                 const relevantKnowledge = await utils.getRelevantKnowledge(userPrompt);
 
-                const markdownGuide = "\n\n📝 FORMATAGE DISCORD OBLIGATOIRE :\n- Utilise UNIQUEMENT le Markdown Discord standard (**gras**, *italique*, `code`, etc.).\n- N'utilise JAMAIS de LaTeX (comme $...$ ou \\[...\\]) car cela ne s'affiche pas sur Discord.\n- Pour les blocs de code, spécifie toujours le langage (ex: ```js ... ```).\n\nSi y a un bloc base de connaissances, sers t'en pour les questions commandes/niveaux. Invente pas de slash.";
+                const markdownGuide = "\n\n📝 FORMATAGE DISCORD OBLIGATOIRE :\n- Utilise UNIQUEMENT le Markdown Discord standard (**gras**, *italique*, `code`, etc.).\n- N'utilise JAMAIS de LaTeX (comme $...$ ou \\[...\\]) car cela ne s'affiche pas sur Discord.\n- Pour les blocs de code, spécifie toujours le langage (ex: ```js ... ```).\n\nQuestions bot : sers-toi UNIQUEMENT du bloc Infos bot. Si c'est pas dedans, dis que tu sais pas. Invente JAMAIS une commande slash.";
 
                 const baseSystemPrompt = systemPrompt + markdownGuide + "\n" + userInfo + "\n\n" + channelContext + (relevantKnowledge ? "\n\nInfos bot (commandes / systemes / faq):\n" + relevantKnowledge : "");
 
@@ -1519,14 +1517,11 @@ async function handleStreamingResponse(message, modelName, queryFunction, existi
 
         if (responseText) {
             // Nettoyage final des tags <think> et mise à jour du cache
-            const thinkRegex = /<think>([\s\S]*?)<\/redacted_thinking>/i;
-            if (thinkRegex.test(responseText)) {
-                const thinkMatch = responseText.match(thinkRegex);
-                if (thinkMatch) {
-                    const finalThinking = (streamState.thinking || '') + (streamState.thinking ? '\n' : '') + thinkMatch[1].trim();
-                    utils.deepThinkCache.set(streamMsgId, finalThinking);
-                }
-                responseText = responseText.replace(/<redacted_thinking>[\s\S]*?<\/redacted_thinking>/gi, '').trim();
+            const extracted = utils.extractThinkTags(responseText);
+            if (extracted.thoughts) {
+                const finalThinking = (streamState.thinking || '') + (streamState.thinking ? '\n' : '') + extracted.thoughts;
+                utils.deepThinkCache.set(streamMsgId, finalThinking);
+                responseText = extracted.text;
             } else if (streamState.thinking) {
                 utils.deepThinkCache.set(streamMsgId, streamState.thinking);
             }

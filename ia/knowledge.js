@@ -122,7 +122,7 @@ function scoreEntry(queryTokens, entry) {
 
   for (const t of queryTokens) {
     if (!hay.includes(t)) continue;
-    score += t.length >= 5 ? 2 : 1;
+    score += t.length >= 4 ? 2 : 1;
     if (titleN.includes(t)) score += 4;
     // Boost commandes slash
     if (t.startsWith('/') && hay.includes(t)) score += 6;
@@ -143,14 +143,14 @@ function searchKnowledge(query, opts = {}) {
   if (!knowledgeEntries.length) loadKnowledgeEntries();
   if (!knowledgeEntries.length) return '';
 
-  const maxEntries = opts.maxEntries ?? 3;
-  const maxChars = opts.maxChars ?? 3500;
+  const maxEntries = opts.maxEntries ?? 5;
+  const maxChars = opts.maxChars ?? 6000;
   const tokens = tokenize(query);
   if (!tokens.length) return '';
 
   const ranked = knowledgeEntries
     .map((entry) => ({ entry, score: scoreEntry(tokens, entry) }))
-    .filter((x) => x.score >= 3)
+    .filter((x) => x.score >= 1)
     .sort((a, b) => b.score - a.score)
     .slice(0, maxEntries);
 
@@ -170,6 +170,35 @@ function searchKnowledge(query, opts = {}) {
   return blocks.join('\n\n---\n\n');
 }
 
+function getCommandIndex() {
+  const md = safeRead(path.join(REPO_ROOT, 'doc', 'COMMANDES.md'));
+  if (!md) return '';
+  const seen = new Set();
+  const names = [];
+  for (const m of md.matchAll(/`(\/[a-z0-9_-]+(?:\s[^`|]*)?)`/gi)) {
+    const raw = m[1].trim();
+    const key = raw.split(/\s+/)[0].toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    names.push(key);
+  }
+  if (!names.length) return '';
+  return `Commandes slash du bot (liste) : ${names.join(', ')}.\nProfil = /profil (pas /profile). /valeur n'existe plus → /classement type Valeur.`;
+}
+
+function getGroundedKnowledge(query) {
+  if (!knowledgeEntries.length) loadKnowledgeEntries();
+  const hits = searchKnowledge(query, { maxEntries: 5, maxChars: 6000 });
+  const index = getCommandIndex();
+  const rules =
+    "Règles bot : tu t'appuies UNIQUEMENT sur Infos bot ci-dessous. Si c'est pas dedans, dis que tu sais pas. Invente JAMAIS une commande slash, un prix, un seuil ou un item.";
+  const parts = [rules];
+  if (index) parts.push(index);
+  if (hits) parts.push(hits);
+  return parts.join('\n\n');
+}
+}
+
 function getKnowledgeEntryCount() {
   return knowledgeEntries.length;
 }
@@ -183,5 +212,7 @@ module.exports = {
   searchKnowledge,
   getKnowledgeEntryCount,
   getKnowledgeEntries,
+  getGroundedKnowledge,
+  getCommandIndex,
   splitMarkdownSections,
 };

@@ -18,8 +18,11 @@ Inventer une commande = non.
 
 ## Trucs recents
 - Puits de combat (PT)
-- Marketplace P2P (niv 25+ pour vendre)
+- Marketplace P2P (niv 25+) : anciens + nouveaux items (diamant, index)
 - Prets starss
+- Depot tresorerie guilde : /guilde tresor_depot
+- /event contribuer coute des starss (plus de score gratuit)
+- Roles de niveau Discord (1-5, 5-10, etc.) suivent le niveau /profil
 - Bienvenue Components V2 + /test-root (admin)
 - Rewards daily/coffres en ephemere parfois
 - /envoyer-message passe par un modal

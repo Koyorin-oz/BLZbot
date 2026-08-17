@@ -314,7 +314,37 @@ function cosineSimilarity(vecA, vecB) {
   return dotProduct / (magnitudeA * magnitudeB);
 }
 
+function stripThinkTags(text) {
+  return String(text || '')
+    .replace(/<think>[\s\S]*?<\/think>/gi, '')
+    .replace(/<redacted_thinking>[\s\S]*?<\/redacted_thinking>/gi, '')
+    .trim();
+}
+
+function extractThinkTags(text) {
+  const s = String(text || '');
+  const parts = [];
+  const patterns = [/<think>([\s\S]*?)<\/think>/gi, /<redacted_thinking>([\s\S]*?)<\/redacted_thinking>/gi];
+  for (const re of patterns) {
+    let m;
+    while ((m = re.exec(s))) {
+      const bit = String(m[1] || '').trim();
+      if (bit) parts.push(bit);
+    }
+  }
+  return { thoughts: parts.join('\n\n'), text: stripThinkTags(s) };
+}
+
 async function getRelevantKnowledge(query) {
+  try {
+    if (typeof knowledge.getGroundedKnowledge === 'function') {
+      const grounded = knowledge.getGroundedKnowledge(query);
+      if (grounded) return grounded;
+    }
+  } catch (e) {
+    log(`KB grounded: ${e?.message || e}`);
+  }
+
   // 1) Similarité vectorielle si dispo
   if (knowledgeBaseEmbeddings.length > 0 && config.embeddingModel) {
     const queryEmbedding = await generateEmbedding(query);
@@ -1102,7 +1132,17 @@ RÉPONSE JSON (et rien d'autre):`;
 
 // Helper: Récupérer les modèles Groq depuis le registre unifié
 function getGroqModels() {
-  return config.MODELS.filter(m => m.provider === 'groq');
+  return config.MODELS.filter((m) => {
+    if (m.provider !== 'groq') return false;
+    const n = String(m.name || '');
+    if (/guard|safeguard|orpheus/i.test(n)) return false;
+    return true;
+  }).map((m) => {
+    if (m.name === 'moonshotai/kimi-k2-instruct') {
+      return { ...m, name: 'moonshotai/kimi-k2-instruct-0905' };
+    }
+    return m;
+  });
 }
 
 async function queryGroq(messages, attachments = [], injectModelInfo = false, specificModelName = null, onProgress = null) {
@@ -1384,6 +1424,12 @@ RAPPEL: Tu es BLZbot, pas ChatGPT. Suis les instructions ci-dessus.`;
       const choice = result.choices[0];
       const message = choice?.message;
       let content = message?.content || '';
+      if (!content && message?.reasoning_content) {
+        content = String(message.reasoning_content);
+      }
+      if (!content && message?.reasoning) {
+        content = String(message.reasoning);
+      }
 
       // Check for tool calls (Formal or Hallucinated in text)
       let toolCall = null;
@@ -2832,6 +2878,8 @@ module.exports = {
   generateEmbedding,
   loadAndGenerateKnowledgeBaseEmbeddings,
   cosineSimilarity,
+  stripThinkTags,
+  extractThinkTags,
   getRelevantKnowledge,
   summarizeHistory,
   updateAndGenerateChannelContext,

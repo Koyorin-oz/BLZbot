@@ -148,12 +148,23 @@ module.exports = {
                 return; // Ne pas accorder xp/points/stars dans le salon de comptage
             }
 
-            // Assigner le rôle de niveau initial si c'est un nouvel utilisateur
+            // Rôle de niveau : /profil lit REBORN, donc on sync le rôle Discord sur ça aussi
             if (newUser && message.member) {
-                const userLevel = newUser.level || 1;
-                await updateLevelRoles(message.member, userLevel).catch(err =>
-                    logger.error(`Erreur lors de l'assignation du rôle de niveau initial à ${author.id}:`, err)
-                );
+                let userLevel = newUser.level || 1;
+                try {
+                    const { rebornEconomyActive, getRebornLevelState } = require('../utils/reborn-integration');
+                    if (rebornEconomyActive()) {
+                        const st = getRebornLevelState(author.id, author.username);
+                        if (st?.level) userLevel = st.level;
+                    }
+                } catch { /* fallback niveau */ }
+                const cacheKey = `lvrole:${author.id}:${userLevel}`;
+                if (!messageCooldown.has(cacheKey)) {
+                    await updateLevelRoles(message.member, userLevel).catch(err =>
+                        logger.error(`Erreur lors de l'assignation du rôle de niveau à ${author.id}:`, err)
+                    );
+                    messageCooldown.add(cacheKey);
+                }
             }
 
             // --- Logique de l'événement Halloween ---

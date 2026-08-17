@@ -784,7 +784,7 @@ async function handleChatbotMessage(message, client) {
             if (typeof utils.getRelevantKnowledge === 'function') {
                 const kb = await utils.getRelevantKnowledge(userTextEarly);
                 if (kb) {
-                    system += `\n\n---\nInfos bot:\n${kb}`;
+                    system += `\n\n---\nInfos bot:\n${kb}\nSi c'est pas dans Infos bot, dis que tu sais pas. Invente jamais une commande.`;
                 }
             }
         } catch (kbErr) {

@@ -464,8 +464,10 @@ function treasuryDeposit(guildId, userId, amount) {
       const push = bridge.pushTreasuryToNiveau(guildId, t);
       if (!push.ok) return { ok: false, error: push.error || "Sync niveau échouée." };
     }
-  } catch {
-    /* pure reborn ok */
+  } catch (e) {
+    if (String(guildId).startsWith("niv_")) {
+      return { ok: false, error: e?.message || "Sync trésorerie échouée." };
+    }
   }
 
   users.addStars(userId, -amount);
@@ -500,8 +502,10 @@ function treasuryWithdraw(guildId, userId, amount) {
       const push = bridge.pushTreasuryToNiveau(guildId, next);
       if (!push.ok) return { ok: false, error: push.error || "Sync niveau échouée." };
     }
-  } catch {
-    /* pure reborn ok */
+  } catch (e) {
+    if (String(guildId).startsWith("niv_")) {
+      return { ok: false, error: e?.message || "Sync trésorerie échouée." };
+    }
   }
 
   db.prepare("UPDATE player_guilds SET treasury = ? WHERE id = ?").run(

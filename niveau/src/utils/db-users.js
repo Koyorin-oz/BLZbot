@@ -227,7 +227,7 @@ async function grantResources(client, userId, { xp = 0, points = 0, stars = 0, s
         try {
             const { rebornEconomyActive, addRebornStars, addRebornXp } = require('./reborn-integration');
             if (rebornEconomyActive()) {
-                if (stars > 0) {
+                if (stars !== 0) {
                     addRebornStars(userId, stars);
                     starsNiveau = 0;
                 }
@@ -441,6 +441,14 @@ async function setLevel(userId, level, client = null) {
             const originalLevel = before.level || 1;
             const st = setRebornLevel(userId, level);
             const effectiveLevel = st?.level ?? level;
+            if (effectiveLevel !== originalLevel) {
+                try {
+                    const { scheduleRebornLevelRoleSync } = require('./reborn-integration');
+                    if (typeof scheduleRebornLevelRoleSync === 'function') {
+                        scheduleRebornLevelRoleSync(userId, effectiveLevel);
+                    }
+                } catch { /* ignore */ }
+            }
 
             if (client && effectiveLevel !== originalLevel) {
                 let announceMember = null;

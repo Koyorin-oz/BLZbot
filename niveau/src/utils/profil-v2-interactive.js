@@ -55,6 +55,13 @@ async function loadFiche2ProfileData(interaction) {
     user.guild_level = guild ? guild.level : 1;
     user.guild_emoji = guild ? guild.emoji : '🛡️';
     user.guild_treasury = guild ? guild.treasury : 0;
+    try {
+        const { rebornEconomyActive, getRebornTreasuryForNiveauGuild } = require('./reborn-integration');
+        if (guild && rebornEconomyActive()) {
+            const rbT = getRebornTreasuryForNiveauGuild(guild.id);
+            if (rbT != null) user.guild_treasury = rbT;
+        }
+    } catch { /* fallback niveau */ }
     user.guild_treasury_capacity = guild ? guild.treasury_capacity : 0;
     user.guild_upgrade_level = guild ? guild.upgrade_level : 1;
     user.guild_total_treasury_generated = guild ? guild.total_treasury_generated : 0;

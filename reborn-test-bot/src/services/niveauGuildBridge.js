@@ -168,15 +168,27 @@ function importNiveauGuild(hubDiscordId, niveauGuild, niveauMembers) {
       niveauGuild.channel_id || "",
     );
   } else {
-    // Re-sync miroir — on n'écrase PAS treasury : les dépôts /guilde tresor_depot
-    // vivent côté REBORN ; les écrire depuis niveau les faisait disparaître.
+    // Re-sync miroir. Treasury = max(reborn, niveau) pour pas écraser un dépôt
+    // et pour rattraper si reborn est à 0 alors que niveau a déjà du stock.
+    const prev = db
+      .prepare("SELECT treasury FROM player_guilds WHERE id = ?")
+      .get(rebornId);
+    let keepTreasury = String(prev?.treasury || "0");
+    try {
+      const a = BigInt(keepTreasury || "0");
+      const b = BigInt(niveauGuild.treasury || 0);
+      if (b > a) keepTreasury = String(b);
+    } catch {
+      /* garde reborn */
+    }
     db.prepare(
       `UPDATE player_guilds
        SET name = ?,
            leader_id = ?,
            hub_discord_id = ?,
            member_cap = MAX(member_cap, ?),
-           guild_level = MAX(guild_level, ?)
+           guild_level = MAX(guild_level, ?),
+           treasury = ?
        WHERE id = ?`,
     ).run(
       niveauGuild.name || "Guilde",
@@ -184,6 +196,7 @@ function importNiveauGuild(hubDiscordId, niveauGuild, niveauMembers) {
       hubDiscordId,
       memberCap,
       Math.max(1, Number(niveauGuild.level) || 1),
+      keepTreasury,
       rebornId,
     );
   }
