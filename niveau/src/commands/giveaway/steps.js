@@ -1,4 +1,4 @@
-const { EmbedBuilder, ModalBuilder, TextInputBuilder, ActionRowBuilder, TextInputStyle, MessageFlags, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { EmbedBuilder, ModalBuilder, TextInputBuilder, ActionRowBuilder, TextInputStyle, MessageFlags, ButtonBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
 const { getSession, createSession, deleteSession } = require('./session');
 const { showConfigurationStep, showRewardStep, showConditionStep, showConfirmStep, showRoleSelection, formatDuration, formatRewards, formatConditions, buildGiveawayEmbed, safeUpdate } = require('./ui');
 const { createGiveaway, updateGiveawayMessageId } = require('../../utils/db-giveaway');
@@ -28,7 +28,8 @@ function parseDuration(durationStr) {
 }
 
 async function handleCreateGiveaway(interaction) {
-    if (!interaction.member.permissions.has('Administrator')) {
+    const perms = interaction.memberPermissions || interaction.member?.permissions;
+    if (!perms || typeof perms.has !== 'function' || !perms.has(PermissionFlagsBits.Administrator)) {
         return interaction.reply({ content: "Vous n'avez pas la permission de créer un giveaway.", flags: [MessageFlags.Ephemeral] });
     }
     createSession(interaction.user.id);

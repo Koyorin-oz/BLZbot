@@ -124,11 +124,9 @@ function scoreEntry(queryTokens, entry) {
     if (!hay.includes(t)) continue;
     score += t.length >= 4 ? 2 : 1;
     if (titleN.includes(t)) score += 4;
-    // Boost commandes slash
     if (t.startsWith('/') && hay.includes(t)) score += 6;
   }
 
-  // Phrase "comment marche X" : boost si titre proche
   if (queryTokens.some((t) => ['niveau', 'niveaux', 'xp', 'rp', 'rank', 'rang'].includes(t))) {
     if (/niveau|xp|rp|rang|progression/.test(titleN)) score += 3;
   }
@@ -183,7 +181,7 @@ function getCommandIndex() {
     names.push(key);
   }
   if (!names.length) return '';
-  return `Commandes slash du bot (liste) : ${names.join(', ')}.\nProfil = /profil (pas /profile). /valeur n'existe plus → /classement type Valeur.`;
+  return `Commandes slash du bot (liste) : ${names.join(', ')}.\nProfil = /profil (pas /profile). /valeur n'existe plus -> /classement type Valeur.`;
 }
 
 function getGroundedKnowledge(query) {
@@ -191,12 +189,11 @@ function getGroundedKnowledge(query) {
   const hits = searchKnowledge(query, { maxEntries: 5, maxChars: 6000 });
   const index = getCommandIndex();
   const rules =
-    "Règles bot : tu t'appuies UNIQUEMENT sur Infos bot ci-dessous. Si c'est pas dedans, dis que tu sais pas. Invente JAMAIS une commande slash, un prix, un seuil ou un item.";
+    "Regles bot : tu t'appuies UNIQUEMENT sur Infos bot ci-dessous. Si c'est pas dedans, dis que tu sais pas. Invente JAMAIS une commande slash, un prix, un seuil ou un item.";
   const parts = [rules];
   if (index) parts.push(index);
   if (hits) parts.push(hits);
   return parts.join('\n\n');
-}
 }
 
 function getKnowledgeEntryCount() {
