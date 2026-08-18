@@ -729,7 +729,7 @@ async function buildHistory(message, client, limit = 6) {
  * @returns {Promise<boolean>} true si pris en charge (l'appelant doit s'arrêter).
  */
 async function groqSimpleRetry(userText, userName, isHard) {
-    const model = 'llama-3.1-8b-instant';
+    const model = 'qwen/qwen3-32b';
     const system = isHard ? HARD_SIMBOT_API_PROMPT : `Tu es BLZbot, bot poli du serveur BLZstarss. Réponds en français, concis, sans insultes.`;
     try {
         return await groqChatCompletion(
