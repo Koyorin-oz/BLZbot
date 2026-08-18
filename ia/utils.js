@@ -1790,7 +1790,7 @@ async function queryDeepThink(prompt, threadHistory = []) {
 
   const wrapped = `${historyLines ? `Historique:\n${historyLines}\n\n` : ''}Consigne:\n${prompt}\n\nRéponds en deux parties : d'abord ton raisonnement détaillé entre <redacted_thinking> et </redacted_thinking>, puis ta réponse finale pour l'utilisateur après la balise de fermeture.`;
 
-  const modelsToTry = ['llama-3.3-70b-versatile', config.GROQ_DEFAULT_MODEL, 'llama-3.1-8b-instant'];
+  const modelsToTry = ['meta-llama/llama-4-scout-17b-16e-instruct', config.GROQ_DEFAULT_MODEL, 'qwen/qwen3-32b'];
   const tried = new Set();
 
   for (const modelName of modelsToTry) {
