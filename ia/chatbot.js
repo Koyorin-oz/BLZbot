@@ -23,13 +23,13 @@ const NORMAL_CHANNEL_ID = config.BASIC_CHATBOT_CHANNEL_ID;
 
 // Modèles chatbot : hard = persona Simbot (Kimi / Llama), normal = polyvalent.
 const HARD_DEFAULT_MODEL = 'moonshotai/kimi-k2-instruct-0905';
-const NORMAL_DEFAULT_MODEL = 'llama-3.3-70b-versatile';
+const NORMAL_DEFAULT_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
 const HARD_FALLBACKS = [
-    'llama-3.3-70b-versatile',
-    'llama-3.1-8b-instant',
+    'meta-llama/llama-4-scout-17b-16e-instruct',
     'qwen/qwen3-32b',
+    'openai/gpt-oss-20b',
 ];
-const NORMAL_FALLBACKS = ['llama-3.1-8b-instant', 'qwen/qwen3-32b'];
+const NORMAL_FALLBACKS = ['qwen/qwen3-32b', 'openai/gpt-oss-20b'];
 const GROQ_BASE_URL = String(process.env.GROQ_API_BASE || 'https://api.groq.com/openai/v1').replace(/\/$/, '');
 const MAX_DISCORD = 1900;
 
@@ -539,14 +539,14 @@ async function requestChatCompletion(messages, { temperature, maxTokens, isHard 
         messages.find((m) => m.role === 'system')?.content?.split('\n').slice(0, 8).join('\n') ||
         HARD_SIMBOT_API_PROMPT;
     const retry = await groqChatCompletion(
-        'llama-3.1-8b-instant',
+        'qwen/qwen3-32b',
         [
             { role: 'system', content: simpleSystem },
             { role: 'user', content: simpleUser },
         ],
         { temperature: isHard ? 0.88 : 0.55, isHard, maxTokens: isHard ? 220 : 400 },
     ).catch(() => '');
-    if (retry) return { text: retry, model: 'llama-3.1-8b-instant (retry)' };
+    if (retry) return { text: retry, model: 'qwen/qwen3-32b (retry)' };
 
     const orText = await openRouterChatCompletion(messages, { temperature, maxTokens, isHard });
     if (orText) return { text: orText, model: 'openrouter' };
@@ -729,7 +729,7 @@ async function buildHistory(message, client, limit = 6) {
  * @returns {Promise<boolean>} true si pris en charge (l'appelant doit s'arrêter).
  */
 async function groqSimpleRetry(userText, userName, isHard) {
-    const model = 'llama-3.1-8b-instant';
+    const model = 'qwen/qwen3-32b';
     const system = isHard ? HARD_SIMBOT_API_PROMPT : `Tu es BLZbot, bot poli du serveur BLZstarss. Réponds en français, concis, sans insultes.`;
     try {
         return await groqChatCompletion(

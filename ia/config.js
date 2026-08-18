@@ -20,7 +20,7 @@ const GROQ_API_KEY = normalizeGroqApiKey(process.env.GROQ_API_KEY);
 if (GROQ_API_KEY) {
     process.env.GROQ_API_KEY = GROQ_API_KEY;
 }
-const GROQ_DEFAULT_MODEL = (process.env.GROQ_MODEL || 'llama-3.1-8b-instant').trim();
+const GROQ_DEFAULT_MODEL = (process.env.GROQ_MODEL || 'meta-llama/llama-4-scout-17b-16e-instruct').trim();
 const GROQ_COOLDOWN_MS = Math.max(0, parseInt(process.env.GROQ_COOLDOWN_MS || '0', 10));
 /** Intervalle entre deux éditions du message Discord pendant le stream (ms). Plus bas = plus réactif (risque rate-limit Discord si trop agressif). */
 const IA_STREAM_EDIT_INTERVAL_MS = Math.min(
@@ -42,7 +42,6 @@ const HF_MODEL = "Mistral-7B-Instruct";
 const GROQ_MODELS_LIST = [
     { name: 'meta-llama/llama-4-maverick-17b-128e-instruct', provider: 'groq', displayName: 'Llama 4 Maverick', cutoff: 'Août 2024', multimodal: true, description: 'Multimodal', includeReplyContext: true },
     { name: 'meta-llama/llama-4-scout-17b-16e-instruct', provider: 'groq', displayName: 'Llama 4 Scout', cutoff: 'Août 2024', multimodal: true, description: 'Scout', includeReplyContext: true },
-    { name: 'llama-3.3-70b-versatile', provider: 'groq', displayName: 'Llama 3.3 Versatile', cutoff: 'Décembre 2023', multimodal: false, description: 'Versatile', includeReplyContext: true },
     { name: 'openai/gpt-oss-120b', provider: 'groq', displayName: 'GPT OSS 120B', cutoff: 'Juin 2024', multimodal: false, description: 'Le plus intelligent de la gamme groq', includeReplyContext: true },
     { name: 'moonshotai/kimi-k2-instruct', provider: 'groq', displayName: 'Kimi K2', cutoff: 'Octobre 2024', multimodal: false, description: 'Modèle chinois long contexte', includeReplyContext: true },
     { name: 'moonshotai/kimi-k2-instruct-0905', provider: 'groq', displayName: 'Kimi K2 0905', cutoff: 'Octobre 2024', multimodal: false, description: 'Update K2 Octobre', includeReplyContext: true },
@@ -51,8 +50,7 @@ const GROQ_MODELS_LIST = [
     { name: 'qwen/qwen3-32b', provider: 'groq', displayName: 'Qwen 3 32B', cutoff: 'Septembre 2024', multimodal: false, description: 'Excellent ratio perf/taille', includeReplyContext: true },
     { name: 'meta-llama/llama-guard-4-12b', provider: 'groq', displayName: 'Llama Guard 4', cutoff: 'Août 2024', multimodal: false, description: 'Modération de contenu', includeReplyContext: true },
     { name: 'openai/gpt-oss-safeguard-20b', provider: 'groq', displayName: 'GPT OSS Safeguard', cutoff: 'Juin 2024', multimodal: false, description: 'Sécurité et alignement', includeReplyContext: true },
-    { name: 'canopylabs/orpheus-arabic-saudi', provider: 'groq', displayName: 'Orpheus', cutoff: 'Mars 2024', multimodal: false, description: 'Spécialisé dialecte Saoudien', includeReplyContext: true },
-    { name: 'llama-3.1-8b-instant', provider: 'groq', displayName: 'Llama 3.1 Instant', cutoff: 'Décembre 2023', multimodal: false, description: 'Inférence instantanée', includeReplyContext: true }
+    { name: 'canopylabs/orpheus-arabic-saudi', provider: 'groq', displayName: 'Orpheus', cutoff: 'Mars 2024', multimodal: false, description: 'Spécialisé dialecte Saoudien', includeReplyContext: true }
 ];
 
 function prioritizeGroqModel(models, preferredName) {

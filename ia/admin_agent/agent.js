@@ -17,9 +17,9 @@ function adminModelChain() {
     const fromEnv = String(process.env.GROQ_ADMIN_MODEL || '').trim();
     const chain = [
         fromEnv,
-        'llama-3.3-70b-versatile',
+        'meta-llama/llama-4-scout-17b-16e-instruct',
         config.GROQ_DEFAULT_MODEL,
-        'llama-3.1-8b-instant',
+        'qwen/qwen3-32b',
     ].filter(Boolean);
     return [...new Set(chain)];
 }
