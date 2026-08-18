@@ -23,13 +23,13 @@ const NORMAL_CHANNEL_ID = config.BASIC_CHATBOT_CHANNEL_ID;
 
 // Modèles chatbot : hard = persona Simbot (Kimi / Llama), normal = polyvalent.
 const HARD_DEFAULT_MODEL = 'moonshotai/kimi-k2-instruct-0905';
-const NORMAL_DEFAULT_MODEL = 'llama-3.3-70b-versatile';
+const NORMAL_DEFAULT_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
 const HARD_FALLBACKS = [
-    'llama-3.3-70b-versatile',
-    'llama-3.1-8b-instant',
+    'meta-llama/llama-4-scout-17b-16e-instruct',
     'qwen/qwen3-32b',
+    'openai/gpt-oss-20b',
 ];
-const NORMAL_FALLBACKS = ['llama-3.1-8b-instant', 'qwen/qwen3-32b'];
+const NORMAL_FALLBACKS = ['qwen/qwen3-32b', 'openai/gpt-oss-20b'];
 const GROQ_BASE_URL = String(process.env.GROQ_API_BASE || 'https://api.groq.com/openai/v1').replace(/\/$/, '');
 const MAX_DISCORD = 1900;
 
