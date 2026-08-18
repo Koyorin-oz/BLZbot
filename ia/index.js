@@ -82,7 +82,7 @@ client.once('clientReady', async (c) => {
                 max_tokens: 8,
             });
             const ok = Boolean(ping?.choices?.[0]?.message?.content?.trim());
-            utils.log(ok ? '[chatbot] Groq OK (llama-3.1-8b-instant)' : '[chatbot] Groq répond vide — vérifie GROQ_API_KEY / quotas');
+            utils.log(ok ? '[chatbot] Groq OK (qwen/qwen3-32b)' : '[chatbot] Groq répond vide — vérifie GROQ_API_KEY / quotas');
         } catch (groqErr) {
             utils.log(`[chatbot] Groq indisponible au démarrage : ${groqErr?.message || groqErr}`);
             utils.log('[chatbot] Salon hard utilisera le fallback local tant que Groq ne répond pas.');
