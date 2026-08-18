@@ -77,7 +77,7 @@ client.once('clientReady', async (c) => {
     if (config.groq) {
         try {
             const ping = await config.groq.chat.completions.create({
-                model: 'llama-3.1-8b-instant',
+                model: 'qwen/qwen3-32b',
                 messages: [{ role: 'user', content: 'ping' }],
                 max_tokens: 8,
             });
