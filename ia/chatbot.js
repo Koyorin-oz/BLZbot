@@ -546,7 +546,7 @@ async function requestChatCompletion(messages, { temperature, maxTokens, isHard 
         ],
         { temperature: isHard ? 0.88 : 0.55, isHard, maxTokens: isHard ? 220 : 400 },
     ).catch(() => '');
-    if (retry) return { text: retry, model: 'llama-3.1-8b-instant (retry)' };
+    if (retry) return { text: retry, model: 'qwen/qwen3-32b (retry)' };
 
     const orText = await openRouterChatCompletion(messages, { temperature, maxTokens, isHard });
     if (orText) return { text: orText, model: 'openrouter' };
