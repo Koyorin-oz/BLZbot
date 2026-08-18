@@ -539,7 +539,7 @@ async function requestChatCompletion(messages, { temperature, maxTokens, isHard 
         messages.find((m) => m.role === 'system')?.content?.split('\n').slice(0, 8).join('\n') ||
         HARD_SIMBOT_API_PROMPT;
     const retry = await groqChatCompletion(
-        'llama-3.1-8b-instant',
+        'qwen/qwen3-32b',
         [
             { role: 'system', content: simpleSystem },
             { role: 'user', content: simpleUser },
