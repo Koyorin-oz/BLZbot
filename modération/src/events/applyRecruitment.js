@@ -1,9 +1,19 @@
-const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, LabelBuilder } = require('discord.js');
-
+const {
+    ModalBuilder,
+    TextInputBuilder,
+    TextInputStyle,
+    ActionRowBuilder,
+    EmbedBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    LabelBuilder,
+    MessageFlags,
+} = require('discord.js');
 const CONFIG = require('../config.js');
 
 const DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const EPHEMERAL = MessageFlags.Ephemeral;
 
 function dbRun(db, sql, params = []) {
     return new Promise((resolve, reject) => {
@@ -49,7 +59,7 @@ async function loadDraft(db, userId) {
     const row = await dbGet(db, 'SELECT * FROM recruitment_drafts WHERE userId = ?', [userId]);
     if (!row) return null;
 
-    if (Date.now() - row.updated_at > DRAFT_TTL_MS) {
+    if (Date.now() - Number(row.updated_at || 0) > DRAFT_TTL_MS) {
         await deleteDraft(db, userId);
         return null;
     }
@@ -63,7 +73,7 @@ async function loadDraft(db, userId) {
         }
     }
 
-    let step1 = null;
+    let step1;
     try {
         step1 = JSON.parse(row.step1_json);
     } catch {
@@ -83,13 +93,54 @@ async function deleteDraft(db, userId) {
     await dbRun(db, 'DELETE FROM recruitment_drafts WHERE userId = ?', [userId]);
 }
 
+function isGone(err) {
+    return err?.code === 10062 || err?.code === 40060;
+}
+
+async function safeReply(interaction, payload) {
+    try {
+        if (interaction.deferred || interaction.replied) {
+            return await interaction.followUp(payload);
+        }
+        return await interaction.reply(payload);
+    } catch (err) {
+        if (!isGone(err)) console.error('[Candidature] reply:', err?.message || err);
+        return null;
+    }
+}
+
+async function safeEdit(interaction, payload) {
+    try {
+        if (interaction.deferred || interaction.replied) {
+            return await interaction.editReply(payload);
+        }
+        return await interaction.reply(payload);
+    } catch (err) {
+        if (!isGone(err)) console.error('[Candidature] editReply:', err?.message || err);
+        return null;
+    }
+}
+
+async function safeShowModal(interaction, modal) {
+    try {
+        await interaction.showModal(modal);
+        return true;
+    } catch (err) {
+        console.error('[Candidature] showModal:', err?.message || err);
+        await safeReply(interaction, {
+            content: '❌ Interaction expirée. Reclique sur le bouton pour recommencer.',
+            flags: EPHEMERAL,
+        });
+        return false;
+    }
+}
+
 function safeText(text) {
     const str = String(text || '').trim();
     if (!str || str === 'undefined' || str === 'null') return '[Non renseigné]';
     return str;
 }
 
-/** Découpe un texte long en morceaux valides pour embed.description (max 4096). */
 function chunkText(text, maxLen = 4090) {
     const str = String(text || '').trim();
     if (!str) return ['[Non renseigné]'];
@@ -105,8 +156,7 @@ function chunkText(text, maxLen = 4090) {
         }
         const piece = str.slice(i, end).trim();
         if (piece.length > 0) chunks.push(piece);
-        const next = end > i ? end : i + maxLen;
-        i = next;
+        i = end > i ? end : i + maxLen;
     }
 
     return chunks.length > 0 ? chunks : ['[Non renseigné]'];
@@ -162,9 +212,7 @@ function buildRecruitmentEmbeds(interaction, { specialite, step1, whyYou, reason
     const parts = chunkText(fullText);
 
     return parts.map((part, index) => {
-        const embed = new EmbedBuilder()
-            .setDescription(part)
-            .setColor('#0099ff');
+        const embed = new EmbedBuilder().setDescription(part).setColor('#0099ff');
         if (index === 0) {
             embed
                 .setTitle(title.substring(0, 256))
@@ -180,66 +228,54 @@ function buildRecruitmentEmbeds(interaction, { specialite, step1, whyYou, reason
 module.exports = {
     name: 'applyRecruitment',
 
-    async execute(interaction, { dbManager, voteManager, recruitmentManager, client }) {
-        if (interaction.isButton()) {
+    async execute(interaction, ctx) {
+        if (!interaction.isButton()) return;
+
+        try {
             if (interaction.customId.startsWith('apply_')) {
                 const specialite = interaction.customId.replace('apply_', '');
-                await this.startApplication(interaction, specialite, dbManager, recruitmentManager);
+                await this.startApplication(interaction, specialite, ctx.dbManager, ctx.recruitmentManager);
             } else if (interaction.customId.startsWith('continue_recruitment_')) {
                 const specialite = interaction.customId.replace('continue_recruitment_', '');
-                await this.showStep2Modal(interaction, specialite, dbManager);
+                await this.showStep2Modal(interaction, specialite, ctx.dbManager);
             }
+        } catch (err) {
+            console.error('[Candidature] execute:', err);
+            await safeReply(interaction, {
+                content: '❌ Erreur candidature. Réessaie.',
+                flags: EPHEMERAL,
+            });
         }
     },
 
     async startApplication(interaction, specialite, dbManager, recruitmentManager) {
         const member = interaction.member;
         const userId = interaction.user.id;
-        const hasBypass = recruitmentManager && recruitmentManager.hasValidBypass(userId);
+        const hasBypass =
+            recruitmentManager && typeof recruitmentManager.hasValidBypass === 'function'
+                ? recruitmentManager.hasValidBypass(userId)
+                : false;
 
+        // Checks sync only — showModal doit partir dans les 3s Discord
         if (!hasBypass) {
-            const joinDate = member.joinedAt;
-            const hasBeenOneWeek = joinDate && (Date.now() - joinDate.getTime()) > ONE_WEEK_MS;
-
-            if (!hasBeenOneWeek) {
-                return interaction.reply({
-                    content: "❌ Vous ne remplissez pas les conditions pour postuler :\n- Vous devez être sur le serveur depuis plus d'une semaine.",
-                    ephemeral: true,
+            const joinDate = member?.joinedAt;
+            const ok = joinDate && Date.now() - joinDate.getTime() > ONE_WEEK_MS;
+            if (!ok) {
+                return safeReply(interaction, {
+                    content: "❌ Tu dois être sur le serveur depuis plus d'une semaine pour postuler.",
+                    flags: EPHEMERAL,
                 });
             }
         }
 
-        const staffProfileDb = dbManager.getStaffProfileDb();
-        staffProfileDb.get(
-            'SELECT * FROM staff_chances WHERE userId = ?',
-            [userId],
-            async (err, chances) => {
-                if (err) console.error('Erreur vérification chances:', err);
-
-                if (!chances) {
-                    staffProfileDb.run(
-                        'INSERT INTO staff_chances (userId, candidature_chances, modo_test_chances) VALUES (?, 2, 1)',
-                        [userId],
-                    );
-                    chances = { candidature_chances: 2, modo_test_chances: 1 };
-                }
-
-                if (!hasBypass && chances.candidature_chances <= 0) {
-                    return interaction.reply({
-                        content: '❌ Vous avez épuisé vos chances de candidature pour le moment.',
-                        ephemeral: true,
-                    });
-                }
-
-                await this.showStep1Modal(interaction, specialite);
-            },
-        );
+        // Modal d'abord ; les chances SQLite sont vérifiées à la soumission étape 1
+        await this.showStep1Modal(interaction, specialite);
     },
 
     async showStep1Modal(interaction, specialite) {
         const modal = new ModalBuilder()
             .setCustomId(`recruitment_form_step1_${specialite}`)
-            .setTitle(`Candidature ${specialite.charAt(0).toUpperCase() + specialite.slice(1)} (1/2)`);
+            .setTitle(`Candidature ${String(specialite).slice(0, 12)} (1/2)`.slice(0, 45));
 
         const ageInput = new TextInputBuilder()
             .setCustomId('age')
@@ -260,24 +296,23 @@ module.exports = {
         const experienceInput = new TextInputBuilder()
             .setCustomId('experience')
             .setLabel('Expérience pertinente ?')
-            .setPlaceholder('Avez-vous déjà été staff ?')
+            .setPlaceholder('As-tu déjà été staff ?')
             .setStyle(TextInputStyle.Paragraph)
             .setRequired(true);
 
+        // Pas de minLength Discord (bouton Submit grisé) — check côté bot après
         const qualitiesInput = new TextInputBuilder()
             .setCustomId('qualities')
             .setLabel('Qualités et Défauts')
-            .setPlaceholder('Minimum 500 caractères...')
+            .setPlaceholder('Développe un peu (vise ~300 caractères)')
             .setStyle(TextInputStyle.Paragraph)
-            .setMinLength(500)
             .setRequired(true);
 
         const motivationInput = new TextInputBuilder()
             .setCustomId('motivation')
-            .setLabel(`Pourquoi devenir ${specialite} ?`)
-            .setPlaceholder('Minimum 250 caractères...')
+            .setLabel(`Pourquoi devenir ${String(specialite).slice(0, 18)} ?`.slice(0, 45))
+            .setPlaceholder('Développe ta motivation (vise ~200 caractères)')
             .setStyle(TextInputStyle.Paragraph)
-            .setMinLength(250)
             .setRequired(true);
 
         modal.addComponents(
@@ -288,41 +323,82 @@ module.exports = {
             new ActionRowBuilder().addComponents(motivationInput),
         );
 
-        await interaction.showModal(modal);
+        await safeShowModal(interaction, modal);
     },
 
-    async handleStep1Submit(interaction, { dbManager }) {
-        const customId = interaction.customId;
-        const specialite = customId.split('_').pop();
+    async handleStep1Submit(interaction, { dbManager, recruitmentManager }) {
+        try {
+            if (!interaction.deferred && !interaction.replied) {
+                await interaction.deferReply({ flags: EPHEMERAL });
+            }
+        } catch (e) {
+            if (isGone(e)) return;
+            console.error('[Candidature] defer step1:', e?.message || e);
+        }
 
+        const specialite = interaction.customId.replace('recruitment_form_step1_', '');
         const age = interaction.fields.getTextInputValue('age');
         const a2f = interaction.fields.getTextInputValue('a2f');
         const experience = interaction.fields.getTextInputValue('experience');
         const qualities = interaction.fields.getTextInputValue('qualities');
         const motivation = interaction.fields.getTextInputValue('motivation');
+        const userId = interaction.user.id;
+        const staffProfileDb = dbManager.getStaffProfileDb();
+        const hasBypass =
+            recruitmentManager && typeof recruitmentManager.hasValidBypass === 'function'
+                ? recruitmentManager.hasValidBypass(userId)
+                : false;
+
+        // Chances (reportées ici pour ne pas bloquer showModal)
+        if (!hasBypass) {
+            try {
+                let chances = await dbGet(staffProfileDb, 'SELECT * FROM staff_chances WHERE userId = ?', [userId]);
+                if (!chances) {
+                    await dbRun(
+                        staffProfileDb,
+                        'INSERT OR IGNORE INTO staff_chances (userId, candidature_chances, modo_test_chances) VALUES (?, 2, 1)',
+                        [userId],
+                    );
+                    chances = { candidature_chances: 2, modo_test_chances: 1 };
+                }
+                if (Number(chances.candidature_chances) <= 0) {
+                    return safeEdit(interaction, {
+                        content: '❌ Plus de chances de candidature pour le moment.',
+                    });
+                }
+            } catch (err) {
+                console.error('[Candidature] chances step1:', err);
+            }
+        }
 
         if (!/^\d+$/.test(age)) {
-            return interaction.reply({
-                content: '❌ Veuillez entrer un âge valide (chiffres uniquement).',
-                ephemeral: true,
+            return safeEdit(interaction, { content: '❌ Âge invalide (chiffres uniquement).' });
+        }
+
+        if (qualities.trim().length < 150) {
+            return safeEdit(interaction, {
+                content: `❌ Qualités/défauts trop courts (${qualities.trim().length}/150 min). Rouvre l’étape 1 et développe.`,
+            });
+        }
+        if (motivation.trim().length < 100) {
+            return safeEdit(interaction, {
+                content: `❌ Motivation trop courte (${motivation.trim().length}/100 min). Rouvre l’étape 1 et développe.`,
             });
         }
 
         const ageNum = parseInt(age, 10);
         const autoReject = ageNum < 14;
-        const staffProfileDb = dbManager.getStaffProfileDb();
 
         try {
-            await saveDraft(staffProfileDb, interaction.user.id, {
+            await saveDraft(staffProfileDb, userId, {
                 specialite,
                 step1: { age, a2f, experience, qualities, motivation },
                 autoReject,
             });
         } catch (e) {
-            console.error('[Candidature] Erreur sauvegarde brouillon étape 1:', e);
-            return interaction.reply({
-                content: '❌ Impossible de sauvegarder votre progression. Réessayez dans un instant.',
-                ephemeral: true,
+            console.error('[Candidature] save draft step1:', e);
+            return safeEdit(interaction, {
+                content: '❌ Impossible de sauvegarder. Réessaie dans un instant.',
             });
         }
 
@@ -333,39 +409,37 @@ module.exports = {
                 .setStyle(ButtonStyle.Primary),
         );
 
-        await interaction.reply({
-            content: '✅ Première étape validée ! Cliquez sur le bouton ci-dessous pour continuer votre candidature.',
+        await safeEdit(interaction, {
+            content: '✅ Étape 1 OK. Clique sur le bouton pour l’étape 2 (valable 24h).',
             components: [row],
-            ephemeral: true,
         });
     },
 
     async showStep2Modal(interaction, specialite, dbManager) {
         const staffProfileDb = dbManager.getStaffProfileDb();
-        let cachedData;
+        let draft;
 
         try {
-            cachedData = await loadDraft(staffProfileDb, interaction.user.id);
+            draft = await loadDraft(staffProfileDb, interaction.user.id);
         } catch (e) {
-            console.error('[Candidature] Erreur lecture brouillon:', e);
+            console.error('[Candidature] load draft step2:', e);
         }
 
-        if (!cachedData || cachedData.specialite !== specialite) {
-            return interaction.reply({
-                content: '❌ Votre session a expiré ou est invalide. Veuillez recommencer depuis l\'étape 1.',
-                ephemeral: true,
+        if (!draft || draft.specialite !== specialite) {
+            return safeReply(interaction, {
+                content: '❌ Session expirée / invalide. Recommence depuis l’étape 1.',
+                flags: EPHEMERAL,
             });
         }
 
         const modal = new ModalBuilder()
             .setCustomId(`recruitment_form_step2_${specialite}`)
-            .setTitle(`Candidature ${specialite.charAt(0).toUpperCase() + specialite.slice(1)} (2/2)`);
+            .setTitle(`Candidature ${String(specialite).slice(0, 12)} (2/2)`.slice(0, 45));
 
         const whyYouInput = new TextInputBuilder()
             .setCustomId('why_you')
-            .setPlaceholder("Pourquoi vous et pas quelqu'un d'autre ?")
+            .setPlaceholder("Pourquoi vous et pas quelqu'un d'autre ? (développe)")
             .setStyle(TextInputStyle.Paragraph)
-            .setMinLength(250)
             .setRequired(true);
 
         const questions = {
@@ -378,103 +452,84 @@ module.exports = {
             questions.q3 = 'Un membre partage du contenu NSFW. Que faites-vous ?';
             questions.q4 = 'Vous êtes seul et un raid commence. Décrivez vos actions.';
 
-            const q1 = new TextInputBuilder().setCustomId('reasoning_1').setPlaceholder(questions.q1).setStyle(TextInputStyle.Paragraph).setMinLength(150).setRequired(true);
-            const q2 = new TextInputBuilder().setCustomId('reasoning_2').setPlaceholder(questions.q2).setStyle(TextInputStyle.Paragraph).setMinLength(150).setRequired(true);
-            const q3 = new TextInputBuilder().setCustomId('reasoning_3').setPlaceholder(questions.q3).setStyle(TextInputStyle.Paragraph).setMinLength(150).setRequired(true);
-            const q4 = new TextInputBuilder().setCustomId('reasoning_4').setPlaceholder(questions.q4).setStyle(TextInputStyle.Paragraph).setMinLength(200).setRequired(true);
+            const q1 = new TextInputBuilder().setCustomId('reasoning_1').setPlaceholder(questions.q1).setStyle(TextInputStyle.Paragraph).setRequired(true);
+            const q2 = new TextInputBuilder().setCustomId('reasoning_2').setPlaceholder(questions.q2).setStyle(TextInputStyle.Paragraph).setRequired(true);
+            const q3 = new TextInputBuilder().setCustomId('reasoning_3').setPlaceholder(questions.q3).setStyle(TextInputStyle.Paragraph).setRequired(true);
+            const q4 = new TextInputBuilder().setCustomId('reasoning_4').setPlaceholder(questions.q4).setStyle(TextInputStyle.Paragraph).setRequired(true);
 
             modal.addLabelComponents(
-                new LabelBuilder().setLabel('Pourquoi vous ?').setDescription('Expliquez ce qui vous différencie.').setTextInputComponent(whyYouInput),
+                new LabelBuilder().setLabel('Pourquoi vous ?').setDescription('Ce qui vous différencie.').setTextInputComponent(whyYouInput),
                 new LabelBuilder().setLabel('Insulte dans le vide').setDescription(questions.q1).setTextInputComponent(q1),
                 new LabelBuilder().setLabel('Harcèlement sans preuve').setDescription(questions.q2).setTextInputComponent(q2),
                 new LabelBuilder().setLabel('NSFW dans le discord').setDescription(questions.q3).setTextInputComponent(q3),
                 new LabelBuilder().setLabel('Raid serveur (seul)').setDescription(questions.q4).setTextInputComponent(q4),
             );
         } else if (specialite === 'communiquant') {
-            let targetName = 'un membre';
-            try {
-                const staffRole = interaction.guild.roles.cache.get(CONFIG.STAFF_ROLE_ID);
-                if (staffRole && staffRole.members.size > 0) {
-                    targetName = staffRole.members.random().displayName;
-                } else {
-                    targetName = 'Quelqu\'un';
-                }
-            } catch (e) {
-                console.error('Erreur sélection staff:', e);
-            }
-
-            const vowels = ['a', 'e', 'i', 'o', 'u', 'y', 'h', 'é', 'è', 'ê', 'à'];
-            const firstChar = targetName.charAt(0).toLowerCase();
-            const determinant = vowels.includes(firstChar) ? "d'" : 'de ';
-
-            questions.q1 = 'Un membre vient d\'arriver. Que faites-vous ?';
-            questions.q2 = `Ticket ouvert pour insulter la daronne ${determinant}${targetName}. Que faites-vous ?`;
+            // Nom générique (pas de scan rôles) → showModal plus rapide, moins de timeouts
+            questions.q1 = "Un membre vient d'arriver. Que faites-vous ?";
+            questions.q2 = "Ticket ouvert pour insulter la daronne d'un staff. Que faites-vous ?";
             questions.q3 = 'Insultes en chat et un ticket ouvert simultanément. Que gérez-vous en priorité ?';
-            questions.q4 = 'Quelqu’un qui se plaint d’un autre membre dans un ticket, décrivez comment gérez vous la situation';
+            questions.q4 = "Quelqu'un se plaint d'un autre membre dans un ticket. Comment gérez-vous ?";
 
-            let labelQ2 = `Insulte daronne ${determinant}${targetName}`;
-            if (labelQ2.length > 45) {
-                labelQ2 = `${labelQ2.substring(0, 42)}...`;
-            }
-
-            const q1 = new TextInputBuilder().setCustomId('reasoning_1').setPlaceholder(questions.q1).setStyle(TextInputStyle.Paragraph).setMinLength(50).setRequired(true);
-            const q2 = new TextInputBuilder().setCustomId('reasoning_2').setPlaceholder(questions.q2).setStyle(TextInputStyle.Paragraph).setMinLength(250).setRequired(true);
-            const q3 = new TextInputBuilder().setCustomId('reasoning_3').setPlaceholder(questions.q3).setStyle(TextInputStyle.Paragraph).setMinLength(200).setRequired(true);
-            const q4 = new TextInputBuilder().setCustomId('reasoning_4').setPlaceholder(questions.q4).setStyle(TextInputStyle.Paragraph).setMinLength(200).setRequired(true);
+            const q1 = new TextInputBuilder().setCustomId('reasoning_1').setPlaceholder(questions.q1).setStyle(TextInputStyle.Paragraph).setRequired(true);
+            const q2 = new TextInputBuilder().setCustomId('reasoning_2').setPlaceholder(questions.q2).setStyle(TextInputStyle.Paragraph).setRequired(true);
+            const q3 = new TextInputBuilder().setCustomId('reasoning_3').setPlaceholder(questions.q3).setStyle(TextInputStyle.Paragraph).setRequired(true);
+            const q4 = new TextInputBuilder().setCustomId('reasoning_4').setPlaceholder(questions.q4).setStyle(TextInputStyle.Paragraph).setRequired(true);
 
             modal.addLabelComponents(
-                new LabelBuilder().setLabel('Pourquoi vous ?').setDescription('Expliquez ce qui vous différencie.').setTextInputComponent(whyYouInput),
+                new LabelBuilder().setLabel('Pourquoi vous ?').setDescription('Ce qui vous différencie.').setTextInputComponent(whyYouInput),
                 new LabelBuilder().setLabel('Nouveau membre arrive').setDescription(questions.q1).setTextInputComponent(q1),
-                new LabelBuilder().setLabel(labelQ2).setDescription(questions.q2).setTextInputComponent(q2),
+                new LabelBuilder().setLabel('Insulte daronne staff').setDescription(questions.q2).setTextInputComponent(q2),
                 new LabelBuilder().setLabel('Insulte discussion + ticket').setDescription(questions.q3).setTextInputComponent(q3),
                 new LabelBuilder().setLabel('Ticket plainte membre').setDescription(questions.q4).setTextInputComponent(q4),
             );
         } else {
             modal.addLabelComponents(
-                new LabelBuilder().setLabel('Pourquoi vous ?').setDescription('Expliquez ce qui vous différencie.').setTextInputComponent(whyYouInput),
+                new LabelBuilder().setLabel('Pourquoi vous ?').setDescription('Ce qui vous différencie.').setTextInputComponent(whyYouInput),
             );
         }
 
-        cachedData.questions = questions;
+        draft.questions = questions;
         try {
-            await saveDraft(staffProfileDb, interaction.user.id, cachedData);
+            await saveDraft(staffProfileDb, interaction.user.id, draft);
         } catch (e) {
-            console.error('[Candidature] Erreur mise à jour brouillon étape 2:', e);
+            console.error('[Candidature] update draft step2:', e);
         }
 
-        await interaction.showModal(modal);
+        await safeShowModal(interaction, modal);
     },
 
     async handleStep2Submit(interaction, { client, dbManager, voteManager }) {
         try {
             if (!interaction.deferred && !interaction.replied) {
-                await interaction.deferReply({ ephemeral: true });
+                await interaction.deferReply({ flags: EPHEMERAL });
             }
         } catch (e) {
-            console.error('Erreur deferReply:', e);
+            if (isGone(e)) return;
+            console.error('[Candidature] defer step2:', e?.message || e);
         }
 
         const userId = interaction.user.id;
         const staffProfileDb = dbManager.getStaffProfileDb();
-        let cachedData;
+        let draft;
 
         try {
-            cachedData = await loadDraft(staffProfileDb, userId);
+            draft = await loadDraft(staffProfileDb, userId);
         } catch (e) {
-            console.error('[Candidature] Erreur lecture brouillon étape 2:', e);
+            console.error('[Candidature] load draft step2 submit:', e);
         }
 
-        if (!cachedData) {
-            return interaction.editReply({
-                content: '❌ Une erreur est survenue (session expirée). Veuillez recommencer.',
+        if (!draft) {
+            return safeEdit(interaction, {
+                content: '❌ Session expirée. Recommence depuis l’étape 1.',
             });
         }
 
-        const specialite = cachedData.specialite;
-        const step1 = cachedData.step1;
-        const autoReject = cachedData.autoReject;
+        const specialite = draft.specialite;
+        const step1 = draft.step1;
+        const autoReject = draft.autoReject;
 
-        let questions = cachedData.questions || {};
+        let questions = draft.questions || {};
         if (!questions.q1) {
             if (specialite === 'moderateur') {
                 questions = {
@@ -485,43 +540,56 @@ module.exports = {
                 };
             } else if (specialite === 'communiquant') {
                 questions = {
-                    q1: 'Un membre vient d\'arriver. Que faites-vous ?',
+                    q1: "Un membre vient d'arriver. Que faites-vous ?",
                     q2: 'Ticket ouvert pour insulter. Que faites-vous ?',
                     q3: 'Insultes en chat et un ticket ouvert simultanément. Que gérez-vous en priorité ?',
-                    q4: 'Quelqu\'un se plaint d\'un autre membre dans un ticket. Comment gérez-vous la situation ?',
+                    q4: "Plainte contre un membre dans un ticket. Comment gérez-vous ?",
                 };
             }
         }
 
-        const whyYou = interaction.fields.getTextInputValue('why_you');
-        let reasoning = {};
+        let whyYou = '';
+        try {
+            whyYou = interaction.fields.getTextInputValue('why_you');
+        } catch {
+            whyYou = '';
+        }
 
+        let reasoning = {};
         if (specialite === 'moderateur' || specialite === 'communiquant') {
-            reasoning = {
-                q1: interaction.fields.getTextInputValue('reasoning_1'),
-                q2: interaction.fields.getTextInputValue('reasoning_2'),
-                q3: interaction.fields.getTextInputValue('reasoning_3'),
-                q4: interaction.fields.getTextInputValue('reasoning_4'),
-            };
+            try {
+                reasoning = {
+                    q1: interaction.fields.getTextInputValue('reasoning_1'),
+                    q2: interaction.fields.getTextInputValue('reasoning_2'),
+                    q3: interaction.fields.getTextInputValue('reasoning_3'),
+                    q4: interaction.fields.getTextInputValue('reasoning_4'),
+                };
+            } catch (e) {
+                console.error('[Candidature] fields step2:', e?.message || e);
+                return safeEdit(interaction, {
+                    content: '❌ Formulaire incomplet. Reprends l’étape 2.',
+                });
+            }
         }
 
         if (autoReject) {
-            staffProfileDb.run(
-                'INSERT INTO candidatures (userId, type, status, date, reviewer_id, review_date) VALUES (?, ?, ?, ?, ?, ?)',
-                [userId, specialite || 'moderateur', 'refuse', Date.now(), 'auto_reject_system', Date.now()],
-                (err) => { if (err) console.error('Erreur enregistrement candidature auto-refusée:', err); },
-            );
+            try {
+                await dbRun(
+                    staffProfileDb,
+                    'INSERT INTO candidatures (userId, type, status, date, reviewer_id, review_date) VALUES (?, ?, ?, ?, ?, ?)',
+                    [userId, specialite || 'moderateur', 'refuse', Date.now(), 'auto_reject_system', Date.now()],
+                );
+                await dbRun(
+                    staffProfileDb,
+                    'UPDATE staff_chances SET candidature_chances = MAX(candidature_chances - 1, 0) WHERE userId = ?',
+                    [userId],
+                );
+            } catch (e) {
+                console.error('[Candidature] auto-reject save:', e);
+            }
 
-            staffProfileDb.run(
-                'UPDATE staff_chances SET candidature_chances = candidature_chances - 1 WHERE userId = ?',
-                [userId],
-            );
-
-            await deleteDraft(staffProfileDb, userId);
-
-            await interaction.editReply({
-                content: '✅ Votre candidature a été envoyée avec succès !',
-            });
+            await deleteDraft(staffProfileDb, userId).catch(() => {});
+            await safeEdit(interaction, { content: '✅ Candidature envoyée.' });
 
             setTimeout(async () => {
                 try {
@@ -531,14 +599,12 @@ module.exports = {
                             new EmbedBuilder()
                                 .setColor('#FF0000')
                                 .setTitle('❌ Candidature refusée')
-                                .setDescription(
-                                    'Candidature modération **refusée**.\n\nTu pourras repostuler après la période de cooldown.',
-                                )
+                                .setDescription('Candidature **refusée**.\n\nTu pourras repostuler après le cooldown.')
                                 .setTimestamp(),
                         ],
                     });
                 } catch (e) {
-                    console.error(`Impossible d'envoyer le refus auto à ${userId}:`, e);
+                    console.error(`[Candidature] DM auto-refus ${userId}:`, e?.message || e);
                 }
             }, 60000);
 
@@ -546,21 +612,21 @@ module.exports = {
         }
 
         if (!voteManager) {
-            console.error('[Candidature] voteManager indisponible');
-            return interaction.editReply({
-                content: '❌ Erreur interne (votes). Contactez un administrateur.',
+            return safeEdit(interaction, {
+                content: '❌ Erreur interne (votes). Contacte un admin.',
             });
         }
 
-        const recruitmentChannel = await client.channels.fetch(CONFIG.RECRUITMENT_CHANNEL_ID).catch((err) => {
-            console.error('[Candidature] Erreur fetch canal:', err);
-            return null;
-        });
+        const recruitmentChannel = await client.channels
+            .fetch(CONFIG.RECRUITMENT_CHANNEL_ID)
+            .catch((err) => {
+                console.error('[Candidature] fetch canal:', err?.message || err);
+                return null;
+            });
 
         if (!recruitmentChannel) {
-            console.error(`[Candidature] Canal de recrutement introuvable: ${CONFIG.RECRUITMENT_CHANNEL_ID}`);
-            return interaction.editReply({
-                content: '❌ Erreur : le canal de recrutement est introuvable. Contactez un administrateur.',
+            return safeEdit(interaction, {
+                content: '❌ Canal de recrutement introuvable. Contacte un admin.',
             });
         }
 
@@ -588,11 +654,15 @@ module.exports = {
             voters: {},
         };
         voteManager.saveVotes();
-        console.log(`[Candidature] Vote créé pour ${interaction.user.tag} (${userId})`);
 
         try {
-            const embeds = buildRecruitmentEmbeds(interaction, { specialite, step1, whyYou, reasoning, questions });
-            console.log(`[Candidature] Envoi de ${embeds.length} embed(s) pour ${interaction.user.tag}`);
+            const embeds = buildRecruitmentEmbeds(interaction, {
+                specialite,
+                step1,
+                whyYou,
+                reasoning,
+                questions,
+            });
 
             const [firstEmbed, ...otherEmbeds] = embeds;
             const sentMessage = await recruitmentChannel.send({
@@ -611,31 +681,34 @@ module.exports = {
 
             voteManager.votes[userId].messageId = sentMessage.id;
             voteManager.saveVotes();
-            console.log(`[Candidature] Candidature de ${interaction.user.tag} envoyée dans ${CONFIG.RECRUITMENT_CHANNEL_ID}`);
+            console.log(`[Candidature] ${interaction.user.tag} envoyée → ${CONFIG.RECRUITMENT_CHANNEL_ID}`);
         } catch (sendError) {
-            console.error('[Candidature] Erreur envoi message:', sendError);
+            console.error('[Candidature] envoi:', sendError);
             delete voteManager.votes[userId];
             voteManager.saveVotes();
-            return interaction.editReply({
-                content: "❌ Erreur lors de l'envoi de la candidature. Contactez un administrateur.",
+            return safeEdit(interaction, {
+                content: "❌ Erreur d'envoi de la candidature. Contacte un admin.",
             });
         }
 
-        staffProfileDb.run(
-            'INSERT INTO candidatures (userId, type, status, date) VALUES (?, ?, ?, ?)',
-            [userId, specialite || 'moderateur', 'en_attente', Date.now()],
-            (err) => { if (err) console.error('Erreur enregistrement candidature:', err); },
-        );
+        try {
+            await dbRun(
+                staffProfileDb,
+                'INSERT INTO candidatures (userId, type, status, date) VALUES (?, ?, ?, ?)',
+                [userId, specialite || 'moderateur', 'en_attente', Date.now()],
+            );
+            await dbRun(
+                staffProfileDb,
+                'UPDATE staff_chances SET candidature_chances = MAX(candidature_chances - 1, 0) WHERE userId = ?',
+                [userId],
+            );
+        } catch (e) {
+            console.error('[Candidature] save final:', e);
+        }
 
-        staffProfileDb.run(
-            'UPDATE staff_chances SET candidature_chances = candidature_chances - 1 WHERE userId = ?',
-            [userId],
-        );
-
-        await deleteDraft(staffProfileDb, userId);
-
-        await interaction.editReply({
-            content: '✅ Votre candidature a été envoyée avec succès !',
+        await deleteDraft(staffProfileDb, userId).catch(() => {});
+        await safeEdit(interaction, {
+            content: '✅ Candidature envoyée avec succès !',
         });
     },
 };

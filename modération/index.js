@@ -439,101 +439,122 @@ client.on('interactionCreate', async interaction => {
     if (interaction.isButton()) {
         const customId = interaction.customId;
 
-        // Boutons de vote et règlement
-        if (customId.startsWith('vote_') ||
-            customId.startsWith('deban_vote_') ||
-            customId.startsWith('fin_') ||
-            customId.startsWith('add_rule_') ||
-            customId.startsWith('finish_reglement_') ||
-            customId === 'accept_reglement') {
-            const buttonHandler = require('./src/events/buttonInteraction');
-            if (buttonHandler && buttonHandler.execute) {
-                await buttonHandler.execute(interaction, { dbManager, voteManager, snipeManager, recruitmentManager, config, client });
+        try {
+            // Boutons de vote et règlement
+            if (customId.startsWith('vote_') ||
+                customId.startsWith('deban_vote_') ||
+                customId.startsWith('fin_') ||
+                customId.startsWith('add_rule_') ||
+                customId.startsWith('finish_reglement_') ||
+                customId === 'accept_reglement') {
+                const buttonHandler = require('./src/events/buttonInteraction');
+                if (buttonHandler && buttonHandler.execute) {
+                    await buttonHandler.execute(interaction, { dbManager, voteManager, snipeManager, recruitmentManager, config, client });
+                }
             }
-        }
 
-        // Boutons de candidature (Nouveau système)
-        else if (customId.startsWith('apply_') || customId.startsWith('continue_recruitment_')) {
-            const applyHandler = require('./src/events/applyRecruitment');
-            if (applyHandler && applyHandler.execute) {
-                await applyHandler.execute(interaction, { dbManager, voteManager, recruitmentManager, client });
+            // Boutons de candidature (Nouveau système)
+            else if (customId.startsWith('apply_') || customId.startsWith('continue_recruitment_')) {
+                const applyHandler = require('./src/events/applyRecruitment');
+                if (applyHandler && applyHandler.execute) {
+                    await applyHandler.execute(interaction, { dbManager, voteManager, recruitmentManager, client });
+                }
             }
-        }
 
-        // Boutons de vote de candidature
-        else if (customId.startsWith('recrutement_vote_') || customId.startsWith('fin_candidature_vote_')) {
-            const buttonHandler = require('./src/events/buttonInteraction');
-            if (buttonHandler && buttonHandler.execute) {
-                await buttonHandler.execute(interaction, { dbManager, voteManager, recruitmentManager, config, client });
+            // Boutons de vote de candidature
+            else if (customId.startsWith('recrutement_vote_') || customId.startsWith('fin_candidature_vote_')) {
+                const buttonHandler = require('./src/events/buttonInteraction');
+                if (buttonHandler && buttonHandler.execute) {
+                    await buttonHandler.execute(interaction, { dbManager, voteManager, recruitmentManager, config, client });
+                }
             }
-        }
 
-        // Boutons de tickets
-        else if (customId.startsWith('ticket_')) {
-            const ticketHandler = require('./src/events/ticketButtons');
-            if (ticketHandler && ticketHandler.handleTicketButton) {
-                await ticketHandler.handleTicketButton(interaction, client);
+            // Boutons de tickets
+            else if (customId.startsWith('ticket_')) {
+                const ticketHandler = require('./src/events/ticketButtons');
+                if (ticketHandler && ticketHandler.handleTicketButton) {
+                    await ticketHandler.handleTicketButton(interaction, client);
+                }
             }
-        }
 
-        // Boutons du formulaire de débannissement
-        // Accepte `launch_form` (legacy) ET `launch_form_<channelId>` (nouveau /panel-deban)
-        else if (customId === 'launch_form' || customId.startsWith('launch_form_') || customId.startsWith('deban_continue_')) {
-            const debanFormHandler = require('./src/events/debanFormHandler');
-            if (customId === 'launch_form' || customId.startsWith('launch_form_')) {
-                await debanFormHandler.handleLaunchForm(interaction, { voteManager, client });
-            } else if (customId === 'deban_continue_step2') {
-                await debanFormHandler.handleContinueStep2(interaction);
-            } else if (customId === 'deban_continue_step3') {
-                await debanFormHandler.handleContinueStep3(interaction);
+            // Boutons du formulaire de débannissement
+            else if (customId === 'launch_form' || customId.startsWith('launch_form_') || customId.startsWith('deban_continue_')) {
+                const debanFormHandler = require('./src/events/debanFormHandler');
+                if (customId === 'launch_form' || customId.startsWith('launch_form_')) {
+                    await debanFormHandler.handleLaunchForm(interaction, { voteManager, client });
+                } else if (customId === 'deban_continue_step2') {
+                    await debanFormHandler.handleContinueStep2(interaction);
+                } else if (customId === 'deban_continue_step3') {
+                    await debanFormHandler.handleContinueStep3(interaction);
+                }
             }
+        } catch (btnErr) {
+            // Unknown interaction / déjà répondu : ne doit JAMAIS crasher le process modération
+            if (btnErr?.code !== 10062 && btnErr?.code !== 40060) {
+                console.error('[modération] Erreur bouton:', btnErr);
+            }
+            try {
+                if (!interaction.replied && !interaction.deferred) {
+                    await interaction.reply({ content: '❌ Action impossible (interaction expirée). Réessaie.', ephemeral: true });
+                }
+            } catch { /* ignore */ }
         }
     }
 
     // Gestion des modals
     if (interaction.isModalSubmit()) {
-        // Modals de candidature
-        if (interaction.customId.startsWith('recruitment_form_step1_')) {
-            const applyHandler = require('./src/events/applyRecruitment');
-            if (applyHandler && applyHandler.handleStep1Submit) {
-                await applyHandler.handleStep1Submit(interaction, { dbManager, voteManager, recruitmentManager, client });
+        try {
+            // Modals de candidature
+            if (interaction.customId.startsWith('recruitment_form_step1_')) {
+                const applyHandler = require('./src/events/applyRecruitment');
+                if (applyHandler && applyHandler.handleStep1Submit) {
+                    await applyHandler.handleStep1Submit(interaction, { dbManager, voteManager, recruitmentManager, client });
+                }
             }
-        }
-        else if (interaction.customId.startsWith('recruitment_form_step2_')) {
-            const applyHandler = require('./src/events/applyRecruitment');
-            if (applyHandler && applyHandler.handleStep2Submit) {
-                await applyHandler.handleStep2Submit(interaction, { dbManager, voteManager, recruitmentManager, client });
+            else if (interaction.customId.startsWith('recruitment_form_step2_')) {
+                const applyHandler = require('./src/events/applyRecruitment');
+                if (applyHandler && applyHandler.handleStep2Submit) {
+                    await applyHandler.handleStep2Submit(interaction, { dbManager, voteManager, recruitmentManager, client });
+                }
             }
-        }
-        // Modals de tickets - SUPPRIMÉ (on utilise maintenant UserSelectMenu)
-        // Les tickets n'utilisent plus de modals grâce aux Components V2
+            // Modals du formulaire de débannissement
+            else if (interaction.customId.startsWith('deban_form_step')) {
+                const debanFormHandler = require('./src/events/debanFormHandler');
+                if (interaction.customId === 'deban_form_step1') {
+                    await debanFormHandler.handleStep1Submit(interaction, { voteManager });
+                } else if (interaction.customId === 'deban_form_step2') {
+                    await debanFormHandler.handleStep2Submit(interaction, { voteManager });
+                } else if (interaction.customId === 'deban_form_step3') {
+                    await debanFormHandler.handleStep3Submit(interaction, { voteManager, client });
+                }
+            }
 
-        // Modals du formulaire de débannissement
-        else if (interaction.customId.startsWith('deban_form_step')) {
-            const debanFormHandler = require('./src/events/debanFormHandler');
-            if (interaction.customId === 'deban_form_step1') {
-                await debanFormHandler.handleStep1Submit(interaction, { voteManager });
-            } else if (interaction.customId === 'deban_form_step2') {
-                await debanFormHandler.handleStep2Submit(interaction, { voteManager });
-            } else if (interaction.customId === 'deban_form_step3') {
-                await debanFormHandler.handleStep3Submit(interaction, { voteManager, client });
+            // Modal /envoyer-message (contenu multi-ligne)
+            else if (interaction.customId === 'envoyer_message_modal') {
+                const envoyerMessage = require('./src/commands/envoyer-message');
+                if (envoyerMessage && envoyerMessage.handleModalSubmit) {
+                    await envoyerMessage.handleModalSubmit(interaction);
+                }
             }
-        }
 
-        // Modal /envoyer-message (contenu multi-ligne)
-        else if (interaction.customId === 'envoyer_message_modal') {
-            const envoyerMessage = require('./src/commands/envoyer-message');
-            if (envoyerMessage && envoyerMessage.handleModalSubmit) {
-                await envoyerMessage.handleModalSubmit(interaction);
+            // Autres modals
+            else {
+                const modalHandler = require('./src/events/modalSubmit');
+                if (modalHandler && modalHandler.execute) {
+                    await modalHandler.execute(interaction, { dbManager, voteManager, snipeManager, recruitmentManager, config, client });
+                }
             }
-        }
-
-        // Autres modals
-        else {
-            const modalHandler = require('./src/events/modalSubmit');
-            if (modalHandler && modalHandler.execute) {
-                await modalHandler.execute(interaction, { dbManager, voteManager, snipeManager, recruitmentManager, config, client });
+        } catch (modalErr) {
+            if (modalErr?.code !== 10062 && modalErr?.code !== 40060) {
+                console.error('[modération] Erreur modal:', modalErr);
             }
+            try {
+                if (!interaction.replied && !interaction.deferred) {
+                    await interaction.reply({ content: '❌ Envoi impossible (interaction expirée). Réessaie.', ephemeral: true });
+                } else if (interaction.deferred) {
+                    await interaction.editReply({ content: '❌ Erreur pendant le traitement. Réessaie.' });
+                }
+            } catch { /* ignore */ }
         }
     }
 
@@ -868,11 +889,26 @@ async function start() {
     }
 }
 
+// Unknown interaction / erreurs API : ne doivent JAMAIS crasher le process
+client.on('error', (error) => {
+    const code = error?.code;
+    if (code === 10062 || code === 40060) {
+        console.warn(`[modération] Interaction expirée ignorée [${code}]`);
+        return;
+    }
+    console.error('[modération] Client error:', error?.message || error);
+});
+
 // Gestion des erreurs non capturées
 process.on('unhandledRejection', (error) => {
+    const code = error && error.code;
+    if (code === 10062 || code === 40060) {
+        console.warn(`[modération] Rejection interaction expirée [${code}]`);
+        return;
+    }
     const msg = error && error.message ? error.message : String(error);
-    const code = error && error.code ? ` [${error.code}]` : '';
-    console.error(`❌ Erreur non gérée:${code} ${msg}`);
+    const codeStr = code ? ` [${code}]` : '';
+    console.error(`❌ Erreur non gérée:${codeStr} ${msg}`);
 });
 
 process.on('SIGINT', () => {

@@ -994,6 +994,23 @@ async function handleFinishReglement(interaction) {
 }
 
 /**
+ * Réponse éphémère safe — Unknown interaction ne doit jamais crasher le process
+ */
+async function safeEphemeralReply(interaction, payload) {
+  try {
+    if (interaction.deferred || interaction.replied) {
+      return await interaction.followUp({ ...payload, ephemeral: true });
+    }
+    return await interaction.reply({ ...payload, ephemeral: true });
+  } catch (err) {
+    if (err?.code !== 10062 && err?.code !== 40060) {
+      console.error("[Vote recrutement] reply:", err?.message || err);
+    }
+    return null;
+  }
+}
+
+/**
  * Gestion des votes de recrutement (système identique au backup)
  */
 async function handleRecruitmentVote(
@@ -1022,10 +1039,7 @@ async function handleRecruitmentVote(
       .setColor("#FF0000")
       .setTimestamp();
 
-    return await interaction.reply({
-      embeds: [expiredEmbed],
-      ephemeral: true,
-    });
+    return safeEphemeralReply(interaction, { embeds: [expiredEmbed] });
   }
 
   const recruitmentVote = voteManager.votes[userId];
@@ -1053,14 +1067,23 @@ async function handleRecruitmentVote(
       .setColor("#FF0000")
       .setTimestamp();
 
-    return await interaction.reply({
-      embeds: [permEmbed],
-      ephemeral: true,
-    });
+    return safeEphemeralReply(interaction, { embeds: [permEmbed] });
   }
 
   // Gestion du vote (oui/non)
   if (actionType === "oui" || actionType === "non") {
+    // Ack immédiat (<3s) — calcul points / edit peut être lent sous charge
+    try {
+      if (!interaction.deferred && !interaction.replied) {
+        await interaction.deferUpdate();
+      }
+    } catch (ackErr) {
+      if (ackErr?.code === 10062 || ackErr?.code === 40060) return;
+      console.error("[Vote recrutement] deferUpdate:", ackErr?.message || ackErr);
+    }
+
+    let feedbackEmbed;
+
     // Vérifier si le votant a déjà voté dans l'autre catégorie
     const oppositeVote = actionType === "oui" ? "non" : "oui";
     if (
@@ -1074,15 +1097,10 @@ async function handleRecruitmentVote(
     if (recruitmentVote[actionType] && recruitmentVote[actionType][voterId]) {
       delete recruitmentVote[actionType][voterId];
 
-      const removeEmbed = new EmbedBuilder()
+      feedbackEmbed = new EmbedBuilder()
         .setDescription(`Vote **${actionType.toUpperCase()}** retiré.`)
         .setColor("#FFA500")
         .setTimestamp();
-
-      await interaction.reply({
-        embeds: [removeEmbed],
-        ephemeral: true,
-      });
     } else {
       // Ajouter le vote
       if (!recruitmentVote[actionType]) {
@@ -1090,7 +1108,7 @@ async function handleRecruitmentVote(
       }
       recruitmentVote[actionType][voterId] = voterRolePoints;
 
-      const voteEmbed = new EmbedBuilder()
+      feedbackEmbed = new EmbedBuilder()
         .setDescription(`Vote **${actionType.toUpperCase()}** enregistré.`)
         .addFields({
           name: "⚖️ Poids de votre vote",
@@ -1099,14 +1117,11 @@ async function handleRecruitmentVote(
         })
         .setColor(actionType === "oui" ? "#00FF00" : "#FF0000")
         .setTimestamp();
-
-      await interaction.reply({
-        embeds: [voteEmbed],
-        ephemeral: true,
-      });
     }
 
-    // Mettre à jour l'embed avec les nouveaux votes
+    // Sauvegarder + MAJ embed AVANT le reply (si reply timeout, le vote reste)
+    voteManager.saveVotes();
+
     const totalOui = Object.values(recruitmentVote.oui || {}).reduce(
       (a, b) => a + b,
       0,
@@ -1133,30 +1148,38 @@ async function handleRecruitmentVote(
     const ouiBar = "🟩".repeat(ouiBlocks) + "⬜".repeat(10 - ouiBlocks);
     const nonBar = "🟥".repeat(nonBlocks) + "⬜".repeat(10 - nonBlocks);
 
-    // Conserver tous les fields originaux et ajouter/mettre à jour le résultat du vote
-    const originalFields = interaction.message.embeds[0].data.fields || [];
+    try {
+      const originalFields = interaction.message.embeds[0]?.data?.fields || [];
+      const fieldsWithoutResult = originalFields.filter(
+        (f) => f.name !== "📊 Résultat du vote",
+      );
 
-    // Filtrer pour retirer l'ancien field "Résultat du vote" s'il existe
-    const fieldsWithoutResult = originalFields.filter(
-      (f) => f.name !== "📊 Résultat du vote",
-    );
+      const updatedEmbed = EmbedBuilder.from(
+        interaction.message.embeds[0],
+      ).setFields([
+        ...fieldsWithoutResult,
+        {
+          name: "📊 Résultat du vote",
+          value: `✅ **OUI** : ${totalOui}/${totalPossiblePoints} points (${ouiPercentage}%)\n${ouiBar}\n\n❌ **NON** : ${totalNon}/${totalPossiblePoints} points (${nonPercentage}%)\n${nonBar}`,
+          inline: false,
+        },
+      ]);
 
-    // Ajouter le nouveau field de résultat
-    const updatedEmbed = EmbedBuilder.from(
-      interaction.message.embeds[0],
-    ).setFields([
-      ...fieldsWithoutResult,
-      {
-        name: "📊 Résultat du vote",
-        value: `✅ **OUI** : ${totalOui}/${totalPossiblePoints} points (${ouiPercentage}%)\n${ouiBar}\n\n❌ **NON** : ${totalNon}/${totalPossiblePoints} points (${nonPercentage}%)\n${nonBar}`,
-        inline: false,
-      },
-    ]);
+      await interaction.message.edit({ embeds: [updatedEmbed] });
+    } catch (editErr) {
+      console.error(
+        "[Vote recrutement] edit message:",
+        editErr?.message || editErr,
+      );
+    }
 
-    await interaction.message.edit({ embeds: [updatedEmbed] });
-
-    // Sauvegarder les votes
-    voteManager.saveVotes();
+    try {
+      await interaction.followUp({ embeds: [feedbackEmbed], ephemeral: true });
+    } catch (fuErr) {
+      if (fuErr?.code !== 10062 && fuErr?.code !== 40060) {
+        console.error("[Vote recrutement] followUp:", fuErr?.message || fuErr);
+      }
+    }
   }
 
   // Gestion de la fin du vote
@@ -1178,14 +1201,16 @@ async function handleRecruitmentVote(
         .setColor("#FF0000")
         .setTimestamp();
 
-      return await interaction.reply({
-        embeds: [adminEmbed],
-        ephemeral: true,
-      });
+      return safeEphemeralReply(interaction, { embeds: [adminEmbed] });
     }
 
     // Defer la réponse car les opérations suivantes peuvent prendre du temps
-    await interaction.deferReply({ ephemeral: false });
+    try {
+      await interaction.deferReply({ ephemeral: false });
+    } catch (e) {
+      if (e?.code === 10062 || e?.code === 40060) return;
+      throw e;
+    }
 
     const totalOui = Object.values(recruitmentVote.oui || {}).reduce(
       (a, b) => a + b,
