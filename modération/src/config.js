@@ -282,6 +282,8 @@ module.exports = {
             '1433460304041218150',
         ],
         LOG_CHANNEL_ID: null,                         // Salon de logs tickets (null = pas de logs)
+        /** Salon archive : transcript auto via « Supprimer + transcript » */
+        TRANSCRIPT_ARCHIVE_CHANNEL_ID: '1540447158694842451',
         MAX_OPEN_TICKETS: 1,                          // Max tickets ouverts par utilisateur
         COOLDOWN_MS: 300000,                          // Cooldown entre tickets (5 minutes)
         EMBED_COLOR: BLZ_EMBED_STRIP_HEX,

@@ -205,6 +205,9 @@ async function handleTicketButton(interaction, client) {
         case 'ticket_delete':
             await handleDeleteRequest(interaction);
             break;
+        case 'ticket_delete_transcript':
+            await handleDeleteWithTranscript(interaction, client);
+            break;
         case 'ticket_delete_confirm':
             await handleDeleteConfirm(interaction, client);
             break;
@@ -545,6 +548,10 @@ async function handleCloseConfirm(interaction, client) {
             new ButtonBuilder()
                 .setCustomId('ticket_delete')
                 .setLabel('Supprimer')
+                .setStyle(ButtonStyle.Danger),
+            new ButtonBuilder()
+                .setCustomId('ticket_delete_transcript')
+                .setLabel('Supprimer + transcript')
                 .setStyle(ButtonStyle.Danger)
         );
 
@@ -671,6 +678,116 @@ async function handleDeleteConfirm(interaction, client) {
 }
 
 /**
+ * Récupère tous les messages du salon + génère le HTML transcript.
+ */
+async function buildChannelTranscript(channel, guild) {
+    const allMessages = [];
+    let lastId;
+    while (true) {
+        const options = { limit: 100 };
+        if (lastId) options.before = lastId;
+        const batch = await channel.messages.fetch(options);
+        if (batch.size === 0) break;
+        allMessages.push(...batch.values());
+        lastId = batch.last().id;
+        if (batch.size < 100) break;
+    }
+    const sortedMessages = allMessages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+
+    const userCache = new Map();
+    for (const msg of sortedMessages) {
+        if (!userCache.has(msg.author.id)) {
+            userCache.set(msg.author.id, {
+                tag: msg.author.tag,
+                displayName: msg.author.displayName || msg.author.username,
+                avatar: msg.author.displayAvatarURL({ extension: 'png', size: 64 }),
+                bot: msg.author.bot
+            });
+        }
+    }
+
+    const html = generateTicketHtml(channel, sortedMessages, guild, userCache);
+    const attachment = new AttachmentBuilder(Buffer.from(html, 'utf8'), {
+        name: `transcript-${channel.name}.html`
+    });
+
+    return { sortedMessages, attachment };
+}
+
+/**
+ * Transcript → salon archive, puis suppression du ticket.
+ */
+async function handleDeleteWithTranscript(interaction, client) {
+    if (!ticketManager.isTicketChannel(interaction.channel)) {
+        return interaction.reply({
+            content: '❌ Cette commande ne peut être utilisée que dans un ticket.',
+            ephemeral: true
+        });
+    }
+
+    if (!interaction.member.permissions.has(PermissionsBitField.Flags.ModerateMembers)) {
+        return interaction.reply({
+            content: '❌ Seul un membre du staff peut supprimer ce ticket.',
+            ephemeral: true
+        });
+    }
+
+    const ticketId = ticketManager.getTicketIdFromChannel(interaction.channel);
+    const ticket = ticketManager.getTicket(ticketId);
+    const archiveId = CONFIG.TICKETS.TRANSCRIPT_ARCHIVE_CHANNEL_ID;
+
+    await interaction.deferReply({ ephemeral: true });
+
+    try {
+        if (interaction.message?.editable) {
+            await interaction.message.edit({ components: [] }).catch(() => {});
+        }
+
+        const { attachment } = await buildChannelTranscript(interaction.channel, interaction.guild);
+
+        let authorName = 'Inconnu';
+        if (ticket?.owner) {
+            const user = await client.users.fetch(ticket.owner).catch(() => null);
+            if (user) authorName = user.tag || user.username;
+        }
+
+        const archiveChannel = await client.channels.fetch(archiveId).catch(() => null);
+        if (!archiveChannel) {
+            return interaction.editReply({
+                content: '❌ Salon d\'archive introuvable.'
+            });
+        }
+
+        await archiveChannel.send({
+            content: `📜 Ticket #${ticketId} — ${authorName}`,
+            files: [attachment]
+        });
+
+        await interaction.editReply({
+            content: `✅ Transcript archivé (#${ticketId} — ${authorName}). Suppression dans 2s…`
+        });
+
+        setTimeout(async () => {
+            try {
+                if (ticket?.bridge) {
+                    await deleteBridgeSibling(client, ticket, interaction.channel.id);
+                }
+            } catch (e) {
+                console.warn('[Tickets] Suppression salon jumelé:', e?.message || e);
+            }
+            interaction.channel.delete().catch((err) => {
+                console.error('[Tickets] Erreur suppression canal:', err);
+            });
+        }, 2000);
+    } catch (error) {
+        console.error('[Tickets] Erreur supprimer + transcript:', error);
+        await interaction.editReply({
+            content: '❌ Erreur transcript / archive — salon non supprimé.'
+        }).catch(() => {});
+    }
+}
+
+/**
  * Génère un transcript HTML complet du ticket (sans limite de messages)
  */
 async function handleTranscript(interaction) {
@@ -684,40 +801,10 @@ async function handleTranscript(interaction) {
     await interaction.deferReply();
 
     try {
-        // Récupérer TOUS les messages (pagination sans limite)
-        const allMessages = [];
-        let lastId;
-        while (true) {
-            const options = { limit: 100 };
-            if (lastId) options.before = lastId;
-            const batch = await interaction.channel.messages.fetch(options);
-            if (batch.size === 0) break;
-            allMessages.push(...batch.values());
-            lastId = batch.last().id;
-            if (batch.size < 100) break;
-        }
-        const sortedMessages = allMessages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
-
-        // Cache des utilisateurs pour les mentions
-        const userCache = new Map();
-        for (const msg of sortedMessages) {
-            if (!userCache.has(msg.author.id)) {
-                userCache.set(msg.author.id, {
-                    tag: msg.author.tag,
-                    displayName: msg.author.displayName || msg.author.username,
-                    avatar: msg.author.displayAvatarURL({ extension: 'png', size: 64 }),
-                    bot: msg.author.bot
-                });
-            }
-        }
-
-        // Générer le HTML
-        const html = generateTicketHtml(interaction.channel, sortedMessages, interaction.guild, userCache);
-
-        const buffer = Buffer.from(html, 'utf8');
-        const attachment = new AttachmentBuilder(buffer, {
-            name: `transcript-${interaction.channel.name}.html`
-        });
+        const { sortedMessages, attachment } = await buildChannelTranscript(
+            interaction.channel,
+            interaction.guild
+        );
 
         await interaction.editReply({
             content: `📜 Transcript HTML du ticket (**${sortedMessages.length}** messages) :`,
