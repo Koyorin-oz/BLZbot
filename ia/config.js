@@ -41,11 +41,13 @@ const CLOUDFLARE_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID || "1951d3c93101
 const HF_MODEL = "Mistral-7B-Instruct";
 
 const GROQ_MODELS_LIST = [
-    { name: 'openai/gpt-oss-120b', provider: 'groq', displayName: 'GPT OSS 120B', cutoff: 'Juin 2024', multimodal: false, description: 'Principal — intelligent + rapide', includeReplyContext: true },
-    { name: 'openai/gpt-oss-20b', provider: 'groq', displayName: 'GPT OSS 20B', cutoff: 'Juin 2024', multimodal: false, description: 'Fallback rapide / pas cher', includeReplyContext: true },
-    { name: 'qwen/qwen3.6-27b', provider: 'groq', displayName: 'Qwen 3.6 27B', cutoff: '2025', multimodal: false, description: 'Alt solide post-Scout', includeReplyContext: true },
-    { name: 'minimaxai/minimax-m2.7', provider: 'groq', displayName: 'MiniMax M2.7', cutoff: '2025', multimodal: false, description: 'Alt tools / reasoning', includeReplyContext: true },
-    { name: 'openai/gpt-oss-safeguard-20b', provider: 'groq', displayName: 'GPT OSS Safeguard', cutoff: 'Juin 2024', multimodal: false, description: 'Sécurité', includeReplyContext: true },
+    { name: 'openai/gpt-oss-120b', provider: 'groq', displayName: 'GPT OSS 120B', cutoff: 'Juin 2024', multimodal: false, description: 'Principal — meilleur ratio intel/prix', includeReplyContext: true },
+    { name: 'openai/gpt-oss-20b', provider: 'groq', displayName: 'GPT OSS 20B', cutoff: 'Juin 2024', multimodal: false, description: 'Backup rapide / pas cher', includeReplyContext: true },
+    // Llama = backup si dispo sur ton plan Groq (souvent Enterprise)
+    { name: 'llama-3.3-70b-versatile', provider: 'groq', displayName: 'Llama 3.3 70B', cutoff: 'Déc 2023', multimodal: false, description: 'Backup Llama (si plan OK)', includeReplyContext: true },
+    { name: 'llama-3.1-8b-instant', provider: 'groq', displayName: 'Llama 3.1 8B', cutoff: 'Déc 2023', multimodal: false, description: 'Backup ultra rapide', includeReplyContext: true },
+    { name: 'qwen/qwen3.6-27b', provider: 'groq', displayName: 'Qwen 3.6 27B', cutoff: '2025', multimodal: false, description: 'Alt preview (plus cher)', includeReplyContext: true },
+    { name: 'minimaxai/minimax-m2.7', provider: 'groq', displayName: 'MiniMax M2.7', cutoff: '2025', multimodal: false, description: 'Alt tools', includeReplyContext: true },
 ];
 
 function prioritizeGroqModel(models, preferredName) {

@@ -33,3 +33,7 @@ Inventer une commande = non.
 - pub seulement dans le salon pub
 - reglement dans le salon regles / boutons welcome
 - plus haut rank ranked = GOAT (pas Master)
+- perte RP : NON pas augmentee. Decay REBORN = 24h inactif, 0 sous 50k, puis -500 a -5000 selon palier. Au-dessus de 100k tu gagnes tres peu (2 RP/msg) donc ca "descend" plus vite si tu farm moins. Ancien decay Emeraude/horaire = off.
+- creer guilde : /guilde creer (pas inventer d'autres slash)
+- pings quete "Nouveau Succes" : /parametres notify quete terminee
+- /event contribuer : cout starss (100/pt), max 500 pts/appel, 5000 pts/event

@@ -494,32 +494,48 @@ Planifié mensuellement avec le battle pass.
 
 ---
 
-## 12. Decay
+## 12. Decay (RP Ranked — REBORN)
 
-### Fonctionnement
+> **Important (REBORN)** : le vieux decay Émeraude/horaire est **désactivé**. Le decay actuel est dans REBORN (`rankedRp.js`).
 
-- Vérifié toutes les heures
-- S'applique uniquement aux joueurs avec ≥ 3 000 RP
-- Le montant et l'intervalle dépendent du rang (définis dans `role.config.json`)
-- Les rangs Émeraude I et au-dessus ont du decay
+### Quand ça perd des RP
 
-| Rang | Decay | Intervalle |
+- Seulement si **aucune activité ranked** depuis **24 h** (message / vocal qui donne des RP).
+- Seulement si le joueur a **≥ 50 000 RP**. En dessous → **0 perte**.
+
+| RP total | Perte / 24 h d’inactivité |
+|---|---|
+| &lt; 50 000 | 0 |
+| 50k – 60k | −500 |
+| 60k – 70k | −1 000 |
+| 70k – 80k | −2 000 |
+| 80k – 90k | −3 000 |
+| 90k – 100k | −4 000 |
+| ≥ 100 000 | −5 000 |
+
+**Ces montants n’ont pas été augmentés récemment** : c’est le système REBORN depuis son intro. Ce qui change le feeling :
+- Au-dessus de 100k, les **gains** sont très bas (~2 RP/msg, ~2 RP/min vocal).
+- Pool zéro-sum sur la bande 50k–100k (plafond d’excès 300k) → gains bridés si le pool est plein.
+
+### Ancien système (legacy, off si REBORN actif)
+
+- Decay Émeraude+ toutes les 2–4 h — **ignoré** quand l’économie REBORN est active.
+
+---
+
+## 12b. Gains RP Ranked (REBORN)
+
+| RP total | RP / message | RP / min vocal |
 |---|---|---|
-| Émeraude I | -100 | 2h |
-| Émeraude II | -200 | 2h |
-| Émeraude III | -300 | 2h |
-| Rubis I | -500 | 2h |
-| Rubis II | -750 | 2h |
-| Rubis III | -1 000 | 2h |
-| Légendaire I | -1 500 | 2h |
-| Légendaire II | -2 000 | 2h |
-| Mythique I | -3 000 | 2h |
-| Mythique II | -4 000 | 2h |
-| GOAT | -5 000 | 2h |
+| &lt; 50k | 10 | 30 |
+| 50–60k | 8 | 20 |
+| 60–70k | 6 | 15 |
+| 70–80k | 5 | 10 |
+| 80–90k | 4 | 7 |
+| 90–100k | 3 | 4 |
+| ≥ 100k | 2 | 2 |
 
-### Protection
-
-- Les rangs **verrouillés** (Mythique I, Mythique II, GOAT) ne sont jamais rétrogradés en dessous de leur seuil, même avec le decay.
+Bonus arbre de compétences possibles. Activité met à jour `rp_last_activity_ms` (reset le timer de decay 24 h).
 
 ---
 
@@ -661,20 +677,25 @@ L'item `remboursement` permet de rembourser intégralement une dette instantané
 
 ---
 
-## 21. Système Ranked (AFK)
+## 21. Système Ranked (AFK + RP)
 
-### Concept
+### RP Ranked (économie REBORN)
 
-Système anti-AFK pour le vocal :
-- Après 15 minutes d'inactivité en vocal, un captcha TTS est envoyé
-- Le joueur doit répondre correctement
-- Échec = pénalité (kick du vocal ou réduction de gains)
+Voir **§12 Decay** et **§12b Gains RP** : c’est la source de vérité actuelle.
+Fichier : `reborn-test-bot/src/services/rankedRp.js`.
+
+FAQ type ticket : « la perte de RP a augmenté depuis la màj ? » → **Non**. Même table de decay 24 h. Sensation de perte = gains bas en haut de ladder + pool + inactivité.
+
+### Anti-AFK vocal
+
+- Après ~15 min d’inactivité en vocal, captcha TTS
+- Échec = pénalité (kick / réduction de gains)
 
 ### Fichiers
 
-- `utils/voice-afk-checker.js` — Vérification périodique
-- `utils/ranked-state.js` — State management
-- `utils/ranked-shares.js` — Distribution dynamique des RP
+- `reborn-test-bot/src/services/rankedRp.js` — gains + decay RP
+- `niveau/.../voice-afk-checker.js` — captcha AFK
+- `niveau/.../ranked-shares.js` — legacy shares (si REBORN off)
 
 ---
 
