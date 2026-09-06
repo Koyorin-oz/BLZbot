@@ -287,11 +287,19 @@ module.exports = {
 
     if (sub === "creer") {
       const nom = interaction.options.getString("nom", true);
-      const r = pg.createGuild(hub, uid, interaction.user.username, nom);
-      if (!r.ok) return interaction.reply({ content: r.error });
-      return interaction.reply({
-        content: `Guilde créée — ID : **${r.guildId}**`,
-      });
+      try {
+        const r = pg.createGuild(hub, uid, interaction.user.username, nom);
+        if (!r.ok) return interaction.reply({ content: r.error, ephemeral: true });
+        return interaction.reply({
+          content: `Guilde créée — ID : **${r.guildId}**`,
+        });
+      } catch (e) {
+        console.error("[guilde creer]", e);
+        return interaction.reply({
+          content: "Impossible de créer la guilde. Réessaie (nom déjà pris ?).",
+          ephemeral: true,
+        });
+      }
     }
 
     if (sub === "rejoindre") {

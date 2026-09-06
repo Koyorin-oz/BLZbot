@@ -384,27 +384,27 @@ function importAllNiveauGuilds(hubDiscordId) {
  */
 function createNiveauGuild(name, ownerId, emoji = "🛡️") {
   const niv = loadNiveau();
-  if (!niv?.createGuild || !niv?.addMemberToGuild) return null;
+  if (!niv?.createGuild || !niv?.addMemberToGuild) return { ok: false, error: "Bridge niveau indispo." };
   try {
     const existing =
       typeof niv.getGuildByName === "function"
         ? niv.getGuildByName(name)
         : null;
     if (existing) {
-      invalidateBridgeCache();
-      return existing.id;
+      return { ok: false, error: "Ce nom de guilde est déjà pris." };
     }
     const id = niv.createGuild(name, ownerId, emoji);
+    if (!id) return { ok: false, error: "Création niveau échouée." };
     try {
       niv.addMemberToGuild(ownerId, id);
     } catch {
       /* maybe already inside */
     }
     invalidateBridgeCache();
-    return id || null;
+    return { ok: true, id };
   } catch (e) {
     console.warn("[niveauGuildBridge] createNiveauGuild:", e?.message || e);
-    return null;
+    return { ok: false, error: e?.message || "Erreur création guilde niveau." };
   }
 }
 

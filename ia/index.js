@@ -77,12 +77,12 @@ client.once('clientReady', async (c) => {
     if (config.groq) {
         try {
             const ping = await config.groq.chat.completions.create({
-                model: 'qwen/qwen3-32b',
+                model: 'openai/gpt-oss-120b',
                 messages: [{ role: 'user', content: 'ping' }],
                 max_tokens: 8,
             });
             const ok = Boolean(ping?.choices?.[0]?.message?.content?.trim());
-            utils.log(ok ? '[chatbot] Groq OK (qwen/qwen3-32b)' : '[chatbot] Groq répond vide — vérifie GROQ_API_KEY / quotas');
+            utils.log(ok ? '[chatbot] Groq OK (gpt-oss-120b)' : '[chatbot] Groq répond vide — vérifie GROQ_API_KEY / quotas');
         } catch (groqErr) {
             utils.log(`[chatbot] Groq indisponible au démarrage : ${groqErr?.message || groqErr}`);
             utils.log('[chatbot] Salon hard utilisera le fallback local tant que Groq ne répond pas.');

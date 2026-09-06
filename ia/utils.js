@@ -1137,11 +1137,6 @@ function getGroqModels() {
     const n = String(m.name || '');
     if (/guard|safeguard|orpheus/i.test(n)) return false;
     return true;
-  }).map((m) => {
-    if (m.name === 'moonshotai/kimi-k2-instruct') {
-      return { ...m, name: 'moonshotai/kimi-k2-instruct-0905' };
-    }
-    return m;
   });
 }
 
@@ -1853,7 +1848,7 @@ async function queryDeepThink(prompt, threadHistory = []) {
 
   const wrapped = `${historyLines ? `Historique:\n${historyLines}\n\n` : ''}Consigne:\n${prompt}\n\nRéponds en deux parties : d'abord ton raisonnement détaillé entre <redacted_thinking> et </redacted_thinking>, puis ta réponse finale pour l'utilisateur après la balise de fermeture.`;
 
-  const modelsToTry = ['meta-llama/llama-4-scout-17b-16e-instruct', config.GROQ_DEFAULT_MODEL, 'qwen/qwen3-32b'];
+  const modelsToTry = ['openai/gpt-oss-120b', config.GROQ_DEFAULT_MODEL, 'openai/gpt-oss-20b', 'qwen/qwen3.6-27b'];
   const tried = new Set();
 
   for (const modelName of modelsToTry) {

@@ -65,7 +65,7 @@ module.exports = {
       const r = events.startEvent(hub, t);
       if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
       return interaction.reply({
-        content: `🎉 **${r.name}** lancé. Clé : \`${r.key}\` — fin <t:${Math.floor(r.endsMs / 1000)}:R>.\n\`/event contribuer\` → **${events.STARSS_PER_SCORE.toLocaleString('fr-FR')}** starss / pt (max ${events.MAX_SCORE_PER_CONTRIB.toLocaleString('fr-FR')} pts).`,
+        content: `🎉 **${r.name}** lancé. Clé : \`${r.key}\` — fin <t:${Math.floor(r.endsMs / 1000)}:R>.\n\`/event contribuer\` → **${events.STARSS_PER_SCORE.toLocaleString('fr-FR')}**⭐/pt (max **${events.MAX_SCORE_PER_CONTRIB.toLocaleString('fr-FR')}**/appel, **${events.MAX_SCORE_PER_EVENT.toLocaleString('fr-FR')}**/event).`,
       });
     }
 

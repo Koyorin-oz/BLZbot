@@ -21,15 +21,11 @@ function chatbotVerboseLog(...args) {
 const HARD_CHANNEL_ID = config.HARD_MODE_CHANNEL_ID;
 const NORMAL_CHANNEL_ID = config.BASIC_CHATBOT_CHANNEL_ID;
 
-// Modèles chatbot : hard = persona Simbot (Kimi / Llama), normal = polyvalent.
-const HARD_DEFAULT_MODEL = 'moonshotai/kimi-k2-instruct-0905';
-const NORMAL_DEFAULT_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
-const HARD_FALLBACKS = [
-    'meta-llama/llama-4-scout-17b-16e-instruct',
-    'qwen/qwen3-32b',
-    'openai/gpt-oss-20b',
-];
-const NORMAL_FALLBACKS = ['qwen/qwen3-32b', 'openai/gpt-oss-20b'];
+// Modèles chatbot (Groq actuels — Scout/Qwen3-32b shutdown)
+const HARD_DEFAULT_MODEL = 'openai/gpt-oss-120b';
+const NORMAL_DEFAULT_MODEL = 'openai/gpt-oss-120b';
+const HARD_FALLBACKS = ['openai/gpt-oss-20b', 'qwen/qwen3.6-27b', 'minimaxai/minimax-m2.7'];
+const NORMAL_FALLBACKS = ['openai/gpt-oss-20b', 'qwen/qwen3.6-27b', 'minimaxai/minimax-m2.7'];
 const GROQ_BASE_URL = String(process.env.GROQ_API_BASE || 'https://api.groq.com/openai/v1').replace(/\/$/, '');
 const MAX_DISCORD = 1900;
 
@@ -539,14 +535,14 @@ async function requestChatCompletion(messages, { temperature, maxTokens, isHard 
         messages.find((m) => m.role === 'system')?.content?.split('\n').slice(0, 8).join('\n') ||
         HARD_SIMBOT_API_PROMPT;
     const retry = await groqChatCompletion(
-        'qwen/qwen3-32b',
+        'openai/gpt-oss-20b',
         [
             { role: 'system', content: simpleSystem },
             { role: 'user', content: simpleUser },
         ],
         { temperature: isHard ? 0.88 : 0.55, isHard, maxTokens: isHard ? 220 : 400 },
     ).catch(() => '');
-    if (retry) return { text: retry, model: 'qwen/qwen3-32b (retry)' };
+    if (retry) return { text: retry, model: 'openai/gpt-oss-20b (retry)' };
 
     const orText = await openRouterChatCompletion(messages, { temperature, maxTokens, isHard });
     if (orText) return { text: orText, model: 'openrouter' };
@@ -729,8 +725,8 @@ async function buildHistory(message, client, limit = 6) {
  * @returns {Promise<boolean>} true si pris en charge (l'appelant doit s'arrêter).
  */
 async function groqSimpleRetry(userText, userName, isHard) {
-    const model = 'qwen/qwen3-32b';
-    const system = isHard ? HARD_SIMBOT_API_PROMPT : `Tu es BLZbot, bot poli du serveur BLZstarss. Réponds en français, concis, sans insultes.`;
+    const model = 'openai/gpt-oss-20b';
+    const system = isHard ? HARD_SIMBOT_API_PROMPT : `Tu es BLZbot sur BLZstarss. Français oral, concis. Base-toi sur Infos bot si dispo, sinon dis que tu sais pas. Insultes soft ok si on te cherche.`;
     try {
         return await groqChatCompletion(
             model,
@@ -778,14 +774,15 @@ async function handleChatbotMessage(message, client) {
             if (emojiBit) system = `${system}\n\n---\n${emojiBit}`;
         }
 
-        // docs commandes si la question match
+        // docs commandes / systèmes — toujours (anti-invention aussi en hard)
         try {
-            const utils = require('./utils.js');
-            if (typeof utils.getRelevantKnowledge === 'function') {
-                const kb = await utils.getRelevantKnowledge(userTextEarly);
-                if (kb) {
-                    system += `\n\n---\nInfos bot:\n${kb}\nSi c'est pas dans Infos bot, dis que tu sais pas. Invente jamais une commande.`;
-                }
+            const knowledge = require('./knowledge.js');
+            const kb =
+                typeof knowledge.getGroundedKnowledge === 'function'
+                    ? knowledge.getGroundedKnowledge(userTextEarly)
+                    : '';
+            if (kb) {
+                system += `\n\n---\nInfos bot:\n${kb}\nSi c'est pas dans Infos bot, dis que tu sais pas. Invente jamais une commande / prix / système.`;
             }
         } catch (kbErr) {
             console.warn('[ia chatbot] KB:', kbErr?.message || kbErr);

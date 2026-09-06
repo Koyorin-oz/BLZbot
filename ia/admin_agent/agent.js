@@ -17,9 +17,10 @@ function adminModelChain() {
     const fromEnv = String(process.env.GROQ_ADMIN_MODEL || '').trim();
     const chain = [
         fromEnv,
-        'meta-llama/llama-4-scout-17b-16e-instruct',
+        'openai/gpt-oss-120b',
         config.GROQ_DEFAULT_MODEL,
-        'qwen/qwen3-32b',
+        'openai/gpt-oss-20b',
+        'qwen/qwen3.6-27b',
     ].filter(Boolean);
     return [...new Set(chain)];
 }

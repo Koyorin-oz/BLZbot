@@ -14,7 +14,9 @@ const TYPES = {
 /** 1 pt de score (avant bonus arbre) = autant de starss. */
 const STARSS_PER_SCORE = 100n;
 /** Plafond par appel /event contribuer (anti-abus). */
-const MAX_SCORE_PER_CONTRIB = 10_000;
+const MAX_SCORE_PER_CONTRIB = 500;
+/** Cap total pts par joueur et par event. */
+const MAX_SCORE_PER_EVENT = 5_000;
 
 function genKey(typeKey) {
   return `${typeKey}_${Date.now().toString(36)}`;
@@ -95,7 +97,25 @@ function contribute(hubDiscordId, eventKey, userId, baseScore) {
     };
   }
 
+  const prev = db
+    .prepare(
+      'SELECT score FROM event_participation WHERE hub_discord_id = ? AND event_key = ? AND user_id = ?',
+    )
+    .get(hubDiscordId, eventKey, userId);
+  const already = BigInt(prev?.score || 0);
+  if (already + raw > BigInt(MAX_SCORE_PER_EVENT)) {
+    const left = BigInt(MAX_SCORE_PER_EVENT) - already;
+    return {
+      ok: false,
+      error:
+        left <= 0n
+          ? `Tu as déjà atteint le max (**${MAX_SCORE_PER_EVENT.toLocaleString('fr-FR')}** pts) sur cet event.`
+          : `Il te reste **${left.toLocaleString('fr-FR')}** pts max sur cet event (plafond **${MAX_SCORE_PER_EVENT.toLocaleString('fr-FR')}**).`,
+    };
+  }
+
   const cost = raw * STARSS_PER_SCORE;
+  users.getOrCreate(userId, '');
   const bal = users.getStars(userId);
   if (bal < cost) {
     return {
@@ -103,19 +123,29 @@ function contribute(hubDiscordId, eventKey, userId, baseScore) {
       error: `Pas assez de starss (coût **${cost.toLocaleString('fr-FR')}**, tu as **${bal.toLocaleString('fr-FR')}**).`,
     };
   }
-  users.addStars(userId, -cost);
 
-  const bp = skillTree.eventCurrencyMultBp(userId);
-  const eff = (raw * BigInt(bp)) / 10000n;
-  const scoreNum = Number(eff > BigInt(Number.MAX_SAFE_INTEGER) ? Number.MAX_SAFE_INTEGER : eff);
-  db.prepare(
-    `INSERT INTO event_participation (hub_discord_id, event_key, user_id, score, contributed_ms)
-     VALUES (?, ?, ?, ?, ?)
-     ON CONFLICT(hub_discord_id, event_key, user_id)
-     DO UPDATE SET score = score + excluded.score, contributed_ms = excluded.contributed_ms`,
-  ).run(hubDiscordId, eventKey, userId, scoreNum, Date.now());
-  users.addEventCurrency(userId, eff);
-  return { ok: true, gained: eff, cost };
+  const tx = db.transaction(() => {
+    users.addStars(userId, -cost);
+    const bp = skillTree.eventCurrencyMultBp(userId);
+    const eff = (raw * BigInt(bp)) / 10000n;
+    const scoreNum = Number(eff > BigInt(Number.MAX_SAFE_INTEGER) ? Number.MAX_SAFE_INTEGER : eff);
+    db.prepare(
+      `INSERT INTO event_participation (hub_discord_id, event_key, user_id, score, contributed_ms)
+       VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(hub_discord_id, event_key, user_id)
+       DO UPDATE SET score = score + excluded.score, contributed_ms = excluded.contributed_ms`,
+    ).run(hubDiscordId, eventKey, userId, scoreNum, Date.now());
+    users.addEventCurrency(userId, eff);
+    return { gained: eff, cost };
+  });
+
+  try {
+    const r = tx();
+    return { ok: true, gained: r.gained, cost: r.cost };
+  } catch (e) {
+    console.error('[events] contribute:', e?.message || e);
+    return { ok: false, error: 'Erreur contribution — starss non débitées.' };
+  }
 }
 
 function leaderboard(hubDiscordId, eventKey, limit = 10) {
@@ -146,6 +176,7 @@ module.exports = {
   TYPES,
   STARSS_PER_SCORE,
   MAX_SCORE_PER_CONTRIB,
+  MAX_SCORE_PER_EVENT,
   startEvent,
   endEvent,
   activeEvents,

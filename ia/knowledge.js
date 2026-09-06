@@ -189,7 +189,7 @@ function getGroundedKnowledge(query) {
   const hits = searchKnowledge(query, { maxEntries: 5, maxChars: 6000 });
   const index = getCommandIndex();
   const rules =
-    "Regles bot : tu t'appuies UNIQUEMENT sur Infos bot ci-dessous. Si c'est pas dedans, dis que tu sais pas. Invente JAMAIS une commande slash, un prix, un seuil ou un item.";
+    "Regles bot : UNIQUEMENT Infos bot ci-dessous. Hors doc = « j'sais pas ». Invente JAMAIS commande slash, prix, seuil, item, feature ou système. Questions hors bot = réponds normalement sans inventer de features BLZ.";
   const parts = [rules];
   if (index) parts.push(index);
   if (hits) parts.push(hits);
