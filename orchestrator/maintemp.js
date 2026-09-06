@@ -49,6 +49,10 @@
     console.error('[pebble-pull] Pas de .git — pull auto ignoré.');
     return;
   }
+  const quiet =
+    ['1', 'true', 'yes', 'on'].includes(String(process.env.BLZ_COMPACT_LOG || '').trim().toLowerCase()) ||
+    fs.existsSync('/home/container/.env') ||
+    process.cwd().startsWith('/home/container');
   const branch = (process.env.BLZ_GITHUB_BRANCH || 'main').trim() || 'main';
   // Le dépôt a été déplacé vers Koyorin-oz/BLZbot : on réaligne l'origine par défaut.
   const repoUrl = (process.env.BLZ_GITHUB_URL || 'https://github.com/Koyorin-oz/BLZbot.git').trim();
@@ -60,7 +64,7 @@
       console.error('[pebble-pull] remote set-url ignoré :', e?.message || e);
     }
     const before = git('rev-parse HEAD');
-    console.log(`[pebble-pull] git fetch origin ${branch} + reset --hard (données préservées)…`);
+    if (!quiet) console.log(`[pebble-pull] git fetch origin ${branch} + reset --hard (données préservées)…`);
     // On reset sur FETCH_HEAD (et non origin/main) : `git fetch origin <branch>` ne met pas
     // forcément à jour la réf de suivi `origin/main` sur Pebble → "unknown revision".
     git(`fetch origin ${branch}`);
@@ -70,7 +74,7 @@
       console.log(`[pebble-pull] Code mis à jour (${before.slice(0, 7)} → ${after.slice(0, 7)}) — redémarrage pour charger le nouveau code…`);
       process.exit(0);
     }
-    console.log('[pebble-pull] Déjà à jour.');
+    if (!quiet) console.log('[pebble-pull] Déjà à jour.');
   } catch (e) {
     console.error('[pebble-pull] Échec du pull auto (on continue avec le code actuel) :', e?.message || e);
   }
@@ -751,7 +755,7 @@ let _childrenStarted = false;
 function startChildrenOnce(reason) {
   if (_childrenStarted) return;
   _childrenStarted = true;
-  blzLine('maintemp', `services · ${scriptsToRun.map((s) => s.key).join(', ')}`);
+  blzLine('maintemp', `● Services    ${scriptsToRun.map((s) => s.key).join(', ')}`);
   runScriptsWithDelay(scriptsToRun, FORK_DELAY_MS);
 }
 
@@ -770,7 +774,17 @@ client.once('clientReady', async () => {
     blzError('maintemp', 'derankUrgence.initialize a échoué :', e?.message || e);
   }
   scheduleSlashSyncFromOrchestrator();
-  blzLine('maintemp', `ready · ${client.user.tag}`);
+  if (isCompact()) {
+    const services = scriptsToRun.map((s) => s.key).join(', ');
+    blzLine('maintemp', '════════════════════════════════════════════════════');
+    blzLine('maintemp', `  Connecté : ${client.user.tag}`);
+    blzLine('maintemp', `  PID ${process.pid} · ${client.guilds.cache.size} serveur(s)`);
+    blzLine('maintemp', `  Services : ${services}`);
+    blzLine('maintemp', '  Logs : compact (BLZ_COMPACT_LOG) — routine coupée');
+    blzLine('maintemp', '════════════════════════════════════════════════════');
+  } else {
+    blzLine('maintemp', `ready · ${client.user.tag}`);
+  }
 });
 
 // Filet de sécurité : si le Gateway de l'orchestrateur ne devient jamais prêt

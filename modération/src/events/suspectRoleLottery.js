@@ -117,9 +117,11 @@ async function handleMemberJoin(member) {
 
     try {
         await winner.roles.add(role, `Tirage aléatoire — 1 membre sur ${threshold} nouveaux arrivants`);
-        console.log(
-            `[SuspectLottery] Rôle ${role.name} → ${winner.user.tag} (tirage 1/${threshold} nouveaux arrivants)`
-        );
+        if (process.env.BLZ_COMPACT_LOG !== '1') {
+            console.log(
+                `[SuspectLottery] Rôle ${role.name} → ${winner.user.tag} (tirage 1/${threshold} nouveaux arrivants)`
+            );
+        }
     } catch (err) {
         console.error(
             `[SuspectLottery] Attribution impossible pour ${winner.user.tag}: ${err?.code || ''} ${err?.message || err} — place le rôle du bot au-dessus du rôle suspect.`

@@ -72,6 +72,12 @@ function blzLine(tag, message) {
     console.log(`${t} [${tag}] ${msg}`);
 }
 
+/** Ligne module style SimBot : `● Modération   ready · …` */
+function blzDot(tag, moduleName, message) {
+    const name = String(moduleName || '').padEnd(12, ' ');
+    blzLine(tag, `● ${name} ${String(message ?? '').trim()}`);
+}
+
 function blzWarn(tag, message) {
     const t = timeTag();
     console.warn(`${t} [${tag}] ${message}`);
@@ -202,6 +208,8 @@ const CHILD_LINE_SKIP = [
     /\[ia chatbot\] OK/i,
     /\[ia chatbot\] retry simple/i,
     /\(node:\d+\) Warning:/i,
+    /TimeoutNegativeWarning/i,
+    /Use `node --trace-warnings/i,
     /Deploy slash terminé.*cherche temple/i,
     /\[BOT_ROLE\]/i,
     /reborn désactivé/i,
@@ -215,9 +223,63 @@ const CHILD_LINE_SKIP = [
     /cleanGuilds/i,
     /purgeGlobal/i,
     /REBORN guild \+/i,
+    // Routine / bruit
+    /Rôle membre attribué/i,
+    /\+1 chance (candidature|modo test)/i,
+    /\[Vote\] Points staff/i,
+    /hit score=/i,
+    /Total entrées KB/i,
+    /^(Commandes|Systèmes|Mises à jour):\s*\d+\s*section/i,
+    /\[ia\/knowledge\]/i,
+    /Compte créé le /i,
+    /Rôle Compte Suspect/i,
+    /envoyée → \d+/i,
+    /Candidature de .+ envoyée/i,
+    /Vote créé pour /i,
+    /Envoi de \d+ embed/i,
+    /Guild \d+: \+\d+ points/i,
+    /Score total: \d+/i,
+    /Invitations (désactivées|réactivées)/i,
+    /admins alertés/i,
+    /Rôle RAID appliqué/i,
+    /Fallback vers embed classique/i,
+    /UNION_TYPE_CHOICES/i,
+    /Missing Permissions/i,
+    /play-dl stream échoue/i,
+    /Sign in to confirm/i,
+    /salon \d+ introuvable/i,
+    /n'a pas répondu au captcha/i,
+    /Erreur lors de l'événement AFK/i,
+    /Erreur lors de l'ajout du rôle booster/i,
+    /Erreur lors du retrait du rôle booster/i,
+    /SQLITE_CONSTRAINT/i,
+    /UNIQUE constraint failed/i,
+    /Unknown interaction/i,
+    /Unknown Message/i,
+    /Unknown Channel/i,
+    /at handleErrors/i,
+    /at process\.processTicksAndRejections/i,
+    /at Client\.emit/i,
+    /at async Object\.execute/i,
+    /requestBody:/i,
+    /rawError:/i,
+    /Groq — modèle:/i,
+    /Tentative Groq avec/i,
+    /Erreur avec .+404/i,
+    /Erreur avec .+403/i,
+    /model_not_found/i,
+    /model_permission_blocked/i,
+    /does not exist or you do not have access/i,
+    /blocked at the organization level/i,
+    /\[LOG SKIP\]/i,
+    /LOG SKIP/i,
+    /pebble-pull\] Déjà à jour/i,
+    /git fetch origin/i,
 ];
 
+/** Ce qui passe en compact (le reste est coupé — plus de “≤90 car = OK”). */
 const CHILD_LINE_ALLOW = [
+    /^● /,
     /^ready ·/i,
     /^reborn ·/i,
     /^services ·/i,
@@ -227,7 +289,18 @@ const CHILD_LINE_ALLOW = [
     /modération \+\d+/i,
     /\[deploy\] Terminé/i,
     /Mode TEST ·/i,
+    /^Reset :/i,
+    /MODE RAID/i,
+    /LOCKDOWN/i,
+    /Mode raid désactivé/i,
+    /Vote terminé/i,
+    /warn\(s\) expiré/i,
+    /Crash \(code/i,
+    /Relance dans/i,
     /❌|ERREUR|\[ERROR\]|Crash|unhandledRejection|uncaughtException/i,
+    /Tous les modèles Groq ont échoué/i,
+    /Groq 401/i,
+    /clé refusée/i,
 ];
 
 /**
@@ -245,14 +318,6 @@ function shouldEmitChildLine(scriptName, line) {
     if (CHILD_LINE_SKIP.some((re) => re.test(body) || re.test(s))) return false;
 
     if (CHILD_LINE_ALLOW.some((re) => re.test(body))) {
-        return !shouldDedupLine(body);
-    }
-
-    if (/^ready ·/i.test(body)) return !shouldDedupLine(body);
-    if (/❌|ERREUR|\[ERROR\]|Crash/i.test(body)) return true;
-
-  // Messages courts utiles (≤ 90 car.) sans bruit deploy intermédiaire
-    if (body.length <= 90 && !/\[niveau\/deploy\]/i.test(body) && !/REBORN/i.test(body)) {
         return !shouldDedupLine(body);
     }
 
@@ -296,6 +361,7 @@ module.exports = {
     applyGlobalLogPolicy,
     timeTag,
     blzLine,
+    blzDot,
     blzWarn,
     blzError,
     shortScriptName,

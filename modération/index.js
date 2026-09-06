@@ -857,8 +857,8 @@ async function start() {
     await client.login(config.BOT_TOKEN);
 
     if (BLZ_COMPACT) {
-        const { blzLine } = require(path.join(__dirname, '..', 'blz-log.js'));
-        blzLine('modération', `ready · ${client.user.tag} · ${cmdLoaded} cmd`);
+        const { blzDot } = require(path.join(__dirname, '..', 'blz-log.js'));
+        blzDot('modération', 'Modération', `ready · ${client.user.tag} · ${cmdLoaded} cmd`);
     }
 
     // Le système de vérification (OAuth + capture IP) tourne désormais dans un
@@ -893,7 +893,9 @@ async function start() {
 client.on('error', (error) => {
     const code = error?.code;
     if (code === 10062 || code === 40060) {
-        console.warn(`[modération] Interaction expirée ignorée [${code}]`);
+        if (process.env.BLZ_COMPACT_LOG !== '1') {
+            console.warn(`[modération] Interaction expirée ignorée [${code}]`);
+        }
         return;
     }
     console.error('[modération] Client error:', error?.message || error);
@@ -903,10 +905,18 @@ client.on('error', (error) => {
 process.on('unhandledRejection', (error) => {
     const code = error && error.code;
     if (code === 10062 || code === 40060) {
-        console.warn(`[modération] Rejection interaction expirée [${code}]`);
+        if (process.env.BLZ_COMPACT_LOG !== '1') {
+            console.warn(`[modération] Rejection interaction expirée [${code}]`);
+        }
         return;
     }
     const msg = error && error.message ? error.message : String(error);
+    if (
+        process.env.BLZ_COMPACT_LOG === '1' &&
+        /SQLITE_CONSTRAINT|UNIQUE constraint failed|Unknown interaction/i.test(msg)
+    ) {
+        return;
+    }
     const codeStr = code ? ` [${code}]` : '';
     console.error(`❌ Erreur non gérée:${codeStr} ${msg}`);
 });

@@ -200,7 +200,9 @@ module.exports = {
             await interaction.reply({ components: [container], flags: [4096] });
         } catch (error) {
             // Fallback embed classique
-            console.log('[ANTIRAID CMD] Fallback vers embed classique:', error.message);
+            if (process.env.BLZ_COMPACT_LOG !== '1') {
+                console.log('[ANTIRAID CMD] Fallback vers embed classique:', error.message);
+            }
             
             const embed = new EmbedBuilder()
                 .setTitle('🛡️ Statut Anti-Raid')

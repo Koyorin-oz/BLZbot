@@ -681,7 +681,9 @@ module.exports = {
 
             voteManager.votes[userId].messageId = sentMessage.id;
             voteManager.saveVotes();
-            console.log(`[Candidature] ${interaction.user.tag} envoyée → ${CONFIG.RECRUITMENT_CHANNEL_ID}`);
+            if (process.env.BLZ_COMPACT_LOG !== '1') {
+                console.log(`[Candidature] ${interaction.user.tag} envoyée → ${CONFIG.RECRUITMENT_CHANNEL_ID}`);
+            }
         } catch (sendError) {
             console.error('[Candidature] envoi:', sendError);
             delete voteManager.votes[userId];

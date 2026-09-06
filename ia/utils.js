@@ -108,24 +108,26 @@ function checkModelAvailability(modelName) {
   return !blacklistedModels.has(modelName);
 }
 
-const { isCompact, blzLine, blzWarn } = require('../blz-log');
+const { isCompact, blzLine, blzDot, blzWarn } = require('../blz-log');
 const log = (message) => {
   const msg = String(message ?? '');
   if (isCompact()) {
     const verbose = ['1', 'true', 'yes', 'on'].includes(
       String(process.env.BLZ_IA_VERBOSE || '').toLowerCase(),
     );
+    const clean = msg.replace(/^\[[\d-]+T[^\]]+\]\s*/, '');
     if (verbose) {
-      blzLine('ia', msg.replace(/^\[[\d-]+T[^\]]+\]\s*/, ''));
+      blzLine('ia', clean);
       return;
     }
-    if (/❌|ERREUR|Error|Crash|est prêt|inconnu \(10003\)|Tous les modèles Groq ont échoué/i.test(msg)) {
-      if (/est prêt/i.test(msg)) {
-        const who = msg.match(/^(.+?)\s+est prêt/i)?.[1]?.trim() || msg;
-        blzLine('ia', `ready · ${who}`);
-      } else {
-        blzLine('ia', msg.replace(/^\[[\d-]+T[^\]]+\]\s*/, ''));
-      }
+    if (/est prêt/i.test(msg)) {
+      const who = msg.match(/^(.+?)\s+est prêt/i)?.[1]?.trim() || msg;
+      blzDot('ia', 'IA', `ready · ${who}`);
+      return;
+    }
+    // Une seule ligne utile : résumé / auth — pas chaque modèle 404/403
+    if (/Groq 401|clé refusée|Tous les modèles Groq ont échoué|Crash|unhandledRejection/i.test(msg)) {
+      blzLine('ia', clean.replace(/^❌\s*/, '').replace(/^⚠️\s*/, ''));
     }
     return;
   }
@@ -1462,7 +1464,7 @@ RAPPEL: Tu es BLZbot, pas ChatGPT. Suis les instructions ci-dessus.`;
       } else if (statusCode === 429) {
         log(`⚠️ Quota dépassé (429) pour ${modelName}. Ajout à la liste noire temporaire.`);
         blacklistedModels.add(modelName);
-      } else {
+      } else if (!isCompact() || ['1', 'true', 'yes', 'on'].includes(String(process.env.BLZ_IA_VERBOSE || '').toLowerCase())) {
         log(`❌ Erreur avec ${modelName}: ${error.message || error}`);
       }
       continue;

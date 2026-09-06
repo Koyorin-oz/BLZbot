@@ -194,7 +194,9 @@ async function handleAdminRequest(message, client) {
 
     for (const modelName of adminModelChain()) {
         try {
-            console.log(`[AdminAgent] Groq — modèle: ${modelName}`);
+            if (process.env.BLZ_COMPACT_LOG !== '1') {
+                console.log(`[AdminAgent] Groq — modèle: ${modelName}`);
+            }
 
             const working = baseMessages.map((m) => ({ ...m }));
             let loopCount = 0;
@@ -265,7 +267,9 @@ async function handleAdminRequest(message, client) {
 
             console.warn(`[AdminAgent] Boucle outil max atteinte pour ${modelName}, modèle suivant…`);
         } catch (error) {
-            console.error(`[AdminAgent] Erreur avec ${modelName}:`, error.message);
+            if (process.env.BLZ_COMPACT_LOG !== '1') {
+                console.error(`[AdminAgent] Erreur avec ${modelName}:`, error.message);
+            }
             lastError = error;
         }
     }

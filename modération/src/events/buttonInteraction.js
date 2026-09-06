@@ -69,9 +69,11 @@ async function calculateTotalPossiblePoints(guild) {
     details.push(`${data.name}(${data.role}:${data.points}pts)`);
   });
 
-  console.log(
-    `[Vote] Points staff: ${totalPoints} pts, ${memberPoints.size} membres: ${details.join(", ") || "aucun"}`,
-  );
+  if (process.env.BLZ_COMPACT_LOG !== '1') {
+    console.log(
+      `[Vote] Points staff: ${totalPoints} pts, ${memberPoints.size} membres: ${details.join(", ") || "aucun"}`,
+    );
+  }
 
   // Mettre en cache le résultat
   totalPointsCache.set(guild.id, {

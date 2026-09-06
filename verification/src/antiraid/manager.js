@@ -2,6 +2,8 @@ const { PermissionFlagsBits, EmbedBuilder, ContainerBuilder, TextDisplayBuilder,
 const CONFIG = require('./config');
 const { resolveRaidLogChannelId } = require('./logResolve');
 
+const compact = () => process.env.BLZ_COMPACT_LOG === '1';
+
 /**
  * Gestionnaire Anti-Raid Intelligent
  * Système de détection basé sur un score cumulatif avec décroissance automatique
@@ -26,7 +28,7 @@ class AntiRaidManager {
         // Démarrer le système de décroissance automatique
         this.startDecayInterval();
 
-        if (process.env.BLZ_COMPACT_LOG !== '1') console.log('✓ AntiRaidManager initialisé');
+        if (!compact()) console.log('✓ AntiRaidManager initialisé');
     }
 
     /**
@@ -133,7 +135,9 @@ class AntiRaidManager {
         data.score += points;
         data.lastUpdate = now;
 
-        console.log(`[ANTI-RAID] Guild ${guildId}: +${points} points (${criteria}) | Score total: ${data.score}`);
+        if (!compact()) {
+            console.log(`[ANTI-RAID] Guild ${guildId}: +${points} points (${criteria}) | Score total: ${data.score}`);
+        }
 
         // Vérifier les seuils
         this.checkThresholds(guildId, data, criteria);
@@ -233,7 +237,7 @@ class AntiRaidManager {
             // Réactiver les invitations si un lockdown était actif
             if (wasLockdown) {
                 await this.enableInvites(guild);
-                console.log(`[ANTI-RAID] 🔗 Invitations réactivées pour ${guild.name}`);
+                if (!compact()) console.log(`[ANTI-RAID] 🔗 Invitations réactivées pour ${guild.name}`);
             }
 
             await this.logRaidAlert(guild, 'Mode raid désactivé', data.score, 'Score descendu sous le seuil', '#00FF00');
@@ -285,7 +289,7 @@ class AntiRaidManager {
                 'Anti-raid: Lockdown activé'
             ).catch(console.error);
 
-            console.log(`[ANTI-RAID] Invitations désactivées pour ${guild.name}`);
+            if (!compact()) console.log(`[ANTI-RAID] Invitations désactivées pour ${guild.name}`);
         } catch (error) {
             console.error('[ANTI-RAID] Erreur lors de la désactivation des invitations:', error);
         }
@@ -302,7 +306,7 @@ class AntiRaidManager {
                 'Anti-raid: Lockdown désactivé'
             ).catch(console.error);
 
-            console.log(`[ANTI-RAID] Invitations réactivées pour ${guild.name}`);
+            if (!compact()) console.log(`[ANTI-RAID] Invitations réactivées pour ${guild.name}`);
         } catch (error) {
             console.error('[ANTI-RAID] Erreur lors de la réactivation des invitations:', error);
         }
@@ -341,7 +345,7 @@ class AntiRaidManager {
                 }
             }
 
-            console.log(`[ANTI-RAID] ${alertsSent} admins alertés sur ${admins.size}`);
+            if (!compact()) console.log(`[ANTI-RAID] ${alertsSent} admins alertés sur ${admins.size}`);
         } catch (error) {
             console.error('[ANTI-RAID] Erreur lors de l\'alerte des admins:', error);
         }
@@ -382,7 +386,7 @@ class AntiRaidManager {
             }
         }
 
-        console.log(`[ANTI-RAID] Rôle RAID appliqué à ${applied}/${raiders.size} raiders`);
+        if (!compact()) console.log(`[ANTI-RAID] Rôle RAID appliqué à ${applied}/${raiders.size} raiders`);
     }
 
     /**
@@ -444,7 +448,7 @@ class AntiRaidManager {
 
             await logChannel.send({ components: [container], flags: [4096] }).catch(async (err) => {
                 // Fallback vers embed classique si Components V2 échoue
-                console.log('[ANTI-RAID] Fallback vers embed classique:', err.message);
+                if (!compact()) console.log('[ANTI-RAID] Fallback vers embed classique:', err.message);
                 const embed = new EmbedBuilder()
                     .setTitle(`🛡️ Anti-Raid : ${title}`)
                     .setDescription(`Système de protection anti-raid`)

@@ -7,6 +7,7 @@ const REPO_ROOT = path.join(__dirname, '..');
 let knowledgeEntries = [];
 
 function log(msg) {
+  if (process.env.BLZ_COMPACT_LOG === '1') return;
   console.log(`[ia/knowledge] ${msg}`);
 }
 

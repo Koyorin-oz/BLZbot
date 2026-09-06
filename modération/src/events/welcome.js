@@ -111,6 +111,7 @@ async function resolveWelcomeTitleEmoji(client) {
 
 /** Infos compte / arrivée : uniquement pour les logs (plus affichées dans le message Discord). */
 function logWelcomeMemberMeta(member) {
+  if (process.env.BLZ_COMPACT_LOG === '1') return;
   const joinedAt = member.joinedAt ?? new Date();
   console.log(
     `[Welcome] ${member.user.tag} (${member.id}) — Compte créé le ${formatFrCompactDate(
@@ -239,12 +240,16 @@ async function handleMemberJoin(member) {
             role,
             "Attribution automatique aux nouveaux arrivants",
           );
-          console.log(`✅ Rôle membre attribué à ${member.user.tag}`);
+          if (process.env.BLZ_COMPACT_LOG !== '1') {
+            console.log(`✅ Rôle membre attribué à ${member.user.tag}`);
+          }
         }
       } catch (roleError) {
-        console.error(
-          `❌ [Welcome] Rôle membre: ${roleError.code || ""} ${roleError.message || roleError} — place le rôle du bot au-dessus de celui attribué.`,
-        );
+        if (process.env.BLZ_COMPACT_LOG !== '1') {
+          console.error(
+            `❌ [Welcome] Rôle membre: ${roleError.code || ""} ${roleError.message || roleError} — place le rôle du bot au-dessus de celui attribué.`,
+          );
+        }
       }
     }
   } catch (error) {

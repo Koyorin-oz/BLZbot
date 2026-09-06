@@ -212,11 +212,11 @@ function createBot(opts) {
   }
 
   client.once(Events.ClientReady, async (c) => {
-    const { isCompact, blzLine } = require(require('node:path').join(__dirname, '..', '..', 'blz-log.js'));
+    const { isCompact, blzDot } = require(require('node:path').join(__dirname, '..', '..', 'blz-log.js'));
     try {
       await c.application.commands.set(buildSlashCommands());
       if (isCompact()) {
-        blzLine('verif', `ready · ${c.user.tag}`);
+        blzDot('verif', 'Verif', `ready · ${c.user.tag}`);
       } else {
         console.log(`[bot] Connecté : ${c.user.tag}`);
         console.log(

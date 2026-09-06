@@ -261,7 +261,7 @@ class Scheduler {
                                 'UPDATE staff_chances SET candidature_chances = candidature_chances + 1, last_candidature_refresh = ? WHERE userId = ?',
                                 [now, userChances.userId],
                                 (err) => {
-                                    if (!err) {
+                                    if (!err && process.env.BLZ_COMPACT_LOG !== '1') {
                                         console.log(`✅ +1 chance candidature pour ${userChances.userId}`);
                                     }
                                 }
@@ -278,7 +278,7 @@ class Scheduler {
                                 'UPDATE staff_chances SET modo_test_chances = modo_test_chances + 1, last_modo_test_refresh = ? WHERE userId = ?',
                                 [now, userChances.userId],
                                 (err) => {
-                                    if (!err) {
+                                    if (!err && process.env.BLZ_COMPACT_LOG !== '1') {
                                         console.log(`✅ +1 chance modo test pour ${userChances.userId}`);
                                     }
                                 }

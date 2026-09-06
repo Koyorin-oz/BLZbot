@@ -18,9 +18,17 @@ applyTestGuildOverride();
 // Gardes anti-crash : on log sans tuer le process pour qu'une interaction/donnée
 // malformée (ex. abus depuis Discord) ne fasse pas tomber le bot principal.
 process.on('unhandledRejection', (reason) => {
+    const text = String(reason?.stack || reason?.message || reason || '');
+    // Bruit SQLite connu (UNIQUE / PK) — pas la peine de spammer la console
+    if (
+        process.env.BLZ_COMPACT_LOG === '1' &&
+        /SQLITE_CONSTRAINT|UNIQUE constraint failed/i.test(text)
+    ) {
+        return;
+    }
     try {
         require('./utils/logger').error(
-            '[niveau] unhandledRejection: ' + (reason?.stack || reason?.message || reason),
+            '[niveau] unhandledRejection: ' + text,
         );
     } catch {
         console.error('[niveau] unhandledRejection:', reason);
@@ -132,8 +140,8 @@ if (skipSlashDeployEnv) {
 
     const cmdCount = client.commands.size;
     if (BLZ_COMPACT) {
-        const { blzLine } = require(path.join(__dirname, '..', '..', 'blz-log.js'));
-        blzLine('niveau', `ready · ${client.user.tag} · ${cmdCount} cmd`);
+        const { blzDot } = require(path.join(__dirname, '..', '..', 'blz-log.js'));
+        blzDot('niveau', 'Niveau', `ready · ${client.user.tag} · ${cmdCount} cmd`);
     } else {
         console.log(`[niveau] ${client.user.tag} — ${cmdCount} cmd · ${eventCount} événements`);
     }
