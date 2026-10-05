@@ -548,7 +548,7 @@ module.exports = {
 
                     await buttonInteraction.deferUpdate();
                     try {
-                        await interaction.channel.send({
+                        await interaction.editReply({
                             embeds: [successEmbed],
                             components: [new ActionRowBuilder().addComponents(publishedButton)],
                             allowedMentions: { parse: [] },
