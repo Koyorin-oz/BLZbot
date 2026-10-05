@@ -517,8 +517,9 @@ module.exports = {
                     WHERE id = ?
                 `).run(days, todayTimestamp, user.id);
 
+                const dayText = days === 1 ? 'jour' : 'jours';
                 const successEmbed = createStreakEmbed(
-                    `✅ La streak de ${user} a été définie à **${days} jour(s)**.`,
+                    `✅ La streak de ${user} a été définie à **${days} ${dayText}**.`,
                     0x2ecc71,
                 );
                 const publishButton = new ButtonBuilder()
