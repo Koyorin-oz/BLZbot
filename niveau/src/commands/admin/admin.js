@@ -525,6 +525,7 @@ module.exports = {
                     .setLabel('Envoyer publiquement')
                     .setStyle(ButtonStyle.Secondary);
                 const publishedButton = new ButtonBuilder()
+                    .setCustomId(`published_streak_${interaction.id}`)
                     .setLabel('Embed envoyé publiquement')
                     .setStyle(ButtonStyle.Secondary)
                     .setDisabled(true);
@@ -548,6 +549,10 @@ module.exports = {
 
                     await buttonInteraction.deferUpdate();
                     try {
+                        await interaction.channel.send({
+                            embeds: [successEmbed],
+                            allowedMentions: { parse: [] },
+                        });
                         await interaction.editReply({
                             embeds: [successEmbed],
                             components: [new ActionRowBuilder().addComponents(publishedButton)],
