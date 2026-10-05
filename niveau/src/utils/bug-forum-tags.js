@@ -327,6 +327,16 @@ async function handleBugTagButton(interaction) {
     await interaction.followUp({
       content: `🏷️ Tag **${label}** appliqué sur ce signalement.`,
       flags: 64,
+    })
+
+     const embed = new EmbedBuilder()
+      .setColor("#FFA500")
+      .setTitle("🏷️ Tag appliqué")
+      .setDescription(`Le tag **${label}** a été appliqué sur ce signalement par <@${interaction.user.id}>.`)
+      .setTimestamp();
+
+    await thread.send({
+      embeds: [embed],
     });
   }
   return true;
