@@ -517,15 +517,17 @@ module.exports = {
                     WHERE id = ?
                 `).run(days, todayTimestamp, user.id);
 
+                let successEmbed;
+
                 if (days === 0) {
-                    const successEmbed = createStreakEmbed(
+                    successEmbed = createStreakEmbed(
                         `✅ La streak de ${user} a été réinnitialisée à **${days} jours**.`,
                         0x2ecc71,
                     );
                 }
                 else {
                     const dayText = days === 1 ? 'jour' : 'jours';
-                    const successEmbed = createStreakEmbed(
+                    successEmbed = createStreakEmbed(
                         `✅ La streak de ${user} a été définie à **${days} ${dayText}**.`,
                         0x2ecc71,
                     );
