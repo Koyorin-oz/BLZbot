@@ -518,12 +518,13 @@ module.exports = {
 
                 return interaction.reply({
                     embeds: [createStreakEmbed(`✅ La streak de ${user} a été définie à **${days} jour(s)**.`, 0x2ecc71)],
+                    flags: MessageFlags.Ephemeral
                 });
             } catch (error) {
                 logger.error(`Erreur set-streak pour ${user.id}:`, error);
                 return interaction.reply({
                     embeds: [createStreakEmbed('❌ Erreur lors de la définition de la streak.', 0xe74c3c)],
-                    ephemeral: true,
+                    flags: MessageFlags.Ephemeral
                 });
             }
         }
