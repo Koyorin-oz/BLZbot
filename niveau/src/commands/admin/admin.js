@@ -67,6 +67,12 @@ module.exports = {
                 .addIntegerOption(option => option.setName('montant').setDescription('Le nouveau montant de RP').setRequired(true).setMinValue(0)))
         .addSubcommand(subcommand =>
             subcommand
+                .setName('set-streak')
+                .setDescription('Définir le nombre de jours de streak d\'un utilisateur.')
+                .addUserOption(option => option.setName('utilisateur').setDescription('L\'utilisateur').setRequired(true))
+                .addIntegerOption(option => option.setName('jours').setDescription('Le nouveau nombre de jours').setRequired(true).setMinValue(0)))
+        .addSubcommand(subcommand =>
+            subcommand
                 .setName('transferer-compte')
                 .setDescription('Transférer les données d\'un compte vers un autre (Irréversible).')
                 .addUserOption(option => option.setName('source').setDescription('Le compte source (données à garder)').setRequired(true))
@@ -481,6 +487,44 @@ module.exports = {
             } catch (error) {
                 logger.error(`Erreur set-rp pour ${user.id}:`, error);
                 return interaction.reply({ content: '❌ Erreur lors de la définition des RP.', ephemeral: true });
+            }
+        }
+
+        else if (subcommand === 'set-streak') {
+            if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
+                return interaction.reply({ content: '❌ Cette commande est réservée aux administrateurs du serveur.', ephemeral: true });
+            }
+
+            const user = interaction.options.getUser('utilisateur');
+            const days = interaction.options.getInteger('jours');
+            const targetMember = interaction.guild?.members.cache.get(user.id)
+                ?? await interaction.guild?.members.fetch(user.id).catch(() => null);
+            const displayName = targetMember?.displayName || user.globalName || user.username;
+            const avatarURL = targetMember?.displayAvatarURL({ extension: 'png', size: 128 })
+                || user.displayAvatarURL({ extension: 'png', size: 128 });
+            const createStreakEmbed = (description, color) => new EmbedBuilder()
+                .setAuthor({ name: displayName, iconURL: avatarURL })
+                .setDescription(description)
+                .setColor(color);
+
+            try {
+                getOrCreateUser(user.id, user.username);
+                const todayTimestamp = new Date().setHours(0, 0, 0, 0);
+                db.prepare(`
+                    UPDATE users
+                    SET streak = ?, last_streak_timestamp = ?, streak_lost_timestamp = 0, previous_streak = 0
+                    WHERE id = ?
+                `).run(days, todayTimestamp, user.id);
+
+                return interaction.reply({
+                    embeds: [createStreakEmbed(`✅ La streak de ${user} a été définie à **${days} jour(s)**.`, 0x2ecc71)],
+                });
+            } catch (error) {
+                logger.error(`Erreur set-streak pour ${user.id}:`, error);
+                return interaction.reply({
+                    embeds: [createStreakEmbed('❌ Erreur lors de la définition de la streak.', 0xe74c3c)],
+                    ephemeral: true,
+                });
             }
         }
 
