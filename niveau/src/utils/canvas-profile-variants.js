@@ -422,6 +422,13 @@ async function renderFiche1(data) {
         ctx.textBaseline = 'alphabetic';
     }
 
+    const streak = Math.max(0, Number(user.streak) || 0);
+    setCondensedBody(ctx, 11, 600);
+    ctx.fillStyle = PROFILE_CARD_THEME.sub;
+    ctx.textAlign = 'center';
+    ctx.fillText(`Streak : ${streak} ${streak === 1 ? 'jour' : 'jours'}`, avCx, avCy + avR + 28);
+    ctx.textAlign = 'left';
+
     /* Mini barre XP en bas de la colonne gauche */
     const sbW = colAvatar - 20;
     const sbX = x0 + 10;
@@ -625,6 +632,15 @@ async function renderFiche2(data) {
         ctx.textAlign = 'left';
         ctx.textBaseline = 'alphabetic';
     }
+
+    const streak = Math.max(0, Number(user.streak) || 0);
+    ctx.font = '600 12px Inter, Arial';
+    ctx.fillStyle = PROFILE_CARD_THEME.sub;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`Streak : ${streak} ${streak === 1 ? 'jour' : 'jours'}`, avCx, avCy + avR + 30);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
 
     const [cornerBImg, badgeImgs] = await Promise.all([
         tryLoadProfileCornerB(),
