@@ -25,6 +25,24 @@ function calculateStreakReward(streak) {
   return { stars: 0, item: "coffre_normal" };
 }
 
+async function grantStreakReward(client, userId, streak) {
+  const reward = calculateStreakReward(streak);
+
+  if (reward.stars > 0) {
+    await grantResources(client, userId, {
+      stars: reward.stars,
+      source: "streak",
+    });
+  }
+
+  if (reward.item) {
+    const { addItemToInventory } = require("./db-users");
+    addItemToInventory(userId, reward.item, 1);
+  }
+
+  return reward;
+}
+
 /**
  * Met à jour la streak d'un utilisateur et envoie les récompenses
  * @param {Client} client - Le client Discord
@@ -97,19 +115,14 @@ function updateStreak(client, userId) {
 
     // Distribuer la récompense si la streak a été mise à jour
     if (streakUpdated) {
+      grantStreakReward(client, userId, newStreak).catch((error) => {
+        logger.error(
+          `Erreur lors de l'attribution de la récompense de streak pour ${userId}:`,
+          error,
+        );
+      });
+
       const reward = calculateStreakReward(newStreak);
-
-      if (reward.stars > 0) {
-        grantResources(client, userId, {
-          stars: reward.stars,
-          source: "streak",
-        });
-      }
-
-      if (reward.item) {
-        const { addItemToInventory } = require("./db-users");
-        addItemToInventory(userId, reward.item, 1);
-      }
 
       // Vérifier les quêtes de streak
       try {
@@ -259,4 +272,9 @@ function scheduleStreakReset() {
   logger.info("[STREAK] Système de reset automatique à 00:00 initialisé.");
 }
 
-module.exports = { updateStreak, calculateStreakReward, scheduleStreakReset };
+module.exports = {
+  updateStreak,
+  calculateStreakReward,
+  grantStreakReward,
+  scheduleStreakReset,
+};

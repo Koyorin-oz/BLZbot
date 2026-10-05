@@ -70,7 +70,15 @@ module.exports = {
                 .setName('set-streak')
                 .setDescription('Définir le nombre de jours de streak d\'un utilisateur.')
                 .addUserOption(option => option.setName('utilisateur').setDescription('L\'utilisateur').setRequired(true))
-                .addIntegerOption(option => option.setName('jours').setDescription('Le nouveau nombre de jours').setRequired(true).setMinValue(0)))
+                .addIntegerOption(option => option.setName('jours').setDescription('Le nouveau nombre de jours').setRequired(true).setMinValue(0))
+                .addStringOption(option => option
+                    .setName('recompense')
+                    .setDescription('Choisir si la récompense de ce palier doit être accordée')
+                    .setRequired(false)
+                    .addChoices(
+                        { name: 'Donner', value: 'donner' },
+                        { name: 'Ne pas donner', value: 'ne_pas_donner' },
+                    )))
         .addSubcommand(subcommand =>
             subcommand
                 .setName('transferer-compte')
@@ -497,6 +505,7 @@ module.exports = {
 
             const user = interaction.options.getUser('utilisateur');
             const days = interaction.options.getInteger('jours');
+            const shouldGiveReward = interaction.options.getString('recompense') === 'donner';
             const targetMember = interaction.guild?.members.cache.get(user.id)
                 ?? await interaction.guild?.members.fetch(user.id).catch(() => null);
             const displayName = targetMember?.displayName || user.globalName || user.username;
@@ -517,18 +526,37 @@ module.exports = {
                     WHERE id = ?
                 `).run(days, todayTimestamp, user.id);
 
+                let rewardMessage = '';
+                if (shouldGiveReward) {
+                    try {
+                        const { grantStreakReward } = require('../../utils/streak-system');
+                        const reward = await grantStreakReward(interaction.client, user.id, days);
+                        if (reward.stars > 0) {
+                            rewardMessage = `\n\n🎁 Récompense accordée : **${reward.stars.toLocaleString('fr-FR')} stars**.`;
+                        } else if (reward.item) {
+                            const itemName = reward.item === 'coffre_normal' ? 'Coffre Bonus' : reward.item;
+                            rewardMessage = `\n\n🎁 Récompense accordée : **${itemName}**.`;
+                        } else {
+                            rewardMessage = '\n\nℹ️ Aucune récompense n’est prévue pour ce palier.';
+                        }
+                    } catch (rewardError) {
+                        logger.error(`Erreur lors de l'attribution de la récompense de streak pour ${user.id}:`, rewardError);
+                        rewardMessage = '\n\n⚠️ La streak a été définie, mais la récompense n’a pas pu être attribuée.';
+                    }
+                }
+
                 let successEmbed;
 
                 if (days === 0) {
                     successEmbed = createStreakEmbed(
-                        `✅ La streak de ${user} a été réinnitialisée à **${days} jours**.`,
+                        `✅ La streak de ${user} a été réinitialisée à **${days} jours**.${rewardMessage}`,
                         0x2ecc71,
                     );
                 }
                 else {
                     const dayText = days === 1 ? 'jour' : 'jours';
                     successEmbed = createStreakEmbed(
-                        `✅ La streak de ${user} a été définie à **${days} ${dayText}**.`,
+                        `✅ La streak de ${user} a été définie à **${days} ${dayText}**.${rewardMessage}`,
                         0x2ecc71,
                     );
                 }
@@ -574,7 +602,6 @@ module.exports = {
                         logger.error(`Erreur lors de la publication de la streak pour ${user.id}:`, error);
                         await interaction.editReply({
                             embeds: [createStreakEmbed(`❌ Impossible d’envoyer l’embed publiquement dans ce salon.\n\n\`\`\`\n${error.message}\n\`\`\``, 0xe74c3c)],
-                            embeds: [successEmbed],
                             components: [],
                         }).catch(() => {});
                     }
