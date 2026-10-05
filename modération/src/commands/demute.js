@@ -12,6 +12,11 @@ module.exports = {
             option.setName('utilisateur')
                 .setDescription('L\'utilisateur à démute')
                 .setRequired(true))
+        .addStringOption(option =>
+            option.setName('raison')
+                .setDescription('La raison du demute')
+                .setRequired(false)
+        )
         .toJSON(),
 
     async execute(interaction, { dbManager }) {
@@ -21,6 +26,8 @@ module.exports = {
         }
 
         const utilisateur = interaction.options.getUser('utilisateur');
+        const raison = interaction.options.getString('raison');
+        const finalRaison = raison || 'Aucune raison fournie';
         const membre = await interaction.guild.members.fetch(utilisateur.id).catch(() => null);
 
         if (!membre) {
@@ -36,7 +43,7 @@ module.exports = {
         }
 
         try {
-            await membre.timeout(null);
+            await membre.timeout(null, `Démute par ${interaction.user.tag}: ${finalRaison} - Effectué par ${interaction.member.user.tag} (${interaction.member.id})`);
             
             // Restaurer les rôles administrateurs temporairement retirés
             const dbTempRemovedRoles = dbManager.getTempRemovedRolesDb();

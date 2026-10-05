@@ -156,7 +156,7 @@ module.exports = {
         const banDmStatus = formatDmStatusForModReply({ dmOk, linkOk, fallback });
 
         try {
-            await interaction.guild.members.ban(utilisateur.id, { reason: finalReason });
+            await interaction.guild.members.ban(utilisateur.id, { reason: `${finalReason} - Effectué par ${modérateur.user.tag} (${modérateur.id})` });
 
             const dbSanctions = dbManager.getDatabase('sanctions');
             const expiresAt = dureeMs ? Date.now() + dureeMs : null;

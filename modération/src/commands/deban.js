@@ -11,6 +11,11 @@ module.exports = {
             option.setName('utilisateur')
                 .setDescription('L\'utilisateur à débannir')
                 .setRequired(true))
+        .addStringOption(option =>
+            option.setName('raison')
+                .setDescription('La raison du débannissement')
+                .setRequired(false)
+        )
         .toJSON(),
 
     async execute(interaction, { dbManager }) {
@@ -19,8 +24,12 @@ module.exports = {
             return interaction.reply({ ...denied, ephemeral: true });
         }
 
+        const modérateur = interaction.member;
         const utilisateur = interaction.options.getUser('utilisateur');
+        const raison = interaction.options.getString('raison');
         const BLOCKED_DEBAN_USER_ID = '296653370788151296';
+
+        const finalRaison = raison || 'Aucune raison fournie';
 
         if (utilisateur.id === BLOCKED_DEBAN_USER_ID) {
             return interaction.reply({
@@ -30,7 +39,7 @@ module.exports = {
         }
 
         try {
-            await interaction.guild.bans.remove(utilisateur.id, `Débanni par ${interaction.user.tag}`);
+            await interaction.guild.bans.remove(utilisateur.id, `Débanni par ${interaction.user.tag}: ${finalRaison} - Effectué par ${modérateur.user.tag} (${modérateur.id})`);
             await interaction.reply({
                 content: `✅ ${utilisateur.tag} a été débanni.`,
                 ephemeral: true
@@ -38,7 +47,7 @@ module.exports = {
 
             const canalLog = interaction.guild.channels.cache.get(CONFIG.STAFF_WARN_CHANNEL_ID);
             if (canalLog && canalLog.isTextBased()) {
-                canalLog.send(`# ${utilisateur.tag} (${utilisateur.id}) a été débanni par ${interaction.member} (${interaction.member.id})`);
+                canalLog.send(`# ${utilisateur.tag} (${utilisateur.id}) a été débanni par ${modérateur.user.tag} (${modérateur.id})`);
             }
         } catch (error) {
             console.error('Erreur lors du deban:', error);

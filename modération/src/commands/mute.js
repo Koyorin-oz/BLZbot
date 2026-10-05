@@ -177,7 +177,7 @@ module.exports = {
                 // Pour 1er et 2ème warn, pas de temps supplémentaire
             }
 
-            await membreCible.timeout(finalDurationMs, raison);
+            await membreCible.timeout(finalDurationMs, `${raison} - Effectué par ${modérateur.user.tag} (${modérateur.id})`)
 
             const finalReason = `${regle} - ${raison}`;
             const duréeTexte = msToReadableTime(finalDurationMs);
