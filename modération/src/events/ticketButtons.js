@@ -1026,6 +1026,46 @@ function generateTicketHtml(channel, messages, guild, userCache) {
         .attachment {
             margin-top: 6px;
         }
+        .forwarded-message {
+            display: block;
+            margin: 8px 0;
+            padding: 10px 12px;
+            background: #2b2d31;
+            border: 1px solid #3f4147;
+            border-left: 3px solid #5865f2;
+            border-radius: 4px;
+            min-height: 48px;
+        }
+        .forwarded-label {
+            color: #b5bac1;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .forwarded-author {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 6px;
+            color: #f2f3f5;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .forwarded-author img {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+        }
+        .forwarded-content { color: #dbdee1; font-size: 14px; overflow-wrap: anywhere; }
+        .forwarded-message .attachment { margin-top: 8px; }
+        .forwarded-message .attachment img,
+        .forwarded-message .attachment video {
+            max-width: min(100%, 400px);
+            max-height: 350px;
+            border-radius: 6px;
+            display: block;
+        }
+        .forwarded-message .embed { display: block; }
         .attachment img, .attachment video {
             max-width: 400px;
             max-height: 350px;
@@ -1223,6 +1263,10 @@ function generateTicketHtml(channel, messages, guild, userCache) {
             html += `<div class="msg-content">${formatTicketContent(msg.content, guild, userCache)}</div>`;
         }
 
+        for (const snapshot of msg.messageSnapshots?.values?.() || []) {
+            html += renderTicketForwardedSnapshot(snapshot, guild, userCache);
+        }
+
         // Pièces jointes (images, vidéos, fichiers)
         if (msg.attachments.size > 0) {
             for (const att of msg.attachments.values()) {
@@ -1344,6 +1388,94 @@ function generateTicketHtml(channel, messages, guild, userCache) {
 </html>`;
 
     return html;
+}
+
+function renderTicketForwardedSnapshot(snapshot, guild, userCache) {
+    const source = snapshot.message || snapshot;
+    const author = source.author || snapshot.author;
+    const authorName = author?.displayName || author?.globalName || author?.username || 'Auteur original';
+    const avatar = typeof author?.displayAvatarURL === 'function'
+        ? author.displayAvatarURL({ extension: 'png', size: 64 })
+        : '';
+    const timestamp = source.createdAt || source.timestamp || snapshot.timestamp;
+    let html = '<div class="forwarded-message"><div class="forwarded-label">Message transféré</div>';
+
+    if (author) {
+        html += '<div class="forwarded-author">';
+        if (avatar) html += `<img src="${escapeHtml(avatar)}" alt="">`;
+        html += `<span>${escapeHtml(authorName)}</span>`;
+        if (timestamp) html += `<span class="timestamp">${new Date(timestamp).toLocaleString('fr-FR')}</span>`;
+        html += '</div>';
+    }
+
+    if (source.content) {
+        html += `<div class="forwarded-content">${formatTicketContent(source.content, guild, userCache)}</div>`;
+    }
+
+    for (const attachment of source.attachments?.values?.() || []) {
+        const url = escapeHtml(attachment.url);
+        const name = escapeHtml(attachment.name || 'Pièce jointe');
+        const contentType = attachment.contentType || '';
+        if (!url) continue;
+
+        html += '<div class="attachment">';
+        if (contentType.startsWith('image/')) {
+            html += `<a href="${url}" target="_blank" rel="noopener noreferrer"><img src="${url}" alt="${name}" title="${name}"></a>`;
+        } else if (contentType.startsWith('video/')) {
+            html += `<video controls preload="metadata" src="${url}" title="${name}"></video>`;
+        } else if (contentType.startsWith('audio/')) {
+            html += `<audio controls preload="metadata" src="${url}"></audio>`;
+        } else {
+            const size = attachment.size ? `${(attachment.size / 1024).toFixed(1)} KB` : '';
+            html += `<div class="attachment-file">📎 <a href="${url}" target="_blank" rel="noopener noreferrer">${name}</a> <span class="file-size">${size}</span></div>`;
+        }
+        html += '</div>';
+    }
+
+    for (const sticker of source.stickers?.values?.() || []) {
+        html += `<div class="sticker"><img src="https://media.discordapp.net/stickers/${escapeHtml(sticker.id)}.webp?size=160" alt="${escapeHtml(sticker.name)}" title="${escapeHtml(sticker.name)}"></div>`;
+    }
+
+    for (const embed of source.embeds || []) {
+        const borderColor = embed.color ? `#${embed.color.toString(16).padStart(6, '0')}` : '#5865f2';
+        html += `<div class="embed" style="border-left-color: ${borderColor};">`;
+        if (embed.thumbnail?.url) html += `<img class="embed-thumbnail" src="${escapeHtml(embed.thumbnail.url)}" alt="Thumbnail">`;
+        if (embed.author) {
+            html += '<div class="embed-author">';
+            if (embed.author.iconURL) html += `<img src="${escapeHtml(embed.author.iconURL)}" alt="">`;
+            html += embed.author.url
+                ? `<a href="${escapeHtml(embed.author.url)}" target="_blank" rel="noopener noreferrer" class="link">${escapeHtml(embed.author.name)}</a>`
+                : escapeHtml(embed.author.name);
+            html += '</div>';
+        }
+        if (embed.title) {
+            html += '<div class="embed-title">';
+            html += embed.url
+                ? `<a href="${escapeHtml(embed.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(embed.title)}</a>`
+                : escapeHtml(embed.title);
+            html += '</div>';
+        }
+        if (embed.description) html += `<div class="embed-description">${formatTicketContent(embed.description, guild, userCache)}</div>`;
+        if (embed.fields?.length) {
+            html += '<div class="embed-fields">';
+            for (const field of embed.fields) {
+                html += `<div class="embed-field ${field.inline ? 'inline' : 'full'}"><div class="embed-field-name">${escapeHtml(field.name)}</div><div class="embed-field-value">${formatTicketContent(field.value, guild, userCache)}</div></div>`;
+            }
+            html += '</div>';
+        }
+        if (embed.image?.url) html += `<img class="embed-image" src="${escapeHtml(embed.image.url)}" alt="Embed image">`;
+        if (embed.footer || embed.timestamp) {
+            html += '<div class="embed-footer">';
+            if (embed.footer?.iconURL) html += `<img src="${escapeHtml(embed.footer.iconURL)}" alt="">`;
+            if (embed.footer?.text) html += `<span>${escapeHtml(embed.footer.text)}</span>`;
+            if (embed.footer?.text && embed.timestamp) html += '<span>•</span>';
+            if (embed.timestamp) html += `<span>${new Date(embed.timestamp).toLocaleString('fr-FR')}</span>`;
+            html += '</div>';
+        }
+        html += '</div>';
+    }
+
+    return `${html}</div>`;
 }
 
 /**
