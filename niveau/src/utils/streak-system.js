@@ -190,7 +190,7 @@ async function sendStreakAnnouncement(client, userId, newStreak, reward) {
         : undefined;
 
     // Construire l'embed
-    const message = `<@${userId}>`;
+    const message = `${shouldPing ? `<@${userId}>` : ''}`;
     const embed = new EmbedBuilder()
       .setAuthor({ name: user.username, iconURL: authorIconUrl })
       .setTitle("Nouvelle Streak")
