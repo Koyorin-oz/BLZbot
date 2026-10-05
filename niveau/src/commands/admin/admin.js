@@ -74,7 +74,7 @@ module.exports = {
                 .addStringOption(option => option
                     .setName('recompense')
                     .setDescription('Choisir si la récompense de ce palier doit être accordée')
-                    .setRequired(false)
+                    .setRequired(true)
                     .addChoices(
                         { name: 'Donner', value: 'donner' },
                         { name: 'Ne pas donner', value: 'ne_pas_donner' },
