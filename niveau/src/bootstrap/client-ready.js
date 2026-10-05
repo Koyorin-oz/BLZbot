@@ -272,6 +272,9 @@ function registerClientReady(client, { isHalloweenActive }) {
     const { scheduleStreakReset } = require('../utils/streak-system');
     scheduleStreakReset();
 
+    const { startBugForumInactivityReminders } = require('../utils/bug-forum-tags');
+    startBugForumInactivityReminders(client);
+
     // MAJ Mars 2026: Tâches planifiées Marketplace & Valeur
     const { cleanupExpiredListings } = require('../utils/marketplace-system');
     const { recalculateAllValues } = require('../utils/trophy-value-system');

@@ -11,6 +11,12 @@ const BUG_TRACKER_GUILD_ID = "1493276404643532810";
 const BUG_FORUM_CHANNEL_ID = "1493282774323302450";
 /** Rôle notifié à chaque nouveau signalement. */
 const BUG_NOTIFY_ROLE_ID = "1493277032745013452";
+const BUG_ASSIGNEE_USER_IDS = {
+  koyorin: "1278372257483456603",
+  roxxor: "1057705135515639859",
+};
+const BUG_INACTIVITY_MS = 3 * 24 * 60 * 60 * 1000;
+const BUG_REMINDER_INTERVAL_MS = 60 * 60 * 1000;
 
 const TAG = {
   corriger: "1493284123333365915",
@@ -23,6 +29,8 @@ const TAG = {
 
 /** Tags « en cours » retirés par /bug-corriger. */
 const EN_COURS_TAG_IDS = [TAG.enCours, TAG.enCoursKoyorin, TAG.enCoursRoxxor];
+let bugReminderInterval = null;
+let bugReminderScanInProgress = false;
 
 const BUTTON_DEFS = [
   { key: "enCours", label: "En cours", style: ButtonStyle.Primary },
@@ -132,6 +140,142 @@ async function closeResolvedBugThread(thread, tagId, userId) {
   await thread.setLocked(true);
 }
 
+function getBugReminderTarget(thread) {
+  const tags = thread.appliedTags || [];
+  if (tags.includes(TAG.enCoursKoyorin)) {
+    return {
+      content: `<@${BUG_ASSIGNEE_USER_IDS.koyorin}>`,
+      userId: BUG_ASSIGNEE_USER_IDS.koyorin,
+    };
+  }
+  if (tags.includes(TAG.enCoursRoxxor)) {
+    return {
+      content: `<@${BUG_ASSIGNEE_USER_IDS.roxxor}>`,
+      userId: BUG_ASSIGNEE_USER_IDS.roxxor,
+    };
+  }
+  if (tags.includes(TAG.enCours)) {
+    return { content: "@here", here: true };
+  }
+  return null;
+}
+
+function getThreadLastActivityTimestamp(thread) {
+  const lastMessageId = thread.lastMessageId;
+  if (lastMessageId && /^\d{17,20}$/.test(lastMessageId)) {
+    return Number((BigInt(lastMessageId) >> 22n) + 1420070400000n);
+  }
+  return thread.createdTimestamp || 0;
+}
+
+async function fetchAllBugForumThreads(forum) {
+  const threads = new Map();
+  const active = await forum.threads.fetchActive();
+  for (const [id, thread] of active.threads) threads.set(id, thread);
+
+  let before;
+  do {
+    const archived = await forum.threads.fetchArchived({
+      type: "public",
+      limit: 100,
+      before,
+    });
+    for (const [id, thread] of archived.threads) threads.set(id, thread);
+    if (!archived.hasMore || archived.threads.size === 0) break;
+    const oldestThread = [...archived.threads.values()].reduce(
+      (oldest, thread) =>
+        !oldest || thread.archivedAt < oldest.archivedAt ? thread : oldest,
+      null,
+    );
+    if (
+      !oldestThread?.archivedAt ||
+      oldestThread.archivedAt.getTime() === before?.getTime?.()
+    )
+      break;
+    before = oldestThread.archivedAt;
+  } while (true);
+
+  return threads.values();
+}
+
+async function checkInactiveBugForumPosts(client, now = Date.now()) {
+  if (bugReminderScanInProgress) return 0;
+  bugReminderScanInProgress = true;
+  let remindersSent = 0;
+
+  try {
+    const forum = await client.channels
+      .fetch(BUG_FORUM_CHANNEL_ID)
+      .catch(() => null);
+    if (!forum || forum.type !== ChannelType.GuildForum) {
+      throw new Error(`Forum bugs introuvable (${BUG_FORUM_CHANNEL_ID})`);
+    }
+
+    for (const thread of await fetchAllBugForumThreads(forum)) {
+      const target = getBugReminderTarget(thread);
+      if (!target) continue;
+
+      const lastActivity = getThreadLastActivityTimestamp(thread);
+      if (!lastActivity || now - lastActivity < BUG_INACTIVITY_MS) continue;
+
+      try {
+        if (thread.archived)
+          await thread.setArchived(
+            false,
+            "Rappel automatique après 3 jours d'inactivité",
+          );
+        if (thread.locked)
+          await thread.setLocked(
+            false,
+            "Rappel automatique après 3 jours d'inactivité",
+          );
+        await thread.send({
+          content: target.here
+            ? "Ce signalement est sans activité depuis 3 jours @here. Veillez à le prendre en charge ou d'au moins parler du bug dans ce post."
+            : `Ce signalement est sans activité depuis 3 jours ${target.content}. Merci de le reprendre en charge ou de mettre son statut à jour.`,
+          allowedMentions: target.here
+            ? { parse: ["everyone"] }
+            : { parse: [], users: [target.userId] },
+        });
+        remindersSent += 1;
+      } catch (error) {
+        console.error(
+          `[BUG_TRACKER] Impossible de relancer le fil ${thread.id}:`,
+          error?.message || error,
+        );
+      }
+    }
+  } finally {
+    bugReminderScanInProgress = false;
+  }
+
+  return remindersSent;
+}
+
+function startBugForumInactivityReminders(client) {
+  if (bugReminderInterval) return bugReminderInterval;
+
+  const runScan = () => {
+    checkInactiveBugForumPosts(client)
+      .then((count) => {
+        if (count > 0)
+          console.log(
+            `[BUG_TRACKER] ${count} rappel(s) envoyé(s) après 3 jours d'inactivité.`,
+          );
+      })
+      .catch((error) =>
+        console.error(
+          "[BUG_TRACKER] Erreur de vérification des signalements inactifs:",
+          error?.message || error,
+        ),
+      );
+  };
+
+  runScan();
+  bugReminderInterval = setInterval(runScan, BUG_REMINDER_INTERVAL_MS);
+  return bugReminderInterval;
+}
+
 /**
  * @param {import('discord.js').ButtonInteraction} interaction
  */
@@ -156,10 +300,18 @@ async function handleBugTagButton(interaction) {
     const uid = String(interaction.user.id);
     const currentTags = thread.appliedTags || [];
     // Si le fil contient déjà une variante spécifique, on remet le tag générique
-    if ( currentTags.includes(TAG.enCoursKoyorin) || currentTags.includes(TAG.enCoursRoxxor) ) { appliedTagId = TAG.enCours;
-    } else if (uid === "1278372257483456603") { appliedTagId = TAG.enCoursKoyorin;
-    } else if (uid === "1057705135515639859") { appliedTagId = TAG.enCoursRoxxor;
-    } else { appliedTagId = TAG.enCours; }
+    if (
+      currentTags.includes(TAG.enCoursKoyorin) ||
+      currentTags.includes(TAG.enCoursRoxxor)
+    ) {
+      appliedTagId = TAG.enCours;
+    } else if (uid === "1278372257483456603") {
+      appliedTagId = TAG.enCoursKoyorin;
+    } else if (uid === "1057705135515639859") {
+      appliedTagId = TAG.enCoursRoxxor;
+    } else {
+      appliedTagId = TAG.enCours;
+    }
   }
 
   await toggleForumTag(thread, appliedTagId);
@@ -245,6 +397,8 @@ module.exports = {
   BUG_TRACKER_GUILD_ID,
   BUG_FORUM_CHANNEL_ID,
   BUG_NOTIFY_ROLE_ID,
+  BUG_ASSIGNEE_USER_IDS,
+  BUG_INACTIVITY_MS,
   TAG,
   EN_COURS_TAG_IDS,
   BUTTON_PREFIX,
@@ -255,4 +409,8 @@ module.exports = {
   buildBugTagButtons,
   handleBugTagButton,
   createBugForumPost,
+  getBugReminderTarget,
+  getThreadLastActivityTimestamp,
+  checkInactiveBugForumPosts,
+  startBugForumInactivityReminders,
 };
