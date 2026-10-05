@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 const users = require('../services/users');
 const { d } = require('../lib/slashDesc');
 
@@ -15,35 +15,47 @@ module.exports = {
   async execute(interaction) {
     const from = interaction.user.id;
     const to = interaction.options.getUser('membre', true);
+
+    const Embed = new EmbedBuilder()
+      .setColor('#9b59b6')
+      .setTitle('💸 Transfert de starss')
+      .setFooter({ text: 'BLZbot' })
+      .setTimestamp();
+
+    if (to.bot && to.id === interaction.client.user.id) {
+      await interaction.reply({ embeds: [Embed.setDescription('❌ Impossible de payer le bot.')], flags: MessageFlags.Ephemeral });
+      return;
+    }
+
     if (to.bot) {
-      await interaction.reply({ content: 'Impossible vers un bot.' });
+      await interaction.reply({ embeds: [Embed.setDescription('❌ Impossible de payer un bot.')], flags: MessageFlags.Ephemeral });
       return;
     }
     if (to.id === from) {
-      await interaction.reply({ content: 'Tu ne peux pas te payer toi-même.' });
+      await interaction.reply({ embeds: [Embed.setDescription('❌ Tu ne peux pas te payer toi-même.')], flags: MessageFlags.Ephemeral });
       return;
     }
     let amount;
     try {
       amount = parseAmount(interaction.options.getString('montant', true));
     } catch {
-      await interaction.reply({ content: 'Montant invalide.' });
+      await interaction.reply({ embeds: [Embed.setDescription('❌ Le montant est invalide.')], flags: MessageFlags.Ephemeral });
       return;
     }
     if (amount <= 0n) {
-      await interaction.reply({ content: 'Montant doit être > 0.' });
+      await interaction.reply({ embeds: [Embed.setDescription('❌ Le montant doit être **supérieur à 0**.')], flags: MessageFlags.Ephemeral });
       return;
     }
     users.getOrCreate(from, interaction.user.username);
     users.getOrCreate(to.id, to.username);
     if (users.getStars(from) < amount) {
-      await interaction.reply({ content: 'Solde insuffisant.' });
+      await interaction.reply({ embeds: [Embed.setDescription('❌ Solde insuffisant.')], flags: MessageFlags.Ephemeral });
       return;
     }
     users.addStars(from, -amount);
     users.addStars(to.id, amount);
     await interaction.reply({
-      content: `Tu as donné **${amount.toLocaleString('fr-FR')}** starss à **${to.username}**.`,
+      embeds: [Embed.setDescription(`Tu as donné **${amount.toLocaleString()}** starss à <@${to.id}>.`)],
     });
   },
 };
