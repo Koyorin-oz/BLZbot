@@ -75,7 +75,7 @@ async function sendQuestUnlockNotification(client, user, quest, rewardText, opts
     const embed = buildQuestUnlockEmbed(fullUser, quest, rewardText);
 
     await ch.send({
-        content: `<@${fullUser.id}>`,
+        content: `${shouldPing ? `<@${fullUser.id}>` : ''}`,
         embeds: [embed],
         allowedMentions: shouldPing ? { users: [fullUser.id] } : { parse: [] },
     });
