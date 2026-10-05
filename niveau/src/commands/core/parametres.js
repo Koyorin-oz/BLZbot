@@ -39,7 +39,7 @@ module.exports = {
                     const statusEmoji = isEnabled ? '✅' : '❌';
                     const statusText = isEnabled ? 'ACTIVÉ' : 'DÉSACTIVÉ';
                     const buttonStyle = isEnabled ? ButtonStyle.Success : ButtonStyle.Danger;
-                    const buttonLabel = isEnabled ? 'Désactiver' : 'Activer';
+                    const buttonLabel = isEnabled ? 'Activée' : 'Désactivée';
 
                     const sectionText = new TextDisplayBuilder()
                         .setContent(`### ${setting.label} - ${statusEmoji} ${statusText}\n${setting.description}`);
