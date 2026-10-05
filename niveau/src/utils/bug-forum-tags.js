@@ -212,6 +212,9 @@ async function checkInactiveBugForumPosts(client, now = Date.now()) {
     }
 
     for (const thread of await fetchAllBugForumThreads(forum)) {
+      if (!client.user?.id || String(thread.ownerId) !== String(client.user.id))
+        continue;
+
       const target = getBugReminderTarget(thread);
       if (!target) continue;
 
