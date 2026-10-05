@@ -305,9 +305,9 @@ async function handleBugTagButton(interaction) {
       currentTags.includes(TAG.enCoursRoxxor)
     ) {
       appliedTagId = TAG.enCours;
-    } else if (uid === "1278372257483456603") {
+    } else if (uid === BUG_ASSIGNEE_USER_IDS.koyorin) {
       appliedTagId = TAG.enCoursKoyorin;
-    } else if (uid === "1057705135515639859") {
+    } else if (uid === BUG_ASSIGNEE_USER_IDS.roxxor) {
       appliedTagId = TAG.enCoursRoxxor;
     } else {
       appliedTagId = TAG.enCours;
