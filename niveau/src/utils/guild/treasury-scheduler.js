@@ -1,29 +1,8 @@
 const logger = require("../logger");
+const { parisNextMidnightMs } = require("../../../../utils/paris-time");
 
 function msUntilNextMidnightParis() {
-  try {
-    const parts = new Intl.DateTimeFormat("en-GB", {
-      timeZone: "Europe/Paris",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    }).formatToParts(new Date());
-    const n = (type) =>
-      parseInt(parts.find((part) => part.type === type)?.value || "0", 10);
-    const h = n("hour");
-    const m = n("minute");
-    const s = n("second");
-    const elapsedMs = ((h * 60 + m) * 60 + s) * 1000;
-    const approxLeft = 86400000 - elapsedMs;
-    return Math.max(1000, approxLeft);
-  } catch (error) {
-    logger.warn(
-      "[treasury-scheduler] msUntilNextMidnightParis repli 1h:",
-      error?.message || error,
-    );
-    return 3600000;
-  }
+  return Math.max(1000, parisNextMidnightMs() - Date.now());
 }
 
 function startTreasuryIncomeScheduler(options = {}) {

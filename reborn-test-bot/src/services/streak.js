@@ -1,9 +1,13 @@
 /**
  * Série de jours (streak) — même logique que le bot `niveau` (message du jour).
  */
-const db = require('../db');
-const users = require('./users');
-const catalog = require('../reborn/catalog');
+const db = require("../db");
+const users = require("./users");
+const catalog = require("../reborn/catalog");
+const {
+  parisDayStartMs,
+  parisPreviousDayStartMs,
+} = require("../../../utils/paris-time");
 
 function calculateStreakReward(streak) {
   if (streak < 10) return { stars: 0n, itemId: null };
@@ -16,12 +20,11 @@ function calculateStreakReward(streak) {
   if (streak < 80) return { stars: 60000n, itemId: null };
   if (streak < 90) return { stars: 80000n, itemId: null };
   if (streak < 100) return { stars: 100000n, itemId: null };
-  return { stars: 0n, itemId: 'coffre_classique' };
+  return { stars: 0n, itemId: "coffre_classique" };
 }
 
 function todayStartMs() {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  return parisDayStartMs();
 }
 
 /**
@@ -29,7 +32,7 @@ function todayStartMs() {
  * @param {string} userId
  */
 function updateStreak(client, userId) {
-  users.getOrCreate(userId, '');
+  users.getOrCreate(userId, "");
   const u = users.getUser(userId);
   if (!u) return { streakUpdated: false, newStreak: 0 };
 
@@ -42,22 +45,26 @@ function updateStreak(client, userId) {
     return { streakUpdated: false, newStreak };
   }
 
-  const yesterdayTs = todayTs - 24 * 60 * 60 * 1000;
+  const yesterdayTs = parisPreviousDayStartMs();
 
-  if (lastTs === yesterdayTs) {
+  if (lastTs >= yesterdayTs && lastTs < todayTs) {
     newStreak += 1;
     streakUpdated = true;
-    db.prepare('UPDATE users SET streak = ?, last_streak_timestamp = ? WHERE id = ?').run(newStreak, todayTs, userId);
+    db.prepare(
+      "UPDATE users SET streak = ?, last_streak_timestamp = ? WHERE id = ?",
+    ).run(newStreak, todayTs, userId);
   } else if (lastTs > 0 && lastTs < yesterdayTs) {
     db.prepare(
-      'UPDATE users SET streak_lost_timestamp = ?, previous_streak = ?, streak = 1, last_streak_timestamp = ? WHERE id = ?',
+      "UPDATE users SET streak_lost_timestamp = ?, previous_streak = ?, streak = 1, last_streak_timestamp = ? WHERE id = ?",
     ).run(Date.now(), u.streak || 0, todayTs, userId);
     newStreak = 1;
     streakUpdated = true;
   } else if (lastTs === 0) {
     newStreak = 1;
     streakUpdated = true;
-    db.prepare('UPDATE users SET streak = ?, last_streak_timestamp = ? WHERE id = ?').run(1, todayTs, userId);
+    db.prepare(
+      "UPDATE users SET streak = ?, last_streak_timestamp = ? WHERE id = ?",
+    ).run(1, todayTs, userId);
   }
 
   if (!streakUpdated) {
@@ -65,7 +72,7 @@ function updateStreak(client, userId) {
   }
 
   const reward = calculateStreakReward(newStreak);
-  const indexBonuses = require('./indexBonuses');
+  const indexBonuses = require("./indexBonuses");
   if (reward.stars > 0n) {
     users.addStars(userId, indexBonuses.applyStars(userId, reward.stars));
   }
@@ -73,7 +80,8 @@ function updateStreak(client, userId) {
     users.addInventory(userId, reward.itemId, 1);
   }
 
-  if (client) sendStreakAnnouncement(client, userId, newStreak, reward).catch(() => {});
+  if (client)
+    sendStreakAnnouncement(client, userId, newStreak, reward).catch(() => {});
   return { streakUpdated: true, newStreak };
 }
 
@@ -81,15 +89,15 @@ async function sendStreakAnnouncement(client, userId, newStreak, reward) {
   const channelId = (
     process.env.REBORN_STREAK_CHANNEL_ID ||
     process.env.STREAK_CHANNEL_ID ||
-    ''
+    ""
   ).trim();
   if (!channelId) return;
   const channel = await client.channels.fetch(channelId).catch(() => null);
   if (!channel || !channel.isTextBased()) return;
 
-  let message = `Bravo <@${userId}> — **${newStreak}** jour${newStreak > 1 ? 's' : ''} de streak !`;
+  let message = `Bravo <@${userId}> — **${newStreak}** jour${newStreak > 1 ? "s" : ""} de streak !`;
   if (reward.stars > 0n) {
-    message += `\nRécompense : **+${reward.stars.toLocaleString('fr-FR')}** ★`;
+    message += `\nRécompense : **+${reward.stars.toLocaleString("fr-FR")}** ★`;
   } else if (reward.itemId) {
     const def = catalog.getItem(reward.itemId);
     message += `\nRécompense : **${def?.name || reward.itemId}**`;
@@ -102,33 +110,38 @@ function tickStreakReset() {
     const yesterdayTs = todayStartMs() - 24 * 60 * 60 * 1000;
     const result = db
       .prepare(
-        'UPDATE users SET streak = 0 WHERE streak > 0 AND last_streak_timestamp > 0 AND last_streak_timestamp < ?',
+        "UPDATE users SET streak = 0 WHERE streak > 0 AND last_streak_timestamp > 0 AND last_streak_timestamp < ?",
       )
       .run(yesterdayTs);
     if (result.changes > 0) {
-      console.log(`[streak] Reset : ${result.changes} joueur(s) sans activité hier.`);
+      console.log(
+        `[streak] Reset : ${result.changes} joueur(s) sans activité hier.`,
+      );
     }
   } catch (e) {
-    console.error('[streak reset]', e?.message || e);
+    console.error("[streak reset]", e?.message || e);
   }
 }
 
 function scheduleStreakReset() {
   setInterval(tickStreakReset, 60_000);
-  console.log('[streak] Vérification reset streak toutes les 60 s.');
+  console.log("[streak] Vérification reset streak toutes les 60 s.");
 }
 
 function restoreLostStreak(userId) {
   const u = users.getUser(userId);
   if (!u?.streak_lost_timestamp) {
-    return { ok: false, error: 'Aucune streak perdue à restaurer.' };
+    return { ok: false, error: "Aucune streak perdue à restaurer." };
   }
   if (Date.now() - u.streak_lost_timestamp > 48 * 60 * 60 * 1000) {
-    return { ok: false, error: 'Trop tard : plus de **48 h** depuis la perte de streak.' };
+    return {
+      ok: false,
+      error: "Trop tard : plus de **48 h** depuis la perte de streak.",
+    };
   }
   const prev = Math.max(1, u.previous_streak || 1);
   db.prepare(
-    'UPDATE users SET streak = ?, last_streak_timestamp = ?, streak_lost_timestamp = 0, previous_streak = 0 WHERE id = ?',
+    "UPDATE users SET streak = ?, last_streak_timestamp = ?, streak_lost_timestamp = 0, previous_streak = 0 WHERE id = ?",
   ).run(prev, todayStartMs(), userId);
   return { ok: true, streak: prev };
 }

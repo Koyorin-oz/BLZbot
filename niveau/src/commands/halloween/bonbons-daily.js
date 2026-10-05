@@ -1,9 +1,9 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { getEventState, getDailyBonbonCooldown, setDailyBonbonCooldown, grantEventCurrency, getOrCreateEventUser } = require('../../utils/db-halloween');
 const { msToTime } = require('../../utils/time');
+const { isSameParisDay, parisNextMidnightMs } = require('../../../../utils/paris-time');
 
 const DAILY_AMOUNT = 1000;
-const COOLDOWN = 24 * 60 * 60 * 1000; // 24 heures en ms
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -19,8 +19,8 @@ module.exports = {
         const cooldown = getDailyBonbonCooldown(userId);
         const now = Date.now();
 
-        if (cooldown && (now - cooldown.last_claimed < COOLDOWN)) {
-            const remainingTime = COOLDOWN - (now - cooldown.last_claimed);
+        if (cooldown && isSameParisDay(cooldown.last_claimed, now)) {
+            const remainingTime = parisNextMidnightMs(now) - now;
             return interaction.reply({ 
                 content: `Vous avez déjà réclamé votre récompense journalière de bonbons. Veuillez patienter encore ${msToTime(remainingTime)}.`, 
                 ephemeral: true 

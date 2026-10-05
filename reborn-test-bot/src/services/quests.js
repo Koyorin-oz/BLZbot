@@ -1,7 +1,8 @@
-const db = require('../db');
-const shop = require('./shop');
-const users = require('./users');
-const skillTree = require('./skillTree');
+const db = require("../db");
+const shop = require("./shop");
+const users = require("./users");
+const skillTree = require("./skillTree");
+const { parisWeekKey } = require("../../../utils/paris-time");
 
 const DAILY_MSG_TARGET = 5;
 const DAILY_REWARD = 25_000n;
@@ -11,40 +12,40 @@ const WEEKLY_REWARD = 150_000n;
 /** Quête « choix » hebdomadaire (une par semaine). */
 const SELECTIONS = {
   chasse_messages: {
-    label: 'Chasse : 20 messages cette semaine',
-    kind: 'msgs',
+    label: "Chasse : 20 messages cette semaine",
+    kind: "msgs",
     target: 20,
     reward: 40_000n,
   },
   offre_corail: {
-    label: 'Offrir 1× corail à la cagnotte (retiré à la réclamation)',
-    kind: 'item',
-    itemId: 'corail',
+    label: "Offrir 1× corail à la cagnotte (retiré à la réclamation)",
+    kind: "item",
+    itemId: "corail",
     qty: 1,
     reward: 80_000n,
   },
   defi_400k: {
-    label: 'Défi 400k : accumuler 400 000 starss cette semaine',
-    kind: 'starss_gain',
+    label: "Défi 400k : accumuler 400 000 starss cette semaine",
+    kind: "starss_gain",
     target: 400_000n,
     reward: 100_000n,
   },
   defi_catl: {
-    label: 'Défi : ouvrir 1× Coffre légendaire',
-    kind: 'catl_open',
+    label: "Défi : ouvrir 1× Coffre légendaire",
+    kind: "catl_open",
     target: 1,
     reward: 250_000n,
   },
   defi_master: {
-    label: 'Défi Master+ : atteindre le tier Master en RP cette semaine',
-    kind: 'rank_reached',
+    label: "Défi Master+ : atteindre le tier Master en RP cette semaine",
+    kind: "rank_reached",
     target: 1,
     reward: 500_000n,
-    tier: 'master',
+    tier: "master",
   },
   defi_minijeu: {
-    label: 'Défi Minijeux : remporter 3 minijeux cette semaine',
-    kind: 'minijeu_wins',
+    label: "Défi Minijeux : remporter 3 minijeux cette semaine",
+    kind: "minijeu_wins",
     target: 3,
     reward: 120_000n,
   },
@@ -55,25 +56,47 @@ const SELECTIONS = {
  * Chaque palier débloque une récompense one-shot (claimée auto par /quetes).
  */
 const LIFETIME_LADDER = [
-  { id: 'life_10', target: 10, reward: 5_000n, label: 'Ligne — 10 messages' },
-  { id: 'life_50', target: 50, reward: 25_000n, label: 'Ligne — 50 messages' },
-  { id: 'life_100', target: 100, reward: 75_000n, label: 'Ligne — 100 messages' },
-  { id: 'life_250', target: 250, reward: 200_000n, label: 'Ligne — 250 messages' },
-  { id: 'life_500', target: 500, reward: 500_000n, label: 'Ligne — 500 messages' },
-  { id: 'life_1000', target: 1000, reward: 1_500_000n, label: 'Ligne — 1 000 messages' },
+  { id: "life_10", target: 10, reward: 5_000n, label: "Ligne — 10 messages" },
+  { id: "life_50", target: 50, reward: 25_000n, label: "Ligne — 50 messages" },
+  {
+    id: "life_100",
+    target: 100,
+    reward: 75_000n,
+    label: "Ligne — 100 messages",
+  },
+  {
+    id: "life_250",
+    target: 250,
+    reward: 200_000n,
+    label: "Ligne — 250 messages",
+  },
+  {
+    id: "life_500",
+    target: 500,
+    reward: 500_000n,
+    label: "Ligne — 500 messages",
+  },
+  {
+    id: "life_1000",
+    target: 1000,
+    reward: 1_500_000n,
+    label: "Ligne — 1 000 messages",
+  },
 ];
 
 function isMilestoneClaimed(userId, key) {
-  return !!db.prepare('SELECT 1 FROM quest_milestones WHERE user_id = ? AND milestone_key = ?').get(userId, key);
+  return !!db
+    .prepare(
+      "SELECT 1 FROM quest_milestones WHERE user_id = ? AND milestone_key = ?",
+    )
+    .get(userId, key);
 }
 
 function claimMilestone(userId, key) {
   if (isMilestoneClaimed(userId, key)) return false;
-  db.prepare('INSERT INTO quest_milestones (user_id, milestone_key, claimed_ms) VALUES (?, ?, ?)').run(
-    userId,
-    key,
-    Date.now(),
-  );
+  db.prepare(
+    "INSERT INTO quest_milestones (user_id, milestone_key, claimed_ms) VALUES (?, ?, ?)",
+  ).run(userId, key, Date.now());
   return true;
 }
 
@@ -81,13 +104,18 @@ function claimMilestone(userId, key) {
 function trackCatlOpen(userId) {
   let row = syncDayWeek(getState(userId));
   const sid = row.selection_id;
-  if (sid !== 'defi_catl') return null;
+  if (sid !== "defi_catl") return null;
   if (row.selection_claimed) return null;
   const next = (row.selection_progress || 0) + 1;
-  db.prepare('UPDATE user_quest_state SET selection_progress = ? WHERE user_id = ?').run(next, userId);
+  db.prepare(
+    "UPDATE user_quest_state SET selection_progress = ? WHERE user_id = ?",
+  ).run(next, userId);
   if (next >= SELECTIONS.defi_catl.target) {
-    db.prepare('UPDATE user_quest_state SET selection_claimed = 1 WHERE user_id = ?').run(userId);
-    const reward = SELECTIONS.defi_catl.reward * skillTree.questRewardMult(userId);
+    db.prepare(
+      "UPDATE user_quest_state SET selection_claimed = 1 WHERE user_id = ?",
+    ).run(userId);
+    const reward =
+      SELECTIONS.defi_catl.reward * skillTree.questRewardMult(userId);
     users.addStars(userId, reward);
     return { reward, label: SELECTIONS.defi_catl.label };
   }
@@ -100,12 +128,17 @@ function trackCatlOpen(userId) {
  */
 function trackMinijeuWin(userId) {
   let row = syncDayWeek(getState(userId));
-  if (row.selection_id !== 'defi_minijeu' || row.selection_claimed) return null;
+  if (row.selection_id !== "defi_minijeu" || row.selection_claimed) return null;
   const next = (row.selection_progress || 0) + 1;
-  db.prepare('UPDATE user_quest_state SET selection_progress = ? WHERE user_id = ?').run(next, userId);
+  db.prepare(
+    "UPDATE user_quest_state SET selection_progress = ? WHERE user_id = ?",
+  ).run(next, userId);
   if (next >= SELECTIONS.defi_minijeu.target) {
-    db.prepare('UPDATE user_quest_state SET selection_claimed = 1 WHERE user_id = ?').run(userId);
-    const reward = SELECTIONS.defi_minijeu.reward * skillTree.questRewardMult(userId);
+    db.prepare(
+      "UPDATE user_quest_state SET selection_claimed = 1 WHERE user_id = ?",
+    ).run(userId);
+    const reward =
+      SELECTIONS.defi_minijeu.reward * skillTree.questRewardMult(userId);
     users.addStars(userId, reward);
     return { reward, label: SELECTIONS.defi_minijeu.label };
   }
@@ -119,13 +152,16 @@ function trackMinijeuWin(userId) {
  */
 function trackRankReached(userId, tierKey) {
   let row = syncDayWeek(getState(userId));
-  if (row.selection_id !== 'defi_master' || row.selection_claimed) return null;
+  if (row.selection_id !== "defi_master" || row.selection_claimed) return null;
   // Pour la quête actuelle, on ne valide qu'à partir de Master (70k RP).
-  const target = SELECTIONS.defi_master.tier || 'master';
-  const rankedRoles = require('./rankedRoles');
+  const target = SELECTIONS.defi_master.tier || "master";
+  const rankedRoles = require("./rankedRoles");
   if (!rankedRoles.isAtLeast(tierKey, target)) return null;
-  db.prepare('UPDATE user_quest_state SET selection_claimed = 1, selection_progress = 1 WHERE user_id = ?').run(userId);
-  const reward = SELECTIONS.defi_master.reward * skillTree.questRewardMult(userId);
+  db.prepare(
+    "UPDATE user_quest_state SET selection_claimed = 1, selection_progress = 1 WHERE user_id = ?",
+  ).run(userId);
+  const reward =
+    SELECTIONS.defi_master.reward * skillTree.questRewardMult(userId);
   users.addStars(userId, reward);
   return { reward, label: SELECTIONS.defi_master.label };
 }
@@ -133,15 +169,21 @@ function trackRankReached(userId, tierKey) {
 function trackStarssGain(userId, amount) {
   let row = syncDayWeek(getState(userId));
   const sid = row.selection_id;
-  if (sid !== 'defi_400k') return null;
+  if (sid !== "defi_400k") return null;
   if (row.selection_claimed) return null;
   const cur = BigInt(row.selection_progress || 0);
   const next = cur + (amount > 0n ? amount : 0n);
-  const clipped = next > Number.MAX_SAFE_INTEGER ? Number.MAX_SAFE_INTEGER : Number(next);
-  db.prepare('UPDATE user_quest_state SET selection_progress = ? WHERE user_id = ?').run(clipped, userId);
+  const clipped =
+    next > Number.MAX_SAFE_INTEGER ? Number.MAX_SAFE_INTEGER : Number(next);
+  db.prepare(
+    "UPDATE user_quest_state SET selection_progress = ? WHERE user_id = ?",
+  ).run(clipped, userId);
   if (next >= SELECTIONS.defi_400k.target) {
-    db.prepare('UPDATE user_quest_state SET selection_claimed = 1 WHERE user_id = ?').run(userId);
-    const reward = SELECTIONS.defi_400k.reward * skillTree.questRewardMult(userId);
+    db.prepare(
+      "UPDATE user_quest_state SET selection_claimed = 1 WHERE user_id = ?",
+    ).run(userId);
+    const reward =
+      SELECTIONS.defi_400k.reward * skillTree.questRewardMult(userId);
     users.addStars(userId, reward);
     return { reward, label: SELECTIONS.defi_400k.label };
   }
@@ -149,14 +191,22 @@ function trackStarssGain(userId, amount) {
 }
 
 function weekBucketMs() {
-  return Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000));
+  return parisWeekKey();
+}
+
+function legacyWeekBucketKey() {
+  return String(Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000)));
 }
 
 function getState(userId) {
-  let r = db.prepare('SELECT * FROM user_quest_state WHERE user_id = ?').get(userId);
+  let r = db
+    .prepare("SELECT * FROM user_quest_state WHERE user_id = ?")
+    .get(userId);
   if (!r) {
     db.prepare(`INSERT INTO user_quest_state (user_id) VALUES (?)`).run(userId);
-    r = db.prepare('SELECT * FROM user_quest_state WHERE user_id = ?').get(userId);
+    r = db
+      .prepare("SELECT * FROM user_quest_state WHERE user_id = ?")
+      .get(userId);
   }
   return r;
 }
@@ -168,13 +218,16 @@ function syncDayWeek(row) {
   if (row.day_key !== day) {
     patch = { ...patch, day_key: day, msgs_today: 0, daily_claimed: 0 };
   }
-  if (row.week_key !== wk) {
+  const legacyWeekKey = String(row.week_key || "");
+  if (legacyWeekKey === legacyWeekBucketKey() && legacyWeekKey !== wk) {
+    patch = { ...patch, week_key: wk };
+  } else if (legacyWeekKey !== wk) {
     patch = {
       ...patch,
       week_key: wk,
       week_points: 0,
       weekly_claimed: 0,
-      selection_id: '',
+      selection_id: "",
       selection_progress: 0,
       selection_claimed: 0,
       weekly_skips_used: 0,
@@ -182,8 +235,11 @@ function syncDayWeek(row) {
   }
   if (Object.keys(patch).length) {
     const keys = Object.keys(patch);
-    const sets = keys.map((k) => `${k} = ?`).join(', ');
-    db.prepare(`UPDATE user_quest_state SET ${sets} WHERE user_id = ?`).run(...keys.map((k) => patch[k]), row.user_id);
+    const sets = keys.map((k) => `${k} = ?`).join(", ");
+    db.prepare(`UPDATE user_quest_state SET ${sets} WHERE user_id = ?`).run(
+      ...keys.map((k) => patch[k]),
+      row.user_id,
+    );
     return { ...row, ...patch };
   }
   return row;
@@ -191,45 +247,54 @@ function syncDayWeek(row) {
 
 /** Compteur messages + progression + auto-claim si seuil atteint. */
 function onMessage(userId) {
-  users.getOrCreate(userId, '');
+  users.getOrCreate(userId, "");
   let row = getState(userId);
   row = syncDayWeek(row);
   const msgs = (row.msgs_today || 0) + 1;
   const wp = (row.week_points || 0) + 1;
   const life = (row.lifetime_msgs ?? 0) + 1;
-  db.prepare('UPDATE user_quest_state SET msgs_today = ?, week_points = ?, lifetime_msgs = ? WHERE user_id = ?').run(
-    msgs,
-    wp,
-    life,
-    userId,
-  );
+  db.prepare(
+    "UPDATE user_quest_state SET msgs_today = ?, week_points = ?, lifetime_msgs = ? WHERE user_id = ?",
+  ).run(msgs, wp, life, userId);
   row = { ...row, msgs_today: msgs, week_points: wp, lifetime_msgs: life };
 
   let selProgress = row.selection_progress || 0;
-  const sid = row.selection_id || '';
+  const sid = row.selection_id || "";
   const def = sid ? SELECTIONS[sid] : null;
-  if (sid && !row.selection_claimed && def?.kind === 'msgs') {
+  if (sid && !row.selection_claimed && def?.kind === "msgs") {
     selProgress += 1;
-    db.prepare('UPDATE user_quest_state SET selection_progress = ? WHERE user_id = ?').run(selProgress, userId);
+    db.prepare(
+      "UPDATE user_quest_state SET selection_progress = ? WHERE user_id = ?",
+    ).run(selProgress, userId);
   }
 
   const unlocked = { daily: null, weekly: null, selection: null };
   const mult = skillTree.questRewardMult(userId);
 
   if (!row.daily_claimed && msgs >= DAILY_MSG_TARGET) {
-    db.prepare('UPDATE user_quest_state SET daily_claimed = 1 WHERE user_id = ?').run(userId);
+    db.prepare(
+      "UPDATE user_quest_state SET daily_claimed = 1 WHERE user_id = ?",
+    ).run(userId);
     const reward = DAILY_REWARD * mult;
     users.addStars(userId, reward);
-    unlocked.daily = { reward, label: 'Quête quotidienne' };
+    unlocked.daily = { reward, label: "Quête quotidienne" };
   }
   if (!row.weekly_claimed && wp >= WEEKLY_MSG_TARGET) {
-    db.prepare('UPDATE user_quest_state SET weekly_claimed = 1 WHERE user_id = ?').run(userId);
+    db.prepare(
+      "UPDATE user_quest_state SET weekly_claimed = 1 WHERE user_id = ?",
+    ).run(userId);
     const reward = WEEKLY_REWARD * mult;
     users.addStars(userId, reward);
-    unlocked.weekly = { reward, label: 'Quête hebdomadaire' };
+    unlocked.weekly = { reward, label: "Quête hebdomadaire" };
   }
-  if (def?.kind === 'msgs' && !row.selection_claimed && selProgress >= def.target) {
-    db.prepare('UPDATE user_quest_state SET selection_claimed = 1 WHERE user_id = ?').run(userId);
+  if (
+    def?.kind === "msgs" &&
+    !row.selection_claimed &&
+    selProgress >= def.target
+  ) {
+    db.prepare(
+      "UPDATE user_quest_state SET selection_claimed = 1 WHERE user_id = ?",
+    ).run(userId);
     const reward = def.reward * mult;
     users.addStars(userId, reward);
     unlocked.selection = { reward, label: def.label };
@@ -257,26 +322,38 @@ function onMessage(userId) {
 }
 
 function claimDaily(userId) {
-  users.getOrCreate(userId, '');
+  users.getOrCreate(userId, "");
   let row = syncDayWeek(getState(userId));
-  if (row.daily_claimed) return { ok: false, error: 'Déjà réclamé aujourd’hui.' };
+  if (row.daily_claimed)
+    return { ok: false, error: "Déjà réclamé aujourd’hui." };
   if ((row.msgs_today || 0) < DAILY_MSG_TARGET) {
-    return { ok: false, error: `Encore **${DAILY_MSG_TARGET - (row.msgs_today || 0)}** message(s) sur ce serveur aujourd’hui.` };
+    return {
+      ok: false,
+      error: `Encore **${DAILY_MSG_TARGET - (row.msgs_today || 0)}** message(s) sur ce serveur aujourd’hui.`,
+    };
   }
-  db.prepare('UPDATE user_quest_state SET daily_claimed = 1 WHERE user_id = ?').run(userId);
+  db.prepare(
+    "UPDATE user_quest_state SET daily_claimed = 1 WHERE user_id = ?",
+  ).run(userId);
   const reward = DAILY_REWARD * skillTree.questRewardMult(userId);
   users.addStars(userId, reward);
   return { ok: true, reward };
 }
 
 function claimWeekly(userId) {
-  users.getOrCreate(userId, '');
+  users.getOrCreate(userId, "");
   let row = syncDayWeek(getState(userId));
-  if (row.weekly_claimed) return { ok: false, error: 'Récompense hebdo déjà prise.' };
+  if (row.weekly_claimed)
+    return { ok: false, error: "Récompense hebdo déjà prise." };
   if ((row.week_points || 0) < WEEKLY_MSG_TARGET) {
-    return { ok: false, error: `**${WEEKLY_MSG_TARGET - (row.week_points || 0)}** points manquants (1 pt = 1 message cette semaine).` };
+    return {
+      ok: false,
+      error: `**${WEEKLY_MSG_TARGET - (row.week_points || 0)}** points manquants (1 pt = 1 message cette semaine).`,
+    };
   }
-  db.prepare('UPDATE user_quest_state SET weekly_claimed = 1 WHERE user_id = ?').run(userId);
+  db.prepare(
+    "UPDATE user_quest_state SET weekly_claimed = 1 WHERE user_id = ?",
+  ).run(userId);
   const reward = WEEKLY_REWARD * skillTree.questRewardMult(userId);
   users.addStars(userId, reward);
   return { ok: true, reward };
@@ -284,66 +361,93 @@ function claimWeekly(userId) {
 
 /** Consomme un skip et débloque la récompense daily (ou hebdo) sans devoir compléter la cible. */
 function skipDaily(userId) {
-  users.getOrCreate(userId, '');
+  users.getOrCreate(userId, "");
   let row = syncDayWeek(getState(userId));
-  if (row.daily_claimed) return { ok: false, error: 'Quête daily déjà validée.' };
+  if (row.daily_claimed)
+    return { ok: false, error: "Quête daily déjà validée." };
   const total = skillTree.questSkipsPerWeek(userId);
   const used = row.weekly_skips_used || 0;
   if (used >= total) {
-    return { ok: false, error: `Aucun skip disponible cette semaine (**${used}/${total}** utilisés).` };
+    return {
+      ok: false,
+      error: `Aucun skip disponible cette semaine (**${used}/${total}** utilisés).`,
+    };
   }
-  db.prepare('UPDATE user_quest_state SET weekly_skips_used = ?, daily_claimed = 1 WHERE user_id = ?').run(used + 1, userId);
+  db.prepare(
+    "UPDATE user_quest_state SET weekly_skips_used = ?, daily_claimed = 1 WHERE user_id = ?",
+  ).run(used + 1, userId);
   const reward = DAILY_REWARD * skillTree.questRewardMult(userId);
   users.addStars(userId, reward);
   return { ok: true, reward, skipsLeft: total - (used + 1) };
 }
 
 function skipWeekly(userId) {
-  users.getOrCreate(userId, '');
+  users.getOrCreate(userId, "");
   let row = syncDayWeek(getState(userId));
-  if (row.weekly_claimed) return { ok: false, error: 'Quête hebdo déjà validée.' };
+  if (row.weekly_claimed)
+    return { ok: false, error: "Quête hebdo déjà validée." };
   const total = skillTree.questSkipsPerWeek(userId);
   const used = row.weekly_skips_used || 0;
   if (used >= total) {
-    return { ok: false, error: `Aucun skip disponible cette semaine (**${used}/${total}** utilisés).` };
+    return {
+      ok: false,
+      error: `Aucun skip disponible cette semaine (**${used}/${total}** utilisés).`,
+    };
   }
-  db.prepare('UPDATE user_quest_state SET weekly_skips_used = ?, weekly_claimed = 1 WHERE user_id = ?').run(used + 1, userId);
+  db.prepare(
+    "UPDATE user_quest_state SET weekly_skips_used = ?, weekly_claimed = 1 WHERE user_id = ?",
+  ).run(used + 1, userId);
   const reward = WEEKLY_REWARD * skillTree.questRewardMult(userId);
   users.addStars(userId, reward);
   return { ok: true, reward, skipsLeft: total - (used + 1) };
 }
 
 function pickSelection(userId, selectionKey) {
-  users.getOrCreate(userId, '');
+  users.getOrCreate(userId, "");
   let row = syncDayWeek(getState(userId));
-  if (!SELECTIONS[selectionKey]) return { ok: false, error: 'Choix inconnu.' };
-  if (row.selection_claimed) return { ok: false, error: 'Tu as déjà terminé ta quête à choix cette semaine.' };
+  if (!SELECTIONS[selectionKey]) return { ok: false, error: "Choix inconnu." };
+  if (row.selection_claimed)
+    return {
+      ok: false,
+      error: "Tu as déjà terminé ta quête à choix cette semaine.",
+    };
   if (row.selection_id === selectionKey && !row.selection_claimed) {
-    return { ok: false, error: 'Tu as déjà ce choix actif.' };
+    return { ok: false, error: "Tu as déjà ce choix actif." };
   }
   db.prepare(
-    'UPDATE user_quest_state SET selection_id = ?, selection_progress = 0, selection_claimed = 0 WHERE user_id = ?',
+    "UPDATE user_quest_state SET selection_id = ?, selection_progress = 0, selection_claimed = 0 WHERE user_id = ?",
   ).run(selectionKey, userId);
   return { ok: true, def: SELECTIONS[selectionKey] };
 }
 
 function claimSelection(userId) {
-  users.getOrCreate(userId, '');
+  users.getOrCreate(userId, "");
   let row = syncDayWeek(getState(userId));
-  const sid = row.selection_id || '';
-  if (!sid) return { ok: false, error: 'Choisis d’abord une quête à choix dans `/quetes`.' };
-  if (row.selection_claimed) return { ok: false, error: 'Déjà réclamée cette semaine.' };
+  const sid = row.selection_id || "";
+  if (!sid)
+    return {
+      ok: false,
+      error: "Choisis d’abord une quête à choix dans `/quetes`.",
+    };
+  if (row.selection_claimed)
+    return { ok: false, error: "Déjà réclamée cette semaine." };
   const def = SELECTIONS[sid];
-  if (!def) return { ok: false, error: 'Quête invalide.' };
-  if (def.kind === 'msgs') {
+  if (!def) return { ok: false, error: "Quête invalide." };
+  if (def.kind === "msgs") {
     if ((row.selection_progress || 0) < def.target) {
-      return { ok: false, error: `Progression **${row.selection_progress || 0}** / **${def.target}** messages.` };
+      return {
+        ok: false,
+        error: `Progression **${row.selection_progress || 0}** / **${def.target}** messages.`,
+      };
     }
-  } else if (def.kind === 'item') {
+  } else if (def.kind === "item") {
     if (!users.takeInventory(userId, def.itemId, def.qty)) {
-      return { ok: false, error: `Il te faut **${def.qty}×** item \`${def.itemId}\` en inventaire.` };
+      return {
+        ok: false,
+        error: `Il te faut **${def.qty}×** item \`${def.itemId}\` en inventaire.`,
+      };
     }
-  } else if (def.kind === 'minijeu_wins') {
+  } else if (def.kind === "minijeu_wins") {
     if ((row.selection_progress || 0) < def.target) {
       return {
         ok: false,
@@ -351,30 +455,34 @@ function claimSelection(userId) {
       };
     }
   }
-  db.prepare('UPDATE user_quest_state SET selection_claimed = 1 WHERE user_id = ?').run(userId);
+  db.prepare(
+    "UPDATE user_quest_state SET selection_claimed = 1 WHERE user_id = ?",
+  ).run(userId);
   const reward = def.reward * skillTree.questRewardMult(userId);
   users.addStars(userId, reward);
   return { ok: true, reward, label: def.label };
 }
 
 function summary(userId) {
-  users.getOrCreate(userId, '');
+  users.getOrCreate(userId, "");
   const row = syncDayWeek(getState(userId));
-  const sid = row.selection_id || '';
+  const sid = row.selection_id || "";
   const def = sid ? SELECTIONS[sid] : null;
-  let selLine = 'Aucune quête à choix sélectionnée — choisis-en une dans le menu ci-dessous.';
+  let selLine =
+    "Aucune quête à choix sélectionnée — choisis-en une dans le menu ci-dessous.";
   if (def) {
-    if (row.selection_claimed) selLine = `**${def.label}** — terminée cette semaine.`;
-    else if (def.kind === 'msgs') {
+    if (row.selection_claimed)
+      selLine = `**${def.label}** — terminée cette semaine.`;
+    else if (def.kind === "msgs") {
       selLine = `**${def.label}** — **${row.selection_progress || 0}** / **${def.target}** *(auto)*`;
-    } else if (def.kind === 'starss_gain') {
+    } else if (def.kind === "starss_gain") {
       const cur = BigInt(row.selection_progress || 0);
-      selLine = `**${def.label}** — **${cur.toLocaleString('fr-FR')}** / **${def.target.toLocaleString('fr-FR')}** *(auto)*`;
-    } else if (def.kind === 'catl_open') {
+      selLine = `**${def.label}** — **${cur.toLocaleString("fr-FR")}** / **${def.target.toLocaleString("fr-FR")}** *(auto)*`;
+    } else if (def.kind === "catl_open") {
       selLine = `**${def.label}** — **${row.selection_progress || 0}** / **${def.target}** *(auto en ouvrant un Coffre légendaire)*`;
-    } else if (def.kind === 'minijeu_wins') {
+    } else if (def.kind === "minijeu_wins") {
       selLine = `**${def.label}** — **${row.selection_progress || 0}** / **${def.target}** *(auto à chaque victoire)*`;
-    } else if (def.kind === 'rank_reached') {
+    } else if (def.kind === "rank_reached") {
       selLine = `**${def.label}** *(auto en atteignant le tier)*`;
     } else {
       selLine = `**${def.label}** — utilise le bouton « Réclamer » dès que tu as l’item.`;

@@ -3,6 +3,7 @@ const db = require("../database/database");
 const { grantResources } = require("./db-users");
 const logger = require("./logger");
 const { EmbedBuilder } = require("discord.js");
+const { parisDayStartMs, parisPreviousDayStartMs } = require("../../../utils/paris-time");
 
 let _warnedStreakChannel = false;
 
@@ -63,25 +64,22 @@ function updateStreak(client, userId) {
       return { streakUpdated: false, newStreak: 0 };
     }
 
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const todayTimestamp = today.getTime();
+    const now = Date.now();
+    const todayTimestamp = parisDayStartMs(now);
 
     // Si le timestamp est 0, l'utilisateur n'a jamais eu de streak
     let lastStreakTimestamp = user.last_streak_timestamp || 0;
-    let lastStreakDate =
-      lastStreakTimestamp > 0 ? new Date(lastStreakTimestamp) : null;
-
     let newStreak = user.streak || 0;
     let streakUpdated = false;
 
-    if (!lastStreakDate || lastStreakDate.getTime() < today.getTime()) {
+    if (lastStreakTimestamp < todayTimestamp) {
       // Premier message du jour
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayTimestamp = yesterday.getTime();
+      const yesterdayTimestamp = parisPreviousDayStartMs(now);
 
-      if (lastStreakTimestamp === yesterdayTimestamp) {
+      if (
+        lastStreakTimestamp >= yesterdayTimestamp &&
+        lastStreakTimestamp < todayTimestamp
+      ) {
         // La dernière mise à jour était hier : on incrémente la streak
         newStreak++;
         streakUpdated = true;
@@ -93,7 +91,7 @@ function updateStreak(client, userId) {
         const updateUserStmt = db.prepare(
           "UPDATE users SET streak_lost_timestamp = ?, previous_streak = ?, streak = 0 WHERE id = ?",
         );
-        updateUserStmt.run(now.getTime(), user.streak, userId);
+        updateUserStmt.run(now, user.streak, userId);
         newStreak = 1;
         streakUpdated = true;
         logger.info(`Streak perdue pour ${userId}: ${user.streak} → 1`);
@@ -233,21 +231,14 @@ async function sendStreakAnnouncement(client, userId, newStreak, reward) {
 function scheduleStreakReset() {
   // Exécuter tous les jours à 00:00 (Paris)
   const rule = new schedule.RecurrenceRule();
+  rule.tz = "Europe/Paris";
   rule.hour = 0;
   rule.minute = 0;
-  // Note: On pourrait utiliser rule.tz = 'Europe/Paris' si nécessaire,
-  // mais le serveur est déjà configuré à l'heure de Paris.
 
   schedule.scheduleJob(rule, () => {
     try {
       const now = new Date();
-      // Début de la journée d'hier (00:00:00)
-      const yesterday = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate() - 1,
-      );
-      const yesterdayTimestamp = yesterday.getTime();
+      const yesterdayTimestamp = parisPreviousDayStartMs(now.getTime());
 
       // Tous ceux qui n'ont pas parlé hier (donc last_streak_timestamp < yesterdayTimestamp)
       // ont perdu leur streak à minuit aujourd'hui.

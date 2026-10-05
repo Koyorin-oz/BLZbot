@@ -1,4 +1,4 @@
-const path = require('node:path');
+const path = require("node:path");
 const {
   SlashCommandBuilder,
   AttachmentBuilder,
@@ -6,61 +6,66 @@ const {
   ButtonStyle,
   ActionRowBuilder,
   ComponentType,
-} = require('discord.js');
-const users = require('../services/users');
-const { getItem } = require('../reborn/catalog');
-const meta = require('../services/meta');
-const cfg = require('../config');
-const { totalToLevelState, T_START, MAX_LEVEL } = require('../reborn/xpCurve');
-const { d } = require('../lib/slashDesc');
-const { deferReplyEphemeral, replyEphemeral, editReplyEphemeral } = require('../lib/ephemeral');
+} = require("discord.js");
+const users = require("../services/users");
+const { getItem } = require("../reborn/catalog");
+const meta = require("../services/meta");
+const cfg = require("../config");
+const { totalToLevelState, T_START, MAX_LEVEL } = require("../reborn/xpCurve");
+const { d } = require("../lib/slashDesc");
+const {
+  deferReplyEphemeral,
+  replyEphemeral,
+  editReplyEphemeral,
+} = require("../lib/ephemeral");
+const {
+  parisDayStartMs,
+  parisNextMidnightMs,
+  isSameParisDay,
+} = require("../../../utils/paris-time");
 
-const { renderDailyCard } = require(path.join(
-  __dirname,
-  '..',
-  '..',
-  '..',
-  'niveau',
-  'src',
-  'utils',
-  'canvas-daily',
-));
+const { renderDailyCard } = require(
+  path.join(
+    __dirname,
+    "..",
+    "..",
+    "..",
+    "niveau",
+    "src",
+    "utils",
+    "canvas-daily",
+  ),
+);
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Même texte d’appui que le canvas (MAJ REBORN / sandbox). */
 const REBORN_MAJ_LINE =
-  'REBORN : coffres doc, double daily, arbre de compétences';
+  "REBORN : coffres doc, double daily, arbre de compétences";
 
 function msToTime(ms) {
   const seconds = Math.floor((ms / 1000) % 60)
     .toString()
-    .padStart(2, '0');
+    .padStart(2, "0");
   const minutes = Math.floor((ms / (1000 * 60)) % 60)
     .toString()
-    .padStart(2, '0');
+    .padStart(2, "0");
   const hours = Math.floor((ms / (1000 * 60 * 60)) % 24).toString();
   if (parseInt(hours, 10) > 0) return `${hours}h ${minutes}m ${seconds}s`;
   if (parseInt(minutes, 10) > 0) return `${minutes}m ${seconds}s`;
   return `${seconds}s`;
 }
 
-function sameCalendarDay(d, ref) {
-  return (
-    d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth() && d.getDate() === ref.getDate()
-  );
-}
-
 function pruneDoubleRolls(userId) {
   const key = `ddailyroll:${userId}`;
   let arr = [];
   try {
-    arr = JSON.parse(meta.get(key) || '[]');
+    arr = JSON.parse(meta.get(key) || "[]");
   } catch {
     arr = [];
   }
   const now = Date.now();
-  arr = arr.filter((t) => typeof t === 'number' && now - t < DAY_MS);
+  arr = arr.filter((t) => typeof t === "number" && now - t < DAY_MS);
   meta.set(key, JSON.stringify(arr));
   return arr;
 }
@@ -77,12 +82,27 @@ function pushDoubleRoll(userId) {
  * par un boost +1h pour conserver la valeur de palier sans toucher au ladder.
  */
 const rewards = [
-  { name: '10 000 Starss', chance: 0.3, type: 'stars', amount: 10000 },
-  { name: '500 EXP', chance: 0.3, type: 'xp', amount: 500 },
-  { name: 'Boost ×2 Starss 1h', chance: 0.2, type: 'item', itemId: 'starss_boost' },
-  { name: '25 000 Starss', chance: 0.1, type: 'stars', amount: 25000 },
-  { name: 'Coffre au trésor', chance: 0.09, type: 'item', itemId: 'coffre_classique' },
-  { name: 'Méga coffre au trésor', chance: 0.01, type: 'item', itemId: 'coffre_catl' },
+  { name: "10 000 Starss", chance: 0.3, type: "stars", amount: 10000 },
+  { name: "500 EXP", chance: 0.3, type: "xp", amount: 500 },
+  {
+    name: "Boost ×2 Starss 1h",
+    chance: 0.2,
+    type: "item",
+    itemId: "starss_boost",
+  },
+  { name: "25 000 Starss", chance: 0.1, type: "stars", amount: 25000 },
+  {
+    name: "Coffre au trésor",
+    chance: 0.09,
+    type: "item",
+    itemId: "coffre_classique",
+  },
+  {
+    name: "Méga coffre au trésor",
+    chance: 0.01,
+    type: "item",
+    itemId: "coffre_catl",
+  },
 ];
 
 function getRandomReward() {
@@ -129,34 +149,34 @@ function applyRandomReward(userId) {
   const reward = getRandomReward();
   let rewardName = reward.name;
   let rewardType = reward.type;
-  let rewardAmount = reward.type === 'item' ? null : reward.amount;
-  let rewardEmoji = '✅';
+  let rewardAmount = reward.type === "item" ? null : reward.amount;
+  let rewardEmoji = "✅";
 
   switch (reward.type) {
-    case 'stars': {
+    case "stars": {
       const base = BigInt(reward.amount);
       const amount = users.applyStarssMultiplier(userId, base);
       users.addStars(userId, amount);
       rewardName = reward.name;
-      rewardType = 'stars';
+      rewardType = "stars";
       rewardAmount = Number(amount);
-      rewardEmoji = '⭐';
+      rewardEmoji = "⭐";
       break;
     }
-    case 'xp':
+    case "xp":
       users.addXp(userId, reward.amount);
       rewardName = reward.name;
-      rewardType = 'xp';
+      rewardType = "xp";
       rewardAmount = reward.amount;
-      rewardEmoji = '🚀';
+      rewardEmoji = "🚀";
       break;
-    case 'item': {
+    case "item": {
       users.addInventory(userId, reward.itemId, 1);
       const def = getItem(reward.itemId);
       rewardName = def?.name || reward.name;
-      rewardType = 'item';
+      rewardType = "item";
       rewardAmount = null;
-      rewardEmoji = '🎁';
+      rewardEmoji = "🎁";
       break;
     }
     default:
@@ -167,12 +187,15 @@ function applyRandomReward(userId) {
 
 function buildCloseRow() {
   return new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('daily_close').setLabel('Fermer').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setCustomId("daily_close")
+      .setLabel("Fermer")
+      .setStyle(ButtonStyle.Secondary),
   );
 }
 
 async function sendDailyCanvasReply(interaction, pngBuffer) {
-  const file = new AttachmentBuilder(pngBuffer, { name: 'daily.png' });
+  const file = new AttachmentBuilder(pngBuffer, { name: "daily.png" });
   const message = await editReplyEphemeral(interaction, {
     files: [file],
     components: [buildCloseRow()],
@@ -183,11 +206,13 @@ async function sendDailyCanvasReply(interaction, pngBuffer) {
     time: 5 * 60 * 1000,
   });
 
-  collector.on('collect', async (i) => {
+  collector.on("collect", async (i) => {
     if (i.user.id !== interaction.user.id) {
-      return replyEphemeral(i, { content: "Seul l'auteur de la commande peut utiliser ce bouton." });
+      return replyEphemeral(i, {
+        content: "Seul l'auteur de la commande peut utiliser ce bouton.",
+      });
     }
-    if (i.customId === 'daily_close') {
+    if (i.customId === "daily_close") {
       try {
         await i.update({ components: [] });
       } catch {
@@ -200,57 +225,54 @@ async function sendDailyCanvasReply(interaction, pngBuffer) {
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('daily')
-    .setDescription(d('🎁', 'Réclame ta récompense journalière (carte illustrée).')),
+    .setName("daily")
+    .setDescription(
+      d("🎁", "Réclame ta récompense journalière (carte illustrée)."),
+    ),
 
   async execute(interaction) {
     await deferReplyEphemeral(interaction);
 
-    if (require('../services/economyState').isPaused()) {
+    if (require("../services/economyState").isPaused()) {
       return editReplyEphemeral(interaction, {
-        content: 'L’économie du serveur est en pause. Le daily est temporairement indisponible.',
+        content:
+          "L’économie du serveur est en pause. Le daily est temporairement indisponible.",
       });
     }
 
     const userId = interaction.user.id;
     users.getOrCreate(userId, interaction.user.username);
 
-    const now = new Date();
-    const midnightLocal = new Date(now);
-    midnightLocal.setHours(0, 0, 0, 0);
+    const now = Date.now();
+    const todayParisStart = parisDayStartMs(now);
 
     const u = users.getUser(userId);
     const lastMs = u?.daily_last_ms || 0;
     const canClaim = !lastMs || lastMs === 0;
 
-    let lastClaimedMidnight = null;
-    if (!canClaim) {
-      const lastClaimedDate = new Date(lastMs);
-      lastClaimedMidnight = new Date(lastClaimedDate);
-      lastClaimedMidnight.setHours(0, 0, 0, 0);
-    }
-
-    const naturalOk = canClaim || (lastClaimedMidnight && lastClaimedMidnight < midnightLocal);
-    const claimedToday = Boolean(lastMs && sameCalendarDay(new Date(lastMs), now));
+    const naturalOk = canClaim || lastMs < todayParisStart;
+    const claimedToday = Boolean(lastMs && isSameParisDay(lastMs, now));
 
     const tryDouble =
       !naturalOk &&
       claimedToday &&
-      invQty(userId, 'double_daily') > 0 &&
+      invQty(userId, "double_daily") > 0 &&
       (cfg.TEST_NO_LIMITS || pruneDoubleRolls(userId).length < 3);
 
-    const member = await interaction.guild?.members.fetch(userId).catch(() => null);
+    const member = await interaction.guild?.members
+      .fetch(userId)
+      .catch(() => null);
     const displayName = member?.displayName || interaction.user.username;
     const highestRoleName =
-      member?.roles.highest?.name !== '@everyone' ? member?.roles.highest?.name : 'Membre';
-    const avatarURL = member?.displayAvatarURL({ extension: 'png', size: 256 });
+      member?.roles.highest?.name !== "@everyone"
+        ? member?.roles.highest?.name
+        : "Membre";
+    const avatarURL = member?.displayAvatarURL({ extension: "png", size: 256 });
 
     if (naturalOk || tryDouble) {
       if (tryDouble) {
-        if (!users.takeInventory(userId, 'double_daily', 1)) {
-          const tomorrowMidnight = new Date(midnightLocal);
-          tomorrowMidnight.setDate(tomorrowMidnight.getDate() + 1);
-          const remainingTime = msToTime(tomorrowMidnight.getTime() - now.getTime());
+        if (!users.takeInventory(userId, "double_daily", 1)) {
+          const remainingTime = msToTime(parisNextMidnightMs(now) - now);
           const uRow = users.getUser(userId);
           const userForCard = buildCanvasUser(uRow);
           let png;
@@ -262,9 +284,9 @@ module.exports = {
               highestRoleName,
               avatarURL,
               remainingTime,
-              doubleDailyCount: invQty(userId, 'double_daily'),
+              doubleDailyCount: invQty(userId, "double_daily"),
               isSuccess: false,
-              footerBrand: 'BLZstarss',
+              footerBrand: "BLZstarss",
             });
           } catch {
             return editReplyEphemeral(interaction, {
@@ -276,7 +298,8 @@ module.exports = {
         pushDoubleRoll(userId);
       }
 
-      const { rewardName, rewardType, rewardAmount, rewardEmoji } = applyRandomReward(userId);
+      const { rewardName, rewardType, rewardAmount, rewardEmoji } =
+        applyRandomReward(userId);
       if (naturalOk) users.setDailyLastMs(userId, Date.now());
 
       const uAfter = users.getUser(userId);
@@ -296,26 +319,26 @@ module.exports = {
             rewardAmount,
             rewardEmoji,
             isSuccess: true,
-            footerBrand: 'BLZZstarss',
+            footerBrand: "BLZZstarss",
             rebornMajLine: REBORN_MAJ_LINE,
           }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000)),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Timeout")), 15000),
+          ),
         ]);
       } catch {
         return editReplyEphemeral(interaction, {
           content: `## ${rewardEmoji} Daily\n**${rewardName}**\n\nSolde : **${users
             .getStars(userId)
-            .toLocaleString('fr-FR')}** starss`,
+            .toLocaleString("fr-FR")}** starss`,
         });
       }
 
       return sendDailyCanvasReply(interaction, png);
     }
 
-    const tomorrowMidnight = new Date(midnightLocal);
-    tomorrowMidnight.setDate(tomorrowMidnight.getDate() + 1);
-    const remainingTime = msToTime(tomorrowMidnight.getTime() - now.getTime());
-    const ddc = invQty(userId, 'double_daily');
+    const remainingTime = msToTime(parisNextMidnightMs(now) - now);
+    const ddc = invQty(userId, "double_daily");
     const uRow = users.getUser(userId);
     const userForCard = buildCanvasUser(uRow);
 
@@ -331,13 +354,15 @@ module.exports = {
           remainingTime,
           doubleDailyCount: ddc,
           isSuccess: false,
-          footerBrand: 'BLZZstarss',
+          footerBrand: "BLZZstarss",
         }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000)),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Timeout")), 15000),
+        ),
       ]);
     } catch {
       return editReplyEphemeral(interaction, {
-        content: `⏳ **Prochain daily** : **${remainingTime}**${ddc > 0 ? ` · *Double daily* : **${ddc}**` : ''}`,
+        content: `⏳ **Prochain daily** : **${remainingTime}**${ddc > 0 ? ` · *Double daily* : **${ddc}**` : ""}`,
       });
     }
 

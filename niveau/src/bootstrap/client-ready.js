@@ -25,6 +25,7 @@ const { getEventState: getNoelState } = require('../utils/db-noel');
 const { getEventState: getValentinState } = require('../utils/db-valentin');
 const { updateAllTopRoles } = require('../utils/top-roles');
 const { distributeGiveawayRewards } = require('../utils/giveaway-rewards-distribution');
+const { parisDayStartMs, parisNextMidnightMs } = require('../../../utils/paris-time');
 
 function scheduleStartupTask(label, delayMs, fn) {
     setTimeout(() => {
@@ -36,25 +37,7 @@ function scheduleStartupTask(label, delayMs, fn) {
 
 /** Ms jusqu’au prochain minuit (Europe/Paris), horloge murale — évite `new Date(localeString)` qui peut donner un délai négatif. */
 function msUntilNextMidnightParis() {
-    try {
-        const parts = new Intl.DateTimeFormat('en-GB', {
-            timeZone: 'Europe/Paris',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false,
-        }).formatToParts(new Date());
-        const n = (t) => parseInt(parts.find((p) => p.type === t)?.value || '0', 10);
-        const h = n('hour');
-        const m = n('minute');
-        const s = n('second');
-        const elapsedMs = ((h * 60 + m) * 60 + s) * 1000;
-        const approxLeft = 86400000 - elapsedMs;
-        return Math.max(1000, approxLeft);
-    } catch (e) {
-        logger.warn('[schedule] msUntilNextMidnightParis repli 1h:', e?.message || e);
-        return 3600000;
-    }
+    return Math.max(1000, parisNextMidnightMs() - Date.now());
 }
 
 /**
@@ -361,7 +344,7 @@ function registerClientReady(client, { isHalloweenActive }) {
                         const { updateStreak } = require('../utils/streak-system');
                         updateStreak(client, userId);
 
-                        const today = new Date().setHours(0, 0, 0, 0);
+                        const today = parisDayStartMs();
                         // Fetch fresh user data including daily_voice_points and daily_voice_xp
                         const dbUser = db.prepare('SELECT daily_voice_xp, daily_voice_points, daily_voice_last_reset FROM users WHERE id = ?').get(userId);
                         let dailyVoiceXP = dbUser?.daily_voice_xp || 0;

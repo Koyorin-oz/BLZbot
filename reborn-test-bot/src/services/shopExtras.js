@@ -2,12 +2,16 @@ const db = require('../db');
 const users = require('./users');
 const shop = require('./shop');
 const skillTree = require('./skillTree');
+const { parisWeekKey } = require('../../../utils/paris-time');
 
 const CATL_CLAIM_MS = 3 * 60 * 60 * 1000;
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 function weekKey() {
-  return String(Math.floor(Date.now() / WEEK_MS));
+  return parisWeekKey();
+}
+
+function legacyWeekKey() {
+  return String(Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000)));
 }
 
 /** Étape 5 boutique : un CATL gratuit toutes les 3 h. */
@@ -36,7 +40,12 @@ function useShopReset(userId) {
   users.getOrCreate(userId, '');
   const wk = weekKey();
   const u = users.getUser(userId);
-  const usedFreeWeek = (u?.shop_reset_used_week_key || '') === wk;
+  const previousKey = String(u?.shop_reset_used_week_key || '');
+  const migratingUsedWeek = previousKey === legacyWeekKey() && previousKey !== wk;
+  const usedFreeWeek = previousKey === wk || migratingUsedWeek;
+  if (migratingUsedWeek) {
+    db.prepare('UPDATE users SET shop_reset_used_week_key = ? WHERE id = ?').run(wk, userId);
+  }
   const tier = skillTree.step(userId, 'shop');
   let consumed = 'item';
   if (tier >= 1 && !usedFreeWeek) {
@@ -65,7 +74,13 @@ function freeResetAvailable(userId) {
   const u = users.getUser(userId);
   if (!u) return false;
   if (skillTree.step(userId, 'shop') < 1) return false;
-  return (u.shop_reset_used_week_key || '') !== weekKey();
+  const currentWeek = weekKey();
+  const previousKey = String(u.shop_reset_used_week_key || '');
+  if (previousKey === legacyWeekKey() && previousKey !== currentWeek) {
+    db.prepare('UPDATE users SET shop_reset_used_week_key = ? WHERE id = ?').run(currentWeek, userId);
+    return false;
+  }
+  return previousKey !== currentWeek;
 }
 
 module.exports = {

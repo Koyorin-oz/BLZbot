@@ -6,6 +6,7 @@ const { updateGuildPrivateChannelName, UPGRADE_MATRIX } = require('../../utils/g
 const { updateUserRank } = require('../../utils/ranks');
 const logger = require('../../utils/logger');
 const roleConfig = require('../../config/role.config.json');
+const { parisDayStartMs } = require('../../../../utils/paris-time');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -214,7 +215,7 @@ module.exports = {
                 let multiplier = 1;
 
                 // Check reset validity
-                const today = new Date().setHours(0, 0, 0, 0);
+                const today = parisDayStartMs();
                 let effectiveXP = dailyXP;
                 let effectivePoints = dailyPoints;
 
@@ -250,14 +251,14 @@ module.exports = {
             }
 
             else if (subcommand === 'reset') {
-                const today = new Date().setHours(0, 0, 0, 0);
+                const today = parisDayStartMs();
                 db.prepare('UPDATE users SET daily_voice_points = 0, daily_voice_last_reset = ? WHERE id = ?').run(today, targetUser.id);
                 return interaction.reply({ content: `✅ Le nerf vocal de **${targetUser.username}** a été réinitialisé (RP vocal journalier remis à 0).` });
             }
 
             else if (subcommand === 'definir') {
                 const amount = interaction.options.getInteger('montant');
-                const today = new Date().setHours(0, 0, 0, 0);
+                const today = parisDayStartMs();
                 // On met à jour le montant ET la date de reset pour que ce soit pris en compte immédiatement
                 // We assume the admin specifies the accumulated points
                 db.prepare('UPDATE users SET daily_voice_points = ?, daily_voice_last_reset = ? WHERE id = ?').run(amount, today, targetUser.id);
@@ -519,7 +520,7 @@ module.exports = {
 
             try {
                 getOrCreateUser(user.id, user.username);
-                const todayTimestamp = new Date().setHours(0, 0, 0, 0);
+                const todayTimestamp = parisDayStartMs();
                 db.prepare(`
                     UPDATE users
                     SET streak = ?, last_streak_timestamp = ?, streak_lost_timestamp = 0, previous_streak = 0
