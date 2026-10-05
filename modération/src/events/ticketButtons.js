@@ -868,16 +868,16 @@ function formatTicketContent(text, guild, userCache) {
     // Mentions utilisateur <@ID> ou <@!ID> → tooltip avec l'ID
     formatted = formatted.replace(/&lt;@!?(\d+)&gt;/g, (_, id) => {
         const user = userCache?.get(id);
-        const display = user ? `@${user.displayName}` : `@Utilisateur`;
+        const display = user ? `@${user.displayName}` : `@Utilisateur inconnu`;
         return `<span class="mention user-mention" title="ID: ${id}">${display}</span>`;
     });
 
     // Mentions rôle <@&ID>
     formatted = formatted.replace(/&lt;@&amp;(\d+)&gt;/g, (_, id) => {
         const role = guild?.roles?.cache?.get(id);
-        const display = role ? `@${role.name}` : `@Rôle`;
+        const display = role ? `@${role.name}` : `@Rôle inconnu`;
         const color = role?.hexColor && role.hexColor !== '#000000' ? role.hexColor : '#99aab5';
-        return `<span class="mention role-mention" style="color: ${color}; background: ${color}20;" title="ID: ${id}">@${escapeHtml(role?.name || 'Rôle')}</span>`;
+        return `<span class="mention role-mention" style="color: ${color}; background: ${color}20;" title="ID: ${id}">@${escapeHtml(role?.name || 'Rôle inconnu')}</span>`;
     });
 
     // Mentions salon <#ID>
