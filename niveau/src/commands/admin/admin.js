@@ -505,6 +505,7 @@ module.exports = {
             const createStreakEmbed = (description, color) => new EmbedBuilder()
                 .setAuthor({ name: displayName, iconURL: avatarURL })
                 .setDescription(description)
+                .setFooter({ text: 'Envoyé par ' + interaction.user.displayName, iconURL: interaction.user.displayAvatarURL({ extension: 'png', size: 128 }) })
                 .setColor(color);
 
             try {
