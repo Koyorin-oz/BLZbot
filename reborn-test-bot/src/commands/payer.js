@@ -23,7 +23,7 @@ module.exports = {
       .setTimestamp();
 
     if (to.bot && to.id === interaction.client.user.id) {
-      await interaction.reply({ embeds: [Embed.setDescription('❌ Impossible de payer le bot.')], flags: MessageFlags.Ephemeral });
+      await interaction.reply({ embeds: [Embed.setDescription('❌ Impossible de me donner des starss. (après si tu veux, tu peux en donner à un développeur <:chut:1410392624208023613>)')], flags: MessageFlags.Ephemeral });
       return;
     }
 
