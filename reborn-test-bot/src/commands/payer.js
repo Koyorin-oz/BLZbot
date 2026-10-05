@@ -17,7 +17,7 @@ module.exports = {
     const to = interaction.options.getUser('membre', true);
 
     const Embed = new EmbedBuilder()
-      .setColor('#9b59b6')
+      .setColor('#FFA500')
       .setTitle('💸 Transfert de starss')
       .setFooter({ text: 'BLZbot' })
       .setTimestamp();
