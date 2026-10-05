@@ -516,10 +516,60 @@ module.exports = {
                     WHERE id = ?
                 `).run(days, todayTimestamp, user.id);
 
-                return interaction.reply({
-                    embeds: [createStreakEmbed(`✅ La streak de ${user} a été définie à **${days} jour(s)**.`, 0x2ecc71)],
+                const successEmbed = createStreakEmbed(
+                    `✅ La streak de ${user} a été définie à **${days} jour(s)**.`,
+                    0x2ecc71,
+                );
+                const publishButton = new ButtonBuilder()
+                    .setCustomId(`publish_streak_${interaction.id}`)
+                    .setLabel('Envoyer publiquement')
+                    .setStyle(ButtonStyle.Primary);
+                const response = await interaction.reply({
+                    embeds: [successEmbed],
+                    components: [new ActionRowBuilder().addComponents(publishButton)],
                     flags: MessageFlags.Ephemeral
                 });
+
+                const collector = response.createMessageComponentCollector({
+                    componentType: ComponentType.Button,
+                    time: 120_000,
+                });
+                collector.on('collect', async buttonInteraction => {
+                    if (buttonInteraction.user.id !== interaction.user.id) {
+                        return buttonInteraction.reply({
+                            content: 'Seul l’administrateur ayant lancé la commande peut publier cet embed.',
+                            flags: MessageFlags.Ephemeral,
+                        });
+                    }
+
+                    await buttonInteraction.deferUpdate();
+                    try {
+                        await interaction.channel.send({
+                            embeds: [successEmbed],
+                            allowedMentions: { parse: [] },
+                        });
+                        await interaction.editReply({
+                            content: '✅ Embed envoyé publiquement.',
+                            embeds: [successEmbed],
+                            components: [],
+                        });
+                    } catch (error) {
+                        logger.error(`Erreur lors de la publication de la streak pour ${user.id}:`, error);
+                        await interaction.editReply({
+                            content: '❌ Impossible d’envoyer l’embed publiquement dans ce salon.',
+                            embeds: [successEmbed],
+                            components: [],
+                        }).catch(() => {});
+                    }
+                    collector.stop();
+                });
+                collector.on('end', (_collected, reason) => {
+                    if (reason === 'time') {
+                        interaction.editReply({ components: [] }).catch(() => {});
+                    }
+                });
+
+                return response;
             } catch (error) {
                 logger.error(`Erreur set-streak pour ${user.id}:`, error);
                 return interaction.reply({
