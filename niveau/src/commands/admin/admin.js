@@ -573,7 +573,7 @@ module.exports = {
                     } catch (error) {
                         logger.error(`Erreur lors de la publication de la streak pour ${user.id}:`, error);
                         await interaction.editReply({
-                            content: '❌ Impossible d’envoyer l’embed publiquement dans ce salon.',
+                            embeds: [createStreakEmbed(`❌ Impossible d’envoyer l’embed publiquement dans ce salon.\n\n\`\`\`\n${error.message}\n\`\`\``, 0xe74c3c)],
                             embeds: [successEmbed],
                             components: [],
                         }).catch(() => {});
@@ -590,7 +590,7 @@ module.exports = {
             } catch (error) {
                 logger.error(`Erreur set-streak pour ${user.id}:`, error);
                 return interaction.reply({
-                    embeds: [createStreakEmbed('❌ Erreur lors de la définition de la streak.', 0xe74c3c)],
+                    embeds: [createStreakEmbed(`❌ Erreur lors de la définition de la streak.\n\n\`\`\`\n${error.message}\n\`\`\``, 0xe74c3c)],
                     flags: MessageFlags.Ephemeral
                 });
             }
