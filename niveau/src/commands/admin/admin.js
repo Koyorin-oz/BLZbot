@@ -523,7 +523,11 @@ module.exports = {
                 const publishButton = new ButtonBuilder()
                     .setCustomId(`publish_streak_${interaction.id}`)
                     .setLabel('Envoyer publiquement')
-                    .setStyle(ButtonStyle.Primary);
+                    .setStyle(ButtonStyle.Secondary);
+                const publishedButton = new ButtonBuilder()
+                    .setLabel('Embed envoyé publiquement')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setDisabled(true);
                 const response = await interaction.reply({
                     embeds: [successEmbed],
                     components: [new ActionRowBuilder().addComponents(publishButton)],
@@ -546,12 +550,8 @@ module.exports = {
                     try {
                         await interaction.channel.send({
                             embeds: [successEmbed],
+                            components: [new ActionRowBuilder().addComponents(publishedButton)],
                             allowedMentions: { parse: [] },
-                        });
-                        await interaction.editReply({
-                            content: '✅ Embed envoyé publiquement.',
-                            embeds: [successEmbed],
-                            components: [],
                         });
                     } catch (error) {
                         logger.error(`Erreur lors de la publication de la streak pour ${user.id}:`, error);
