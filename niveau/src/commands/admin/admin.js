@@ -803,16 +803,15 @@ module.exports = {
                     logger.warn(`Impossible d’envoyer le récapitulatif des paramètres à ${targetUser.id}:`, error);
                 }
 
-                const saveNotice = dmSent
-                    ? '✅ Modifications sauvegardées. Un MP a été envoyé à l’utilisateur.'
-                    : '✅ Modifications sauvegardées, mais le MP n’a pas pu être envoyé.';
+                const changedSettingsComponents = new ContainerBuilder();
+                changedSettingsComponents.addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(
+                        `# ✅ Paramètres sauvegardés\nLes modifications ont été appliquées à <@${targetUser.id}>.\n\n**Détails**\n\`\`\`text\n${buildSettingsChangeDetailsContent(adminName, changes)}\n\`\`\`\n${dmSent ? 'Un récapitulatif a été envoyé à l’utilisateur par message privé.' : 'Impossible d’envoyer le récapitulatif à l’utilisateur (message privé désactivé).'}`
+                    )
+                );
 
                 return interaction.editReply({
-                    components: buildUserSettingsComponents(
-                        targetUser,
-                        { ...userData, ...draftSettings },
-                        { notice: saveNotice, hasPendingChanges: false }
-                    ),
+                    components: changedSettingsComponents(),
                 });
             };
 
