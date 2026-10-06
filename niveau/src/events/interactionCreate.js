@@ -21,7 +21,7 @@ function formatSettingsReportDetails(report, includeAuditInfo = true) {
         `${change.label}: ${change.previousValue === 1 ? 'Activé' : 'Désactivé'} -> ${change.nextValue === 1 ? 'Activé' : 'Désactivé'}`
     ).join('\n') || String(report.details_content || 'Détails indisponibles.').replace(/```/g, "'''");
     if (!includeAuditInfo) {
-        return `# Modifications des paramètres\n\`\`\`text\n${details}\n\`\`\`\n\n-# Clé: **\`${report.report_id.startsWith('cle-') ? report.report_id : `cle-${report.report_id}`}\`**`;
+        return `# Modifications des paramètres\n\`\`\`text\n${details}\n\`\`\`\n\n🔑 Clé: **\`${report.report_id.startsWith('cle-') ? report.report_id : `cle-${report.report_id}`}\`**`;
     }
 
     const adminId = report.admin_user_id || 'indisponible';
