@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType, EmbedBuilder, UserSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, MessageFlags, ContainerBuilder, TextDisplayBuilder, StringSelectMenuBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType, EmbedBuilder, UserSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, MessageFlags, ContainerBuilder, TextDisplayBuilder, SectionBuilder, StringSelectMenuBuilder } = require('discord.js');
 const db = require('../../database/database');
 const { getGuildByName, updateGuildDetails, changeGuildOwner, addMemberToGuild, removeGuildSubChief, getGuildOfUser, getAllGuilds, dissolveGuild, createGuild, addGuildSubChief, updateGuildUpgrade, updateGuildLevel, getGuildById } = require('../../utils/db-guilds');
 const { getOrCreateUser, updateUserBalance, setPoints, transferUserData } = require('../../utils/db-users');
@@ -7,6 +7,67 @@ const { updateUserRank } = require('../../utils/ranks');
 const logger = require('../../utils/logger');
 const roleConfig = require('../../config/role.config.json');
 const { parisDayStartMs } = require('../../../../utils/paris-time');
+
+const USER_SETTINGS = [
+    { id: 'notify_rank_up', label: 'Notifications de Rang', description: 'Notification lors d’une montée de rang.' },
+    { id: 'notify_level_up', label: 'Notifications de Niveau', description: 'Notification lors d’une montée de niveau.' },
+    { id: 'notify_streak', label: 'Notifications de Streak', description: 'Notification lors d’une streak gagnée ou perdue.' },
+    { id: 'notify_guild_invite', label: 'Invitations de Guilde', description: 'Notification lors d’une invitation de guilde.' },
+    { id: 'notify_quest_complete', label: 'Quêtes Terminées', description: 'Notification lorsqu’une quête est terminée.' },
+    { id: 'notify_trade', label: 'Demandes d’Échange', description: 'Notification lors d’une demande d’échange.' },
+    { id: 'notify_minigame_invite', label: 'Invitations Mini-jeu', description: 'Notification lors d’une invitation à un mini-jeu.' },
+    { id: 'notify_debt_reminder', label: 'Rappels de Dettes', description: 'Notification lors d’un rappel de dette.' },
+];
+
+function buildUserSettingsContainer(targetUser, userData, notice = null, locked = false) {
+    const container = new ContainerBuilder();
+    container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(
+            `# Paramètres de ${targetUser.username}\nUtilisateur : <@${targetUser.id}>${notice ? `\n\n${notice}` : ''}`
+        )
+    );
+
+    for (const setting of USER_SETTINGS) {
+        const isEnabled = userData[setting.id] === 1;
+        const button = new ButtonBuilder()
+            .setCustomId(`admin-setting-disable:${setting.id}`)
+            .setLabel(isEnabled ? 'Désactiver' : 'Désactivé')
+            .setStyle(isEnabled ? ButtonStyle.Danger : ButtonStyle.Secondary)
+            .setDisabled(!isEnabled || locked);
+        const section = new SectionBuilder()
+            .addTextDisplayComponents(
+                new TextDisplayBuilder().setContent(
+                    `### ${setting.label}\n${setting.description}\nÉtat : **${isEnabled ? 'Activé' : 'Désactivé'}**`
+                )
+            )
+            .setButtonAccessory(button);
+        container.addSectionComponents(section);
+    }
+
+    return container;
+}
+
+function buildSettingConfirmationContainer(setting, remainingSeconds = null, ready = false) {
+    const container = new ContainerBuilder();
+    container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(
+            `# Confirmation\nSouhaitez-vous vraiment désactiver le paramètre **${setting.label}** ?`
+        )
+    );
+    const disableButton = new ButtonBuilder()
+        .setCustomId(`admin-setting-confirm:${setting.id}`)
+        .setLabel(ready ? 'Désactiver' : `Désactiver (${remainingSeconds})`)
+        .setStyle(ButtonStyle.Danger)
+        .setDisabled(!ready);
+    const cancelButton = new ButtonBuilder()
+        .setCustomId(`admin-setting-cancel:${setting.id}`)
+        .setLabel('Annuler')
+        .setStyle(ButtonStyle.Secondary);
+    container.addActionRowComponents(
+        new ActionRowBuilder().addComponents(disableButton, cancelButton)
+    );
+    return container;
+}
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -184,7 +245,17 @@ module.exports = {
                 .addUserOption(option =>
                     option.setName('membre')
                         .setDescription('Le membre dont le profil doit être réinitialisé')
-                        .setRequired(true))),
+                        .setRequired(true)))
+        .addSubcommandGroup(group =>
+            group
+                .setName('parametres')
+                .setDescription('Gérer les paramètres d’un utilisateur.')
+                .addSubcommand(subcommand =>
+                    subcommand
+                        .setName('utilisateur')
+                        .setDescription('Afficher les paramètres d’un utilisateur.')
+                        .addUserOption(option =>
+                            option.setName('utilisateur').setDescription('L’utilisateur').setRequired(true)))),
 
     async autocomplete(interaction) {
         const focusedValue = interaction.options.getFocused();
@@ -200,6 +271,111 @@ module.exports = {
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand();
         const subcommandGroup = interaction.options.getSubcommandGroup(); // Récupérer le groupe
+
+        if (subcommandGroup === 'parametres' && subcommand === 'utilisateur') {
+            const targetUser = interaction.options.getUser('utilisateur', true);
+            const userData = getOrCreateUser(targetUser.id, targetUser.username);
+            const response = await interaction.reply({
+                components: [buildUserSettingsContainer(targetUser, userData)],
+                flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+            });
+            let activeConfirmation = null;
+
+            const collector = response.createMessageComponentCollector({
+                componentType: ComponentType.Button,
+                time: 15 * 60 * 1000,
+            });
+
+            collector.on('collect', async buttonInteraction => {
+                if (buttonInteraction.user.id !== interaction.user.id) {
+                    return buttonInteraction.reply({
+                        content: 'Seul l’administrateur ayant lancé la commande peut modifier ces paramètres.',
+                        flags: MessageFlags.Ephemeral,
+                    });
+                }
+
+                const [action, settingId] = buttonInteraction.customId.split(':');
+                const setting = USER_SETTINGS.find(candidate => candidate.id === settingId);
+                if (!setting) return;
+
+                if (action === 'admin-setting-disable' && !activeConfirmation) {
+                    const currentUser = getOrCreateUser(targetUser.id, targetUser.username);
+                    if (currentUser[settingId] !== 1) {
+                        await buttonInteraction.deferUpdate();
+                        return interaction.editReply({
+                            components: [buildUserSettingsContainer(targetUser, currentUser)],
+                        });
+                    }
+
+                    const confirmation = { settingId, ready: false };
+                    activeConfirmation = confirmation;
+                    await buttonInteraction.deferUpdate();
+                    await interaction.editReply({
+                        components: [buildSettingConfirmationContainer(setting, 3)],
+                    });
+
+                    const advanceCountdown = async () => {
+                        for (const remainingSeconds of [2, 1, 0]) {
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                            if (activeConfirmation !== confirmation) return;
+                            await interaction.editReply({
+                                components: [buildSettingConfirmationContainer(setting, remainingSeconds)],
+                            });
+                        }
+
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        if (activeConfirmation !== confirmation) return;
+                        confirmation.ready = true;
+                        await interaction.editReply({
+                            components: [buildSettingConfirmationContainer(setting, null, true)],
+                        });
+                    };
+
+                    advanceCountdown().catch(error =>
+                        logger.error('Erreur pendant le compte à rebours des paramètres admin :', error)
+                    );
+                    return;
+                }
+
+                if (action === 'admin-setting-cancel' && activeConfirmation?.settingId === settingId) {
+                    activeConfirmation = null;
+                    await buttonInteraction.deferUpdate();
+                    const currentUser = getOrCreateUser(targetUser.id, targetUser.username);
+                    return interaction.editReply({
+                        components: [buildUserSettingsContainer(targetUser, currentUser)],
+                    });
+                }
+
+                if (
+                    action === 'admin-setting-confirm' &&
+                    activeConfirmation?.settingId === settingId &&
+                    activeConfirmation.ready
+                ) {
+                    activeConfirmation = null;
+                    await buttonInteraction.deferUpdate();
+                    db.prepare(`UPDATE users SET ${settingId} = 0 WHERE id = ?`).run(targetUser.id);
+                    const updatedUser = getOrCreateUser(targetUser.id, targetUser.username);
+                    return interaction.editReply({
+                        components: [
+                            buildUserSettingsContainer(
+                                targetUser,
+                                updatedUser,
+                                `✅ **${setting.label}** a été désactivé.`
+                            ),
+                        ],
+                    });
+                }
+            });
+
+            collector.on('end', () => {
+                const currentUser = getOrCreateUser(targetUser.id, targetUser.username);
+                interaction.editReply({
+                    components: [buildUserSettingsContainer(targetUser, currentUser, null, true)],
+                }).catch(() => {});
+            });
+
+            return response;
+        }
 
         if (subcommandGroup === 'nerf-vocal') {
             const targetUser = interaction.options.getUser('utilisateur');
