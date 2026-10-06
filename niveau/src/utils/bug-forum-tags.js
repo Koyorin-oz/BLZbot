@@ -134,10 +134,92 @@ function buildResolutionEmbed(tagId, userId) {
     .setTimestamp();
 }
 
+async function sendBugDM(user, { title, description, resolved = false, resolvedBy = null }) {
+    if (!user) return;
+
+    const embed = new EmbedBuilder()
+        .setTitle(resolved ? "📩 Signalement traité" : "🐛 Signalement enregistré")
+        .setDescription(
+            resolved
+                ? "Ton signalement a bien été traité par l'équipe. Merci d'avoir pris le temps de nous signaler ce problème."
+                : "Ton signalement a bien été enregistré. Tu seras contacté dès que ton signalement sera traité."
+        )
+        .addFields(
+            {
+                name: "Titre",
+                value: String(title || "Sans titre").slice(0, 1024),
+            },
+            {
+                name: "Description",
+                value: String(description || "Aucune description").slice(0, 1024),
+            }
+        )
+        .setColor(resolved ? 0x2ecc71 : 0xe67e22)
+        .setTimestamp();
+
+
+    if (resolved && resolvedBy) {
+        embed.setFooter({
+            text: `Traité par ${resolvedBy.displayName || resolvedBy.username}`,
+            iconURL: resolvedBy.displayAvatarURL({ size: 128 }),
+        });
+    }
+
+    try {
+        await user.send({ embeds: [embed] });
+    } catch (error) {
+        console.error(
+            `[BUG_TRACKER] Impossible d'envoyer le MP à ${user.id}:`,
+            error?.message || error
+        );
+    }
+}
+
 async function closeResolvedBugThread(thread, tagId, userId) {
-  await thread.send({ embeds: [buildResolutionEmbed(tagId, userId)] });
-  await thread.setArchived(true, "Signalement traité");
-  await thread.setLocked(true);
+    await thread.send({ embeds: [buildResolutionEmbed(tagId, userId)] });
+
+    let resolvedBy = null;
+
+    try {
+        resolvedBy = await thread.client.users.fetch(userId);
+    } catch (error) {
+        console.error(
+            `[BUG_TRACKER] Impossible de récupérer l'utilisateur ${userId}:`,
+            error?.message || error
+        );
+    }
+
+    try {
+        const starterMessage = await thread.fetchStarterMessage();
+        const embed = starterMessage?.embeds?.[0];
+
+        const reporterField = embed?.fields?.find(
+            field => field.name === "ID Discord"
+        );
+
+        const reporterId = reporterField?.value
+            ?.replace(/[`]/g, "")
+            ?.trim();
+
+        if (reporterId && /^\d{17,20}$/.test(reporterId)) {
+            const user = await thread.client.users.fetch(reporterId);
+
+            await sendBugDM(user, {
+                title: thread.name,
+                description: embed?.description || "Aucune description",
+                resolved: true,
+                resolvedBy,
+            });
+        }
+    } catch (error) {
+        console.error(
+            `[BUG_TRACKER] Impossible de notifier l'auteur du signalement ${thread.id}:`,
+            error?.message || error
+        );
+    }
+
+    await thread.setArchived(true, "Signalement traité");
+    await thread.setLocked(true);
 }
 
 function getBugReminderTarget(thread) {
@@ -393,15 +475,30 @@ async function createBugForumPost(client, opts) {
   }
 
   const thread = await channel.threads.create({
-    name: threadName,
-    message: {
-      content: `<@&${BUG_NOTIFY_ROLE_ID}>`,
-      embeds: [embed],
-      components: buildBugTagButtons(),
-      allowedMentions: { roles: [BUG_NOTIFY_ROLE_ID] },
-    },
-    appliedTags: [TAG.enCours],
+      name: threadName,
+      message: {
+          content: `<@&${BUG_NOTIFY_ROLE_ID}>`,
+          embeds: [embed],
+          components: buildBugTagButtons(),
+          allowedMentions: { roles: [BUG_NOTIFY_ROLE_ID] },
+      },
+      appliedTags: [TAG.enCours],
   });
+
+  try {
+      const user = await client.users.fetch(opts.reporterId);
+
+      await sendBugDM(user, {
+          title: threadName,
+          description: String(opts.description || "Aucune description"),
+          resolved: false,
+      });
+  } catch (error) {
+      console.error(
+          `[BUG_TRACKER] Impossible de notifier l'auteur du signalement ${opts.reporterId}:`,
+          error?.message || error
+      );
+  }
 
   return thread;
 }
