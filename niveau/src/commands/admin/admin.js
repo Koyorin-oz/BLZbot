@@ -103,7 +103,7 @@ function buildSettingConfirmationContainer(setting, nextValue, remainingSeconds 
     const container = new ContainerBuilder();
     container.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-            `# ⚙️ Confirmation\nSouhaitez-vous vraiment ${actionLabel.toLowerCase()} le paramètre **${setting.label}** ?`
+            `# ⚙️ Confirmation\nSouhaitez-vous vraiment **\`${actionLabel.toLowerCase()}\`** le paramètre **${setting.label}** ?`
         )
     );
     const confirmButton = new ButtonBuilder()
