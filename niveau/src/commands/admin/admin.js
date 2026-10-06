@@ -161,7 +161,7 @@ function buildSettingsReportListContainer(reports, page, totalReports, notice = 
     const container = new ContainerBuilder();
     container.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-            `# 🔑 Clés de modification\nPage **${page}/${totalPages}** · **${totalReports}** clé(s)${notice ? `\n\n${notice}` : ''}`
+            `# 🔑 Clés de modification\n**${totalReports}** clé(s)${notice ? `\n\n${notice}` : ''}\n\n${reports.map(report => `- <@${report.selectedKey}> - ${formatSettingsReportDate(report.created_at)} par <@${report.admin_id}>`).join('\n')}\n\nPage **${page}/${totalPages}**`
         )
     );
 
