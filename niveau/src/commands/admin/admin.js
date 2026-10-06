@@ -811,7 +811,7 @@ module.exports = {
                 );
 
                 return interaction.editReply({
-                    components: changedSettingsComponents(),
+                    components: [changedSettingsComponents],
                 });
             };
 
