@@ -22,6 +22,7 @@ module.exports = {
                 { id: 'notify_quest_complete', label: 'Quêtes Terminées', description: 'Me mentionner lorsque je termine une quête' },
                 { id: 'notify_trade', label: 'Demandes d\'Échange', description: 'Me mentionner lorsque quelqu\'un veut me trade' },
                 { id: 'notify_minigame_invite', label: 'Invitations Mini-jeu', description: 'Me mentionner lorsque quelqu\'un m\'invite en mini jeu' },
+                { id: 'notify_love_calc', label: 'Ping calcul d’amour', description: 'Me mentionner dans les résultats du calcul d’amour.' },
                 { id: 'notify_debt_reminder', label: 'Rappels de Dettes', description: 'Me mentionner lors de rappels de dettes à régler (singe si tu met off btw)' },
             ];
 

@@ -570,7 +570,8 @@ function initializeDatabase(db) {
         'notify_quest_complete INTEGER DEFAULT 1',
         'notify_trade INTEGER DEFAULT 1',
         'notify_minigame_invite INTEGER DEFAULT 1',
-        'notify_debt_reminder INTEGER DEFAULT 1'
+        'notify_debt_reminder INTEGER DEFAULT 1',
+        'notify_love_calc INTEGER DEFAULT 1'
     ];
 
     for (const columnDef of userSettingsColumns) {

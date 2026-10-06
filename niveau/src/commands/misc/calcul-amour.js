@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
 const { buildLoveCalcCard } = require('../../utils/canvas-love-calc');
 const db = require('../../database/database');
+const { getOrCreateUser } = require('../../utils/db-users');
 
 const LOVE_RESULT_TTL_MS = 2 * 60 * 60 * 1000;
 
@@ -71,10 +72,19 @@ module.exports = {
         const phrase = pickLovePhrase(percent, member1.displayName, member2.displayName);
         const buffer = await buildLoveCalcCard(user1, user2, percent);
         const file = new AttachmentBuilder(buffer, { name: 'calcul-amour.png' });
+        const user1Settings = getOrCreateUser(user1.id, user1.username);
+        const user2Settings = getOrCreateUser(user2.id, user2.username);
+        const pingUserIds = [...new Set([
+            user1Settings.notify_love_calc !== 0 ? user1.id : null,
+            user2Settings.notify_love_calc !== 0 ? user2.id : null,
+        ].filter(Boolean))];
+        const displayUser1 = pingUserIds.includes(user1.id) ? `<@${user1.id}>` : `**${member1.displayName}**`;
+        const displayUser2 = pingUserIds.includes(user2.id) ? `<@${user2.id}>` : `**${member2.displayName}**`;
 
         return interaction.editReply({
-            content: `💘 **${member1.displayName}** + **${member2.displayName}** = **${percent}%**\n${phrase}`,
+            content: `💘 ${displayUser1} + ${displayUser2} = **${percent}%**\n${phrase}`,
             files: [file],
+            allowedMentions: { users: pingUserIds },
         });
     },
 };

@@ -807,7 +807,8 @@ function toggleUserSetting(userId, settingName) {
         'notify_quest_complete',
         'notify_trade',
         'notify_minigame_invite',
-        'notify_debt_reminder'
+        'notify_debt_reminder',
+        'notify_love_calc'
     ];
 
     if (!allowedSettings.includes(settingName)) {

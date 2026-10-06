@@ -16,6 +16,7 @@ const USER_SETTINGS = [
     { id: 'notify_quest_complete', label: 'Quêtes Terminées', description: 'Notification lorsqu’une quête est terminée.' },
     { id: 'notify_trade', label: 'Demandes d’Échange', description: 'Notification lors d’une demande d’échange.' },
     { id: 'notify_minigame_invite', label: 'Invitations Mini-jeu', description: 'Notification lors d’une invitation à un mini-jeu.' },
+    { id: 'notify_love_calc', label: 'Ping calcul d’amour', description: 'Mention dans les résultats du calcul d’amour.' },
     { id: 'notify_debt_reminder', label: 'Rappels de Dettes', description: 'Notification lors d’un rappel de dette.' },
 ];
 
@@ -36,13 +37,8 @@ function getChangedSettings(previousSettings, nextSettings) {
 function buildUserSettingsContainer(targetUser, userData, options = {}) {
     const { notice = null, locked = false, hasPendingChanges = false } = options;
     const container = new ContainerBuilder();
-    container.addTextDisplayComponents(
-        new TextDisplayBuilder().setContent(
-            `# Paramètres de ${targetUser.username}\nUtilisateur : <@${targetUser.id}>${notice ? `\n\n${notice}` : ''}${hasPendingChanges ? '\n\nDes modifications ont été effectuées, souhaitez-vous les sauvegarder ?' : ''}`
-        )
-    );
 
-    for (const setting of USER_SETTINGS) {
+    for (const [index, setting] of USER_SETTINGS.entries()) {
         const isEnabled = userData[setting.id] === 1;
         const button = new ButtonBuilder()
             .setCustomId(`admin-setting-disable:${setting.id}`)
@@ -52,7 +48,7 @@ function buildUserSettingsContainer(targetUser, userData, options = {}) {
         const section = new SectionBuilder()
             .addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(
-                    `### ${setting.label}\n${setting.description}\nÉtat : **${isEnabled ? 'Activé' : 'Désactivé'}**`
+                    `${index === 0 ? `# Paramètres de ${targetUser.username}\nUtilisateur : <@${targetUser.id}>${notice ? `\n\n${notice}` : ''}${hasPendingChanges ? '\n\nDes modifications ont été effectuées, souhaitez-vous les sauvegarder ?' : ''}\n\n` : ''}### ${setting.label}\n${setting.description}\nÉtat : **${isEnabled ? 'Activé' : 'Désactivé'}**`
                 )
             )
             .setButtonAccessory(button);
