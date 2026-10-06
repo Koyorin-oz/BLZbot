@@ -17,6 +17,17 @@ function initialize(client) {
     });
 
     client.on('interactionCreate', async interaction => {
+        if (!interaction.guild) {
+            return interaction.reply({
+                embeds: [
+                    new EmbedBuilder()
+                        .setDescription('❌ Les commandes ne sont pas disponibles en message privé.')
+                        .setColor(0xED4245)
+                ],
+                ephemeral: true,
+            });
+        }
+
         if (interaction.isChatInputCommand() && interaction.commandName === 'derank-urgence') {
             handleCommand(interaction);
         } else if (interaction.isButton() && (interaction.customId.startsWith('derank_approve') || interaction.customId.startsWith('derank_refuse'))) {

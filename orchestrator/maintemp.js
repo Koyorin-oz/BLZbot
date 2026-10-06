@@ -549,6 +549,18 @@ async function registerCommands() {
 
 // Gestion des interactions slash
 client.on('interactionCreate', async interaction => {
+
+  if (!interaction.guild) {
+      return interaction.reply({
+          embeds: [
+              new EmbedBuilder()
+                  .setDescription('❌ Les commandes ne sont pas disponibles en message privé.')
+                  .setColor(0xED4245)
+          ],
+          ephemeral: true,
+      });
+  }
+
   if (!interaction.isChatInputCommand()) return;
 
   const { commandName, options } = interaction;

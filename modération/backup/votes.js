@@ -505,6 +505,18 @@ async function checkVotesPeriod() {
 }
 
 client.on('interactionCreate', async interaction => {
+
+  if (!interaction.guild) {
+      return interaction.reply({
+          embeds: [
+              new EmbedBuilder()
+                  .setDescription('❌ Les commandes ne sont pas disponibles en message privé.')
+                  .setColor(0xED4245)
+          ],
+          ephemeral: true,
+      });
+  }
+
   try {
     if (interaction.isCommand()) {
       const { commandName } = interaction;

@@ -1,4 +1,4 @@
-const { Events, PermissionFlagsBits, ContainerBuilder, TextDisplayBuilder, MessageFlags } = require('discord.js');
+const { Events, PermissionFlagsBits, ContainerBuilder, TextDisplayBuilder, MessageFlags, EmbedBuilder } = require('discord.js');
 const logger = require('../utils/logger');
 const { isMaintenanceMode } = require('../utils/maintenance');
 const { handleCommandError } = require('../utils/error-handler');
@@ -101,6 +101,18 @@ module.exports = {
     async execute(interaction) {
         // ⭐ Bot owner override (koyorin) : monkey-patch des permissions à la racine
         // pour que toutes les vérifs `member.permissions.has(...)` passent automatiquement.
+
+        if (!interaction.guild) {
+            return interaction.reply({
+                embeds: [
+                    new EmbedBuilder()
+                        .setDescription('❌ Les commandes ne sont pas disponibles en message privé.')
+                        .setColor(0xED4245)
+                ],
+                ephemeral: true,
+            });
+        }
+
         try {
             const { applyOwnerOverride } = require('../utils/bot-owner');
             applyOwnerOverride(interaction);

@@ -312,6 +312,17 @@ client.on('ready', async () => {
 client.on('interactionCreate', async interaction => {
     if (!interaction.isCommand()) return;
 
+    if (!interaction.guild) {
+        return interaction.reply({
+            embeds: [
+                new EmbedBuilder()
+                    .setDescription('❌ Les commandes ne sont pas disponibles en message privé.')
+                    .setColor(0xED4245)
+            ],
+            ephemeral: true,
+        });
+    }
+
     const roleModerateur = '1172237685763608579';
     const logChannelId = '1343193683595366482';
 

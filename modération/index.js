@@ -16,7 +16,7 @@ require('dotenv').config({
 require('dotenv').config({ path: path.join(__dirname, '.env'), quiet: true, override: true });
 applyTestGuildOverride();
 
-const { Client, GatewayIntentBits, Partials, Collection } = require('discord.js');
+const { Client, GatewayIntentBits, Partials, Collection, EmbedBuilder } = require('discord.js');
 const { REST, Routes } = require('discord.js');
 const schedule = require('node-schedule');
 const fs = require('fs');
@@ -413,6 +413,18 @@ async function handleSpamDetection(message, history, reason, channelCount) {
 client.on('interactionCreate', async interaction => {
     // ⭐ Bot owner override (koyorin) : monkey-patch des permissions à la racine
     // pour que toutes les vérifs `member.permissions.has(...)` passent automatiquement.
+
+    if (!interaction.guild) {
+        return interaction.reply({
+            embeds: [
+                new EmbedBuilder()
+                    .setDescription('❌ Les commandes ne sont pas disponibles en message privé.')
+                    .setColor(0xED4245)
+            ],
+            ephemeral: true,
+        });
+    }
+
     try {
         const { applyOwnerOverride } = require('./src/utils/bot-owner');
         applyOwnerOverride(interaction);
