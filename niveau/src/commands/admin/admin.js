@@ -19,11 +19,26 @@ const USER_SETTINGS = [
     { id: 'notify_debt_reminder', label: 'Rappels de Dettes', description: 'Notification lors d’un rappel de dette.' },
 ];
 
-function buildUserSettingsContainer(targetUser, userData, notice = null, locked = false) {
+function readUserSettings(userData) {
+    return Object.fromEntries(USER_SETTINGS.map(setting => [setting.id, userData[setting.id] === 1 ? 1 : 0]));
+}
+
+function getChangedSettings(previousSettings, nextSettings) {
+    return USER_SETTINGS
+        .filter(setting => previousSettings[setting.id] !== nextSettings[setting.id])
+        .map(setting => ({
+            ...setting,
+            previousValue: previousSettings[setting.id],
+            nextValue: nextSettings[setting.id],
+        }));
+}
+
+function buildUserSettingsContainer(targetUser, userData, options = {}) {
+    const { notice = null, locked = false, hasPendingChanges = false } = options;
     const container = new ContainerBuilder();
     container.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-            `# Paramètres de ${targetUser.username}\nUtilisateur : <@${targetUser.id}>${notice ? `\n\n${notice}` : ''}`
+            `# Paramètres de ${targetUser.username}\nUtilisateur : <@${targetUser.id}>${notice ? `\n\n${notice}` : ''}${hasPendingChanges ? '\n\nDes modifications ont été effectuées, souhaitez-vous les sauvegarder ?' : ''}`
         )
     );
 
@@ -42,6 +57,23 @@ function buildUserSettingsContainer(targetUser, userData, notice = null, locked 
             )
             .setButtonAccessory(button);
         container.addSectionComponents(section);
+    }
+
+    if (hasPendingChanges) {
+        container.addActionRowComponents(
+            new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId('admin-settings-save')
+                    .setLabel('Sauvegarder')
+                    .setStyle(ButtonStyle.Success)
+                    .setDisabled(locked),
+                new ButtonBuilder()
+                    .setCustomId('admin-settings-reset')
+                    .setLabel('Réinitialiser')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setDisabled(locked),
+            )
+        );
     }
 
     return container;
@@ -65,6 +97,37 @@ function buildSettingConfirmationContainer(setting, remainingSeconds = null, rea
         .setStyle(ButtonStyle.Secondary);
     container.addActionRowComponents(
         new ActionRowBuilder().addComponents(disableButton, cancelButton)
+    );
+    return container;
+}
+
+function buildSettingsChangeNotice(adminName, customId) {
+    const container = new ContainerBuilder();
+    container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(
+            `# Paramètres modifiés\nVos paramètres ont été modifiés par l’administrateur **${adminName}**.`
+        )
+    );
+    container.addActionRowComponents(
+        new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId(customId)
+                .setLabel('Voir les paramètres changés')
+                .setStyle(ButtonStyle.Secondary)
+        )
+    );
+    return container;
+}
+
+function buildSettingsChangeDetails(adminName, changes) {
+    const container = new ContainerBuilder();
+    const details = changes.map(change =>
+        `• **${change.label}** : ${change.previousValue === 1 ? 'Activé' : 'Désactivé'} → ${change.nextValue === 1 ? 'Activé' : 'Désactivé'}`
+    ).join('\n');
+    container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(
+            `# Paramètres changés\nModifiés par **${adminName}** :\n\n${details}`
+        )
     );
     return container;
 }
@@ -274,12 +337,26 @@ module.exports = {
 
         if (subcommandGroup === 'parametres' && subcommand === 'utilisateur') {
             const targetUser = interaction.options.getUser('utilisateur', true);
-            const userData = getOrCreateUser(targetUser.id, targetUser.username);
+            let userData = getOrCreateUser(targetUser.id, targetUser.username);
+            let savedSettings = readUserSettings(userData);
+            let draftSettings = { ...savedSettings };
             const response = await interaction.reply({
-                components: [buildUserSettingsContainer(targetUser, userData)],
+                components: [buildUserSettingsContainer(targetUser, { ...userData, ...draftSettings })],
                 flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
             });
             let activeConfirmation = null;
+
+            const renderSettings = (notice = null, locked = false) => interaction.editReply({
+                components: [buildUserSettingsContainer(
+                    targetUser,
+                    { ...userData, ...draftSettings },
+                    {
+                        notice,
+                        locked,
+                        hasPendingChanges: getChangedSettings(savedSettings, draftSettings).length > 0,
+                    }
+                )],
+            });
 
             const collector = response.createMessageComponentCollector({
                 componentType: ComponentType.Button,
@@ -295,16 +372,85 @@ module.exports = {
                 }
 
                 const [action, settingId] = buttonInteraction.customId.split(':');
+
+                if (action === 'admin-settings-reset') {
+                    activeConfirmation = null;
+                    draftSettings = { ...savedSettings };
+                    await buttonInteraction.deferUpdate();
+                    return renderSettings('Les modifications non sauvegardées ont été annulées.');
+                }
+
+                if (action === 'admin-settings-save') {
+                    const changes = getChangedSettings(savedSettings, draftSettings);
+                    if (changes.length === 0) {
+                        await buttonInteraction.deferUpdate();
+                        return renderSettings();
+                    }
+
+                    await buttonInteraction.deferUpdate();
+                    try {
+                        const saveChanges = db.transaction(() => {
+                            for (const change of changes) {
+                                db.prepare(`UPDATE users SET ${change.id} = ? WHERE id = ?`)
+                                    .run(change.nextValue, targetUser.id);
+                            }
+                        });
+                        saveChanges();
+                    } catch (error) {
+                        logger.error(`Erreur lors de la sauvegarde des paramètres de ${targetUser.id}:`, error);
+                        return renderSettings('❌ La sauvegarde a échoué. Les changements restent en attente.');
+                    }
+
+                    savedSettings = { ...draftSettings };
+                    userData = getOrCreateUser(targetUser.id, targetUser.username);
+
+                    const adminName = interaction.member?.displayName
+                        || interaction.user.globalName
+                        || interaction.user.username;
+                    const customId = `admin-settings-view:${interaction.id}`;
+                    let dmSent = false;
+                    try {
+                        const dmMessage = await targetUser.send({
+                            components: [buildSettingsChangeNotice(adminName, customId)],
+                            flags: MessageFlags.IsComponentsV2,
+                            allowedMentions: { parse: [] },
+                        });
+                        const dmCollector = dmMessage.createMessageComponentCollector({
+                            componentType: ComponentType.Button,
+                            time: 7 * 24 * 60 * 60 * 1000,
+                        });
+                        dmCollector.on('collect', async dmInteraction => {
+                            if (dmInteraction.user.id !== targetUser.id) {
+                                return dmInteraction.reply({
+                                    content: 'Seul le destinataire de ce message peut consulter les changements.',
+                                    flags: MessageFlags.Ephemeral,
+                                });
+                            }
+                            await dmInteraction.reply({
+                                components: [buildSettingsChangeDetails(adminName, changes)],
+                                flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+                                allowedMentions: { parse: [] },
+                            });
+                        });
+                        dmSent = true;
+                    } catch (error) {
+                        logger.warn(`Impossible d’envoyer le récapitulatif des paramètres à ${targetUser.id}:`, error);
+                    }
+
+                    return renderSettings(
+                        dmSent
+                            ? '✅ Modifications sauvegardées. Un MP a été envoyé à l’utilisateur.'
+                            : '✅ Modifications sauvegardées, mais le MP n’a pas pu être envoyé.'
+                    );
+                }
+
                 const setting = USER_SETTINGS.find(candidate => candidate.id === settingId);
                 if (!setting) return;
 
                 if (action === 'admin-setting-disable' && !activeConfirmation) {
-                    const currentUser = getOrCreateUser(targetUser.id, targetUser.username);
-                    if (currentUser[settingId] !== 1) {
+                    if (draftSettings[settingId] !== 1) {
                         await buttonInteraction.deferUpdate();
-                        return interaction.editReply({
-                            components: [buildUserSettingsContainer(targetUser, currentUser)],
-                        });
+                        return renderSettings();
                     }
 
                     const confirmation = { settingId, ready: false };
@@ -340,10 +486,7 @@ module.exports = {
                 if (action === 'admin-setting-cancel' && activeConfirmation?.settingId === settingId) {
                     activeConfirmation = null;
                     await buttonInteraction.deferUpdate();
-                    const currentUser = getOrCreateUser(targetUser.id, targetUser.username);
-                    return interaction.editReply({
-                        components: [buildUserSettingsContainer(targetUser, currentUser)],
-                    });
+                    return renderSettings();
                 }
 
                 if (
@@ -353,25 +496,21 @@ module.exports = {
                 ) {
                     activeConfirmation = null;
                     await buttonInteraction.deferUpdate();
-                    db.prepare(`UPDATE users SET ${settingId} = 0 WHERE id = ?`).run(targetUser.id);
-                    const updatedUser = getOrCreateUser(targetUser.id, targetUser.username);
-                    return interaction.editReply({
-                        components: [
-                            buildUserSettingsContainer(
-                                targetUser,
-                                updatedUser,
-                                `✅ **${setting.label}** a été désactivé.`
-                            ),
-                        ],
-                    });
+                    draftSettings[settingId] = 0;
+                    return renderSettings();
+                }
+
+                if (!buttonInteraction.deferred && !buttonInteraction.replied) {
+                    await buttonInteraction.deferUpdate();
                 }
             });
 
             collector.on('end', () => {
-                const currentUser = getOrCreateUser(targetUser.id, targetUser.username);
-                interaction.editReply({
-                    components: [buildUserSettingsContainer(targetUser, currentUser, null, true)],
-                }).catch(() => {});
+                activeConfirmation = null;
+                draftSettings = { ...savedSettings };
+                userData = getOrCreateUser(targetUser.id, targetUser.username);
+                renderSettings('Session expirée. Les modifications non sauvegardées ont été annulées.', true)
+                    .catch(() => {});
             });
 
             return response;
