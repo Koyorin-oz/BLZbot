@@ -161,7 +161,7 @@ function buildSettingsReportListContainer(reports, page, totalReports, notice = 
     const container = new ContainerBuilder();
     container.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-            `# 🔑 Clés de modification\n**${totalReports}** clé(s)${notice ? `\n\n${notice}` : ''}\n\n${reports.map(report => `- <@${report.selectedKey}> - ${formatSettingsReportDate(report.created_at)} par <@${report.admin_id}>`).join('\n')}\n\nPage **${page}/${totalPages}**`
+            `# 🔑 Clés de modification\n**${totalReports}** clé(s)${notice ? `\n\n${notice}` : ''}\n\n${reports.map(report => `- ${report.report_id} - ${formatSettingsReportDate(report.created_at)} pour <@${report.target_user_id}>`).join('\n')}\n\nPage **${page}/${totalPages}**`
         )
     );
 
@@ -185,7 +185,7 @@ function buildSettingsReportListContainer(reports, page, totalReports, notice = 
         .setPlaceholder('Analyser une clé')
         .addOptions(reports.map(report => ({
             label: report.report_id,
-            description: `${formatSettingsReportDate(report.created_at)} · <@${report.target_user_id}>`.slice(0, 100),
+            description: `${formatSettingsReportDate(report.created_at)}`.slice(0, 100),
             value: report.report_id,
         })));
 
