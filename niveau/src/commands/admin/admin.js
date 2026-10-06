@@ -21,7 +21,7 @@ const USER_SETTINGS = [
 ];
 
 function readUserSettings(userData) {
-    return Object.fromEntries(USER_SETTINGS.map(setting => [setting.id, userData[setting.id] === 1 ? 1 : 0]));
+    return Object.fromEntries(USER_SETTINGS.map(setting => [setting.id, Number(userData[setting.id]) === 1 ? 1 : 0]));
 }
 
 function getChangedSettings(previousSettings, nextSettings) {
@@ -35,57 +35,74 @@ function getChangedSettings(previousSettings, nextSettings) {
 }
 
 function buildUserSettingsContainer(targetUser, userData, options = {}) {
-    const { notice = null, locked = false, hasPendingChanges = false } = options;
+    const { notice = null, locked = false } = options;
     const container = new ContainerBuilder();
+    container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(
+            `# ⚙️ Paramètres de ${targetUser.username}\nUtilisateur : <@${targetUser.id}>${notice ? `\n\n${notice}` : ''}`
+        )
+    );
 
-    for (const [index, setting] of USER_SETTINGS.entries()) {
-        const isEnabled = userData[setting.id] === 1;
+    for (const setting of USER_SETTINGS) {
+        const isEnabled = Number(userData[setting.id]) === 1;
         const button = new ButtonBuilder()
-            .setCustomId(`admin-setting-disable:${setting.id}`)
-            .setLabel(isEnabled ? 'Désactiver' : 'Désactivé')
-            .setStyle(isEnabled ? ButtonStyle.Danger : ButtonStyle.Secondary)
-            .setDisabled(!isEnabled || locked);
+            .setCustomId(`admin-setting-toggle:${setting.id}`)
+            .setLabel(isEnabled ? 'Désactiver' : 'Activer')
+            .setStyle(isEnabled ? ButtonStyle.Danger : ButtonStyle.Success)
+            .setDisabled(locked);
         const section = new SectionBuilder()
             .addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(
-                    `${index === 0 ? `# Paramètres de ${targetUser.username}\nUtilisateur : <@${targetUser.id}>${notice ? `\n\n${notice}` : ''}${hasPendingChanges ? '\n\nDes modifications ont été effectuées, souhaitez-vous les sauvegarder ?' : ''}\n\n` : ''}### ${setting.label}\n${setting.description}\nÉtat : **${isEnabled ? 'Activé' : 'Désactivé'}**`
+                    `### ${setting.label}\n${setting.description}\nÉtat : **${isEnabled ? 'Activé' : 'Désactivé'}**`
                 )
             )
             .setButtonAccessory(button);
         container.addSectionComponents(section);
     }
 
-    if (hasPendingChanges) {
-        container.addActionRowComponents(
-            new ActionRowBuilder().addComponents(
-                new ButtonBuilder()
-                    .setCustomId('admin-settings-save')
-                    .setLabel('Sauvegarder')
-                    .setStyle(ButtonStyle.Success)
-                    .setDisabled(locked),
-                new ButtonBuilder()
-                    .setCustomId('admin-settings-reset')
-                    .setLabel('Réinitialiser')
-                    .setStyle(ButtonStyle.Secondary)
-                    .setDisabled(locked),
-            )
-        );
-    }
-
     return container;
 }
 
-function buildSettingConfirmationContainer(setting, remainingSeconds = null, ready = false) {
+function buildPendingSettingsContainer(notice = null) {
     const container = new ContainerBuilder();
     container.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-            `# Confirmation\nSouhaitez-vous vraiment désactiver le paramètre **${setting.label}** ?`
+            `# Modifications en attente\n${notice ? `${notice}\n\n` : ''}Des modifications ont été effectuées, souhaitez-vous les sauvegarder ?`
+        )
+    );
+    container.addActionRowComponents(
+        new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId('admin-settings-save')
+                .setLabel('Sauvegarder')
+                .setStyle(ButtonStyle.Success),
+            new ButtonBuilder()
+                .setCustomId('admin-settings-reset')
+                .setLabel('Réinitialiser')
+                .setStyle(ButtonStyle.Secondary),
+        )
+    );
+    return container;
+}
+
+function buildPendingStatusContainer(message) {
+    return new ContainerBuilder().addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(message)
+    );
+}
+
+function buildSettingConfirmationContainer(setting, nextValue, remainingSeconds = null, ready = false) {
+    const actionLabel = nextValue === 1 ? 'Activer' : 'Désactiver';
+    const container = new ContainerBuilder();
+    container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(
+            `# ⚙️ Confirmation\nSouhaitez-vous vraiment ${actionLabel.toLowerCase()} le paramètre **${setting.label}** ?`
         )
     );
     const disableButton = new ButtonBuilder()
         .setCustomId(`admin-setting-confirm:${setting.id}`)
-        .setLabel(ready ? 'Désactiver' : `Désactiver (${remainingSeconds})`)
-        .setStyle(ButtonStyle.Danger)
+        .setLabel(ready ? actionLabel : `${actionLabel} (${remainingSeconds})`)
+        .setStyle(nextValue === 1 ? ButtonStyle.Success : ButtonStyle.Danger)
         .setDisabled(!ready);
     const cancelButton = new ButtonBuilder()
         .setCustomId(`admin-setting-cancel:${setting.id}`)
@@ -101,7 +118,7 @@ function buildSettingsChangeNotice(adminName, customId) {
     const container = new ContainerBuilder();
     container.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-            `# Paramètres modifiés\nVos paramètres ont été modifiés par l’administrateur **${adminName}**.`
+            `# Vos paramètres ont été modifiés\nVos paramètres ont été modifiés par l’administrateur **${adminName}**. Vous pouvez consulter les changements en cliquant sur le bouton ci-dessous.\n\n-# [**Une erreur ? Contactez-nous !**](https://discord.com/channels/1097110036192448656/1454477715494404212)`
         )
     );
     container.addActionRowComponents(
@@ -118,11 +135,11 @@ function buildSettingsChangeNotice(adminName, customId) {
 function buildSettingsChangeDetails(adminName, changes) {
     const container = new ContainerBuilder();
     const details = changes.map(change =>
-        `• **${change.label}** : ${change.previousValue === 1 ? 'Activé' : 'Désactivé'} → ${change.nextValue === 1 ? 'Activé' : 'Désactivé'}`
+        `- **${change.label} : ${change.nextValue === 1 ? '✅ `Activé`' : '❌ `Désactivé`'}**`
     ).join('\n');
     container.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-            `# Paramètres changés\nModifiés par **${adminName}** :\n\n${details}`
+            `# ⚙️ Paramètres changés\nModifiés par **${adminName}** :\n\n${details}`
         )
     );
     return container;
@@ -305,16 +322,16 @@ module.exports = {
                     option.setName('membre')
                         .setDescription('Le membre dont le profil doit être réinitialisé')
                         .setRequired(true)))
-        .addSubcommandGroup(group =>
-            group
+        .addSubcommandGroup(subcommand =>
+            subcommand
                 .setName('parametres')
                 .setDescription('Gérer les paramètres d’un utilisateur.')
-                .addSubcommand(subcommand =>
-                    subcommand
+                .addSubcommand(settingsSubcommand =>
+                    settingsSubcommand
                         .setName('utilisateur')
-                        .setDescription('Afficher les paramètres d’un utilisateur.')
-                        .addUserOption(option =>
-                            option.setName('utilisateur').setDescription('L’utilisateur').setRequired(true)))),
+                        .setDescription('Afficher et modifier les paramètres d’un utilisateur.')
+                    .addUserOption(option =>
+                        option.setName('utilisateur').setDescription('L’utilisateur').setRequired(true)))),
 
     async autocomplete(interaction) {
         const focusedValue = interaction.options.getFocused();
@@ -329,7 +346,7 @@ module.exports = {
 
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand();
-        const subcommandGroup = interaction.options.getSubcommandGroup(); // Récupérer le groupe
+        const subcommandGroup = interaction.options.getSubcommandGroup();
 
         if (subcommandGroup === 'parametres' && subcommand === 'utilisateur') {
             const targetUser = interaction.options.getUser('utilisateur', true);
@@ -341,18 +358,151 @@ module.exports = {
                 flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
             });
             let activeConfirmation = null;
+            let pendingMessage = null;
+            let pendingCollector = null;
 
             const renderSettings = (notice = null, locked = false) => interaction.editReply({
                 components: [buildUserSettingsContainer(
                     targetUser,
                     { ...userData, ...draftSettings },
-                    {
-                        notice,
-                        locked,
-                        hasPendingChanges: getChangedSettings(savedSettings, draftSettings).length > 0,
-                    }
+                    { notice, locked }
                 )],
             });
+
+            const finishPendingMessage = async message => {
+                if (!pendingMessage) return;
+                const messageToUpdate = pendingMessage;
+                await messageToUpdate.edit({
+                    components: [buildPendingStatusContainer(message)],
+                }).catch(() => {});
+                pendingCollector?.stop();
+                pendingCollector = null;
+                pendingMessage = null;
+            };
+
+            const saveSettings = async buttonInteraction => {
+                const changes = getChangedSettings(savedSettings, draftSettings);
+                if (changes.length === 0) {
+                    await buttonInteraction.deferUpdate();
+                    return finishPendingMessage('Aucune modification à sauvegarder.');
+                }
+
+                await buttonInteraction.deferUpdate();
+                try {
+                    const saveChanges = db.transaction(() => {
+                        for (const change of changes) {
+                            db.prepare(`UPDATE users SET ${change.id} = ? WHERE id = ?`)
+                                .run(change.nextValue, targetUser.id);
+                        }
+                    });
+                    saveChanges();
+                } catch (error) {
+                    logger.error(`Erreur lors de la sauvegarde des paramètres de ${targetUser.id}:`, error);
+                    await pendingMessage?.edit({
+                        components: [buildPendingSettingsContainer('❌ La sauvegarde a échoué.')],
+                    }).catch(() => {});
+                    return;
+                }
+
+                savedSettings = { ...draftSettings };
+                userData = getOrCreateUser(targetUser.id, targetUser.username);
+
+                const adminName = interaction.member?.displayName
+                    || interaction.user.globalName
+                    || interaction.user.username;
+                const customId = `admin-settings-view:${interaction.id}`;
+                let dmSent = false;
+                try {
+                    const dmMessage = await targetUser.send({
+                        components: [buildSettingsChangeNotice(adminName, customId)],
+                        flags: MessageFlags.IsComponentsV2,
+                        allowedMentions: { parse: [] },
+                    });
+                    const dmCollector = dmMessage.createMessageComponentCollector({
+                        componentType: ComponentType.Button,
+                        time: 7 * 24 * 60 * 60 * 1000,
+                    });
+                    dmCollector.on('collect', async dmInteraction => {
+                        if (dmInteraction.user.id !== targetUser.id) {
+                            return dmInteraction.reply({
+                                content: 'Seul le destinataire de ce message peut consulter les changements.',
+                                flags: MessageFlags.Ephemeral,
+                            });
+                        }
+                        await dmInteraction.reply({
+                            components: [buildSettingsChangeDetails(adminName, changes)],
+                            flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+                            allowedMentions: { parse: [] },
+                        });
+                    });
+                    dmSent = true;
+                } catch (error) {
+                    logger.warn(`Impossible d’envoyer le récapitulatif des paramètres à ${targetUser.id}:`, error);
+                }
+
+                await renderSettings(
+                    dmSent
+                        ? '✅ Modifications sauvegardées. Un MP a été envoyé à l’utilisateur.'
+                        : '✅ Modifications sauvegardées, mais le MP n’a pas pu être envoyé.'
+                );
+                await finishPendingMessage('Les modifications ont été sauvegardées.');
+            };
+
+            const handlePendingButton = async buttonInteraction => {
+                if (buttonInteraction.user.id !== interaction.user.id) {
+                    return buttonInteraction.reply({
+                        content: 'Seul l’administrateur ayant lancé la commande peut modifier ces paramètres.',
+                        flags: MessageFlags.Ephemeral,
+                    });
+                }
+
+                if (activeConfirmation && buttonInteraction.customId === 'admin-settings-save') {
+                    return buttonInteraction.reply({
+                        content: 'Terminez ou annulez d’abord la confirmation en cours.',
+                        flags: MessageFlags.Ephemeral,
+                    });
+                }
+
+                if (buttonInteraction.customId === 'admin-settings-reset') {
+                    activeConfirmation = null;
+                    draftSettings = { ...savedSettings };
+                    await buttonInteraction.deferUpdate();
+                    await renderSettings('Les modifications non sauvegardées ont été annulées.');
+                    return finishPendingMessage('Les modifications non sauvegardées ont été annulées.');
+                }
+
+                if (buttonInteraction.customId === 'admin-settings-save') {
+                    return saveSettings(buttonInteraction);
+                }
+
+                await buttonInteraction.deferUpdate();
+            };
+
+            const syncPendingMessage = async () => {
+                const hasPendingChanges = getChangedSettings(savedSettings, draftSettings).length > 0;
+                if (!hasPendingChanges) {
+                    if (pendingMessage) {
+                        await finishPendingMessage('Aucune modification en attente.');
+                    }
+                    return;
+                }
+
+                if (pendingMessage) {
+                    return pendingMessage.edit({
+                        components: [buildPendingSettingsContainer()],
+                    });
+                }
+
+                pendingMessage = await interaction.followUp({
+                    components: [buildPendingSettingsContainer()],
+                    flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+                });
+                pendingCollector = pendingMessage.createMessageComponentCollector({
+                    componentType: ComponentType.Button,
+                    time: 15 * 60 * 1000,
+                });
+                pendingCollector.on('collect', handlePendingButton);
+            };
 
             const collector = response.createMessageComponentCollector({
                 componentType: ComponentType.Button,
@@ -369,91 +519,16 @@ module.exports = {
 
                 const [action, settingId] = buttonInteraction.customId.split(':');
 
-                if (action === 'admin-settings-reset') {
-                    activeConfirmation = null;
-                    draftSettings = { ...savedSettings };
-                    await buttonInteraction.deferUpdate();
-                    return renderSettings('Les modifications non sauvegardées ont été annulées.');
-                }
-
-                if (action === 'admin-settings-save') {
-                    const changes = getChangedSettings(savedSettings, draftSettings);
-                    if (changes.length === 0) {
-                        await buttonInteraction.deferUpdate();
-                        return renderSettings();
-                    }
-
-                    await buttonInteraction.deferUpdate();
-                    try {
-                        const saveChanges = db.transaction(() => {
-                            for (const change of changes) {
-                                db.prepare(`UPDATE users SET ${change.id} = ? WHERE id = ?`)
-                                    .run(change.nextValue, targetUser.id);
-                            }
-                        });
-                        saveChanges();
-                    } catch (error) {
-                        logger.error(`Erreur lors de la sauvegarde des paramètres de ${targetUser.id}:`, error);
-                        return renderSettings('❌ La sauvegarde a échoué. Les changements restent en attente.');
-                    }
-
-                    savedSettings = { ...draftSettings };
-                    userData = getOrCreateUser(targetUser.id, targetUser.username);
-
-                    const adminName = interaction.member?.displayName
-                        || interaction.user.globalName
-                        || interaction.user.username;
-                    const customId = `admin-settings-view:${interaction.id}`;
-                    let dmSent = false;
-                    try {
-                        const dmMessage = await targetUser.send({
-                            components: [buildSettingsChangeNotice(adminName, customId)],
-                            flags: MessageFlags.IsComponentsV2,
-                            allowedMentions: { parse: [] },
-                        });
-                        const dmCollector = dmMessage.createMessageComponentCollector({
-                            componentType: ComponentType.Button,
-                            time: 7 * 24 * 60 * 60 * 1000,
-                        });
-                        dmCollector.on('collect', async dmInteraction => {
-                            if (dmInteraction.user.id !== targetUser.id) {
-                                return dmInteraction.reply({
-                                    content: 'Seul le destinataire de ce message peut consulter les changements.',
-                                    flags: MessageFlags.Ephemeral,
-                                });
-                            }
-                            await dmInteraction.reply({
-                                components: [buildSettingsChangeDetails(adminName, changes)],
-                                flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
-                                allowedMentions: { parse: [] },
-                            });
-                        });
-                        dmSent = true;
-                    } catch (error) {
-                        logger.warn(`Impossible d’envoyer le récapitulatif des paramètres à ${targetUser.id}:`, error);
-                    }
-
-                    return renderSettings(
-                        dmSent
-                            ? '✅ Modifications sauvegardées. Un MP a été envoyé à l’utilisateur.'
-                            : '✅ Modifications sauvegardées, mais le MP n’a pas pu être envoyé.'
-                    );
-                }
-
                 const setting = USER_SETTINGS.find(candidate => candidate.id === settingId);
                 if (!setting) return;
 
-                if (action === 'admin-setting-disable' && !activeConfirmation) {
-                    if (draftSettings[settingId] !== 1) {
-                        await buttonInteraction.deferUpdate();
-                        return renderSettings();
-                    }
-
-                    const confirmation = { settingId, ready: false };
+                if (action === 'admin-setting-toggle' && !activeConfirmation) {
+                    const nextValue = draftSettings[settingId] === 1 ? 0 : 1;
+                    const confirmation = { settingId, nextValue, ready: false };
                     activeConfirmation = confirmation;
                     await buttonInteraction.deferUpdate();
                     await interaction.editReply({
-                        components: [buildSettingConfirmationContainer(setting, 3)],
+                        components: [buildSettingConfirmationContainer(setting, nextValue, 3)],
                     });
 
                     const advanceCountdown = async () => {
@@ -461,7 +536,7 @@ module.exports = {
                             await new Promise(resolve => setTimeout(resolve, 1000));
                             if (activeConfirmation !== confirmation) return;
                             await interaction.editReply({
-                                components: [buildSettingConfirmationContainer(setting, remainingSeconds)],
+                                components: [buildSettingConfirmationContainer(setting, nextValue, remainingSeconds)],
                             });
                         }
 
@@ -469,7 +544,7 @@ module.exports = {
                         if (activeConfirmation !== confirmation) return;
                         confirmation.ready = true;
                         await interaction.editReply({
-                            components: [buildSettingConfirmationContainer(setting, null, true)],
+                            components: [buildSettingConfirmationContainer(setting, nextValue, null, true)],
                         });
                     };
 
@@ -490,10 +565,12 @@ module.exports = {
                     activeConfirmation?.settingId === settingId &&
                     activeConfirmation.ready
                 ) {
+                    const confirmedValue = activeConfirmation.nextValue;
                     activeConfirmation = null;
                     await buttonInteraction.deferUpdate();
-                    draftSettings[settingId] = 0;
-                    return renderSettings();
+                    draftSettings[settingId] = confirmedValue;
+                    await renderSettings();
+                    return syncPendingMessage();
                 }
 
                 if (!buttonInteraction.deferred && !buttonInteraction.replied) {
@@ -506,6 +583,8 @@ module.exports = {
                 draftSettings = { ...savedSettings };
                 userData = getOrCreateUser(targetUser.id, targetUser.username);
                 renderSettings('Session expirée. Les modifications non sauvegardées ont été annulées.', true)
+                    .catch(() => {});
+                finishPendingMessage('Session expirée. Les modifications non sauvegardées ont été annulées.')
                     .catch(() => {});
             });
 

@@ -78,8 +78,8 @@ module.exports = {
             user1Settings.notify_love_calc !== 0 ? user1.id : null,
             user2Settings.notify_love_calc !== 0 ? user2.id : null,
         ].filter(Boolean))];
-        const displayUser1 = pingUserIds.includes(user1.id) ? `<@${user1.id}>` : `**${member1.displayName}**`;
-        const displayUser2 = pingUserIds.includes(user2.id) ? `<@${user2.id}>` : `**${member2.displayName}**`;
+        const displayUser1 = `<@${user1.id}>`;
+        const displayUser2 = `<@${user2.id}>`;
 
         return interaction.editReply({
             content: `💘 ${displayUser1} + ${displayUser2} = **${percent}%**\n${phrase}`,
