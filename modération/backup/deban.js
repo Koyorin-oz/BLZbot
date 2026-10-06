@@ -542,7 +542,7 @@ async function updateRecruitmentMessage() {
 
 client.on(Events.InteractionCreate, async (interaction) => {
   try {
-    if (!interaction.guild) {
+    if (interaction.isChatInputCommand() && !interaction.guild) {
       return interaction.reply({
           embeds: [
               new EmbedBuilder()

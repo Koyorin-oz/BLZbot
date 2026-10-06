@@ -102,7 +102,7 @@ module.exports = {
         // ⭐ Bot owner override (koyorin) : monkey-patch des permissions à la racine
         // pour que toutes les vérifs `member.permissions.has(...)` passent automatiquement.
 
-        if (!interaction.guild) {
+        if (interaction.isChatInputCommand() && !interaction.guild) {
             return interaction.reply({
                 embeds: [
                     new EmbedBuilder()

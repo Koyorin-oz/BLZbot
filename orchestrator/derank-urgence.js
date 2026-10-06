@@ -17,7 +17,7 @@ function initialize(client) {
     });
 
     client.on('interactionCreate', async interaction => {
-        if (!interaction.guild) {
+        if (interaction.isChatInputCommand() && !interaction.guild) {
             return interaction.reply({
                 embeds: [
                     new EmbedBuilder()

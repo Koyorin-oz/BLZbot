@@ -312,7 +312,7 @@ client.on('ready', async () => {
 client.on('interactionCreate', async interaction => {
     if (!interaction.isCommand()) return;
 
-    if (!interaction.guild) {
+    if (interaction.isChatInputCommand() && !interaction.guild) {
         return interaction.reply({
             embeds: [
                 new EmbedBuilder()
