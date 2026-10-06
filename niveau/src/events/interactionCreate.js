@@ -10,9 +10,18 @@ function buildSettingsReportContainer(content) {
 }
 
 async function handleAdminSettingsReportButton(interaction) {
-    await interaction.deferReply({
-        flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
-    });
+    try {
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    } catch (error) {
+        logger.error('Erreur lors de l’acquittement du bouton de paramètres :', error);
+        if (!interaction.replied && !interaction.deferred) {
+            return interaction.reply({
+                content: 'Impossible d’ouvrir ce récapitulatif de paramètres.',
+                flags: MessageFlags.Ephemeral,
+            }).catch(() => {});
+        }
+        return;
+    }
 
     try {
         const reportId = interaction.customId.slice('admin-settings-view:'.length);
@@ -27,22 +36,26 @@ async function handleAdminSettingsReportButton(interaction) {
         if (!report) {
             return interaction.editReply({
                 components: [buildSettingsReportContainer('Ce récapitulatif de paramètres est introuvable.')],
+                flags: MessageFlags.IsComponentsV2,
             });
         }
         if (interaction.user.id !== report.target_user_id) {
             return interaction.editReply({
                 components: [buildSettingsReportContainer('Seul le destinataire du MP peut consulter ces changements.')],
+                flags: MessageFlags.IsComponentsV2,
             });
         }
 
         return interaction.editReply({
             components: [buildSettingsReportContainer(report.details_content)],
+            flags: MessageFlags.IsComponentsV2,
             allowedMentions: { parse: [] },
         });
     } catch (error) {
         logger.error('Erreur lors de la lecture du récapitulatif des paramètres :', error);
         return interaction.editReply({
             components: [buildSettingsReportContainer('Impossible de récupérer ce récapitulatif de paramètres.')],
+            flags: MessageFlags.IsComponentsV2,
         }).catch(() => {});
     }
 }
