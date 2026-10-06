@@ -47,8 +47,8 @@ function buildUserSettingsContainer(targetUser, userData, options = {}) {
         const isEnabled = Number(userData[setting.id]) === 1;
         const button = new ButtonBuilder()
             .setCustomId(`admin-setting-toggle:${setting.id}`)
-            .setLabel(isEnabled ? 'Désactiver' : 'Activer')
-            .setStyle(isEnabled ? ButtonStyle.Danger : ButtonStyle.Success)
+            .setLabel(isEnabled ? 'Activée' : 'Désactivée')
+            .setStyle(isEnabled ? ButtonStyle.Success : ButtonStyle.Danger)
             .setDisabled(locked);
         const section = new SectionBuilder()
             .addTextDisplayComponents(
