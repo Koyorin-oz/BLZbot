@@ -565,6 +565,7 @@ async function executeSettingsKeysCommand(interaction) {
                     color: 0xc0392b,
                     admin,
                     description: `<@${admin.userId}> a réinitialisé **toutes** les clés de modification.`,
+                    ping: true,
                     fields: [
                         { name: 'Clés supprimées', value: `${deletedCount}`, inline: true },
                         { name: 'Liste', value: truncateLogValue(resetKeys.map(k => `\`${k}\``).join(', ') || 'Aucune') },
