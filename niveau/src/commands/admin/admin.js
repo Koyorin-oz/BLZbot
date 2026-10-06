@@ -285,27 +285,11 @@ async function handleSettingsKeysDownload(interaction) {
         const fileName = `${isReset ? 'historique-cles' : 'cle-supprimee'}-${logRow.created_at}.html`;
         const file = new AttachmentBuilder(Buffer.from(buildSettingsKeysHtml(logRow), 'utf8'), { name: fileName });
 
-        // 1) Envoi du fichier d'abord : si ça échoue, le bouton reste cliquable
         await interaction.reply({
             content: isReset ? '📄 Historique complet des clés :' : '📄 Clé supprimée :',
             files: [file],
         });
 
-        // 2) Désactivation du bouton (ButtonBuilder.from car les composants du message sont en lecture seule)
-        const updatedRows = interaction.message.components.map(row =>
-            new ActionRowBuilder().addComponents(
-                row.components.map(component => {
-                    const button = ButtonBuilder.from(component);
-                    if (component.customId === interaction.customId) {
-                        button
-                            .setLabel('Fichier de log envoyé')
-                            .setStyle(ButtonStyle.Success)
-                            .setDisabled(true);
-                    }
-                    return button;
-                })
-            )
-        );
         await interaction.message.edit({ components: updatedRows }).catch(error =>
             logger.warn('[settings-keys] Impossible de désactiver le bouton :', error)
         );
