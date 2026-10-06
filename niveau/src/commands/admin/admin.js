@@ -63,32 +63,39 @@ function buildUserSettingsContainer(targetUser, userData, options = {}) {
     return container;
 }
 
-function buildPendingSettingsContainer(notice = null) {
-    const container = new ContainerBuilder();
-    container.addTextDisplayComponents(
-        new TextDisplayBuilder().setContent(
-            `# Modifications en attente\n${notice ? `${notice}\n\n` : ''}Des modifications ont été effectuées, souhaitez-vous les sauvegarder ?`
-        )
-    );
-    container.addActionRowComponents(
-        new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-                .setCustomId('admin-settings-save')
-                .setLabel('Sauvegarder')
-                .setStyle(ButtonStyle.Success),
-            new ButtonBuilder()
-                .setCustomId('admin-settings-reset')
-                .setLabel('Réinitialiser')
-                .setStyle(ButtonStyle.Secondary),
-        )
-    );
-    return container;
+function buildUserSettingsComponents(targetUser, userData, options = {}) {
+    const { hasPendingChanges = false, notice = null, locked = false } = options;
+    const components = [buildUserSettingsContainer(targetUser, userData, options)];
+
+    if (hasPendingChanges) {
+        components.push(
+            new TextDisplayBuilder().setContent(
+                'Des modifications ont été effectuées, souhaitez-vous les sauvegarder ?'
+            ),
+            new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId('admin-settings-save')
+                    .setLabel('Sauvegarder')
+                    .setStyle(ButtonStyle.Success)
+                    .setDisabled(locked),
+                new ButtonBuilder()
+                    .setCustomId('admin-settings-reset')
+                    .setLabel('Réinitialiser')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setDisabled(locked),
+            )
+        );
+    }
+
+    if (notice) {
+        components.push(new TextDisplayBuilder().setContent(notice));
+    }
+
+    return components;
 }
 
-function buildPendingStatusContainer(message) {
-    return new ContainerBuilder().addTextDisplayComponents(
-        new TextDisplayBuilder().setContent(message)
-    );
+function hasUnsavedSettingsChanges(savedSettings, draftSettings) {
+    return getChangedSettings(savedSettings, draftSettings).length > 0;
 }
 
 function buildSettingConfirmationContainer(setting, nextValue, remainingSeconds = null, ready = false) {
@@ -99,7 +106,7 @@ function buildSettingConfirmationContainer(setting, nextValue, remainingSeconds 
             `# ⚙️ Confirmation\nSouhaitez-vous vraiment ${actionLabel.toLowerCase()} le paramètre **${setting.label}** ?`
         )
     );
-    const disableButton = new ButtonBuilder()
+    const confirmButton = new ButtonBuilder()
         .setCustomId(`admin-setting-confirm:${setting.id}`)
         .setLabel(ready ? actionLabel : `${actionLabel} (${remainingSeconds})`)
         .setStyle(nextValue === 1 ? ButtonStyle.Success : ButtonStyle.Danger)
@@ -108,9 +115,7 @@ function buildSettingConfirmationContainer(setting, nextValue, remainingSeconds 
         .setCustomId(`admin-setting-cancel:${setting.id}`)
         .setLabel('Annuler')
         .setStyle(ButtonStyle.Secondary);
-    container.addActionRowComponents(
-        new ActionRowBuilder().addComponents(disableButton, cancelButton)
-    );
+    container.addActionRowComponents(new ActionRowBuilder().addComponents(confirmButton, cancelButton));
     return container;
 }
 
@@ -354,37 +359,38 @@ module.exports = {
             let savedSettings = readUserSettings(userData);
             let draftSettings = { ...savedSettings };
             const response = await interaction.reply({
-                components: [buildUserSettingsContainer(targetUser, { ...userData, ...draftSettings })],
+                components: buildUserSettingsComponents(
+                    targetUser,
+                    { ...userData, ...draftSettings }
+                ),
                 flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
             });
             let activeConfirmation = null;
-            let pendingMessage = null;
-            let pendingCollector = null;
 
             const renderSettings = (notice = null, locked = false) => interaction.editReply({
-                components: [buildUserSettingsContainer(
+                components: buildUserSettingsComponents(
                     targetUser,
                     { ...userData, ...draftSettings },
-                    { notice, locked }
-                )],
+                    {
+                        notice,
+                        locked,
+                        hasPendingChanges: hasUnsavedSettingsChanges(savedSettings, draftSettings),
+                    }
+                ),
             });
 
-            const finishPendingMessage = async message => {
-                if (!pendingMessage) return;
-                const messageToUpdate = pendingMessage;
-                await messageToUpdate.edit({
-                    components: [buildPendingStatusContainer(message)],
-                }).catch(() => {});
-                pendingCollector?.stop();
-                pendingCollector = null;
-                pendingMessage = null;
-            };
-
             const saveSettings = async buttonInteraction => {
+                if (activeConfirmation) {
+                    return buttonInteraction.reply({
+                        content: 'Terminez ou annulez d’abord la confirmation en cours.',
+                        flags: MessageFlags.Ephemeral,
+                    });
+                }
+
                 const changes = getChangedSettings(savedSettings, draftSettings);
                 if (changes.length === 0) {
                     await buttonInteraction.deferUpdate();
-                    return finishPendingMessage('Aucune modification à sauvegarder.');
+                    return renderSettings('Aucune modification à sauvegarder.');
                 }
 
                 await buttonInteraction.deferUpdate();
@@ -398,10 +404,7 @@ module.exports = {
                     saveChanges();
                 } catch (error) {
                     logger.error(`Erreur lors de la sauvegarde des paramètres de ${targetUser.id}:`, error);
-                    await pendingMessage?.edit({
-                        components: [buildPendingSettingsContainer('❌ La sauvegarde a échoué.')],
-                    }).catch(() => {});
-                    return;
+                    return renderSettings('❌ La sauvegarde a échoué. Les changements restent en attente.');
                 }
 
                 savedSettings = { ...draftSettings };
@@ -440,68 +443,11 @@ module.exports = {
                     logger.warn(`Impossible d’envoyer le récapitulatif des paramètres à ${targetUser.id}:`, error);
                 }
 
-                await renderSettings(
+                return renderSettings(
                     dmSent
                         ? '✅ Modifications sauvegardées. Un MP a été envoyé à l’utilisateur.'
                         : '✅ Modifications sauvegardées, mais le MP n’a pas pu être envoyé.'
                 );
-                await finishPendingMessage('Les modifications ont été sauvegardées.');
-            };
-
-            const handlePendingButton = async buttonInteraction => {
-                if (buttonInteraction.user.id !== interaction.user.id) {
-                    return buttonInteraction.reply({
-                        content: 'Seul l’administrateur ayant lancé la commande peut modifier ces paramètres.',
-                        flags: MessageFlags.Ephemeral,
-                    });
-                }
-
-                if (activeConfirmation && buttonInteraction.customId === 'admin-settings-save') {
-                    return buttonInteraction.reply({
-                        content: 'Terminez ou annulez d’abord la confirmation en cours.',
-                        flags: MessageFlags.Ephemeral,
-                    });
-                }
-
-                if (buttonInteraction.customId === 'admin-settings-reset') {
-                    activeConfirmation = null;
-                    draftSettings = { ...savedSettings };
-                    await buttonInteraction.deferUpdate();
-                    await renderSettings('Les modifications non sauvegardées ont été annulées.');
-                    return finishPendingMessage('Les modifications non sauvegardées ont été annulées.');
-                }
-
-                if (buttonInteraction.customId === 'admin-settings-save') {
-                    return saveSettings(buttonInteraction);
-                }
-
-                await buttonInteraction.deferUpdate();
-            };
-
-            const syncPendingMessage = async () => {
-                const hasPendingChanges = getChangedSettings(savedSettings, draftSettings).length > 0;
-                if (!hasPendingChanges) {
-                    if (pendingMessage) {
-                        await finishPendingMessage('Aucune modification en attente.');
-                    }
-                    return;
-                }
-
-                if (pendingMessage) {
-                    return pendingMessage.edit({
-                        components: [buildPendingSettingsContainer()],
-                    });
-                }
-
-                pendingMessage = await interaction.followUp({
-                    components: [buildPendingSettingsContainer()],
-                    flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
-                });
-                pendingCollector = pendingMessage.createMessageComponentCollector({
-                    componentType: ComponentType.Button,
-                    time: 15 * 60 * 1000,
-                });
-                pendingCollector.on('collect', handlePendingButton);
             };
 
             const collector = response.createMessageComponentCollector({
@@ -515,6 +461,16 @@ module.exports = {
                         content: 'Seul l’administrateur ayant lancé la commande peut modifier ces paramètres.',
                         flags: MessageFlags.Ephemeral,
                     });
+                }
+
+                if (buttonInteraction.customId === 'admin-settings-save') {
+                    return saveSettings(buttonInteraction);
+                }
+
+                if (buttonInteraction.customId === 'admin-settings-reset') {
+                    draftSettings = { ...savedSettings };
+                    await buttonInteraction.deferUpdate();
+                    return renderSettings('Les modifications non sauvegardées ont été annulées.');
                 }
 
                 const [action, settingId] = buttonInteraction.customId.split(':');
@@ -569,8 +525,7 @@ module.exports = {
                     activeConfirmation = null;
                     await buttonInteraction.deferUpdate();
                     draftSettings[settingId] = confirmedValue;
-                    await renderSettings();
-                    return syncPendingMessage();
+                    return renderSettings();
                 }
 
                 if (!buttonInteraction.deferred && !buttonInteraction.replied) {
@@ -583,8 +538,6 @@ module.exports = {
                 draftSettings = { ...savedSettings };
                 userData = getOrCreateUser(targetUser.id, targetUser.username);
                 renderSettings('Session expirée. Les modifications non sauvegardées ont été annulées.', true)
-                    .catch(() => {});
-                finishPendingMessage('Session expirée. Les modifications non sauvegardées ont été annulées.')
                     .catch(() => {});
             });
 
