@@ -9,7 +9,7 @@ function buildSettingsReportContainer(content) {
     );
 }
 
-function formatSettingsReportDetails(report) {
+function formatSettingsReportDetails(report, includeAuditInfo = true) {
     let changes = [];
     try {
         changes = JSON.parse(report.changes_json || '[]');
@@ -20,6 +20,10 @@ function formatSettingsReportDetails(report) {
     const details = changes.map(change =>
         `${change.label}: ${change.previousValue === 1 ? 'Activé' : 'Désactivé'} -> ${change.nextValue === 1 ? 'Activé' : 'Désactivé'}`
     ).join('\n') || String(report.details_content || 'Détails indisponibles.').replace(/```/g, "'''");
+    if (!includeAuditInfo) {
+        return `# Modifications des paramètres\n\`\`\`text\n${details}\n\`\`\``;
+    }
+
     const adminId = report.admin_user_id || 'indisponible';
     const adminMention = report.admin_user_id ? `<@${report.admin_user_id}>` : 'Inconnu';
     const adminName = report.admin_name || 'Nom indisponible';
@@ -71,7 +75,7 @@ async function handleAdminSettingsReportButton(interaction) {
         }
 
         return interaction.editReply({
-            components: [buildSettingsReportContainer(formatSettingsReportDetails(report))],
+            components: [buildSettingsReportContainer(formatSettingsReportDetails(report, false))],
             flags: MessageFlags.IsComponentsV2,
             allowedMentions: { parse: [] },
         });

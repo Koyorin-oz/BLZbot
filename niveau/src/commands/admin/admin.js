@@ -123,14 +123,14 @@ function buildSettingsChangeNotice(reportId, customId) {
     const container = new ContainerBuilder();
     container.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-            `# Vos paramètres ont été modifiés\nUne modification a été effectuée sur vos paramètres.\nClé de changement : **\`${reportId}\`**\n\nVous pouvez consulter les détails en cliquant ci-dessous.\n\n-# [**Une erreur ? Contactez-nous !**](https://discord.com/channels/1097110036192448656/1454477715494404212)`
+            `# Vos paramètres ont été modifiés\nDes modifications ont été effectuées sur vos paramètres.\nSi vous n'êtes pas l'auteur de cette demande, vous pouvez consulter le **serveur support**.\n\nVous pouvez aussi consulter les détails des changements en cliquant sur le bouton ci-dessous.\n\n-# [**Une erreur ? Contactez-nous !**](https://discord.com/channels/1097110036192448656/1454477715494404212)`
         )
     );
     container.addActionRowComponents(
         new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setCustomId(customId)
-                .setLabel('Voir les changements')
+                .setLabel('Voir les détails')
                 .setStyle(ButtonStyle.Secondary)
         )
     );
