@@ -33,6 +33,20 @@ module.exports = {
             if (subcommand === 'pierre-feuille-ciseaux') {
                 const opponent = interaction.options.getUser('adversaire');
 
+                // Empêcher de jouer contre le bot lui-même
+                if (opponent.id === interaction.client.user.id) {
+                    const errorText = new TextDisplayBuilder().setContent('❌ Vous ne pouvez pas jouer contre moi-même !');
+                    const container = new ContainerBuilder().addTextDisplayComponents(errorText);
+                    return interaction.editReply({ components: [container], flags: 32768 });
+                }
+
+                // Empêcher de jouer contre un bot
+                if (opponent.bot) {
+                    const errorText = new TextDisplayBuilder().setContent('❌ Vous ne pouvez pas jouer contre un bot !');
+                    const container = new ContainerBuilder().addTextDisplayComponents(errorText);
+                    return interaction.editReply({ components: [container], flags: 32768 });
+                }
+
                 // Empêcher de jouer contre soi-même
                 if (opponent.id === interaction.user.id) {
                     const errorText = new TextDisplayBuilder().setContent('❌ Vous ne pouvez pas jouer contre vous-même !');
@@ -94,6 +108,20 @@ module.exports = {
             } else if (subcommand === 'morpion') {
                 const opponent = interaction.options.getUser('adversaire');
 
+                // Empêcher de jouer contre le bot lui-même
+                if (opponent.id === interaction.client.user.id) {
+                    const errorText = new TextDisplayBuilder().setContent('❌ Vous ne pouvez pas jouer contre moi-même !');
+                    const container = new ContainerBuilder().addTextDisplayComponents(errorText);
+                    return interaction.editReply({ components: [container], flags: 32768 });
+                }
+
+                // Empêcher de jouer contre un bot
+                if (opponent.bot) {
+                    const errorText = new TextDisplayBuilder().setContent('❌ Vous ne pouvez pas jouer contre un bot !');
+                    const container = new ContainerBuilder().addTextDisplayComponents(errorText);
+                    return interaction.editReply({ components: [container], flags: 32768 });
+                }
+
                 // Empêcher de jouer contre soi-même
                 if (opponent.id === interaction.user.id) {
                     const errorText = new TextDisplayBuilder().setContent('❌ Vous ne pouvez pas jouer contre vous-même !');
@@ -154,6 +182,20 @@ module.exports = {
                 });
             } else if (subcommand === 'puissance4') {
                 const opponent = interaction.options.getUser('adversaire');
+
+                // Empêcher de jouer contre le bot lui-même
+                if (opponent.id === interaction.client.user.id) {
+                    const errorText = new TextDisplayBuilder().setContent('❌ Vous ne pouvez pas jouer contre moi-même !');
+                    const container = new ContainerBuilder().addTextDisplayComponents(errorText);
+                    return interaction.editReply({ components: [container], flags: 32768 });
+                }
+
+                // Empêcher de jouer contre un bot
+                if (opponent.bot) {
+                    const errorText = new TextDisplayBuilder().setContent('❌ Vous ne pouvez pas jouer contre un bot !');
+                    const container = new ContainerBuilder().addTextDisplayComponents(errorText);
+                    return interaction.editReply({ components: [container], flags: 32768 });
+                }
 
                 // Empêcher de jouer contre soi-même
                 if (opponent.id === interaction.user.id) {
