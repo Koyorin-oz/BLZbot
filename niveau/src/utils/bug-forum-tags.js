@@ -147,11 +147,11 @@ async function sendBugDM(user, { title, description, resolved = false, resolvedB
         .addFields(
             {
                 name: "Titre",
-                value: String(title || "Sans titre").slice(0, 1024),
+                value: `\`${String(title || "Sans titre").slice(0, 1024)}\``,
             },
             {
                 name: "Description",
-                value: String(description || "Aucune description").slice(0, 1024),
+                value: `\`\`\`\n${String(description || "Aucune description").slice(0, 1024)}\n\`\`\``,
             }
         )
         .setColor(resolved ? 0x2ecc71 : 0xe67e22)
