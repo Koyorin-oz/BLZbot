@@ -18,7 +18,7 @@ function formatSettingsReportDetails(report, includeAuditInfo = true) {
     }
 
     const details = changes.map(change =>
-        `${change.label}: ${change.previousValue === 1 ? 'Activé' : 'Désactivé'} -> ${change.nextValue === 1 ? 'Activé' : 'Désactivé'}`
+        `${change.label}: ${change.nextValue === 1 ? 'Activée' : 'Désactivée'}`
     ).join('\n') || String(report.details_content || 'Détails indisponibles.').replace(/```/g, "'''");
     if (!includeAuditInfo) {
         return `# Modifications des paramètres\n\`\`\`text\n${details}\n\`\`\`\n\n🔑 Clé: **\`${report.report_id.startsWith('cle-') ? report.report_id : `cle-${report.report_id}`}\`**`;
