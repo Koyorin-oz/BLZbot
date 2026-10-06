@@ -15,6 +15,20 @@ if (isTestBotProfile() && /^\d{17,22}$/.test(testG) && /^\d{17,22}$/.test(mainG)
 function initializeDatabase(db) {
     logger.debug('Initialisation de la base de données…');
 
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS love_calculations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            member1_id TEXT NOT NULL,
+            member2_id TEXT NOT NULL,
+            percentage INTEGER NOT NULL,
+            created_at INTEGER NOT NULL
+        );
+    `);
+    db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_love_calculations_pair_created
+        ON love_calculations(member1_id, member2_id, created_at DESC)
+    `);
+
     // Table des utilisateurs
     db.exec(`
         CREATE TABLE IF NOT EXISTS users (
