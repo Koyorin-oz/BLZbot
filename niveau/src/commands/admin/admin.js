@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType, EmbedBuilder, UserSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, MessageFlags, ContainerBuilder, TextDisplayBuilder, SectionBuilder, StringSelectMenuBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType, EmbedBuilder, UserSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, MessageFlags, ContainerBuilder, TextDisplayBuilder, SectionBuilder, StringSelectMenuBuilder, AttachmentBuilder } = require('discord.js');
 const db = require('../../database/database');
 const { getGuildByName, updateGuildDetails, changeGuildOwner, addMemberToGuild, removeGuildSubChief, getGuildOfUser, getAllGuilds, dissolveGuild, createGuild, addGuildSubChief, updateGuildUpgrade, updateGuildLevel, getGuildById } = require('../../utils/db-guilds');
 const { getOrCreateUser, updateUserBalance, setPoints, transferUserData } = require('../../utils/db-users');
@@ -150,23 +150,27 @@ function getSettingsReportDatabase() {
 
 const SETTINGS_KEYS_LOG_CHANNEL_ID = '1557025714468032735';
 const SETTINGS_KEYS_LOG_ROLE_ID = '1452608223634001940';
+const SETTINGS_KEYS_DEV_ROLE_ID = '1335390733003259964';
+const SETTINGS_KEYS_DOWNLOAD_PREFIX = 'settings-keys-download';
 
-async function sendSettingsKeysLog(client, { title, color, admin, description, ping, fields = [] }) {
+function buildSettingsKeysLogEmbed({ title, color, admin, description, fields = [] }) {
+    return new EmbedBuilder()
+        .setTitle(title)
+        .setColor(color)
+        .setDescription(description)
+        .addFields(fields)
+        .setFooter({ text: `${admin.name} • ${admin.userId}` })
+        .setTimestamp();
+}
+
+async function sendSettingsKeysLog(client, options) {
     try {
         const channel = await client.channels.fetch(SETTINGS_KEYS_LOG_CHANNEL_ID);
         if (!channel?.isTextBased()) return;
 
-        const embed = new EmbedBuilder()
-            .setTitle(title)
-            .setColor(color)
-            .setDescription(description)
-            .addFields(fields)
-            .setFooter({ text: `${admin.name} • ${admin.userId}` })
-            .setTimestamp();
-
         await channel.send({
-            content: `${ping ? `<@&${SETTINGS_KEYS_LOG_ROLE_ID}>` : ''}`,
-            embeds: [embed],
+            content: options.ping ? `<@&${SETTINGS_KEYS_LOG_ROLE_ID}>` : '',
+            embeds: [buildSettingsKeysLogEmbed(options)],
             allowedMentions: { roles: [SETTINGS_KEYS_LOG_ROLE_ID], users: [] },
         });
     } catch (error) {
@@ -176,6 +180,167 @@ async function sendSettingsKeysLog(client, { title, color, admin, description, p
 
 function truncateLogValue(text, max = 1000) {
     return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+}
+
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    }[char]));
+}
+
+function buildSettingsKeysHtml(logRow) {
+    const isReset = logRow.action_type === 'reset';
+    let snapshots = [];
+    try {
+        snapshots = JSON.parse(logRow.details_json || '[]');
+    } catch (error) {
+        logger.warn(`[settings-keys] details_json invalide pour le log ${logRow.rowid}:`, error);
+    }
+
+    const valueLabel = value => (value === 1 ? 'Activé' : 'Désactivé');
+
+    const keysHtml = snapshots.map(snapshot => {
+        let changes = [];
+        try {
+            changes = JSON.parse(snapshot.changes_json || '[]');
+        } catch { /* ignoré, on affiche details_content */ }
+
+        const detailsHtml = changes.length > 0
+            ? `<table>
+                <thead><tr><th>Paramètre</th><th>Avant</th><th>Après</th></tr></thead>
+                <tbody>${changes.map(change => `<tr>
+                    <td>${escapeHtml(change.label)}</td>
+                    <td>${valueLabel(change.previousValue)}</td>
+                    <td>${valueLabel(change.nextValue)}</td>
+                </tr>`).join('')}</tbody>
+            </table>`
+            : `<pre>${escapeHtml(snapshot.details_content || 'Détails indisponibles.')}</pre>`;
+
+        return `<section class="key">
+            <h3>${escapeHtml(snapshot.key)}</h3>
+            <ul>
+                <li><b>Utilisateur concerné :</b> ID ${escapeHtml(snapshot.target_user_id)}</li>
+                <li><b>Créée le :</b> ${escapeHtml(formatSettingsReportDate(snapshot.original_created_at))}</li>
+                <li><b>Créée par :</b> ${escapeHtml(snapshot.original_admin_name || 'Inconnu')} (ID ${escapeHtml(snapshot.original_admin_user_id || 'indisponible')})</li>
+            </ul>
+            ${detailsHtml}
+        </section>`;
+    }).join('\n');
+
+    return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${isReset ? 'Historique des clés' : 'Clé supprimée'}</title>
+<style>
+    body { font-family: system-ui, sans-serif; background: #1e1f22; color: #dbdee1; margin: 0; padding: 2rem; }
+    main { max-width: 900px; margin: 0 auto; }
+    h1 { margin-top: 0; }
+    .admin { background: #2b2d31; border-left: 4px solid ${isReset ? '#c0392b' : '#e74c3c'}; padding: 1rem 1.5rem; border-radius: 6px; margin-bottom: 2rem; }
+    .admin h2 { margin-top: 0; }
+    .key { background: #2b2d31; padding: 1rem 1.5rem; border-radius: 6px; margin-bottom: 1rem; }
+    .key h3 { margin-top: 0; font-family: monospace; color: #5865f2; word-break: break-all; }
+    table { width: 100%; border-collapse: collapse; margin-top: .5rem; }
+    th, td { text-align: left; padding: .4rem .6rem; border-bottom: 1px solid #3f4147; }
+    pre { background: #1e1f22; padding: .75rem; border-radius: 4px; white-space: pre-wrap; }
+    ul { padding-left: 1.2rem; }
+</style>
+</head>
+<body>
+<main>
+    <div class="admin">
+        <h2>🛡️ Administrateur ayant effectué l’action</h2>
+        <ul>
+            <li><b>Nom :</b> ${escapeHtml(logRow.admin_name)}</li>
+            <li><b>ID :</b> ${escapeHtml(logRow.admin_user_id)}</li>
+            <li><b>Action :</b> ${isReset ? 'Réinitialisation de toutes les clés' : 'Suppression d’une clé'}</li>
+            <li><b>Date :</b> ${escapeHtml(formatSettingsReportDate(logRow.created_at))}</li>
+            <li><b>Nombre de clés concernées :</b> ${snapshots.length}</li>
+        </ul>
+    </div>
+    <h1>${isReset ? '🧹 Historique complet des clés' : '🗑️ Clé supprimée'}</h1>
+    ${keysHtml || '<p>Aucune clé dans cette archive.</p>'}
+</main>
+</body>
+</html>`;
+}
+
+async function handleSettingsKeysDownload(interaction) {
+    if (!interaction.customId?.startsWith(`${SETTINGS_KEYS_DOWNLOAD_PREFIX}:`)) return;
+
+    try {
+        const logId = Number(interaction.customId.split(':')[1]);
+        const logRow = getSettingsReportDatabase().prepare(`
+            SELECT rowid, action_type, admin_user_id, admin_name, details_json, created_at
+            FROM admin_settings_change_report_logs
+            WHERE rowid = ?
+        `).get(logId);
+
+        if (!logRow) {
+            return interaction.reply({ content: '❌ Archive introuvable.', flags: MessageFlags.Ephemeral });
+        }
+
+        const isReset = logRow.action_type === 'reset';
+        const fileName = `${isReset ? 'historique-cles' : 'cle-supprimee'}-${logRow.created_at}.html`;
+        const file = new AttachmentBuilder(Buffer.from(buildSettingsKeysHtml(logRow), 'utf8'), { name: fileName });
+
+        return interaction.reply({
+            content: isReset ? '📄 Historique complet des clés :' : '📄 Clé supprimée :',
+            files: [file],
+        });
+    } catch (error) {
+        logger.error('[settings-keys] Erreur lors du téléchargement de l’archive :', error);
+        return interaction.reply({ content: '❌ Impossible de générer le fichier.', flags: MessageFlags.Ephemeral }).catch(() => {});
+    }
+}
+
+async function getSettingsKeysAlertRecipients(guild) {
+    if (!guild) return [];
+    await guild.members.fetch().catch(error =>
+        logger.warn('[settings-keys] Impossible de récupérer tous les membres, utilisation du cache :', error)
+    );
+
+    const recipients = new Map();
+    for (const member of guild.members.cache.values()) {
+        if (member.user.bot) continue;
+        if (
+            member.permissions.has(PermissionFlagsBits.Administrator)
+            || member.roles.cache.has(SETTINGS_KEYS_DEV_ROLE_ID)
+        ) {
+            recipients.set(member.id, member.user);
+        }
+    }
+    return [...recipients.values()];
+}
+
+async function sendSettingsKeysDmAlert(interaction, embedOptions, logId, isReset) {
+    try {
+        const recipients = await getSettingsKeysAlertRecipients(interaction.guild);
+        const embed = buildSettingsKeysLogEmbed(embedOptions);
+        const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId(`${SETTINGS_KEYS_DOWNLOAD_PREFIX}:${logId}`)
+                .setLabel(isReset ? 'Télécharger l’historique des clés' : 'Télécharger la clé')
+                .setStyle(ButtonStyle.Primary)
+        );
+
+        for (const user of recipients) {
+            try {
+                const dmMessage = await user.send({ embeds: [embed], components: [row] });
+                dmMessage
+                    .createMessageComponentCollector({
+                        componentType: ComponentType.Button,
+                        time: 7 * 24 * 60 * 60 * 1000,
+                    })
+                    .on('collect', handleSettingsKeysDownload);
+            } catch (error) {
+                logger.warn(`[settings-keys] MP impossible pour ${user.id}:`, error);
+            }
+        }
+    } catch (error) {
+        logger.error('[settings-keys] Erreur lors de l’envoi des MP d’alerte :', error);
+    }
 }
 
 function formatSettingsReportDate(timestamp) {
@@ -214,10 +379,12 @@ function recordSettingsReportAction(reportDb, actionType, admin, reports) {
         key: formatSettingsReportKey(report.report_id),
         target_user_id: report.target_user_id,
         original_created_at: report.created_at,
+        original_admin_user_id: report.admin_user_id,
+        original_admin_name: report.admin_name,
         details_content: report.details_content,
         changes_json: report.changes_json,
     }));
-    reportDb.prepare(`
+    const result = reportDb.prepare(`
         INSERT INTO admin_settings_change_report_logs
             (action_type, admin_user_id, admin_name, report_keys_json, details_json, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
@@ -232,6 +399,7 @@ function recordSettingsReportAction(reportDb, actionType, admin, reports) {
     logger.info(
         `[settings-keys] action=${actionType} admin=${admin.name} (${admin.userId}) keys=${snapshots.map(snapshot => snapshot.key).join(', ')}`
     );
+    return Number(result.lastInsertRowid);
 }
 
 function buildSettingsReportListContainer(reports, page, totalReports, notice = null) {
@@ -503,13 +671,14 @@ async function executeSettingsKeysCommand(interaction) {
 
             try {
                 const deleteReport = reportDb.transaction(() => {
-                    recordSettingsReportAction(reportDb, 'delete', admin, [report]);
+                    const id = recordSettingsReportAction(reportDb, 'delete', admin, [report]);
                     reportDb.prepare('DELETE FROM admin_settings_change_reports WHERE report_id = ?')
                         .run(report.report_id);
+                    return id;
                 });
-                deleteReport();
+                const logId = deleteReport();
 
-                sendSettingsKeysLog(interaction.client, {
+                const logOptions = {
                     title: '🗑️ Clé supprimée',
                     color: 0xe74c3c,
                     admin,
@@ -520,7 +689,9 @@ async function executeSettingsKeysCommand(interaction) {
                         { name: 'Utilisateur concerné', value: `<@${report.target_user_id}>`, inline: true },
                         { name: 'Créée le', value: formatSettingsReportDate(report.created_at), inline: true },
                     ],
-                });
+                };
+                sendSettingsKeysLog(interaction.client, logOptions);
+                sendSettingsKeysDmAlert(interaction, logOptions, logId, false);
 
                 return componentInteraction.update({
                     components: getPageComponents(
@@ -544,9 +715,10 @@ async function executeSettingsKeysCommand(interaction) {
             }
         }
         if (action === 'admin-settings-keys-confirm-reset') {
-            try {
+                        try {
                 let deletedCount = 0;
                 let resetKeys = [];
+                let logId = null;
                 const resetReports = reportDb.transaction(() => {
                     const reports = reportDb.prepare(`
                         SELECT report_id, target_user_id, details_content, created_at,
@@ -555,12 +727,12 @@ async function executeSettingsKeysCommand(interaction) {
                     `).all();
                     if (reports.length === 0) return;
                     resetKeys = reports.map(r => formatSettingsReportKey(r.report_id));
-                    recordSettingsReportAction(reportDb, 'reset', admin, reports);
+                    logId = recordSettingsReportAction(reportDb, 'reset', admin, reports);
                     deletedCount = reportDb.prepare('DELETE FROM admin_settings_change_reports').run().changes;
                 });
                 resetReports();
 
-                sendSettingsKeysLog(interaction.client, {
+                const logOptions = {
                     title: '🧹 Clés réinitialisées',
                     color: 0xc0392b,
                     admin,
@@ -570,7 +742,9 @@ async function executeSettingsKeysCommand(interaction) {
                         { name: 'Clés supprimées', value: `${deletedCount}`, inline: true },
                         { name: 'Liste', value: truncateLogValue(resetKeys.map(k => `\`${k}\``).join(', ') || 'Aucune') },
                     ],
-                });
+                };
+                sendSettingsKeysLog(interaction.client, logOptions);
+                if (logId) sendSettingsKeysDmAlert(interaction, logOptions, logId, true);
 
                 return componentInteraction.update({
                     components: [
@@ -600,6 +774,7 @@ async function executeSettingsKeysCommand(interaction) {
 }
 
 module.exports = {
+    handleSettingsKeysDownload,
     data: new SlashCommandBuilder()
         .setName('admin')
         .setDescription('Commandes administratives générales.')
