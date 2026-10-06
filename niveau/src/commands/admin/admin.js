@@ -130,7 +130,7 @@ function buildSettingsChangeNotice(adminName, customId) {
         new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setCustomId(customId)
-                .setLabel('Voir les paramètres changés')
+                .setLabel('Voir les changements')
                 .setStyle(ButtonStyle.Secondary)
         )
     );
@@ -361,12 +361,11 @@ module.exports = {
             });
             let activeConfirmation = null;
 
-            const renderSettings = (notice = null, locked = false) => interaction.editReply({
+            const renderSettings = (locked = false) => interaction.editReply({
                 components: buildUserSettingsComponents(
                     targetUser,
                     { ...userData, ...draftSettings },
                     {
-                        notice,
                         locked,
                         hasPendingChanges: hasUnsavedSettingsChanges(savedSettings, draftSettings),
                     }
@@ -384,7 +383,7 @@ module.exports = {
                 const changes = getChangedSettings(savedSettings, draftSettings);
                 if (changes.length === 0) {
                     await buttonInteraction.deferUpdate();
-                    return renderSettings('Aucune modification à sauvegarder.');
+                    return renderSettings();
                 }
 
                 await buttonInteraction.deferUpdate();
@@ -398,7 +397,7 @@ module.exports = {
                     saveChanges();
                 } catch (error) {
                     logger.error(`Erreur lors de la sauvegarde des paramètres de ${targetUser.id}:`, error);
-                    return renderSettings('❌ La sauvegarde a échoué. Les changements restent en attente.');
+                    return renderSettings();
                 }
 
                 savedSettings = { ...draftSettings };
@@ -437,11 +436,17 @@ module.exports = {
                     logger.warn(`Impossible d’envoyer le récapitulatif des paramètres à ${targetUser.id}:`, error);
                 }
 
-                return renderSettings(
-                    dmSent
-                        ? '✅ Modifications sauvegardées. Un MP a été envoyé à l’utilisateur.'
-                        : '✅ Modifications sauvegardées, mais le MP n’a pas pu être envoyé.'
-                );
+                const saveNotice = dmSent
+                    ? '✅ Modifications sauvegardées. Un MP a été envoyé à l’utilisateur.'
+                    : '✅ Modifications sauvegardées, mais le MP n’a pas pu être envoyé.';
+
+                return interaction.editReply({
+                    components: buildUserSettingsComponents(
+                        targetUser,
+                        { ...userData, ...draftSettings },
+                        { notice: saveNotice, hasPendingChanges: false }
+                    ),
+                });
             };
 
             const collector = response.createMessageComponentCollector({
@@ -464,7 +469,7 @@ module.exports = {
                 if (buttonInteraction.customId === 'admin-settings-reset') {
                     draftSettings = { ...savedSettings };
                     await buttonInteraction.deferUpdate();
-                    return renderSettings('Les modifications non sauvegardées ont été annulées.');
+                    return renderSettings();
                 }
 
                 const [action, settingId] = buttonInteraction.customId.split(':');
@@ -531,7 +536,7 @@ module.exports = {
                 activeConfirmation = null;
                 draftSettings = { ...savedSettings };
                 userData = getOrCreateUser(targetUser.id, targetUser.username);
-                renderSettings('Session expirée. Les modifications non sauvegardées ont été annulées.', true)
+                renderSettings(true)
                     .catch(() => {});
             });
 
