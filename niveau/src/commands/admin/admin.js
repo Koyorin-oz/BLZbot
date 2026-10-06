@@ -148,6 +148,36 @@ function getSettingsReportDatabase() {
     return typeof db.getMainDb === 'function' ? db.getMainDb() : db;
 }
 
+const SETTINGS_KEYS_LOG_CHANNEL_ID = '1557025714468032735';
+const SETTINGS_KEYS_LOG_ROLE_ID = '1452608223634001940';
+
+async function sendSettingsKeysLog(client, { title, color, admin, description, ping, fields = [] }) {
+    try {
+        const channel = await client.channels.fetch(SETTINGS_KEYS_LOG_CHANNEL_ID);
+        if (!channel?.isTextBased()) return;
+
+        const embed = new EmbedBuilder()
+            .setTitle(title)
+            .setColor(color)
+            .setDescription(description)
+            .addFields(fields)
+            .setFooter({ text: `${admin.name} • ${admin.userId}` })
+            .setTimestamp();
+
+        await channel.send({
+            content: `${ping ? `<@&${SETTINGS_KEYS_LOG_ROLE_ID}>` : ''}`,
+            embeds: [embed],
+            allowedMentions: { roles: [SETTINGS_KEYS_LOG_ROLE_ID], users: [] },
+        });
+    } catch (error) {
+        logger.warn('[settings-keys] Impossible d’envoyer le log :', error);
+    }
+}
+
+function truncateLogValue(text, max = 1000) {
+    return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+}
+
 function formatSettingsReportDate(timestamp) {
     return new Date(timestamp).toLocaleString('fr-FR', {
         timeZone: 'Europe/Paris',
@@ -359,6 +389,30 @@ async function executeSettingsKeysCommand(interaction) {
         initialComponents = getPageComponents(1);
     }
 
+        if (requestedKey) {
+        const found = findSettingsReportByKey(reportDb, requestedKey);
+        await sendSettingsKeysLog(interaction.client, {
+            title: '🔑 Clé consultée',
+            color: 0x3498db,
+            admin,
+            description: `<@${admin.userId}> a consulté une clé via la commande.`,
+            ping: false,
+            fields: [
+                { name: 'Clé', value: `\`${formatSettingsReportKey(requestedKey)}\``, inline: true },
+                { name: 'Résultat', value: found ? '✅ Trouvée' : '❌ Introuvable', inline: true },
+            ],
+        });
+    } else {
+        await sendSettingsKeysLog(interaction.client, {
+            title: '🔑 Liste des clés ouverte',
+            color: 0x95a5a6,
+            admin,
+            description: `<@${admin.userId}> a ouvert la liste des clés de modification.`,
+            ping: false,
+            fields: [{ name: 'Total', value: `${getTotalReports()} clé(s)`, inline: true }],
+        });
+    }
+
     const response = await interaction.reply({
         components: initialComponents,
         flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
@@ -376,6 +430,18 @@ async function executeSettingsKeysCommand(interaction) {
         if (componentInteraction.isStringSelectMenu()) {
             const selectedKey = componentInteraction.values[0];
             const report = findSettingsReportByKey(reportDb, selectedKey);
+            sendSettingsKeysLog(interaction.client, {
+                title: '🔑 Clé consultée',
+                color: 0x3498db,
+                admin,
+                description: `<@${admin.userId}> a consulté une clé depuis la liste.`,
+                ping: false,
+                fields: [
+                    { name: 'Clé', value: `\`${formatSettingsReportKey(selectedKey)}\``, inline: true },
+                    { name: 'Utilisateur concerné', value: report ? `<@${report.target_user_id}>` : 'Inconnu', inline: true },
+                ],
+            });
+
             return componentInteraction.update({
                 components: report
                     ? [buildSettingsReportDetailsContainer(report, page)]
@@ -442,6 +508,20 @@ async function executeSettingsKeysCommand(interaction) {
                         .run(report.report_id);
                 });
                 deleteReport();
+
+                sendSettingsKeysLog(interaction.client, {
+                    title: '🗑️ Clé supprimée',
+                    color: 0xe74c3c,
+                    admin,
+                    description: `<@${admin.userId}> a supprimé une clé de modification.`,
+                    ping: true,
+                    fields: [
+                        { name: 'Clé', value: `\`${formatSettingsReportKey(report.report_id)}\``, inline: true },
+                        { name: 'Utilisateur concerné', value: `<@${report.target_user_id}>`, inline: true },
+                        { name: 'Créée le', value: formatSettingsReportDate(report.created_at), inline: true },
+                    ],
+                });
+
                 return componentInteraction.update({
                     components: getPageComponents(
                         Number(pageValue),
@@ -450,6 +530,14 @@ async function executeSettingsKeysCommand(interaction) {
                 });
             } catch (error) {
                 logger.error(`Erreur lors de la suppression de la clé ${report.report_id}:`, error);
+                sendSettingsKeysLog(interaction.client, {
+                    title: '⚠️ Échec de suppression de clé',
+                    color: 0xe67e22,
+                    admin,
+                    description: `La suppression de \`${formatSettingsReportKey(report.report_id)}\` a échoué.`,
+                    ping: true,
+                    fields: [{ name: 'Erreur', value: `\`\`\`${truncateLogValue(String(error.message), 900)}\`\`\`` }],
+                });
                 return componentInteraction.update({
                     components: [buildSettingsReportDetailsContainer(report, Number(pageValue))],
                 });
@@ -458,17 +546,31 @@ async function executeSettingsKeysCommand(interaction) {
         if (action === 'admin-settings-keys-confirm-reset') {
             try {
                 let deletedCount = 0;
+                let resetKeys = [];
                 const resetReports = reportDb.transaction(() => {
                     const reports = reportDb.prepare(`
                         SELECT report_id, target_user_id, details_content, created_at,
-                               admin_user_id, admin_name, changes_json
+                            admin_user_id, admin_name, changes_json
                         FROM admin_settings_change_reports
                     `).all();
                     if (reports.length === 0) return;
+                    resetKeys = reports.map(r => formatSettingsReportKey(r.report_id));
                     recordSettingsReportAction(reportDb, 'reset', admin, reports);
                     deletedCount = reportDb.prepare('DELETE FROM admin_settings_change_reports').run().changes;
                 });
                 resetReports();
+
+                sendSettingsKeysLog(interaction.client, {
+                    title: '🧹 Clés réinitialisées',
+                    color: 0xc0392b,
+                    admin,
+                    description: `<@${admin.userId}> a réinitialisé **toutes** les clés de modification.`,
+                    fields: [
+                        { name: 'Clés supprimées', value: `${deletedCount}`, inline: true },
+                        { name: 'Liste', value: truncateLogValue(resetKeys.map(k => `\`${k}\``).join(', ') || 'Aucune') },
+                    ],
+                });
+
                 return componentInteraction.update({
                     components: [
                         buildSettingsReportListContainer(
@@ -481,6 +583,13 @@ async function executeSettingsKeysCommand(interaction) {
                 });
             } catch (error) {
                 logger.error('Erreur lors de la réinitialisation des clés de paramètres :', error);
+                sendSettingsKeysLog(interaction.client, {
+                    title: '⚠️ Échec de réinitialisation des clés',
+                    color: 0xe67e22,
+                    admin,
+                    description: 'La réinitialisation a échoué ; les clés sont conservées.',
+                    fields: [{ name: 'Erreur', value: `\`\`\`${truncateLogValue(String(error.message), 900)}\`\`\`` }],
+                });
                 return componentInteraction.update({
                     components: getPageComponents(Number(value), 'La réinitialisation a échoué; les clés sont conservées.'),
                 });
@@ -765,6 +874,7 @@ module.exports = {
                     || interaction.user.globalName
                     || interaction.user.username;
                 const reportId = `cle-${interaction.id}`;
+                const adminInfo = { userId: interaction.user.id, name: adminName };
                 const customId = `admin-settings-view:${reportId}`;
                 let dmSent = false;
                 let reportDb = null;
@@ -802,6 +912,26 @@ module.exports = {
                     ).run(reportId);
                     logger.warn(`Impossible d’envoyer le récapitulatif des paramètres à ${targetUser.id}:`, error);
                 }
+
+                sendSettingsKeysLog(interaction.client, {
+                    title: dmSent ? '🔑 Clé créée' : '⚠️ Paramètres modifiés (clé non conservée)',
+                    color: dmSent ? 0x2ecc71 : 0xe67e22,
+                    admin: adminInfo,
+                    description: dmSent
+                        ? `<@${adminInfo.userId}> a modifié les paramètres de <@${targetUser.id}>. Une clé a été générée.`
+                        : `<@${adminInfo.userId}> a modifié les paramètres de <@${targetUser.id}>, mais le MP a échoué : la clé a été supprimée.`,
+                    ping: false,
+                    fields: [
+                        { name: 'Clé', value: dmSent ? `\`${formatSettingsReportKey(reportId)}\`` : 'Aucune', inline: true },
+                        { name: 'Utilisateur concerné', value: `<@${targetUser.id}> (\`${targetUser.id}\`)`, inline: true },
+                        {
+                            name: 'Changements',
+                            value: truncateLogValue(changes.map(c =>
+                                `• **${c.label}** : ${c.previousValue === 1 ? 'Activé' : 'Désactivé'} → ${c.nextValue === 1 ? 'Activé' : 'Désactivé'}`
+                            ).join('\n')),
+                        },
+                    ],
+                });
 
                 const changedSettingsComponents = new ContainerBuilder();
                 changedSettingsComponents.addTextDisplayComponents(
