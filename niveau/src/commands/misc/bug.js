@@ -79,13 +79,7 @@ module.exports = {
         const reporter = buildReporterLabel(interaction);
         const userId = interaction.user.id;
 
-        const descSlice = description.length > 3900 ? `${description.slice(0, 3897)}…` : description;
-        const bodyText = [
-            descSlice,
-            '',
-            `**Membre :** ${reporter}`,
-            `**ID :** \`${userId}\``,
-        ].join('\n');
+        const bodyText = description.length > 3900 ? `${description.slice(0, 3897)}…` : description;
 
         try {
             await createBugForumPost(interaction.client, {
