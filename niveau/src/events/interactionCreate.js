@@ -110,6 +110,11 @@ module.exports = {
             return handleAdminSettingsReportButton(interaction);
         }
 
+        if (interaction.isButton() && interaction.customId.startsWith('settings-keys-download:')) {
+            const { handleSettingsKeysDownload } = require('../commands/admin/admin');
+            return handleSettingsKeysDownload(interaction);
+        }
+
         const { runWithEconomyGuild } = require('../utils/economy-scope');
         const run = async () => {
         try {

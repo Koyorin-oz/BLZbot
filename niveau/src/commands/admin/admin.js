@@ -285,27 +285,35 @@ async function handleSettingsKeysDownload(interaction) {
         const fileName = `${isReset ? 'historique-cles' : 'cle-supprimee'}-${logRow.created_at}.html`;
         const file = new AttachmentBuilder(Buffer.from(buildSettingsKeysHtml(logRow), 'utf8'), { name: fileName });
 
-        // Désactiver le bouton et écrire "Clé envoyée"
-        await interaction.update({
-            components: interaction.message.components.map(row => {
-                return new ActionRowBuilder().addComponents(
-                    ...row.components.map(component => {
-                        if (component.customId === `${SETTINGS_KEYS_DOWNLOAD_PREFIX}:${logId}`) {
-                            return component.setLabel('Fichier de log envoyé').setStyle(ButtonStyle.Success).setDisabled(true);
-                        }
-                        return component;
-                    })
-                );
-            })
-        })
-
-        return interaction.reply({
+        // 1) Envoi du fichier d'abord : si ça échoue, le bouton reste cliquable
+        await interaction.reply({
             content: isReset ? '📄 Historique complet des clés :' : '📄 Clé supprimée :',
             files: [file],
         });
+
+        // 2) Désactivation du bouton (ButtonBuilder.from car les composants du message sont en lecture seule)
+        const updatedRows = interaction.message.components.map(row =>
+            new ActionRowBuilder().addComponents(
+                row.components.map(component => {
+                    const button = ButtonBuilder.from(component);
+                    if (component.customId === interaction.customId) {
+                        button
+                            .setLabel('Fichier de log envoyé')
+                            .setStyle(ButtonStyle.Success)
+                            .setDisabled(true);
+                    }
+                    return button;
+                })
+            )
+        );
+        await interaction.message.edit({ components: updatedRows }).catch(error =>
+            logger.warn('[settings-keys] Impossible de désactiver le bouton :', error)
+        );
     } catch (error) {
         logger.error('[settings-keys] Erreur lors du téléchargement de l’archive :', error);
-        return interaction.reply({ content: '❌ Impossible de générer le fichier.', flags: MessageFlags.Ephemeral }).catch(() => {});
+        if (!interaction.replied && !interaction.deferred) {
+            interaction.reply({ content: '❌ Impossible de générer le fichier.', flags: MessageFlags.Ephemeral }).catch(() => {});
+        }
     }
 }
 
@@ -341,13 +349,7 @@ async function sendSettingsKeysDmAlert(interaction, embedOptions, logId, isReset
 
         for (const user of recipients) {
             try {
-                const dmMessage = await user.send({ embeds: [embed], components: [row] });
-                dmMessage
-                    .createMessageComponentCollector({
-                        componentType: ComponentType.Button,
-                        time: 7 * 24 * 60 * 60 * 1000,
-                    })
-                    .on('collect', handleSettingsKeysDownload);
+                await user.send({ embeds: [embed], components: [row] });
             } catch (error) {
                 logger.warn(`[settings-keys] MP impossible pour ${user.id}:`, error);
             }
