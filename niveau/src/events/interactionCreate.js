@@ -1,4 +1,4 @@
-const { Events, PermissionFlagsBits } = require('discord.js');
+const { Events, PermissionFlagsBits, ContainerBuilder, TextDisplayBuilder, MessageFlags } = require('discord.js');
 const logger = require('../utils/logger');
 const { isMaintenanceMode } = require('../utils/maintenance');
 const { handleCommandError } = require('../utils/error-handler');
@@ -62,7 +62,47 @@ module.exports = {
                 await handleCommandError(interaction, error);
             }
         } else if (interaction.isButton()) {
-            if (interaction.customId.startsWith('bug_tag:')) {
+            if (interaction.customId.startsWith('admin-settings-view:')) {
+                const reportId = interaction.customId.slice('admin-settings-view:'.length);
+                try {
+                    const db = require('../database/database');
+                    const reportDb = typeof db.getMainDb === 'function' ? db.getMainDb() : db;
+                    const report = reportDb.prepare(`
+                        SELECT target_user_id, details_content
+                        FROM admin_settings_change_reports
+                        WHERE report_id = ?
+                    `).get(reportId);
+
+                    if (!report) {
+                        return interaction.reply({
+                            content: 'Ce récapitulatif de paramètres est introuvable.',
+                            flags: MessageFlags.Ephemeral,
+                        });
+                    }
+                    if (interaction.user.id !== report.target_user_id) {
+                        return interaction.reply({
+                            content: 'Seul le destinataire du MP peut consulter ces changements.',
+                            flags: MessageFlags.Ephemeral,
+                        });
+                    }
+
+                    return interaction.reply({
+                        components: [
+                            new ContainerBuilder().addTextDisplayComponents(
+                                new TextDisplayBuilder().setContent(report.details_content)
+                            ),
+                        ],
+                        flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+                        allowedMentions: { parse: [] },
+                    });
+                } catch (error) {
+                    logger.error('Erreur lors de la lecture du récapitulatif des paramètres :', error);
+                    return interaction.reply({
+                        content: 'Impossible de récupérer ce récapitulatif de paramètres.',
+                        flags: MessageFlags.Ephemeral,
+                    });
+                }
+            } else if (interaction.customId.startsWith('bug_tag:')) {
                 const { handleBugTagButton } = require('../utils/bug-forum-tags');
                 try {
                     await handleBugTagButton(interaction);

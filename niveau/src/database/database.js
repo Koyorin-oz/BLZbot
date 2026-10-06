@@ -28,6 +28,14 @@ function initializeDatabase(db) {
         CREATE INDEX IF NOT EXISTS idx_love_calculations_pair_created
         ON love_calculations(member1_id, member2_id, created_at DESC)
     `);
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS admin_settings_change_reports (
+            report_id TEXT PRIMARY KEY,
+            target_user_id TEXT NOT NULL,
+            details_content TEXT NOT NULL,
+            created_at INTEGER NOT NULL
+        );
+    `);
 
     // Table des utilisateurs
     db.exec(`

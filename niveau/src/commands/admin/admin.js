@@ -137,17 +137,11 @@ function buildSettingsChangeNotice(adminName, customId) {
     return container;
 }
 
-function buildSettingsChangeDetails(adminName, changes) {
-    const container = new ContainerBuilder();
+function buildSettingsChangeDetailsContent(adminName, changes) {
     const details = changes.map(change =>
         `- **${change.label} : ${change.nextValue === 1 ? '✅ `Activé`' : '❌ `Désactivé`'}**`
     ).join('\n');
-    container.addTextDisplayComponents(
-        new TextDisplayBuilder().setContent(
-            `# ⚙️ Paramètres changés\nModifiés par **${adminName}** :\n\n${details}`
-        )
-    );
-    return container;
+    return `# ⚙️ Paramètres changés\nModifiés par **${adminName}** :\n\n${details}`;
 }
 
 module.exports = {
@@ -413,33 +407,33 @@ module.exports = {
                 const adminName = interaction.member?.displayName
                     || interaction.user.globalName
                     || interaction.user.username;
-                const customId = `admin-settings-view:${interaction.id}`;
+                const reportId = interaction.id;
+                const customId = `admin-settings-view:${reportId}`;
                 let dmSent = false;
+                let reportDb = null;
                 try {
+                    reportDb = typeof db.getMainDb === 'function' ? db.getMainDb() : db;
+                    reportDb.prepare(`
+                        INSERT OR REPLACE INTO admin_settings_change_reports
+                            (report_id, target_user_id, details_content, created_at)
+                        VALUES (?, ?, ?, ?)
+                    `).run(
+                        reportId,
+                        targetUser.id,
+                        buildSettingsChangeDetailsContent(adminName, changes),
+                        Date.now()
+                    );
+
                     const dmMessage = await targetUser.send({
                         components: [buildSettingsChangeNotice(adminName, customId)],
                         flags: MessageFlags.IsComponentsV2,
                         allowedMentions: { parse: [] },
                     });
-                    const dmCollector = dmMessage.createMessageComponentCollector({
-                        componentType: ComponentType.Button,
-                        time: 7 * 24 * 60 * 60 * 1000,
-                    });
-                    dmCollector.on('collect', async dmInteraction => {
-                        if (dmInteraction.user.id !== targetUser.id) {
-                            return dmInteraction.reply({
-                                content: 'Seul le destinataire de ce message peut consulter les changements.',
-                                flags: MessageFlags.Ephemeral,
-                            });
-                        }
-                        await dmInteraction.reply({
-                            components: [buildSettingsChangeDetails(adminName, changes)],
-                            flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
-                            allowedMentions: { parse: [] },
-                        });
-                    });
                     dmSent = true;
                 } catch (error) {
+                    reportDb?.prepare(
+                        'DELETE FROM admin_settings_change_reports WHERE report_id = ?'
+                    ).run(reportId);
                     logger.warn(`Impossible d’envoyer le récapitulatif des paramètres à ${targetUser.id}:`, error);
                 }
 
