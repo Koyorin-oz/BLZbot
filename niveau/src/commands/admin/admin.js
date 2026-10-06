@@ -185,7 +185,7 @@ function buildSettingsReportListContainer(reports, page, totalReports, notice = 
         .setPlaceholder('Analyser une clé')
         .addOptions(reports.map(report => ({
             label: report.report_id,
-            description: `${formatSettingsReportDate(report.created_at)}`.slice(0, 100),
+            description: `Générée le ${formatSettingsReportDate(report.created_at)}`.slice(0, 100),
             value: report.report_id,
         })));
 
