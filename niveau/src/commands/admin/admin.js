@@ -122,9 +122,9 @@ function buildSettingConfirmationContainer(setting, nextValue, remainingSeconds 
 function buildSettingsChangeNotice(reportId, customId) {
     const container = new ContainerBuilder();
     container.addTextDisplayComponents(
-        new TextDisplayBuilder().setContent(
-            `# Vos paramètres ont été modifiés\nDes modifications ont été effectuées sur vos paramètres.\nSi vous n'êtes pas l'auteur de cette demande, vous pouvez consulter le **serveur support**.\n\nVous pouvez aussi consulter les détails des changements en cliquant sur le bouton ci-dessous.\n\n-# [**Une erreur ? Contactez-nous !**](https://discord.com/channels/1097110036192448656/1454477715494404212)`
-        )
+            new TextDisplayBuilder().setContent(
+                `# Vos paramètres ont été modifiés\nDes modifications ont été effectuées sur vos paramètres.\nSi vous n'êtes pas l'auteur de cette demande, vous pouvez consulter le **serveur support**.\n\nVous pouvez aussi consulter les détails des changements en cliquant sur le bouton ci-dessous.\n\n-# [**Une erreur ? Contactez-nous !**](https://discord.com/channels/1097110036192448656/1454477715494404212)`
+            )
     );
     container.addActionRowComponents(
         new ActionRowBuilder().addComponents(
@@ -156,12 +156,60 @@ function formatSettingsReportDate(timestamp) {
     });
 }
 
+function formatSettingsReportKey(reportId) {
+    return reportId.startsWith('cle-') ? reportId : `cle-${reportId}`;
+}
+
+function findSettingsReportByKey(reportDb, key) {
+    const normalizedKey = key.trim();
+    const candidates = normalizedKey.startsWith('cle-')
+        ? [normalizedKey, normalizedKey.slice(4)]
+        : [`cle-${normalizedKey}`, normalizedKey];
+    const findReport = reportDb.prepare(`
+        SELECT report_id, target_user_id, details_content, created_at,
+               admin_user_id, admin_name, changes_json
+        FROM admin_settings_change_reports
+        WHERE report_id = ?
+    `);
+
+    for (const candidate of candidates) {
+        const report = findReport.get(candidate);
+        if (report) return report;
+    }
+    return null;
+}
+
+function recordSettingsReportAction(reportDb, actionType, admin, reports) {
+    const snapshots = reports.map(report => ({
+        key: formatSettingsReportKey(report.report_id),
+        target_user_id: report.target_user_id,
+        original_created_at: report.created_at,
+        details_content: report.details_content,
+        changes_json: report.changes_json,
+    }));
+    reportDb.prepare(`
+        INSERT INTO admin_settings_change_report_logs
+            (action_type, admin_user_id, admin_name, report_keys_json, details_json, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    `).run(
+        actionType,
+        admin.userId,
+        admin.name,
+        JSON.stringify(snapshots.map(snapshot => snapshot.key)),
+        JSON.stringify(snapshots),
+        Date.now()
+    );
+    logger.info(
+        `[settings-keys] action=${actionType} admin=${admin.name} (${admin.userId}) keys=${snapshots.map(snapshot => snapshot.key).join(', ')}`
+    );
+}
+
 function buildSettingsReportListContainer(reports, page, totalReports, notice = null) {
     const totalPages = Math.max(1, Math.ceil(totalReports / 20));
     const container = new ContainerBuilder();
     container.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-            `# 🔑 Clés de modification\n**${totalReports}** clé(s)${notice ? `\n\n${notice}` : ''}\n\n${reports.map(report => `- **\`${report.report_id}\`** - Le **${formatSettingsReportDate(report.created_at)}** pour <@${report.target_user_id}>`).join('\n')}\n\nPage **${page}/${totalPages}**`
+            `# 🔑 Clés de modification\n**${totalReports}** clé(s)${notice ? `\n\n${notice}` : ''}\n\n${reports.map(report => `- **\`${formatSettingsReportKey(report.report_id)}\`** - Le **${formatSettingsReportDate(report.created_at)}** pour <@${report.target_user_id}>`).join('\n')}\n\nPage **${page}/${totalPages}**`
         )
     );
 
@@ -184,13 +232,21 @@ function buildSettingsReportListContainer(reports, page, totalReports, notice = 
         .setCustomId(`admin-settings-keys-select:${page}`)
         .setPlaceholder('Analyser une clé')
         .addOptions(reports.map(report => ({
-            label: report.report_id,
+            label: formatSettingsReportKey(report.report_id),
             description: `Générée le ${formatSettingsReportDate(report.created_at)}`.slice(0, 100),
             value: report.report_id,
         })));
 
     container.addActionRowComponents(new ActionRowBuilder().addComponents(previousButton, nextButton));
     container.addActionRowComponents(new ActionRowBuilder().addComponents(menu));
+    container.addActionRowComponents(
+        new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId(`admin-settings-keys-reset:${page}`)
+                .setLabel('Réinitialiser les clés')
+                .setStyle(ButtonStyle.Danger)
+        )
+    );
     return container;
 }
 
@@ -215,7 +271,7 @@ function buildSettingsReportDetailsContainer(report, returnPage = 1) {
     const container = new ContainerBuilder();
     container.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-            `# 🔑 Détail de la modification\n**Administrateur :** ${adminMention} · ${adminName} · ID \`${adminId}\`\n**Utilisateur concerné :** <@${report.target_user_id}> · ID \`${report.target_user_id}\`\n**Date :** ${formatSettingsReportDate(report.created_at)}\n**Clé :** \`${report.report_id}\`\n\n**Détails**\n\`\`\`text\n${details}\n\`\`\``
+            `# 🔑 Détail de la modification\n**Administrateur :** ${adminMention} · ${adminName} · ID \`${adminId}\`\n**Utilisateur concerné :** <@${report.target_user_id}> · ID \`${report.target_user_id}\`\n**Date :** ${formatSettingsReportDate(report.created_at)}\n**Clé :** \`${formatSettingsReportKey(report.report_id)}\`\n\n**Détails**\n\`\`\`text\n${details}\n\`\`\``
         )
     );
     container.addActionRowComponents(
@@ -223,6 +279,42 @@ function buildSettingsReportDetailsContainer(report, returnPage = 1) {
             new ButtonBuilder()
                 .setCustomId(`admin-settings-keys-back:${returnPage}`)
                 .setLabel('Retour')
+                .setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder()
+                .setCustomId(`admin-settings-keys-delete:${report.report_id}:${returnPage}`)
+                .setLabel('Supprimer cette clé')
+                .setStyle(ButtonStyle.Danger)
+        )
+    );
+    return container;
+}
+
+function buildSettingsReportConfirmationContainer(action, report = null, page = 1, reportCount = 0) {
+    const isReset = action === 'reset';
+    const key = report ? formatSettingsReportKey(report.report_id) : null;
+    const customId = isReset
+        ? `admin-settings-keys-confirm-reset:${page}`
+        : `admin-settings-keys-confirm-delete:${report.report_id}:${page}`;
+    const cancelCustomId = isReset
+        ? `admin-settings-keys-cancel-reset:${page}`
+        : `admin-settings-keys-cancel-delete:${report.report_id}:${page}`;
+    const container = new ContainerBuilder();
+    container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(
+            isReset
+                ? `# Réinitialiser les clés\nCette action va supprimer **${reportCount} clé(s)**. Un journal d’audit sera conservé. Confirmer ?`
+                : `# Supprimer une clé\nLa clé **\`${key}\`** sera supprimée. Un journal d’audit sera conservé. Confirmer ?`
+        )
+    );
+    container.addActionRowComponents(
+        new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId(customId)
+                .setLabel(isReset ? 'Réinitialiser toutes les clés' : 'Supprimer cette clé')
+                .setStyle(ButtonStyle.Danger),
+            new ButtonBuilder()
+                .setCustomId(cancelCustomId)
+                .setLabel('Annuler')
                 .setStyle(ButtonStyle.Secondary)
         )
     );
@@ -233,12 +325,13 @@ async function executeSettingsKeysCommand(interaction) {
     const reportDb = getSettingsReportDatabase();
     const requestedKey = interaction.options.getString('cle')?.trim();
     const pageSize = 20;
-    const totalReports = reportDb.prepare(
+    const getTotalReports = () => reportDb.prepare(
         'SELECT COUNT(*) AS total FROM admin_settings_change_reports'
     ).get().total;
     let page = 1;
 
     const getPageComponents = (requestedPage, notice = null) => {
+        const totalReports = getTotalReports();
         const totalPages = Math.max(1, Math.ceil(totalReports / pageSize));
         page = Math.min(Math.max(1, requestedPage), totalPages);
         const reports = reportDb.prepare(`
@@ -250,17 +343,18 @@ async function executeSettingsKeysCommand(interaction) {
         return [buildSettingsReportListContainer(reports, page, totalReports, notice)];
     };
 
+    const admin = {
+        userId: interaction.user.id,
+        name: interaction.member?.displayName
+            || interaction.user.globalName
+            || interaction.user.username,
+    };
     let initialComponents;
     if (requestedKey) {
-        const report = reportDb.prepare(`
-            SELECT report_id, target_user_id, details_content, created_at,
-                   admin_user_id, admin_name, changes_json
-            FROM admin_settings_change_reports
-            WHERE report_id = ?
-        `).get(requestedKey);
+        const report = findSettingsReportByKey(reportDb, requestedKey);
         initialComponents = report
             ? [buildSettingsReportDetailsContainer(report)]
-            : getPageComponents(1, `Clé \`${requestedKey}\` introuvable.`);
+            : getPageComponents(1, `Clé \`${formatSettingsReportKey(requestedKey)}\` introuvable.`);
     } else {
         initialComponents = getPageComponents(1);
     }
@@ -281,27 +375,116 @@ async function executeSettingsKeysCommand(interaction) {
 
         if (componentInteraction.isStringSelectMenu()) {
             const selectedKey = componentInteraction.values[0];
-            const report = reportDb.prepare(`
-                SELECT report_id, target_user_id, details_content, created_at,
-                       admin_user_id, admin_name, changes_json
-                FROM admin_settings_change_reports
-                WHERE report_id = ?
-            `).get(selectedKey);
+            const report = findSettingsReportByKey(reportDb, selectedKey);
             return componentInteraction.update({
                 components: report
                     ? [buildSettingsReportDetailsContainer(report, page)]
-                    : getPageComponents(page, `Clé \`${selectedKey}\` introuvable.`),
+                    : getPageComponents(page, `Clé \`${formatSettingsReportKey(selectedKey)}\` introuvable.`),
             });
         }
 
         if (!componentInteraction.isButton()) return;
-        const [action, value] = componentInteraction.customId.split(':');
+        const [action, value, pageValue] = componentInteraction.customId.split(':');
         if (action === 'admin-settings-keys-prev' || action === 'admin-settings-keys-next') {
             const nextPage = page + (action === 'admin-settings-keys-prev' ? -1 : 1);
             return componentInteraction.update({ components: getPageComponents(nextPage) });
         }
         if (action === 'admin-settings-keys-back') {
             return componentInteraction.update({ components: getPageComponents(Number(value)) });
+        }
+        if (action === 'admin-settings-keys-reset') {
+            const reports = reportDb.prepare(`
+                SELECT report_id, target_user_id, details_content, created_at,
+                       admin_user_id, admin_name, changes_json
+                FROM admin_settings_change_reports
+            `).all();
+            if (reports.length === 0) {
+                return componentInteraction.update({ components: getPageComponents(Number(value)) });
+            }
+            return componentInteraction.update({
+                components: [buildSettingsReportConfirmationContainer('reset', null, Number(value), reports.length)],
+            });
+        }
+        if (action === 'admin-settings-keys-delete') {
+            const report = findSettingsReportByKey(reportDb, value);
+            if (!report) {
+                return componentInteraction.update({
+                    components: getPageComponents(Number(pageValue), `Clé \`${formatSettingsReportKey(value)}\` introuvable.`),
+                });
+            }
+            return componentInteraction.update({
+                components: [buildSettingsReportConfirmationContainer('delete', report, Number(pageValue))],
+            });
+        }
+        if (action === 'admin-settings-keys-cancel-delete') {
+            const report = findSettingsReportByKey(reportDb, value);
+            return componentInteraction.update({
+                components: report
+                    ? [buildSettingsReportDetailsContainer(report, Number(pageValue))]
+                    : getPageComponents(Number(pageValue), 'Cette clé n’existe plus.'),
+            });
+        }
+        if (action === 'admin-settings-keys-cancel-reset') {
+            return componentInteraction.update({ components: getPageComponents(Number(value)) });
+        }
+        if (action === 'admin-settings-keys-confirm-delete') {
+            const report = findSettingsReportByKey(reportDb, value);
+            if (!report) {
+                return componentInteraction.update({
+                    components: getPageComponents(Number(pageValue), 'Cette clé n’existe plus.'),
+                });
+            }
+
+            try {
+                const deleteReport = reportDb.transaction(() => {
+                    recordSettingsReportAction(reportDb, 'delete', admin, [report]);
+                    reportDb.prepare('DELETE FROM admin_settings_change_reports WHERE report_id = ?')
+                        .run(report.report_id);
+                });
+                deleteReport();
+                return componentInteraction.update({
+                    components: getPageComponents(
+                        Number(pageValue),
+                        `La clé \`${formatSettingsReportKey(report.report_id)}\` a été supprimée. L’action a été journalisée.`
+                    ),
+                });
+            } catch (error) {
+                logger.error(`Erreur lors de la suppression de la clé ${report.report_id}:`, error);
+                return componentInteraction.update({
+                    components: [buildSettingsReportDetailsContainer(report, Number(pageValue))],
+                });
+            }
+        }
+        if (action === 'admin-settings-keys-confirm-reset') {
+            try {
+                let deletedCount = 0;
+                const resetReports = reportDb.transaction(() => {
+                    const reports = reportDb.prepare(`
+                        SELECT report_id, target_user_id, details_content, created_at,
+                               admin_user_id, admin_name, changes_json
+                        FROM admin_settings_change_reports
+                    `).all();
+                    if (reports.length === 0) return;
+                    recordSettingsReportAction(reportDb, 'reset', admin, reports);
+                    deletedCount = reportDb.prepare('DELETE FROM admin_settings_change_reports').run().changes;
+                });
+                resetReports();
+                return componentInteraction.update({
+                    components: [
+                        buildSettingsReportListContainer(
+                            [],
+                            1,
+                            0,
+                            `${deletedCount} clé(s) réinitialisée(s). L’action a été journalisée.`
+                        ),
+                    ],
+                });
+            } catch (error) {
+                logger.error('Erreur lors de la réinitialisation des clés de paramètres :', error);
+                return componentInteraction.update({
+                    components: getPageComponents(Number(value), 'La réinitialisation a échoué; les clés sont conservées.'),
+                });
+            }
         }
     });
 }
@@ -581,7 +764,7 @@ module.exports = {
                 const adminName = interaction.member?.displayName
                     || interaction.user.globalName
                     || interaction.user.username;
-                const reportId = interaction.id;
+                const reportId = `cle-${interaction.id}`;
                 const customId = `admin-settings-view:${reportId}`;
                 let dmSent = false;
                 let reportDb = null;

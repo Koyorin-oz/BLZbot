@@ -21,7 +21,7 @@ function formatSettingsReportDetails(report, includeAuditInfo = true) {
         `${change.label}: ${change.previousValue === 1 ? 'Activé' : 'Désactivé'} -> ${change.nextValue === 1 ? 'Activé' : 'Désactivé'}`
     ).join('\n') || String(report.details_content || 'Détails indisponibles.').replace(/```/g, "'''");
     if (!includeAuditInfo) {
-        return `# Modifications des paramètres\n\`\`\`text\n${details}\n\`\`\``;
+        return `# Modifications des paramètres\n\`\`\`text\n${details}\n\`\`\`\n\n-# Clé: **\`${report.report_id.startsWith('cle-') ? report.report_id : `cle-${report.report_id}`}\`**`;
     }
 
     const adminId = report.admin_user_id || 'indisponible';
@@ -60,14 +60,22 @@ async function handleAdminSettingsReportButton(interaction) {
             FROM admin_settings_change_reports
             WHERE report_id = ?
         `).get(reportId);
+        const legacyReport = !report && reportId.startsWith('cle-')
+            ? reportDb.prepare(`
+                SELECT report_id, target_user_id, details_content, created_at,
+                       admin_user_id, admin_name, changes_json
+                FROM admin_settings_change_reports
+                WHERE report_id = ?
+            `).get(reportId.slice(4))
+            : report;
 
-        if (!report) {
+        if (!legacyReport) {
             return interaction.editReply({
                 components: [buildSettingsReportContainer('Ce récapitulatif de paramètres est introuvable.')],
                 flags: MessageFlags.IsComponentsV2,
             });
         }
-        if (interaction.user.id !== report.target_user_id) {
+        if (interaction.user.id !== legacyReport.target_user_id) {
             return interaction.editReply({
                 components: [buildSettingsReportContainer('Seul le destinataire du MP peut consulter ces changements.')],
                 flags: MessageFlags.IsComponentsV2,
@@ -75,7 +83,7 @@ async function handleAdminSettingsReportButton(interaction) {
         }
 
         return interaction.editReply({
-            components: [buildSettingsReportContainer(formatSettingsReportDetails(report, false))],
+            components: [buildSettingsReportContainer(formatSettingsReportDetails(legacyReport, false))],
             flags: MessageFlags.IsComponentsV2,
             allowedMentions: { parse: [] },
         });

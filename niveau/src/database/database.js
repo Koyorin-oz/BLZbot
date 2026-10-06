@@ -55,6 +55,21 @@ function initializeDatabase(db) {
         CREATE INDEX IF NOT EXISTS idx_admin_settings_change_reports_created
         ON admin_settings_change_reports(created_at DESC)
     `);
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS admin_settings_change_report_logs (
+            log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            action_type TEXT NOT NULL,
+            admin_user_id TEXT NOT NULL,
+            admin_name TEXT NOT NULL,
+            report_keys_json TEXT NOT NULL,
+            details_json TEXT NOT NULL,
+            created_at INTEGER NOT NULL
+        );
+    `);
+    db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_admin_settings_change_report_logs_created
+        ON admin_settings_change_report_logs(created_at DESC)
+    `);
 
     // Table des utilisateurs
     db.exec(`
