@@ -9,6 +9,29 @@ function buildSettingsReportContainer(content) {
     );
 }
 
+function formatSettingsReportDetails(report) {
+    let changes = [];
+    try {
+        changes = JSON.parse(report.changes_json || '[]');
+    } catch (error) {
+        logger.warn(`Détails JSON invalides pour la clé ${report.report_id}:`, error);
+    }
+
+    const details = changes.map(change =>
+        `${change.label}: ${change.previousValue === 1 ? 'Activé' : 'Désactivé'} -> ${change.nextValue === 1 ? 'Activé' : 'Désactivé'}`
+    ).join('\n') || String(report.details_content || 'Détails indisponibles.').replace(/```/g, "'''");
+    const adminId = report.admin_user_id || 'indisponible';
+    const adminMention = report.admin_user_id ? `<@${report.admin_user_id}>` : 'Inconnu';
+    const adminName = report.admin_name || 'Nom indisponible';
+    const date = new Date(report.created_at).toLocaleString('fr-FR', {
+        timeZone: 'Europe/Paris',
+        dateStyle: 'short',
+        timeStyle: 'short',
+    });
+
+    return `# Clé de modification\n**Administrateur :** ${adminMention} · ${adminName} · ID \`${adminId}\`\n**Utilisateur concerné :** <@${report.target_user_id}> · ID \`${report.target_user_id}\`\n**Date :** ${date}\n**Clé :** \`${report.report_id}\`\n\n**Détails**\n\`\`\`text\n${details}\n\`\`\``;
+}
+
 async function handleAdminSettingsReportButton(interaction) {
     try {
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });
@@ -28,7 +51,8 @@ async function handleAdminSettingsReportButton(interaction) {
         const db = require('../database/database');
         const reportDb = typeof db.getMainDb === 'function' ? db.getMainDb() : db;
         const report = reportDb.prepare(`
-            SELECT target_user_id, details_content
+            SELECT report_id, target_user_id, details_content, created_at,
+                   admin_user_id, admin_name, changes_json
             FROM admin_settings_change_reports
             WHERE report_id = ?
         `).get(reportId);
@@ -47,7 +71,7 @@ async function handleAdminSettingsReportButton(interaction) {
         }
 
         return interaction.editReply({
-            components: [buildSettingsReportContainer(report.details_content)],
+            components: [buildSettingsReportContainer(formatSettingsReportDetails(report))],
             flags: MessageFlags.IsComponentsV2,
             allowedMentions: { parse: [] },
         });

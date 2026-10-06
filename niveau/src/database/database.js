@@ -33,8 +33,27 @@ function initializeDatabase(db) {
             report_id TEXT PRIMARY KEY,
             target_user_id TEXT NOT NULL,
             details_content TEXT NOT NULL,
-            created_at INTEGER NOT NULL
+            created_at INTEGER NOT NULL,
+            admin_user_id TEXT NOT NULL DEFAULT '',
+            admin_name TEXT NOT NULL DEFAULT '',
+            changes_json TEXT NOT NULL DEFAULT '[]'
         );
+    `);
+    const reportColumns = new Set(
+        db.prepare('PRAGMA table_info(admin_settings_change_reports)').all().map(column => column.name)
+    );
+    for (const [columnName, columnDefinition] of [
+        ['admin_user_id', "TEXT NOT NULL DEFAULT ''"],
+        ['admin_name', "TEXT NOT NULL DEFAULT ''"],
+        ['changes_json', "TEXT NOT NULL DEFAULT '[]'"],
+    ]) {
+        if (!reportColumns.has(columnName)) {
+            db.exec(`ALTER TABLE admin_settings_change_reports ADD COLUMN ${columnName} ${columnDefinition}`);
+        }
+    }
+    db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_admin_settings_change_reports_created
+        ON admin_settings_change_reports(created_at DESC)
     `);
 
     // Table des utilisateurs

@@ -119,11 +119,11 @@ function buildSettingConfirmationContainer(setting, nextValue, remainingSeconds 
     return container;
 }
 
-function buildSettingsChangeNotice(adminName, customId) {
+function buildSettingsChangeNotice(reportId, customId) {
     const container = new ContainerBuilder();
     container.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-            `# Vos paramètres ont été modifiés\nVos paramètres ont été modifiés par l’administrateur **${adminName}**. Vous pouvez consulter les changements en cliquant sur le bouton ci-dessous.\n\n-# [**Une erreur ? Contactez-nous !**](https://discord.com/channels/1097110036192448656/1454477715494404212)`
+            `# Vos paramètres ont été modifiés\nUne modification a été effectuée sur vos paramètres.\nClé de changement : **\`${reportId}\`**\n\nVous pouvez consulter les détails en cliquant ci-dessous.\n\n-# [**Une erreur ? Contactez-nous !**](https://discord.com/channels/1097110036192448656/1454477715494404212)`
         )
     );
     container.addActionRowComponents(
@@ -142,6 +142,168 @@ function buildSettingsChangeDetailsContent(adminName, changes) {
         `- **${change.label} : ${change.nextValue === 1 ? '✅ `Activé`' : '❌ `Désactivé`'}**`
     ).join('\n');
     return `# ⚙️ Paramètres changés\nModifiés par **${adminName}** :\n\n${details}`;
+}
+
+function getSettingsReportDatabase() {
+    return typeof db.getMainDb === 'function' ? db.getMainDb() : db;
+}
+
+function formatSettingsReportDate(timestamp) {
+    return new Date(timestamp).toLocaleString('fr-FR', {
+        timeZone: 'Europe/Paris',
+        dateStyle: 'short',
+        timeStyle: 'short',
+    });
+}
+
+function buildSettingsReportListContainer(reports, page, totalReports, notice = null) {
+    const totalPages = Math.max(1, Math.ceil(totalReports / 20));
+    const container = new ContainerBuilder();
+    container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(
+            `# 🔑 Clés de modification\nPage **${page}/${totalPages}** · **${totalReports}** clé(s)${notice ? `\n\n${notice}` : ''}`
+        )
+    );
+
+    if (reports.length === 0) {
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent('Aucune modification enregistrée.'));
+        return container;
+    }
+
+    const previousButton = new ButtonBuilder()
+        .setCustomId(`admin-settings-keys-prev:${page}`)
+        .setLabel('<')
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(page <= 1);
+    const nextButton = new ButtonBuilder()
+        .setCustomId(`admin-settings-keys-next:${page}`)
+        .setLabel('>')
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(page >= totalPages);
+    const menu = new StringSelectMenuBuilder()
+        .setCustomId(`admin-settings-keys-select:${page}`)
+        .setPlaceholder('Analyser une clé')
+        .addOptions(reports.map(report => ({
+            label: report.report_id,
+            description: `${formatSettingsReportDate(report.created_at)} · <@${report.target_user_id}>`.slice(0, 100),
+            value: report.report_id,
+        })));
+
+    container.addActionRowComponents(new ActionRowBuilder().addComponents(previousButton, nextButton));
+    container.addActionRowComponents(new ActionRowBuilder().addComponents(menu));
+    return container;
+}
+
+function buildSettingsReportDetailsContainer(report, returnPage = 1) {
+    let changes = [];
+    try {
+        changes = JSON.parse(report.changes_json || '[]');
+    } catch (error) {
+        logger.warn(`Détails JSON invalides pour la clé ${report.report_id}:`, error);
+    }
+
+    const details = changes.length > 0
+        ? changes.map(change => [
+            `Paramètre : ${change.label}`,
+            `Avant : ${change.previousValue === 1 ? 'Activé' : 'Désactivé'}`,
+            `Après : ${change.nextValue === 1 ? 'Activé' : 'Désactivé'}`,
+        ].join('\n')).join('\n\n')
+        : String(report.details_content || 'Détails indisponibles.').replace(/```/g, "'''");
+    const adminMention = report.admin_user_id ? `<@${report.admin_user_id}>` : 'Inconnu';
+    const adminName = report.admin_name || 'Nom indisponible';
+    const adminId = report.admin_user_id || 'indisponible';
+    const container = new ContainerBuilder();
+    container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(
+            `# 🔑 Détail de la modification\n**Administrateur :** ${adminMention} · ${adminName} · ID \`${adminId}\`\n**Utilisateur concerné :** <@${report.target_user_id}> · ID \`${report.target_user_id}\`\n**Date :** ${formatSettingsReportDate(report.created_at)}\n**Clé :** \`${report.report_id}\`\n\n**Détails**\n\`\`\`text\n${details}\n\`\`\``
+        )
+    );
+    container.addActionRowComponents(
+        new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId(`admin-settings-keys-back:${returnPage}`)
+                .setLabel('Retour')
+                .setStyle(ButtonStyle.Secondary)
+        )
+    );
+    return container;
+}
+
+async function executeSettingsKeysCommand(interaction) {
+    const reportDb = getSettingsReportDatabase();
+    const requestedKey = interaction.options.getString('cle')?.trim();
+    const pageSize = 20;
+    const totalReports = reportDb.prepare(
+        'SELECT COUNT(*) AS total FROM admin_settings_change_reports'
+    ).get().total;
+    let page = 1;
+
+    const getPageComponents = (requestedPage, notice = null) => {
+        const totalPages = Math.max(1, Math.ceil(totalReports / pageSize));
+        page = Math.min(Math.max(1, requestedPage), totalPages);
+        const reports = reportDb.prepare(`
+            SELECT report_id, target_user_id, created_at
+            FROM admin_settings_change_reports
+            ORDER BY created_at DESC, report_id DESC
+            LIMIT ? OFFSET ?
+        `).all(pageSize, (page - 1) * pageSize);
+        return [buildSettingsReportListContainer(reports, page, totalReports, notice)];
+    };
+
+    let initialComponents;
+    if (requestedKey) {
+        const report = reportDb.prepare(`
+            SELECT report_id, target_user_id, details_content, created_at,
+                   admin_user_id, admin_name, changes_json
+            FROM admin_settings_change_reports
+            WHERE report_id = ?
+        `).get(requestedKey);
+        initialComponents = report
+            ? [buildSettingsReportDetailsContainer(report)]
+            : getPageComponents(1, `Clé \`${requestedKey}\` introuvable.`);
+    } else {
+        initialComponents = getPageComponents(1);
+    }
+
+    const response = await interaction.reply({
+        components: initialComponents,
+        flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+    });
+    const collector = response.createMessageComponentCollector({ time: 15 * 60 * 1000 });
+
+    collector.on('collect', async componentInteraction => {
+        if (componentInteraction.user.id !== interaction.user.id) {
+            return componentInteraction.reply({
+                content: 'Seul l’administrateur ayant lancé la commande peut consulter ces clés.',
+                flags: MessageFlags.Ephemeral,
+            });
+        }
+
+        if (componentInteraction.isStringSelectMenu()) {
+            const selectedKey = componentInteraction.values[0];
+            const report = reportDb.prepare(`
+                SELECT report_id, target_user_id, details_content, created_at,
+                       admin_user_id, admin_name, changes_json
+                FROM admin_settings_change_reports
+                WHERE report_id = ?
+            `).get(selectedKey);
+            return componentInteraction.update({
+                components: report
+                    ? [buildSettingsReportDetailsContainer(report, page)]
+                    : getPageComponents(page, `Clé \`${selectedKey}\` introuvable.`),
+            });
+        }
+
+        if (!componentInteraction.isButton()) return;
+        const [action, value] = componentInteraction.customId.split(':');
+        if (action === 'admin-settings-keys-prev' || action === 'admin-settings-keys-next') {
+            const nextPage = page + (action === 'admin-settings-keys-prev' ? -1 : 1);
+            return componentInteraction.update({ components: getPageComponents(nextPage) });
+        }
+        if (action === 'admin-settings-keys-back') {
+            return componentInteraction.update({ components: getPageComponents(Number(value)) });
+        }
+    });
 }
 
 module.exports = {
@@ -330,7 +492,16 @@ module.exports = {
                         .setName('utilisateur')
                         .setDescription('Afficher et modifier les paramètres d’un utilisateur.')
                     .addUserOption(option =>
-                        option.setName('utilisateur').setDescription('L’utilisateur').setRequired(true)))),
+                        option.setName('utilisateur').setDescription('L’utilisateur').setRequired(true)))
+                .addSubcommand(settingsSubcommand =>
+                    settingsSubcommand
+                        .setName('cle')
+                        .setDescription('Consulter l’historique des modifications de paramètres.')
+                        .addStringOption(option =>
+                            option.setName('cle')
+                                .setDescription('Clé précise à consulter (facultatif)')
+                                .setRequired(false)
+                                .setMaxLength(30)))),
 
     async autocomplete(interaction) {
         const focusedValue = interaction.options.getFocused();
@@ -346,6 +517,10 @@ module.exports = {
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand();
         const subcommandGroup = interaction.options.getSubcommandGroup();
+
+        if (subcommandGroup === 'parametres' && subcommand === 'cle') {
+            return executeSettingsKeysCommand(interaction);
+        }
 
         if (subcommandGroup === 'parametres' && subcommand === 'utilisateur') {
             const targetUser = interaction.options.getUser('utilisateur', true);
@@ -414,17 +589,26 @@ module.exports = {
                     reportDb = typeof db.getMainDb === 'function' ? db.getMainDb() : db;
                     reportDb.prepare(`
                         INSERT OR REPLACE INTO admin_settings_change_reports
-                            (report_id, target_user_id, details_content, created_at)
-                        VALUES (?, ?, ?, ?)
+                            (report_id, target_user_id, details_content, created_at,
+                             admin_user_id, admin_name, changes_json)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
                     `).run(
                         reportId,
                         targetUser.id,
                         buildSettingsChangeDetailsContent(adminName, changes),
-                        Date.now()
+                        Date.now(),
+                        interaction.user.id,
+                        adminName,
+                        JSON.stringify(changes.map(({ id, label, previousValue, nextValue }) => ({
+                            id,
+                            label,
+                            previousValue,
+                            nextValue,
+                        })))
                     );
 
                     const dmMessage = await targetUser.send({
-                        components: [buildSettingsChangeNotice(adminName, customId)],
+                        components: [buildSettingsChangeNotice(reportId, customId)],
                         flags: MessageFlags.IsComponentsV2,
                         allowedMentions: { parse: [] },
                     });
