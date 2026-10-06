@@ -285,6 +285,20 @@ async function handleSettingsKeysDownload(interaction) {
         const fileName = `${isReset ? 'historique-cles' : 'cle-supprimee'}-${logRow.created_at}.html`;
         const file = new AttachmentBuilder(Buffer.from(buildSettingsKeysHtml(logRow), 'utf8'), { name: fileName });
 
+        // Désactiver le bouton et écrire "Clé envoyée"
+        await interaction.update({
+            components: interaction.message.components.map(row => {
+                return new ActionRowBuilder().addComponents(
+                    ...row.components.map(component => {
+                        if (component.customId === `${SETTINGS_KEYS_DOWNLOAD_PREFIX}:${logId}`) {
+                            return component.setLabel('Fichier de log envoyé').setStyle(ButtonStyle.Success).setDisabled(true);
+                        }
+                        return component;
+                    })
+                );
+            })
+        })
+
         return interaction.reply({
             content: isReset ? '📄 Historique complet des clés :' : '📄 Clé supprimée :',
             files: [file],
