@@ -147,6 +147,15 @@ async function grantResources(client, userId, { xp = 0, points = 0, stars = 0, s
                 xp = Math.round(xp * 2);
                 logger.info(`XP boost (x2) applied for user ${userId}.`);
             }
+            try {
+                const hw = require('../halloween2026/store');
+                if (hw.hasPermXp(userId)) xp = Math.round(xp * 2);
+                if (hw.isCursed(userId)) {
+                    xp = Math.round(xp * 0.7);
+                    stars = Math.round(stars * 0.7);
+                    points = Math.round(points * 0.7);
+                }
+            } catch { /* halloween beta */ }
             if (userBeforeUpdate.points_boost_until > now) {
                 points = Math.round(points * 2);
                 logger.info(`Points boost (x2) applied for user ${userId}.`);
@@ -308,6 +317,16 @@ async function grantResources(client, userId, { xp = 0, points = 0, stars = 0, s
                     levelChanged = true;
 
                     checkQuestProgress(client, 'LEVEL_REACH', userAfterUpdate, { newLevel: newLevel });
+                }
+                if (levelChanged) {
+                    try {
+                        const { onLevel } = require('../halloween2026/hooks');
+                        const { TEST_GUILD_ID, MAIN_GUILD_ID } = require('../halloween2026/config');
+                        for (const gid of [TEST_GUILD_ID, MAIN_GUILD_ID]) {
+                            const g = client?.guilds?.cache?.get(gid);
+                            if (g) onLevel(client, g, userId).catch(() => {});
+                        }
+                    } catch { /* halloween */ }
                 }
             }
             // Descente de niveau (XP négatif)

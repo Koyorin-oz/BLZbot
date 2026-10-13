@@ -26,6 +26,9 @@ module.exports = {
                 .addUserOption(option => option.setName('adversaire').setDescription('L\'adversaire à défier').setRequired(true))
                 .addStringOption(option => option.setName('mise').setDescription('La mise (starss ou objet)').setRequired(false))),
     async execute(interaction) {
+        if (interaction.guild && require('../../halloween2026/store').isCursed(interaction.user.id) && require('../../halloween2026/live').isLive(interaction.guildId)) {
+            return interaction.reply({ content: 'Un fantôme te bloque les mini-jeux pendant 2h. Utilise /collier si tu en as un.', ephemeral: true });
+        }
         try {
             await interaction.deferReply();
             const subcommand = interaction.options.getSubcommand();

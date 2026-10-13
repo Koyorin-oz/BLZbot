@@ -168,7 +168,11 @@ module.exports = {
             }
 
             // --- Logique de l'événement Halloween ---
-            if (getEventState('halloween')) {
+            const { isLive } = require('../halloween2026/live');
+            if (message.guild && isLive(message.guildId)) {
+                const { onMessage } = require('../halloween2026/hooks');
+                await onMessage(message);
+            } else if (getEventState('halloween')) {
                 const updatedEventUser = grantEventCurrency(author.id, { citrouilles: 10, bonbons: 3 });
                 await checkAndGrantHalloweenRewards(client, updatedEventUser);
             }

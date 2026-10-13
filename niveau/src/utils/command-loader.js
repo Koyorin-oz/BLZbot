@@ -36,6 +36,21 @@ function isCommandHelperFile(basename) {
  * Charge les commandes slash depuis commands/core, guilde, admin, misc.
  * @param {import('discord.js').Client} client
  */
+function loadHalloweenBeta(client) {
+    const dir = path.join(commandsRootPath, 'halloween-beta');
+    if (!fs.existsSync(dir)) return 0;
+    let n = 0;
+    for (const file of fs.readdirSync(dir)) {
+        if (!file.endsWith('.js')) continue;
+        const command = require(path.join(dir, file));
+        if (command?.data && command.execute) {
+            client.commands.set(command.data.name, command);
+            n += 1;
+        }
+    }
+    return n;
+}
+
 function loadTopLevelCommands(client) {
     for (const sub of MAIN_COMMAND_SUBDIRS) {
         const dir = path.join(commandsRootPath, sub);
@@ -245,6 +260,7 @@ module.exports = {
     isLegacyTestProfilFile,
     isCommandHelperFile,
     loadTopLevelCommands,
+    loadHalloweenBeta,
     loadSeasonalCommands,
     loadRebornSlashCommands,
     loadHalloweenCommands,
