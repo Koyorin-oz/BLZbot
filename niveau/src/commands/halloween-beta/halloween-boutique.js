@@ -15,7 +15,8 @@ const { grantEventCurrency, getOrCreateEventUser } = require('../../utils/db-hal
 const { progress, giveShopRole } = require('../../halloween2026/rewards');
 const store = require('../../halloween2026/store');
 const { getOrCreateUser } = require('../../utils/db-users');
-const { renderHalloweenShopBanner } = require('../../utils/canvas-halloween-shop');
+const fs = require('fs');
+const path = require('path');
 
 function priceLine(item) {
     const bits = [];
@@ -62,7 +63,8 @@ module.exports = {
             return interaction.reply({ content: 'Update Halloween pas encore sur ce serveur.', ephemeral: true });
         }
 
-        const banner = await renderHalloweenShopBanner();
+        const bannerPath = path.join(__dirname, '..', '..', 'assets', 'halloween_boutique_banner.jpg');
+        const banner = fs.readFileSync(bannerPath);
         const userId = interaction.user.id;
 
         const payload = () => {
@@ -70,7 +72,7 @@ module.exports = {
             const container = new ContainerBuilder();
             const { MediaGalleryBuilder } = require('discord.js');
             container.addMediaGalleryComponents(
-                new MediaGalleryBuilder().addItems({ media: { url: 'attachment://halloween-shop.png' } }),
+                new MediaGalleryBuilder().addItems({ media: { url: 'attachment://halloween-shop.jpg' } }),
             );
             container.addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(
@@ -112,7 +114,7 @@ module.exports = {
 
             return {
                 components: [container],
-                files: [new AttachmentBuilder(banner, { name: 'halloween-shop.png' })],
+                files: [new AttachmentBuilder(banner, { name: 'halloween-shop.jpg' })],
                 flags: 32768,
                 ephemeral: true,
             };
