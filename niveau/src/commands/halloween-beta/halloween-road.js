@@ -1,8 +1,9 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, AttachmentBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { ROAD } = require('../../halloween2026/config');
 const { isLive } = require('../../halloween2026/live');
 const store = require('../../halloween2026/store');
 const { questOpen } = require('../../halloween2026/config');
+const { renderHalloweenRoad } = require('../../utils/canvas-halloween-road');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -17,18 +18,27 @@ module.exports = {
         if (await memberHasShopRole(interaction.member)) {
             await progress(interaction.client, interaction.guild, interaction.user.id, 'roles', 1);
         }
-        const lines = ROAD.map((q) => {
+        await interaction.deferReply({ ephemeral: true });
+
+        const quests = ROAD.map((q) => {
             const row = store.roadRow(interaction.user.id, q.id);
-            const open = questOpen(q);
-            const state = row.done ? 'fait' : open ? `${row.progress}/${q.goal}` : 'fermé';
-            return `**${q.date.slice(8)}/10** ${q.label} — ${state} — ${q.reward}`;
+            return {
+                day: `${q.date.slice(8)}/10`,
+                label: q.label,
+                reward: q.reward,
+                progress: row.progress,
+                goal: q.goal,
+                done: row.done === 1,
+                open: questOpen(q),
+            };
         });
         const done = store.completedCount(interaction.user.id);
-        const embed = new EmbedBuilder()
-            .setTitle('Road Halloween')
-            .setColor(0xe67e22)
-            .setDescription(lines.join('\n'))
-            .setFooter({ text: `${done}/9 quêtes` });
+        const png = await renderHalloweenRoad({
+            username: interaction.user.username,
+            done,
+            quests,
+        });
+        const file = new AttachmentBuilder(png, { name: 'halloween-road.png' });
 
         const row = done >= 9
             ? [new ActionRowBuilder().addComponents(
@@ -37,6 +47,6 @@ module.exports = {
             )]
             : [];
 
-        return interaction.reply({ embeds: [embed], components: row, ephemeral: true });
+        return interaction.editReply({ files: [file], components: row });
     },
 };

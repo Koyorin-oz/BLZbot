@@ -110,7 +110,7 @@ async function payChoice(interaction, bonbons, citrouilles) {
 async function onButton(interaction) {
     const id = interaction.customId;
     if (!id.startsWith('hw26:')) return false;
-    if (id === 'hw26:shop' || id.startsWith('hw26:buy:')) return false;
+    if (id === 'hw26:shop' || id.startsWith('hw26:buy:') || id.startsWith('hw26:pick:')) return false;
 
     if (id === 'hw26:streak:xp' || id === 'hw26:streak:role') {
         const { getOrCreateEventUser } = require('../utils/db-halloween');
