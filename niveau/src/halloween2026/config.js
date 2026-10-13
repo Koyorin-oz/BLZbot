@@ -17,12 +17,12 @@ const ROAD = [
 ];
 
 const SHOP = [
-    { id: 'role_citrouilles', emoji: '🎃', name: 'Roi des citrouilles', blurb: 'Rôle saisonnier. Compte pour la quête du 31.', kind: 'role', citrouilles: 3000, bonbons: null },
-    { id: 'role_bonbons', emoji: '🍬', name: 'Roi des bonbons', blurb: 'Rôle saisonnier. Compte pour la quête du 31.', kind: 'role', bonbons: 10000, citrouilles: null },
-    { id: 'boost_xp', emoji: '⚡', name: 'Boost x2 EXP', blurb: 'Double l\'EXP pendant 1 heure.', kind: 'boost_xp', bonbons: 1000, citrouilles: 300 },
-    { id: 'boost_stars', emoji: '✨', name: 'Boost x2 starss', blurb: 'Double les starss pendant 1 heure.', kind: 'boost_stars', bonbons: 1000, citrouilles: 300 },
-    { id: 'item_fantome', emoji: '👻', name: 'Fantôme', blurb: 'Item. /fantome sur quelqu\'un : −30% RP, EXP et starss pendant 2h.', kind: 'item_fantome', bonbons: 3000, citrouilles: 1000 },
-    { id: 'item_collier', emoji: '📿', name: 'Collier chasseur de fantômes', blurb: '3 charges. /collier retire une malédiction.', kind: 'item_collier', bonbons: 4500, citrouilles: 1500 },
+    { id: 'role_citrouilles', emoji: '🎃', name: 'Roi des citrouilles', description: 'Rôle saisonnier Halloween.', info: 'Compte pour la quête du 31', kind: 'role', citrouilles: 3000, bonbons: null },
+    { id: 'role_bonbons', emoji: '🍬', name: 'Roi des bonbons', description: 'Rôle saisonnier Halloween.', info: 'Compte pour la quête du 31', kind: 'role', bonbons: 10000, citrouilles: null },
+    { id: 'boost_xp', emoji: '⚡', name: 'Boost XP (x2)', description: 'Double l\'EXP gagnée.', info: 'Durée: 1 heure', kind: 'boost_xp', bonbons: 1000, citrouilles: 300 },
+    { id: 'boost_stars', emoji: '✨', name: 'Boost Starss (x2)', description: 'Double les Starss gagnés.', info: 'Durée: 1 heure', kind: 'boost_stars', bonbons: 1000, citrouilles: 300 },
+    { id: 'item_fantome', emoji: '👻', name: 'Fantôme', description: 'Lance-le avec /fantome : −30% RP, EXP et Starss pour ta cible.', info: 'Malédiction de 2 heures', kind: 'item_fantome', bonbons: 3000, citrouilles: 1000 },
+    { id: 'item_collier', emoji: '📿', name: 'Collier chasseur de fantômes', description: 'Retire une malédiction avec /collier.', info: '3 charges', kind: 'item_collier', bonbons: 4500, citrouilles: 1500 },
 ];
 
 const PHRASES = [

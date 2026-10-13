@@ -7,6 +7,7 @@ const {
     ButtonStyle,
     ActionRowBuilder,
     AttachmentBuilder,
+    MediaGalleryBuilder,
     ComponentType,
 } = require('discord.js');
 const { SHOP } = require('../../halloween2026/config');
@@ -20,9 +21,9 @@ const path = require('path');
 
 function priceLine(item) {
     const bits = [];
-    if (item.bonbons != null) bits.push(`**${item.bonbons.toLocaleString('fr-FR')}** bonbons`);
-    if (item.citrouilles != null) bits.push(`**${item.citrouilles.toLocaleString('fr-FR')}** citrouilles`);
-    return bits.join('  ou  ');
+    if (item.bonbons != null) bits.push(`${item.bonbons.toLocaleString('fr-FR')} Bonbons 🍬`);
+    if (item.citrouilles != null) bits.push(`${item.citrouilles.toLocaleString('fr-FR')} Citrouilles 🎃`);
+    return bits.join(' ou ');
 }
 
 function canPay(user, item) {
@@ -70,50 +71,54 @@ module.exports = {
         const payload = () => {
             const user = getOrCreateEventUser(userId, interaction.user.username);
             const container = new ContainerBuilder();
-            const { MediaGalleryBuilder } = require('discord.js');
             container.addMediaGalleryComponents(
                 new MediaGalleryBuilder().addItems({ media: { url: 'attachment://halloween-shop.jpg' } }),
             );
             container.addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(
-                    `Bonbons : **${user.bonbons.toLocaleString('fr-FR')}**  ·  Citrouilles : **${user.citrouilles.toLocaleString('fr-FR')}**\n` +
-                    `Fantômes : **${user.fantomes || 0}**  ·  Charges collier : **${user.colliers || 0}**`,
+                    `Votre solde : **${user.bonbons.toLocaleString('fr-FR')}** Bonbons 🍬 · **${user.citrouilles.toLocaleString('fr-FR')}** Citrouilles 🎃`,
                 ),
             );
 
             for (const item of SHOP) {
                 const owned = item.kind === 'role' && interaction.member.roles.cache.some((r) => r.name === item.name);
-                const affordable = canPay(user, item);
+                let description = `**Prix:** ${priceLine(item)}\n${item.description}`;
                 let label = 'Acheter';
                 let style = ButtonStyle.Success;
-                let disabled = false;
                 if (owned) {
                     label = 'Possédé';
                     style = ButtonStyle.Secondary;
-                    disabled = true;
-                } else if (!affordable) {
-                    label = 'Pas assez';
-                    style = ButtonStyle.Secondary;
-                    disabled = true;
+                    description += '\n✅ **Déjà possédé**';
+                } else {
+                    description += `\n*${item.info}*`;
                 }
+                if (item.kind === 'item_fantome') description += ` · *En stock : ${user.fantomes || 0}*`;
+                if (item.kind === 'item_collier') description += ` · *Charges : ${user.colliers || 0}*`;
+
                 const both = item.bonbons != null && item.citrouilles != null;
                 const only = item.bonbons != null ? 'bonbons' : 'citrouilles';
                 const button = new ButtonBuilder()
                     .setCustomId(both ? `hw26:pick:${item.id}` : `hw26:buy:${item.id}:${only}`)
                     .setLabel(label)
                     .setStyle(style)
-                    .setDisabled(disabled);
+                    .setEmoji('🎃')
+                    .setDisabled(owned || !canPay(user, item));
                 container.addSectionComponents(
                     new SectionBuilder()
-                        .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-                            `### ${item.emoji} ${item.name}\n**Prix :** ${priceLine(item)}\n${item.blurb}`,
-                        ))
+                        .addTextDisplayComponents(new TextDisplayBuilder().setContent(`### ${item.emoji} ${item.name}\n${description}`))
                         .setButtonAccessory(button),
                 );
             }
 
+            const nav = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('hw26:shop:prev').setLabel('◀️ Précédent').setStyle(ButtonStyle.Secondary).setDisabled(true),
+                new ButtonBuilder().setCustomId('hw26:shop:page').setLabel('Page 1/1').setStyle(ButtonStyle.Secondary).setDisabled(true),
+                new ButtonBuilder().setCustomId('hw26:shop:next').setLabel('Suivant ▶️').setStyle(ButtonStyle.Secondary).setDisabled(true),
+                new ButtonBuilder().setCustomId('hw26:shop:road').setLabel('🛣️ Road Halloween').setStyle(ButtonStyle.Primary),
+            );
+
             return {
-                components: [container],
+                components: [container, nav],
                 files: [new AttachmentBuilder(banner, { name: 'halloween-shop.jpg' })],
                 flags: 32768,
                 ephemeral: true,
@@ -126,6 +131,9 @@ module.exports = {
         collector.on('collect', async (i) => {
             if (i.user.id !== userId) {
                 return i.reply({ content: 'Pas ta boutique.', ephemeral: true });
+            }
+            if (i.customId === 'hw26:shop:road') {
+                return require('./halloween-road').execute(i);
             }
             if (i.customId.startsWith('hw26:pick:')) {
                 const item = SHOP.find((s) => s.id === i.customId.split(':')[2]);

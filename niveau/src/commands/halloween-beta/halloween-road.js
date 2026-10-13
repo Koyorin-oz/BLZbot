@@ -35,6 +35,8 @@ module.exports = {
         const done = store.completedCount(interaction.user.id);
         const png = await renderHalloweenRoad({
             username: interaction.user.username,
+            displayName: interaction.member?.displayName || interaction.user.globalName || interaction.user.username,
+            avatarURL: interaction.user.displayAvatarURL({ extension: 'png', size: 128 }),
             done,
             quests,
         });
