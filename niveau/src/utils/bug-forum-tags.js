@@ -316,7 +316,7 @@ async function checkInactiveBugForumPosts(client, now = Date.now()) {
           );
         await thread.send({
           content: target.here
-            ? "Ce signalement est sans activité depuis 3 jours @here. Veillez à le prendre en charge ou d'au moins parler du bug dans ce post."
+            ? `Ce signalement est sans activité depuis 3 jours <@${BUG_ASSIGNEE_USER_IDS.roxxor}> <@${BUG_ASSIGNEE_USER_IDS.koyorin}>. Veillez à le prendre en charge ou d'au moins parler du bug dans ce post.`
             : `Ce signalement est sans activité depuis 3 jours ${target.content}. Merci de le reprendre en charge ou de mettre son statut à jour.`,
           allowedMentions: target.here
             ? { parse: ["everyone"] }
