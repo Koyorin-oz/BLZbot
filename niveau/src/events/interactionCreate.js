@@ -176,7 +176,17 @@ module.exports = {
             } catch (error) {
                 await handleCommandError(interaction, error);
             }
-        } else if (interaction.isButton()) {
+        } else if (interaction.isButton() || (interaction.isStringSelectMenu() && interaction.customId?.startsWith('hw26:'))) {
+            if (interaction.customId?.startsWith('hw26:')) {
+                const { onButton } = require('../halloween2026/events');
+                try {
+                    const handled = await onButton(interaction);
+                    if (handled) return;
+                } catch (error) {
+                    logger.error('halloween button:', error);
+                }
+            }
+            if (!interaction.isButton()) return;
             if (interaction.customId.startsWith('bug_tag:')) {
                 const { handleBugTagButton } = require('../utils/bug-forum-tags');
                 try {

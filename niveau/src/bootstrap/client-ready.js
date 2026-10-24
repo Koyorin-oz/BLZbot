@@ -65,6 +65,12 @@ function registerClientReady(client, { isHalloweenActive }) {
         logger.warn('[countdown] Scheduler non démarré:', e?.message || e);
     }
 
+    try {
+        require('../halloween2026/hooks').start(client);
+    } catch (e) {
+        logger.warn('[halloween] beta non démarrée:', e?.message || e);
+    }
+
     const _deferRaw = parseInt(process.env.BLZ_DEFER_STARTUP_MS || '1500', 10);
     const startupBase = Number.isFinite(_deferRaw) && _deferRaw >= 0 ? _deferRaw : 1500;
     logger.info(`Connecté en tant que ${client.user.tag} !`);
@@ -424,9 +430,15 @@ function registerClientReady(client, { isHalloweenActive }) {
                         const questUser = { ...user, ...dbUser }; // Merge pour avoir les infos nécessaires
                         checkQuestProgress(client, 'VOICE_MINUTE', questUser);
 
-                        if (getEventState('halloween')) {
-                            const bonbonsGain = Math.floor(15 * globalEventMultiplier);
-                            if (bonbonsGain > 0) grantEventCurrency(userId, { bonbons: bonbonsGain });
+                        {
+                            const { isLive } = require('../halloween2026/live');
+                            if (isLive(guildId)) {
+                                const { onVoiceMinute } = require('../halloween2026/hooks');
+                                await onVoiceMinute(client, guild, userId);
+                            } else if (getEventState('halloween')) {
+                                const bonbonsGain = Math.floor(15 * globalEventMultiplier);
+                                if (bonbonsGain > 0) grantEventCurrency(userId, { bonbons: bonbonsGain });
+                            }
                         }
 
                         if (getNoelState('noël')) {

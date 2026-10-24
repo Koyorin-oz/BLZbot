@@ -51,6 +51,7 @@ const { getEventState } = require('./utils/db-halloween');
 const { initializeSharesSystem } = require('./utils/ranked-shares');
 const {
     loadTopLevelCommands,
+    loadHalloweenBeta,
     loadSeasonalCommands,
     loadRebornSlashCommands,
 } = require('./utils/command-loader');
@@ -75,6 +76,7 @@ const client = new Client({
 
 client.commands = new Collection();
 loadTopLevelCommands(client);
+loadHalloweenBeta(client);
 loadSeasonalCommands(client);
 const rebornIntegration = require('./utils/reborn-integration');
 const rebornLoaded = loadRebornSlashCommands(client);
