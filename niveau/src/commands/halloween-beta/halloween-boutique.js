@@ -133,15 +133,16 @@ module.exports = {
                 new ButtonBuilder().setCustomId('hw26:shop:road').setLabel('🛣️ Road Halloween').setStyle(ButtonStyle.Primary),
             );
 
-            return {
-                components: [container, nav],
-                files: [new AttachmentBuilder(banner, { name: 'halloween-shop.jpg' })],
-                flags: 32768,
-                ephemeral: true,
-            };
+            return { components: [container, nav], flags: 32768 };
         };
 
-        const response = await interaction.reply(payload());
+        const response = await interaction.reply({
+            ...payload(),
+            files: [new AttachmentBuilder(banner, { name: 'halloween-shop.jpg' })],
+        });
+        const announce = (i, msg) => (msg.startsWith('Acheté')
+            ? i.followUp({ content: `${i.user} ${msg}` })
+            : i.followUp({ content: msg, ephemeral: true })).catch(() => {});
         const collector = response.createMessageComponentCollector({ time: 5 * 60 * 1000 });
 
         collector.on('collect', async (i) => {
@@ -179,6 +180,7 @@ module.exports = {
                     const msg = await buyOnce(b, item, currency);
                     await b.editReply({ content: msg, components: [] }).catch(() => {});
                     await interaction.editReply(payload()).catch(() => {});
+                    if (msg.startsWith('Acheté')) await announce(b, msg);
                 });
                 return;
             }
@@ -188,7 +190,7 @@ module.exports = {
             await i.deferUpdate();
             const msg = await buyOnce(i, item, currency);
             await interaction.editReply(payload()).catch(() => {});
-            await i.followUp({ content: msg, ephemeral: true }).catch(() => {});
+            await announce(i, msg);
         });
     },
 };

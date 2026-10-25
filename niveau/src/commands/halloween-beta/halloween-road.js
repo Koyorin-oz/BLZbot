@@ -19,7 +19,7 @@ module.exports = {
         if (await memberHasShopRole(interaction.member)) {
             await progress(interaction.client, interaction.guild, interaction.user.id, 'roles', 1);
         }
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply();
 
         const quests = ROAD.map((q) => {
             const row = store.roadRow(interaction.user.id, q.id);

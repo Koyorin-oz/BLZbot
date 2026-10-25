@@ -38,7 +38,6 @@ module.exports = {
         const verb = amount >= 0 ? 'donné' : 'retiré';
         return interaction.reply({
             content: `${Math.abs(amount).toLocaleString('fr-FR')} ${LABEL[currency]} ${verb} à ${target}. Nouveau solde : **${after.toLocaleString('fr-FR')}**.`,
-            ephemeral: true,
         });
     },
 };

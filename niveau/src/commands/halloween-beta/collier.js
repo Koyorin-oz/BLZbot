@@ -18,6 +18,6 @@ module.exports = {
             return interaction.reply({ content: 'Plus de charge. Le collier s\'achète à la boutique (3 charges).', ephemeral: true });
         }
         store.clearCurse(interaction.user.id);
-        return interaction.reply({ content: 'Malédiction retirée. Une charge en moins.', ephemeral: true });
+        return interaction.reply({ content: `📿 ${interaction.user} a brisé sa malédiction avec son collier.` });
     },
 };
