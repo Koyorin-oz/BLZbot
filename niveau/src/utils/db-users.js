@@ -15,12 +15,13 @@ const BOOSTED_ROLE_IDS = ['1170361439345704962', '1323305704932507648'];
 // Préparer les requêtes pour de meilleures performances
 const getUserStmt = db.prepare('SELECT * FROM users WHERE id = ?');
 const createUserStmt = db.prepare('INSERT INTO users (id, username) VALUES (?, ?)');
-const grantResourcesStmt = db.prepare('UPDATE users SET xp = xp + ?, stars = stars + ? WHERE id = ?');
+const grantResourcesStmt = db.prepare('UPDATE users SET xp = xp + ?, stars = MAX(0, stars + ?) WHERE id = ?');
 const updateMaxPointsStmt = db.prepare('UPDATE users SET max_points = ? WHERE id = ? AND ? > max_points');
 const updateMaxStarsStmt = db.prepare('UPDATE users SET max_stars = ? WHERE id = ? AND ? > max_stars');
 const setLevelStmt = db.prepare('UPDATE users SET level = ?, xp = ?, xp_needed = ? WHERE id = ?');
 const setPointsStmt = db.prepare('UPDATE users SET points = ? WHERE id = ?');
 const setStarsStmt = db.prepare('UPDATE users SET stars = ? WHERE id = ?');
+db.forEachEconomyDatabase((d) => d.prepare('UPDATE users SET stars = 0 WHERE stars < 0').run());
 const resetUserStmt = db.prepare(`
     UPDATE users
     SET xp = 0, level = 1, xp_needed = 100, points = 0, stars = 0, daily_last_claimed = 0, last_decay_timestamp = 0
@@ -321,11 +322,10 @@ async function grantResources(client, userId, { xp = 0, points = 0, stars = 0, s
                 if (levelChanged) {
                     try {
                         const { onLevel } = require('../halloween2026/hooks');
-                        const { TEST_GUILD_ID, MAIN_GUILD_ID } = require('../halloween2026/config');
-                        for (const gid of [TEST_GUILD_ID, MAIN_GUILD_ID]) {
-                            const g = client?.guilds?.cache?.get(gid);
-                            if (g) onLevel(client, g, userId).catch(() => {});
-                        }
+                        const { MAIN_GUILD_ID } = require('../halloween2026/config');
+                        const { economyGuildId } = require('./economy-scope');
+                        const g = client?.guilds?.cache?.get(economyGuildId.getStore() || MAIN_GUILD_ID);
+                        if (g) onLevel(client, g, userId).catch(() => {});
                     } catch { /* halloween */ }
                 }
             }
@@ -723,7 +723,7 @@ function updateUserBalance(userId, { xp = 0, points = 0, stars = 0 }) {
             if (rebornEconomyActive()) {
                 addRebornStars(userId, stars);
             } else {
-                const stmt = db.prepare('UPDATE users SET stars = stars + ? WHERE id = ?');
+                const stmt = db.prepare('UPDATE users SET stars = MAX(0, stars + ?) WHERE id = ?');
                 stmt.run(stars, userId);
             }
         }

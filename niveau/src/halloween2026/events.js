@@ -3,14 +3,18 @@ const {
     ButtonBuilder,
     ButtonStyle,
 } = require('discord.js');
-const { PHRASES, parisParts } = require('./config');
+const { PHRASES, parisParts, eventRunning } = require('./config');
 const { generalId, progress } = require('./rewards');
 const { isLive } = require('./live');
 const { grantEventCurrency } = require('../utils/db-halloween');
 const store = require('./store');
 
+const MIN = 60 * 1000;
+
 /** @type {Map<string, any>} */
 const running = new Map();
+/** @type {Map<string, string>} guildId -> "date:hour" du dernier spawn */
+const lastSpawn = new Map();
 
 function quietHour() {
     const h = parisParts().hour;
@@ -68,21 +72,21 @@ async function spawnMorpion(channel, guildId) {
         content: '**Event Halloween — Morpion**\nLes 2 premiers à cliquer se battent. Le gagnant choisit 300 bonbons ou 100 citrouilles.',
         components: [row],
     });
-    running.set(msg.id, { type: 'morpion', guildId, players: [], cells: Array(9).fill(null), turn: 0, channelId: channel.id });
+    running.set(msg.id, { type: 'morpion', guildId, players: [], cells: Array(9).fill(null), turn: 0, channelId: channel.id, expires: Date.now() + 3 * MIN });
 }
 
 async function spawnAuction(channel, guildId) {
     const msg = await channel.send(
         '**Event Halloween — Enchères** (1 min)\nÉcris juste un nombre : tes starss misés. La plus grosse mise gagne 500 bonbons ou 200 citrouilles (au choix).',
     );
-    running.set(msg.id, { type: 'auction', guildId, channelId: channel.id, bids: [], ends: Date.now() + 60 * 1000 });
+    running.set(msg.id, { type: 'auction', guildId, channelId: channel.id, bids: [], ends: Date.now() + MIN, expires: Date.now() + 2 * MIN });
     setTimeout(() => closeAuction(channel.client, msg.id).catch(() => {}), 60 * 1000);
 }
 
 async function spawnRewrite(channel, guildId) {
     const msg = await channel.send('**Event Halloween — Réécris**\nDans 15 secondes une phrase apparaît. Le premier qui la recopie gagne.');
     const phrase = PHRASES[Math.floor(Math.random() * PHRASES.length)];
-    running.set(msg.id, { type: 'rewrite', guildId, channelId: channel.id, phrase: null, ends: Date.now() + 45 * 1000 });
+    running.set(msg.id, { type: 'rewrite', guildId, channelId: channel.id, phrase: null, ends: Date.now() + 45 * 1000, expires: Date.now() + MIN });
     setTimeout(async () => {
         const state = running.get(msg.id);
         if (!state || state.phrase) return;
@@ -115,6 +119,7 @@ async function onButton(interaction) {
     if (id === 'hw26:streak:xp' || id === 'hw26:streak:role') {
         const { getOrCreateEventUser } = require('../utils/db-halloween');
         const { ROAD } = require('./config');
+        require('./rewards').ensureMissed(interaction.user.id);
         const u = getOrCreateEventUser(interaction.user.id);
         if (u.streak_done) return interaction.reply({ content: 'Choix déjà fait.', ephemeral: true });
         if (store.completedCount(interaction.user.id) < ROAD.length) {
@@ -133,7 +138,8 @@ async function onButton(interaction) {
     if (id.startsWith('hw26:reward:')) {
         const stateId = interaction.message.id;
         const state = running.get(stateId);
-        if (!state || state.winner !== interaction.user.id) {
+        if (!state) return interaction.reply({ content: 'Trop tard, la récompense a expiré.', ephemeral: true });
+        if (state.winner !== interaction.user.id) {
             return interaction.reply({ content: 'Pas pour toi.', ephemeral: true });
         }
         const pack = state.reward;
@@ -165,13 +171,11 @@ async function onButton(interaction) {
                 .setLabel(`${r * 3 + c + 1}`)
                 .setStyle(ButtonStyle.Secondary)),
         ));
+        game.expires = Date.now() + 2 * MIN;
         await interaction.update({
             content: `Morpion : <@${game.players[0]}> (X) vs <@${game.players[1]}> (O)\nTour de <@${game.players[0]}>\n${boardText(game.cells)}`,
             components: rows,
         });
-        running.set(interaction.message.id, game);
-        running.delete(msgId);
-        if (interaction.message.id !== msgId) running.set(interaction.message.id, game);
         return true;
     }
 
@@ -182,6 +186,7 @@ async function onButton(interaction) {
         if (game.cells[idx]) return interaction.reply({ content: 'Case prise.', ephemeral: true });
         game.cells[idx] = game.turn % 2 === 0 ? 'X' : 'O';
         game.turn += 1;
+        game.expires = Date.now() + 2 * MIN;
         const win = winnerOf(game.cells);
         if (!win) {
             const rows = [0, 1, 2].map((r) => new ActionRowBuilder().addComponents(
@@ -205,7 +210,6 @@ async function onButton(interaction) {
         const winnerId = win === 'X' ? game.players[0] : game.players[1];
         game.winner = winnerId;
         game.reward = { bonbons: 300, citrouilles: 100 };
-        running.set(interaction.message.id, game);
         await interaction.update({
             content: `Morpion fini. <@${winnerId}> choisit.`,
             components: [pickRow('hw26:reward')],
@@ -231,6 +235,7 @@ async function handleChatEvent(message) {
             state.done = true;
             state.winner = message.author.id;
             state.reward = { bonbons: 450, citrouilles: 150 };
+            state.expires = Date.now() + 2 * MIN;
             await progress(message.client, message.guild, message.author.id, 'event', 1);
             const row = pickRow('hw26:reward');
             const sent = await message.channel.send({
@@ -257,6 +262,7 @@ async function closeAuction(client, msgId) {
         mainDb.prepare('UPDATE users SET stars = stars - ? WHERE id = ?').run(bid.amount, bid.userId);
         state.winner = bid.userId;
         state.reward = { bonbons: 500, citrouilles: 200 };
+        state.expires = Date.now() + 2 * MIN;
         const sent = await channel.send({
             content: `Enchères : <@${bid.userId}> remporte avec ${bid.amount} starss. Choisis.`,
             components: [pickRow('hw26:reward')],
@@ -267,15 +273,36 @@ async function closeAuction(client, msgId) {
     await channel.send('Enchères finies, aucune mise valide.');
 }
 
+/** Ferme les events abandonnés ; une récompense jamais choisie part en bonbons. */
+async function sweep(client) {
+    const now = Date.now();
+    for (const [id, s] of [...running.entries()]) {
+        if (!s.expires || s.expires > now) continue;
+        running.delete(id);
+        let note = 'Event expiré.';
+        if (s.winner && s.reward) {
+            grantEventCurrency(s.winner, { bonbons: s.reward.bonbons });
+            note = `Pas de choix : <@${s.winner}> reçoit ${s.reward.bonbons} bonbons.`;
+        }
+        const ch = client.channels.cache.get(s.channelId);
+        const msg = ch?.messages ? await ch.messages.fetch(id).catch(() => null) : null;
+        if (msg?.editable) await msg.edit({ content: `${msg.content}\n\n${note}`, components: [] }).catch(() => {});
+    }
+}
+
 function startEvents(client) {
     setInterval(async () => {
+        await sweep(client).catch(() => {});
         const p = parisParts();
-        if (p.minute !== 0 || quietHour()) return;
+        if (p.minute !== 0 || quietHour() || !eventRunning()) return;
+        const slot = `${p.date}:${p.hour}`;
         const { TEST_GUILD_ID, MAIN_GUILD_ID } = require('./config');
         for (const id of [TEST_GUILD_ID, MAIN_GUILD_ID]) {
-            if (!isLive(id)) continue;
+            if (!isLive(id) || lastSpawn.get(id) === slot) continue;
             const guild = client.guilds.cache.get(id);
-            if (guild) await spawn(client, guild).catch(() => {});
+            if (!guild) continue;
+            lastSpawn.set(id, slot);
+            await spawn(client, guild).catch(() => {});
         }
     }, 20 * 1000);
 }

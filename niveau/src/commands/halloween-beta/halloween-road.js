@@ -14,7 +14,8 @@ module.exports = {
         if (!isLive(interaction.guildId)) {
             return interaction.reply({ content: 'Update Halloween pas encore sur ce serveur.', ephemeral: true });
         }
-        const { memberHasShopRole, progress } = require('../../halloween2026/rewards');
+        const { memberHasShopRole, progress, ensureMissed } = require('../../halloween2026/rewards');
+        ensureMissed(interaction.user.id);
         if (await memberHasShopRole(interaction.member)) {
             await progress(interaction.client, interaction.guild, interaction.user.id, 'roles', 1);
         }

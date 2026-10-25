@@ -47,6 +47,15 @@ function markDeployed(guildId) {
     meta(`deployed:${guildId}`, '1');
 }
 
+/** Repart de zéro pour 2026 : la table event_users garde les soldes des Halloween précédents. */
+function freshSeason() {
+    db.transaction(() => {
+        db.prepare('UPDATE event_users SET bonbons = 0, citrouilles = 0, fantomes = 0, colliers = 0, perm_xp = 0, streak_done = 0, msg_mod = 0').run();
+        db.prepare('DELETE FROM hw_road').run();
+        db.prepare('DELETE FROM hw_curse').run();
+    })();
+}
+
 function roadRow(userId, questId) {
     let row = db.prepare('SELECT * FROM hw_road WHERE user_id = ? AND quest_id = ?').get(userId, questId);
     if (!row) {
@@ -133,6 +142,7 @@ module.exports = {
     meta,
     isDeployed,
     markDeployed,
+    freshSeason,
     roadRow,
     addProgress,
     bumpMsg,

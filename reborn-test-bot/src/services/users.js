@@ -36,9 +36,16 @@ function setStars(userId, amount) {
 }
 
 function addStars(userId, delta) {
-  const n = getStars(userId) + (typeof delta === 'bigint' ? delta : B(delta));
+  let n = getStars(userId) + (typeof delta === 'bigint' ? delta : B(delta));
+  if (n < 0n) n = 0n;
   setStars(userId, n);
   return n;
+}
+
+try {
+  db.prepare("UPDATE users SET stars = '0' WHERE CAST(stars AS INTEGER) < 0").run();
+} catch {
+  /* table pas encore créée */
 }
 
 function getPoints(userId) {

@@ -303,10 +303,6 @@ function registerClientReady(client, { isHalloweenActive }) {
         updateAllUnknownUsernames();
     }
 
-    // RANKED V2: Démarrer le système anti-AFK vocal
-    const { start: startVoiceAfkChecker } = require('../utils/voice-afk-checker');
-    startVoiceAfkChecker(client);
-
     // Tâche périodique pour les récompenses vocales
     setInterval(async () => {
         if (usersInVoice.size === 0) return;
@@ -391,27 +387,13 @@ function registerClientReady(client, { isHalloweenActive }) {
                             pointsGain = Math.floor(baseRpAmount / 5);
                         }
 
-                        // RANKED V2: pénalité AFK (réglable via /anti-afk → sanctions)
-                        const {
-                            getRPMultiplier,
-                            getXpPenaltyMultiplier,
-                            getStarsPenaltyMultiplier,
-                        } = require('../utils/ranked-state');
-                        const rpM = getRPMultiplier(userId);
-                        const xpM = getXpPenaltyMultiplier(userId);
-                        const stM = getStarsPenaltyMultiplier(userId);
-                        xpGain = Math.floor(xpGain * xpM);
-                        pointsGain = Math.floor(pointsGain * rpM);
-
-                        const starsGain = Math.floor(0 * stM);
-
                         // Multiplicateur global pour les événements (si un soft cap est atteint, on réduit aussi les gains d'event)
                         let globalEventMultiplier = 1;
                         if (dailyVoiceXP >= 10000 || dailyVoicePoints >= 5000) {
                             globalEventMultiplier = 0.2; // 1/5
                         }
 
-                        const nerfedRewards = { xp: xpGain, points: pointsGain, stars: starsGain, source: 'vocal' };
+                        const nerfedRewards = { xp: xpGain, points: pointsGain, stars: 0, source: 'vocal' };
 
                         // Update Database UPDATE daily counters
                         db.prepare('UPDATE users SET daily_voice_xp = daily_voice_xp + ?, daily_voice_points = daily_voice_points + ? WHERE id = ?').run(xpGain, pointsGain, userId);
@@ -422,9 +404,8 @@ function registerClientReady(client, { isHalloweenActive }) {
                         // MAJ Mars 2026: Accorder des PT pour le Puits de Combat (20 PT/min vocal)
                         grantTiragePoints(userId, PT_PER_VOICE_MINUTE);
 
-                        const penalizedVoice = rpM < 1 || xpM < 1 || stM < 1;
                         logger.info(
-                            `Récompense vocale pour ${user.username}: +${xpGain} XP, +${pointsGain} RP${penalizedVoice ? ' (PÉNALISÉ)' : ''} +${PT_PER_VOICE_MINUTE} PT (Daily XP tot: ${dailyVoiceXP + xpGain}, Daily RP tot: ${dailyVoicePoints + pointsGain})`
+                            `Récompense vocale pour ${user.username}: +${xpGain} XP, +${pointsGain} RP +${PT_PER_VOICE_MINUTE} PT (Daily XP tot: ${dailyVoiceXP + xpGain}, Daily RP tot: ${dailyVoicePoints + pointsGain})`
                         );
 
                         const questUser = { ...user, ...dbUser }; // Merge pour avoir les infos nécessaires

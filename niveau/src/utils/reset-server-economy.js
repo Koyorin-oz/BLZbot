@@ -193,6 +193,12 @@ function resetServerEconomy() {
         }
     });
 
+    try {
+        require('../halloween2026/store').db.prepare('UPDATE event_users SET perm_xp = 0').run();
+    } catch (e) {
+        logger.error('[reset-economy] x2 EXP Halloween:', e?.message || e);
+    }
+
     logger.warn(
         `[reset-economy] Économie réinitialisée — ${totalUsersReset} profil(s), ${totalGuildsReset} guilde(s) (trésorerie/boosts guilde).`
     );

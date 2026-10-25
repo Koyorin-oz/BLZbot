@@ -5,16 +5,19 @@ const { grantEventCurrency, getOrCreateEventUser } = require('../utils/db-hallow
 
 const HOUR = 60 * 60 * 1000;
 
-function pay(userId, quest) {
+/** +1h de boost, ajouté à la fin d'un boost déjà en cours. */
+function addBoostHour(userId, column) {
     const mainDb = require('../database/database');
-    const until = Date.now() + HOUR;
+    const now = Date.now();
+    mainDb.prepare(`UPDATE users SET ${column} = MAX(COALESCE(${column}, 0), ?) + ? WHERE id = ?`).run(now, HOUR, userId);
+}
+
+function pay(userId, quest) {
     if (quest.id === 'd23') grantEventCurrency(userId, { bonbons: 500 });
     else if (quest.id === 'd24') grantEventCurrency(userId, { citrouilles: 200 });
-    else if (quest.id === 'd25' || quest.id === 'd29') {
-        mainDb.prepare('UPDATE users SET xp_boost_until = ? WHERE id = ?').run(until, userId);
-    } else if (quest.id === 'd26') {
-        mainDb.prepare('UPDATE users SET stars_boost_until = ? WHERE id = ?').run(until, userId);
-    } else if (quest.id === 'd27') grantEventCurrency(userId, { bonbons: 1000 });
+    else if (quest.id === 'd25' || quest.id === 'd29') addBoostHour(userId, 'xp_boost_until');
+    else if (quest.id === 'd26') addBoostHour(userId, 'stars_boost_until');
+    else if (quest.id === 'd27') grantEventCurrency(userId, { bonbons: 1000 });
     else if (quest.id === 'd28') grantEventCurrency(userId, { citrouilles: 400 });
     else if (quest.id === 'd30') store.addItem(userId, 'colliers', 3);
     else if (quest.id === 'd31') store.addItem(userId, 'fantomes', 1);
@@ -25,7 +28,7 @@ async function ensureRole(guild, name, color) {
     if (!role) {
         role = await guild.roles.create({
             name,
-            color,
+            colors: { primaryColor: color },
             reason: 'Halloween 2026',
             permissions: [],
         });
@@ -38,7 +41,24 @@ async function memberHasShopRole(member) {
     return member.roles.cache.some((r) => r.name === 'Roi des citrouilles' || r.name === 'Roi des bonbons');
 }
 
+/** Quêtes déjà fermées au lancement sur le principal : validées et payées une fois par joueur. */
+function ensureMissed(userId) {
+    const { questOpen, parisParts, MAIN_GUILD_ID } = require('./config');
+    const launchedAt = Number(store.meta(`launched_at:${MAIN_GUILD_ID}`) || 0);
+    if (!launchedAt) return;
+    const launch = new Date(launchedAt);
+    const launchDate = parisParts(launch).date;
+    for (const quest of ROAD) {
+        if (quest.date >= launchDate || questOpen(quest, launch)) continue;
+        const row = store.roadRow(userId, quest.id);
+        if (row.done) continue;
+        store.db.prepare('UPDATE hw_road SET progress = ?, done = 1 WHERE user_id = ? AND quest_id = ?').run(quest.goal, userId, quest.id);
+        pay(userId, quest);
+    }
+}
+
 async function progress(client, guild, userId, type, amount = 1) {
+    ensureMissed(userId);
     const { activeQuests } = require('./config');
     const quests = activeQuests().filter((q) => q.type === type);
     const lines = [];
@@ -93,6 +113,8 @@ function canManage(guild) {
 
 module.exports = {
     pay,
+    addBoostHour,
+    ensureMissed,
     ensureRole,
     memberHasShopRole,
     progress,

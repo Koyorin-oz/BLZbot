@@ -248,8 +248,6 @@ const CHILD_LINE_SKIP = [
     /play-dl stream échoue/i,
     /Sign in to confirm/i,
     /salon \d+ introuvable/i,
-    /n'a pas répondu au captcha/i,
-    /Erreur lors de l'événement AFK/i,
     /Erreur lors de l'ajout du rôle booster/i,
     /Erreur lors du retrait du rôle booster/i,
     /SQLITE_CONSTRAINT/i,

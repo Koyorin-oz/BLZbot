@@ -3,6 +3,8 @@
 const TEST_GUILD_ID = '1493276404643532810';
 const MAIN_GUILD_ID = '1097110036192448656';
 const PRC_ROLE_ID = '1393152287303663648';
+const EVENT_START = '2026-10-23';
+const EVENT_END = '2026-11-01';
 
 const ROAD = [
     { id: 'd23', date: '2026-10-23', type: 'messages', goal: 50, label: 'Envoyer 50 messages', reward: '500 bonbons' },
@@ -71,6 +73,12 @@ function activeQuests(now = new Date()) {
     return ROAD.filter((q) => questOpen(q, now));
 }
 
+/** Gains passifs + events du général : du 23/10 au 01/11 inclus (Paris). */
+function eventRunning(now = new Date()) {
+    const d = parisParts(now).date;
+    return d >= EVENT_START && d <= EVENT_END;
+}
+
 module.exports = {
     TEST_GUILD_ID,
     MAIN_GUILD_ID,
@@ -81,4 +89,5 @@ module.exports = {
     parisParts,
     questOpen,
     activeQuests,
+    eventRunning,
 };

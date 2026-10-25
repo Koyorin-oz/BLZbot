@@ -49,7 +49,8 @@ function calculateOverstaffPenalty(guildId) {
     if (membersOver === 0) return { penalty: 0, daysOverstaffed: 0, membersOver: 0 };
     
     const daysOverstaffed = getDaysSinceOverstaffed(guild);
-    const penalty = membersOver * PENALTY_PER_MEMBER_PER_DAY * daysOverstaffed;
+    // Retirée chaque jour : ne pas multiplier par les jours, sinon le total explose.
+    const penalty = membersOver * PENALTY_PER_MEMBER_PER_DAY;
     
     return { penalty, daysOverstaffed, membersOver };
 }

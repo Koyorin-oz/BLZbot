@@ -13,7 +13,7 @@ const {
 const { SHOP } = require('../../halloween2026/config');
 const { isLive } = require('../../halloween2026/live');
 const { grantEventCurrency, getOrCreateEventUser } = require('../../utils/db-halloween');
-const { progress, giveShopRole } = require('../../halloween2026/rewards');
+const { progress, giveShopRole, addBoostHour } = require('../../halloween2026/rewards');
 const store = require('../../halloween2026/store');
 const { getOrCreateUser } = require('../../utils/db-users');
 const fs = require('fs');
@@ -39,19 +39,35 @@ async function applyBuy(interaction, item, currency) {
     if (item.kind === 'role' && interaction.member.roles.cache.some((r) => r.name === item.name)) {
         return 'Tu as déjà ce rôle.';
     }
+    if (item.kind === 'role') {
+        try {
+            await giveShopRole(interaction.member, item);
+        } catch {
+            return 'Le bot n\'a pas pu donner le rôle (permission Gérer les rôles). Rien n\'a été débité.';
+        }
+    }
     grantEventCurrency(interaction.user.id, { [currency]: -price });
-    const mainDb = require('../../database/database');
     getOrCreateUser(interaction.user.id, interaction.user.username);
-    const until = Date.now() + 60 * 60 * 1000;
-    if (item.kind === 'role') await giveShopRole(interaction.member, item);
-    else if (item.kind === 'boost_xp') mainDb.prepare('UPDATE users SET xp_boost_until = ? WHERE id = ?').run(until, interaction.user.id);
-    else if (item.kind === 'boost_stars') mainDb.prepare('UPDATE users SET stars_boost_until = ? WHERE id = ?').run(until, interaction.user.id);
+    if (item.kind === 'boost_xp') addBoostHour(interaction.user.id, 'xp_boost_until');
+    else if (item.kind === 'boost_stars') addBoostHour(interaction.user.id, 'stars_boost_until');
     else if (item.kind === 'item_fantome') store.addItem(interaction.user.id, 'fantomes', 1);
     else if (item.kind === 'item_collier') store.addItem(interaction.user.id, 'colliers', 3);
     await progress(interaction.client, interaction.guild, interaction.user.id, 'shop', 1);
     if (item.kind === 'role') await progress(interaction.client, interaction.guild, interaction.user.id, 'roles', 1);
     const unit = currency === 'bonbons' ? 'bonbons' : 'citrouilles';
     return `Acheté : **${item.name}** (${price.toLocaleString('fr-FR')} ${unit}).`;
+}
+
+const buying = new Set();
+
+async function buyOnce(interaction, item, currency) {
+    if (buying.has(interaction.user.id)) return 'Achat déjà en cours.';
+    buying.add(interaction.user.id);
+    try {
+        return await applyBuy(interaction, item, currency);
+    } finally {
+        buying.delete(interaction.user.id);
+    }
 }
 
 module.exports = {
@@ -159,8 +175,9 @@ module.exports = {
                 const sub = pickMsg.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000, max: 1 });
                 sub.on('collect', async (b) => {
                     const currency = b.customId.endsWith(':citrouilles') ? 'citrouilles' : 'bonbons';
-                    const msg = await applyBuy(b, item, currency);
-                    await b.update({ content: msg, components: [] });
+                    await b.deferUpdate();
+                    const msg = await buyOnce(b, item, currency);
+                    await b.editReply({ content: msg, components: [] }).catch(() => {});
                     await interaction.editReply(payload()).catch(() => {});
                 });
                 return;
@@ -168,9 +185,9 @@ module.exports = {
             if (!i.customId.startsWith('hw26:buy:')) return;
             const [, , itemId, currency] = i.customId.split(':');
             const item = SHOP.find((s) => s.id === itemId);
-            const msg = await applyBuy(i, item, currency);
             await i.deferUpdate();
-            await interaction.editReply(payload());
+            const msg = await buyOnce(i, item, currency);
+            await interaction.editReply(payload()).catch(() => {});
             await i.followUp({ content: msg, ephemeral: true }).catch(() => {});
         });
     },

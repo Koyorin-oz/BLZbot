@@ -677,7 +677,7 @@ L'item `remboursement` permet de rembourser intégralement une dette instantané
 
 ---
 
-## 21. Système Ranked (AFK + RP)
+## 21. Système Ranked (RP)
 
 ### RP Ranked (économie REBORN)
 
@@ -686,15 +686,9 @@ Fichier : `reborn-test-bot/src/services/rankedRp.js`.
 
 FAQ type ticket : « la perte de RP a augmenté depuis la màj ? » → **Non**. Même table de decay 24 h. Sensation de perte = gains bas en haut de ladder + pool + inactivité.
 
-### Anti-AFK vocal
-
-- Après ~15 min d’inactivité en vocal, captcha TTS
-- Échec = pénalité (kick / réduction de gains)
-
 ### Fichiers
 
 - `reborn-test-bot/src/services/rankedRp.js` — gains + decay RP
-- `niveau/.../voice-afk-checker.js` — captcha AFK
 - `niveau/.../ranked-shares.js` — legacy shares (si REBORN off)
 
 ---

@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const { MAIN_GUILD_ID } = require('../../halloween2026/config');
-const { markDeployed } = require('../../halloween2026/store');
+const { markDeployed, isDeployed, freshSeason, meta } = require('../../halloween2026/store');
 const { pushGuild } = require('../../halloween2026/register');
 
 module.exports = {
@@ -15,10 +15,17 @@ module.exports = {
         }
         await interaction.deferReply({ ephemeral: true });
         try {
+            const first = !isDeployed(MAIN_GUILD_ID);
+            if (first) {
+                freshSeason();
+                meta(`launched_at:${MAIN_GUILD_ID}`, Date.now());
+            }
             markDeployed(MAIN_GUILD_ID);
             const names = await pushGuild(interaction.client, MAIN_GUILD_ID);
             return interaction.editReply(
-                `Update Halloween active sur le serveur principal (${MAIN_GUILD_ID}).\nCommandes : ${names.join(', ')}\nCtrl+Maj+R si le menu / tarde.`,
+                `Update Halloween active sur le serveur principal (${MAIN_GUILD_ID}).\n` +
+                (first ? 'Soldes bonbons / citrouilles, road et items remis à zéro. Le serveur de test est coupé.\n' : 'Déjà active, rien n\'a été remis à zéro.\n') +
+                `Commandes : ${names.join(', ')}\nCtrl+Maj+R si le menu / tarde.`,
             );
         } catch (e) {
             return interaction.editReply(`Échec : ${e?.message || e}`);

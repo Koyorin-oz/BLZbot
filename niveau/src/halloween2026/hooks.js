@@ -2,7 +2,7 @@ const { isLive } = require('./live');
 const store = require('./store');
 const { grantEventCurrency } = require('../utils/db-halloween');
 const { progress, memberHasShopRole, generalId } = require('./rewards');
-const { parisParts, PRC_ROLE_ID } = require('./config');
+const { parisParts, PRC_ROLE_ID, eventRunning } = require('./config');
 const { handleChatEvent } = require('./events');
 
 const PRC_GAP = 60 * 60 * 1000;
@@ -18,10 +18,7 @@ async function onMessage(message) {
         store.meta(`prc:lastmsg:${gid}`, Date.now());
         await handleChatEvent(message);
     }
-
-    if (store.isCursed(message.author.id)) {
-        /* les gains messages restent, la malus est sur XP / starss / RP */
-    }
+    if (!eventRunning()) return;
 
     const citrouille = store.bumpMsg(message.author.id);
     grantEventCurrency(message.author.id, { bonbons: 1, citrouilles: citrouille });
@@ -33,7 +30,7 @@ async function onMessage(message) {
 }
 
 async function onVoiceMinute(client, guild, userId) {
-    if (!guild || !isLive(guild.id)) return;
+    if (!guild || !isLive(guild.id) || !eventRunning()) return;
     grantEventCurrency(userId, { bonbons: 3, citrouilles: 1 });
     await progress(client, guild, userId, 'voice', 1);
 }
