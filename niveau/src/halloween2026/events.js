@@ -60,6 +60,15 @@ function quietHour() {
     return h >= 1 && h < 9;
 }
 
+/** @here sur le premier event du jour seulement (date Paris, gardée en base pour survivre aux redémarrages). */
+function hereOnce(guildId) {
+    const today = parisParts().date;
+    const key = `here:${guildId}`;
+    if (store.meta(key) === today) return {};
+    store.meta(key, today);
+    return { content: '@here', allowedMentions: { parse: ['everyone'] } };
+}
+
 function rewardText(r) {
     const bits = [];
     if (r.bonbons) bits.push(`**${r.bonbons.toLocaleString('fr-FR')}** 🍬 bonbons`);
@@ -72,15 +81,23 @@ function closedEmbed(message, field) {
     return base.addFields(field);
 }
 
-async function spawn(client, guild) {
-    if (!isLive(guild.id) || quietHour()) return;
-    if ([...running.values()].some((s) => s.guildId === guild.id)) return;
-    const channel = await generalChannel(guild);
-    if (!channel) return;
+const KINDS = ['citrouille', 'bonbons', 'fantome', 'chaudron', 'phrase'];
 
-    const roll = Math.floor(Math.random() * (DROPS.length + 1));
-    if (roll < DROPS.length) await spawnDrop(channel, guild.id, DROPS[roll]);
+/**
+ * @param {{ force?: boolean, kind?: string }} [opts] force : ignore la pause de nuit (commande admin)
+ * @returns {Promise<string>} 'ok' | 'busy' | 'quiet' | 'off' | 'nochannel'
+ */
+async function spawn(client, guild, { force = false, kind = null } = {}) {
+    if (!isLive(guild.id)) return 'off';
+    if (!force && quietHour()) return 'quiet';
+    if ([...running.values()].some((s) => s.guildId === guild.id)) return 'busy';
+    const channel = await generalChannel(guild);
+    if (!channel) return 'nochannel';
+
+    const index = kind ? KINDS.indexOf(kind) : Math.floor(Math.random() * KINDS.length);
+    if (index < DROPS.length) await spawnDrop(channel, guild.id, DROPS[index]);
     else await spawnRewrite(channel, guild.id);
+    return 'ok';
 }
 
 async function spawnDrop(channel, guildId, drop) {
@@ -94,7 +111,7 @@ async function spawnDrop(channel, guildId, drop) {
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('hw26:grab').setLabel(drop.button).setEmoji(drop.emoji).setStyle(ButtonStyle.Success),
     );
-    const msg = await channel.send({ embeds: [embed], components: [row] });
+    const msg = await channel.send({ ...hereOnce(guildId), embeds: [embed], components: [row] });
     running.set(msg.id, { type: 'drop', guildId, channelId: channel.id, reward, expires: Date.now() + 5 * MIN });
 }
 
@@ -106,7 +123,7 @@ async function spawnRewrite(channel, guildId) {
         .setDescription('Dans **15 secondes**, une phrase va apparaître ici.\nLe **premier** qui la recopie exactement gagne.')
         .addFields({ name: '🎁 Récompense', value: `Au choix : ${rewardText({ bonbons: 450 })} ou ${rewardText({ citrouilles: 150 })}` })
         .setFooter(FOOTER);
-    const msg = await channel.send({ embeds: [embed] });
+    const msg = await channel.send({ ...hereOnce(guildId), embeds: [embed] });
     running.set(msg.id, { type: 'rewrite', guildId, channelId: channel.id, phrase: null, expires: Date.now() + MIN });
 
     setTimeout(async () => {
@@ -258,4 +275,4 @@ function startEvents(client) {
     }, 20 * 1000);
 }
 
-module.exports = { onButton, handleChatEvent, startEvents, spawn };
+module.exports = { onButton, handleChatEvent, startEvents, spawn, KINDS };
