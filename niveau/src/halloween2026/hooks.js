@@ -1,8 +1,9 @@
 const { isLive } = require('./live');
 const store = require('./store');
 const { grantEventCurrency } = require('../utils/db-halloween');
-const { progress, memberHasShopRole, generalId } = require('./rewards');
-const { parisParts, PRC_ROLE_ID, eventRunning } = require('./config');
+const { EmbedBuilder } = require('discord.js');
+const { progress, memberHasShopRole, generalId, generalChannel } = require('./rewards');
+const { parisParts, PRC_ROLE_ID, COLOR, eventRunning } = require('./config');
 const { handleChatEvent } = require('./events');
 
 const PRC_GAP = 60 * 60 * 1000;
@@ -47,28 +48,33 @@ async function tickPrc(client) {
         if (!isLive(id)) continue;
         const guild = client.guilds.cache.get(id) || (await client.guilds.fetch(id).catch(() => null));
         if (!guild) continue;
-        const channelId = await generalId(guild);
-        if (!channelId) continue;
         const lastMsg = Number(store.meta(`prc:lastmsg:${id}`) || 0);
         const lastPing = Number(store.meta(`prc:lastping:${id}`) || 0);
         const now = Date.now();
         if (!lastMsg || now - lastMsg < PRC_GAP) continue;
         if (now - lastPing < PRC_COOLDOWN) continue;
-        const ch = await guild.channels.fetch(channelId).catch(() => null);
-        if (!ch?.isTextBased?.()) continue;
-        await ch.send(`<@&${PRC_ROLE_ID}> le général est mort depuis 1h, venez parler.`).catch(() => {});
+        const ch = await generalChannel(guild);
+        if (!ch) continue;
+        await ch.send(prcPayload('Le salon est silencieux depuis **plus d\'une heure**… même les fantômes s\'ennuient 👻')).catch(() => {});
         store.meta(`prc:lastping:${id}`, now);
     }
 }
 
+function prcPayload(text) {
+    const embed = new EmbedBuilder()
+        .setColor(COLOR.purple)
+        .setTitle('🕯️ Ping Revive Chat')
+        .setDescription(`${text}\n\nVenez faire revivre le chat ! 💬\n🍬 Chaque message vous rapporte des **bonbons**, et 🎃 des **citrouilles** tous les 3 messages.`)
+        .setFooter({ text: 'Halloween 2026' });
+    return { content: `<@&${PRC_ROLE_ID}>`, embeds: [embed], allowedMentions: { roles: [PRC_ROLE_ID] } };
+}
+
 async function manualPrc(interaction) {
-    const guild = interaction.guild;
-    const channelId = await generalId(guild);
-    const ch = channelId ? await guild.channels.fetch(channelId).catch(() => null) : null;
-    if (!ch?.isTextBased?.()) {
-        return interaction.reply({ content: 'Salon général introuvable (nom avec « général », ou HALLOWEEN_GENERAL_CHANNEL_ID).', ephemeral: true });
+    const ch = await generalChannel(interaction.guild);
+    if (!ch) {
+        return interaction.reply({ content: 'Salon général introuvable.', ephemeral: true });
     }
-    await ch.send(`<@&${PRC_ROLE_ID}> ping revive (manuel) par ${interaction.user}.`);
+    await ch.send(prcPayload(`${interaction.user} lance un appel : le chat a besoin de vous !`));
     store.meta(`prc:lastping:${guild.id}`, Date.now());
     const p = parisParts();
     return interaction.reply({ content: `PRC envoyé dans <#${ch.id}> (${p.date} ${p.hour}h).`, ephemeral: true });

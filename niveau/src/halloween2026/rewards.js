@@ -1,5 +1,5 @@
-const { PermissionFlagsBits } = require('discord.js');
-const { ROAD } = require('./config');
+const { PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { ROAD, COLOR, GENERAL_CHANNEL_ID } = require('./config');
 const store = require('./store');
 const { grantEventCurrency, getOrCreateEventUser } = require('../utils/db-halloween');
 
@@ -61,35 +61,48 @@ async function progress(client, guild, userId, type, amount = 1) {
     ensureMissed(userId);
     const { activeQuests } = require('./config');
     const quests = activeQuests().filter((q) => q.type === type);
-    const lines = [];
+    const done = [];
     for (const quest of quests) {
         const { justDone } = store.addProgress(userId, quest.id, amount, quest.goal);
         if (!justDone) continue;
         pay(userId, quest);
-        lines.push(`Quête ${quest.date.slice(8)}/10 faite — ${quest.reward}`);
-        if (store.completedCount(userId) >= ROAD.length) {
-            const u = getOrCreateEventUser(userId);
-            if (!u.streak_done) {
-                lines.push('9/9 sans rater. Fais `/halloween-road` pour choisir x2 EXP ou le rôle Fantôme d\'Halloween.');
-            }
-        }
+        done.push(quest);
     }
-    if (lines.length && guild) {
-        const ch = guild.channels.cache.get(await generalId(guild)) || guild.systemChannel;
-        if (ch?.isTextBased?.()) {
-            ch.send(`<@${userId}> ${lines.join('\n')}`).catch(() => {});
-        }
+    if (!done.length || !guild) return done;
+
+    const count = store.completedCount(userId);
+    const embed = new EmbedBuilder()
+        .setColor(COLOR.orange)
+        .setTitle('🎃 Quête Halloween validée !')
+        .setDescription(done.map((q) => `✅ **${q.label}** (${q.date.slice(8)}/10)\n🎁 Récompense : **${q.reward}**`).join('\n\n'))
+        .addFields({ name: '🛣️ Road', value: `**${count}/${ROAD.length}** quêtes faites`, inline: true })
+        .setFooter({ text: 'Halloween 2026 · /halloween-road pour voir ta progression' });
+    if (count >= ROAD.length && !getOrCreateEventUser(userId).streak_done) {
+        embed.setColor(COLOR.purple).addFields({
+            name: '👻 Road parfaite !',
+            value: 'Fais `/halloween-road` pour choisir **x2 EXP jusqu\'au reset** ou le rôle **Fantôme d\'Halloween**.',
+        });
     }
-    return lines;
+    const ch = await generalChannel(guild);
+    if (ch) ch.send({ content: `<@${userId}>`, embeds: [embed] }).catch(() => {});
+    return done;
 }
 
 async function generalId(guild) {
-    const env = process.env.HALLOWEEN_GENERAL_CHANNEL_ID;
-    if (env && guild.channels.cache.has(env)) return env;
+    for (const id of [process.env.HALLOWEEN_GENERAL_CHANNEL_ID, GENERAL_CHANNEL_ID]) {
+        if (id && guild.channels.cache.has(id)) return id;
+    }
     const found = guild.channels.cache.find(
         (c) => c.isTextBased?.() && /général|general/i.test(c.name),
     );
     return found?.id || null;
+}
+
+async function generalChannel(guild) {
+    const id = await generalId(guild);
+    if (!id) return null;
+    const ch = guild.channels.cache.get(id) || (await guild.channels.fetch(id).catch(() => null));
+    return ch?.isTextBased?.() ? ch : null;
 }
 
 async function giveShopRole(member, item) {
@@ -119,6 +132,7 @@ module.exports = {
     memberHasShopRole,
     progress,
     generalId,
+    generalChannel,
     giveShopRole,
     giveStreakRole,
     canManage,

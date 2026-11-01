@@ -3,6 +3,8 @@
 const TEST_GUILD_ID = '1493276404643532810';
 const MAIN_GUILD_ID = '1097110036192448656';
 const PRC_ROLE_ID = '1393152287303663648';
+const GENERAL_CHANNEL_ID = '1523670182281740358';
+const COLOR = { orange: 0xff8a3d, purple: 0x9b59b6, green: 0x4ade80, red: 0xe23b2f };
 const EVENT_START = '2026-10-23';
 const EVENT_END = '2026-11-01';
 
@@ -31,7 +33,7 @@ const PHRASES = [
     'le fantôme a volé les bonbons',
     'citrouille rouge sous la lune',
     'blzstarss halloween 2026',
-    'pas de morpion la nuit',
+    'la sorcière remue son chaudron',
     'le collier chasse le fantôme',
 ];
 
@@ -83,6 +85,8 @@ module.exports = {
     TEST_GUILD_ID,
     MAIN_GUILD_ID,
     PRC_ROLE_ID,
+    GENERAL_CHANNEL_ID,
+    COLOR,
     ROAD,
     SHOP,
     PHRASES,
