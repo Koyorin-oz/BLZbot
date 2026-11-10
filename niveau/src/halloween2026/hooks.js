@@ -42,6 +42,8 @@ async function onLevel(client, guild, userId) {
 }
 
 async function tickPrc(client) {
+    if (!eventRunning()) return;
+
     const { TEST_GUILD_ID, MAIN_GUILD_ID } = require('./config');
     const ids = [TEST_GUILD_ID, MAIN_GUILD_ID];
     for (const id of ids) {
@@ -70,12 +72,16 @@ function prcPayload(text) {
 }
 
 async function manualPrc(interaction) {
+    if (!eventRunning()) {
+        return interaction.reply({ content: 'L’événement Halloween n’est pas actif.', ephemeral: true });
+    }
+
     const ch = await generalChannel(interaction.guild);
     if (!ch) {
         return interaction.reply({ content: 'Salon général introuvable.', ephemeral: true });
     }
     await ch.send(prcPayload(`${interaction.user} lance un appel : le chat a besoin de vous !`));
-    store.meta(`prc:lastping:${guild.id}`, Date.now());
+    store.meta(`prc:lastping:${interaction.guild.id}`, Date.now());
     const p = parisParts();
     return interaction.reply({ content: `PRC envoyé dans <#${ch.id}> (${p.date} ${p.hour}h).`, ephemeral: true });
 }
