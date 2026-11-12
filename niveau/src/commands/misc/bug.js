@@ -7,6 +7,7 @@ const {
     ModalBuilder,
     MessageFlags,
     PermissionFlagsBits,
+    SeparatorBuilder,
     SectionBuilder,
     StringSelectMenuBuilder,
     StringSelectMenuOptionBuilder,
@@ -88,11 +89,11 @@ async function fetchReportedBugs(client) {
 
 function buildListComponents(bugs, userId, token, filter, page, isAdmin) {
     const filteredBugs = filterBugs(bugs, filter);
-    const totalPages = Math.ceil(filteredBugs.length / PAGE_SIZE);
+    const totalPages = Math.max(1, Math.ceil(filteredBugs.length / PAGE_SIZE));
     const pageBugs = filteredBugs.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
     const container = new ContainerBuilder().addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-            `# 🐛 ${FILTER_TITLES[filter]}\n${filteredBugs.length} bug${filteredBugs.length > 1 ? 's' : ''} signalé${filteredBugs.length > 1 ? 's' : ''}.`
+            `# 🐛 ${FILTER_TITLES[filter]}\n**${filteredBugs.length}** bug${filteredBugs.length > 1 ? 's' : ''} signalé${filteredBugs.length > 1 ? 's' : ''}.`
         )
     );
 
@@ -126,8 +127,14 @@ function buildListComponents(bugs, userId, token, filter, page, isAdmin) {
         container.addSectionComponents(section);
     }
 
+    container
+        .addSeparatorComponents(new SeparatorBuilder())
+        .addTextDisplayComponents(
+            new TextDisplayBuilder().setContent(`-# Page **${page + 1}/${totalPages}**`)
+        );
+
     const components = [container];
-    if (totalPages > 0) {
+    if (filteredBugs.length > 0) {
         const navigation = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setCustomId(`${LIST_PREFIX}prev:${userId}:${token}:${filter}:${page}`)
