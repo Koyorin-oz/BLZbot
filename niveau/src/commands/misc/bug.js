@@ -6,6 +6,7 @@ const {
     ContainerBuilder,
     ModalBuilder,
     MessageFlags,
+    PermissionFlagsBits,
     SectionBuilder,
     TextDisplayBuilder,
     TextInputBuilder,
@@ -35,7 +36,7 @@ function getReporterId(message) {
     return /^\d{17,20}$/.test(reporterId || '') ? reporterId : null;
 }
 
-async function fetchReportedBugs(client, userId) {
+async function fetchReportedBugs(client) {
     const forum = await client.channels.fetch(BUG_FORUM_CHANNEL_ID);
     if (!forum || !forum.isThreadOnly?.()) {
         throw new Error(`Forum bugs introuvable (${BUG_FORUM_CHANNEL_ID})`);
@@ -47,9 +48,11 @@ async function fetchReportedBugs(client, userId) {
         await Promise.all(threads.slice(i, i + 5).map(async (thread) => {
             try {
                 const starterMessage = await thread.fetchStarterMessage();
-                if (getReporterId(starterMessage) === userId) {
-                    bugs.push({ thread, starterMessage });
-                }
+                bugs.push({
+                    thread,
+                    starterMessage,
+                    reporterId: getReporterId(starterMessage),
+                });
             } catch (error) {
                 logger.warn(`[bug] Impossible de lire le premier message du fil ${thread.id}: ${error?.message || error}`);
             }
@@ -59,16 +62,16 @@ async function fetchReportedBugs(client, userId) {
     return bugs.sort((a, b) => b.thread.createdTimestamp - a.thread.createdTimestamp);
 }
 
-function buildListComponents(bugs, userId, token, page) {
+function buildListComponents(bugs, userId, token, page, isAdmin) {
     const totalPages = Math.ceil(bugs.length / PAGE_SIZE);
     const pageBugs = bugs.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
     const container = new ContainerBuilder().addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-            `# 🐛 Mes signalements\n${bugs.length} bug${bugs.length > 1 ? 's' : ''} signalé${bugs.length > 1 ? 's' : ''}.`
+            `# 🐛 Signalements du forum\n${bugs.length} bug${bugs.length > 1 ? 's' : ''} signalé${bugs.length > 1 ? 's' : ''}.`
         )
     );
 
-    for (const { thread, starterMessage } of pageBugs) {
+    for (const { thread, starterMessage, reporterId } of pageBugs) {
         const description = starterMessage.embeds?.[0]?.description || 'Aucune description.';
         const preview = description.length > DESCRIPTION_PREVIEW_LENGTH
             ? `${description.slice(0, DESCRIPTION_PREVIEW_LENGTH - 1)}…`
@@ -76,7 +79,8 @@ function buildListComponents(bugs, userId, token, page) {
         const infoButton = new ButtonBuilder()
             .setCustomId(`${LIST_PREFIX}info:${userId}:${token}:${thread.id}`)
             .setLabel('Informations')
-            .setStyle(ButtonStyle.Secondary);
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(!isAdmin && reporterId !== userId);
         const section = new SectionBuilder()
             .addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(`### ${thread.name}\n${preview}`)
@@ -141,11 +145,13 @@ async function handleListButton(interaction) {
         const forum = await interaction.client.channels.fetch(BUG_FORUM_CHANNEL_ID);
         const thread = await forum.threads.fetch(value);
         const starterMessage = await thread.fetchStarterMessage();
-        if (getReporterId(starterMessage) !== ownerId) {
+        const isAdmin = interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) || false;
+        if (getReporterId(starterMessage) !== ownerId && !isAdmin) {
             return interaction.editReply({ content: '❌ Ce signalement ne vous appartient pas.' });
         }
 
         const embed = starterMessage.embeds?.[0];
+        const reporter = embed?.fields?.find((field) => field.name === 'Membre')?.value || 'Inconnu';
         const tags = (thread.appliedTags || [])
             .map((tagId) => forum.availableTags.find((tag) => tag.id === tagId)?.name)
             .filter(Boolean);
@@ -154,11 +160,11 @@ async function handleListButton(interaction) {
                 new TextDisplayBuilder().setContent(
                     `# 🐛 Informations du signalement\n` +
                     `**Titre :** ${thread.name}\n` +
-                    `**Signalé par :** ${embed?.fields?.find((field) => field.name === 'Membre')?.value || 'Inconnu'}\n` +
+                    `**Signalé par :** ${isAdmin ? reporter : '🔒 Réservé à l’administration'}\n` +
                     `**Signalé le :** <t:${Math.floor(thread.createdTimestamp / 1000)}:F>\n` +
                     `**Statut :** ${tags.length ? tags.join(', ') : 'Aucun'}\n` +
                     `**Fil :** ${thread.archived ? 'Archivé' : 'Actif'}${thread.locked ? ' et verrouillé' : ''}\n` +
-                    `**Lien :** [Ouvrir le post](${thread.url})\n` +
+                    `**Lien :** ${isAdmin ? `[Ouvrir le post](${thread.url})` : '🔒 Réservé à l’administration'}\n` +
                     `**ID :** \`${thread.id}\``
                 ),
                 new TextDisplayBuilder().setContent(
@@ -180,13 +186,14 @@ async function handleListButton(interaction) {
         }
 
         await interaction.deferUpdate();
-        const bugs = await fetchReportedBugs(interaction.client, ownerId);
+        const bugs = await fetchReportedBugs(interaction.client);
         const totalPages = Math.max(1, Math.ceil(bugs.length / PAGE_SIZE));
+        const isAdmin = interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) || false;
         const page = Math.min(
             Math.max(currentPage + (action === 'next' ? 1 : -1), 0),
             totalPages - 1
         );
-        await interaction.editReply(buildListComponents(bugs, ownerId, token, page));
+        await interaction.editReply(buildListComponents(bugs, ownerId, token, page, isAdmin));
         return true;
     }
 
@@ -217,10 +224,11 @@ async function handlePageModalSubmit(interaction) {
     }
 
     await interaction.deferUpdate();
-    const bugs = await fetchReportedBugs(interaction.client, ownerId);
+    const bugs = await fetchReportedBugs(interaction.client);
     const totalPages = Math.max(1, Math.ceil(bugs.length / PAGE_SIZE));
     const page = Math.min(Math.max(requestedPage - 1, 0), totalPages - 1);
-    await interaction.editReply(buildListComponents(bugs, ownerId, token, page));
+    const isAdmin = interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) || false;
+    await interaction.editReply(buildListComponents(bugs, ownerId, token, page, isAdmin));
 }
 
 function buildReporterLabel(interaction) {
@@ -241,7 +249,7 @@ module.exports = {
             subcommand.setName('ajouter').setDescription('Signaler un bug via un formulaire.')
         )
         .addSubcommand((subcommand) =>
-            subcommand.setName('lister').setDescription('Lister les bugs signalés par moi.')
+            subcommand.setName('lister').setDescription('Lister les signalements du forum.')
         ),
 
     async execute(interaction) {
@@ -276,23 +284,24 @@ module.exports = {
         else if (interaction.options.getSubcommand() === 'lister') {
             await interaction.deferReply({ flags: MessageFlags.Ephemeral });
             try {
-                const bugs = await fetchReportedBugs(interaction.client, interaction.user.id);
+                const bugs = await fetchReportedBugs(interaction.client);
                 const token = crypto.randomBytes(6).toString('hex');
                 if (bugs.length === 0) {
                     return interaction.editReply({
                         components: [
                             new ContainerBuilder().addTextDisplayComponents(
-                                new TextDisplayBuilder().setContent('🐛 Vous n’avez signalé aucun bug.')
+                                new TextDisplayBuilder().setContent('🐛 Aucun signalement pour le moment.')
                             ),
                         ],
                         flags: MessageFlags.IsComponentsV2,
                     });
                 }
-                await interaction.editReply(buildListComponents(bugs, interaction.user.id, token, 0));
+                const isAdmin = interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) || false;
+                await interaction.editReply(buildListComponents(bugs, interaction.user.id, token, 0, isAdmin));
             } catch (error) {
                 logger.error('[bug] Impossible de lister les signalements:', error);
                 await interaction.editReply({
-                    content: '❌ Impossible de récupérer vos signalements pour le moment.',
+                    content: '❌ Impossible de récupérer les signalements pour le moment.',
                 });
             }
         }
