@@ -1,5 +1,6 @@
 const path = require('path');
 const { migrate } = require('./migrate');
+const { resolveDatabasePath } = require('../../../utils/database-path');
 
 const repoRoot = path.join(__dirname, '..', '..', '..');
 let Database;
@@ -10,7 +11,8 @@ try {
 }
 
 const defaultPath = path.join(__dirname, '..', '..', 'data', 'reborn.sqlite');
-const dbPath = (process.env.REBORN_DB_PATH || '').trim() || defaultPath;
+const configuredPath = (process.env.REBORN_DB_PATH || '').trim() || defaultPath;
+const dbPath = resolveDatabasePath(configuredPath);
 
 const dbDir = path.dirname(dbPath);
 require('fs').mkdirSync(dbDir, { recursive: true });

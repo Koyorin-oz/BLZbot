@@ -1,6 +1,7 @@
 const path = require('node:path');
 const fs = require('node:fs');
 const logger = require('./logger');
+const { resolveDatabasePath } = require('../../../utils/database-path');
 
 const REPO_ROOT = path.join(__dirname, '..', '..', '..');
 const REBORN_RUNTIME_PATH = path.join(REPO_ROOT, 'reborn-test-bot', 'src', 'rebornRuntime.js');
@@ -72,7 +73,8 @@ function defaultDbPath() {
 function initEnvironment() {
   const rt = getRuntime();
   if (!rt) return null;
-  const dbPath = (process.env.REBORN_DB_PATH || '').trim() || defaultDbPath();
+  const configuredDbPath = (process.env.REBORN_DB_PATH || '').trim() || defaultDbPath();
+  const dbPath = resolveDatabasePath(configuredDbPath);
   rt.initDbPath(dbPath);
   rt.applyProfilBypassEnv();
   rt.ensureDbLoaded();

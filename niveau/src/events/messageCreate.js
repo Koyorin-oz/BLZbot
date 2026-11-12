@@ -17,6 +17,7 @@ const { getTutorialProgress } = require('../utils/tutorial-handler');
 const config = require('../config');
 const roleConfig = require('../config/role.config.json');
 const logger = require('../utils/logger');
+const { isInsiderMode, isInsiderUserAllowed } = require('../utils/insider-access');
 
 // Cooldown anti-spam (en mémoire)
 const messageCooldown = new Set();
@@ -30,6 +31,10 @@ let lastCountingNumber = null;
 module.exports = {
     name: Events.MessageCreate,
     async execute(message, client) { // client est maintenant disponible ici
+        if (isInsiderMode() && !isInsiderUserAllowed(message.author?.id)) {
+            return;
+        }
+
         if (message.author.bot || !message.guild) {
             return;
         }

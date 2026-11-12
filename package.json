@@ -9,6 +9,7 @@
     "start:full": "cross-env BLZ_FORK_SERVICES=all node orchestrator/maintemp.js",
     "start:niveau": "node niveau/src/index.js",
     "start:niveau:test": "cross-env BLZ_TEST_MODE=1 node niveau/src/index.js",
+    "dev": "node --watch scripts/start-insider.js",
     "deploy:commands": "node scripts/deploy-commands-cli.js",
     "deploy:commands:test": "cross-env BLZ_TEST_MODE=1 node scripts/deploy-commands-cli.js",
     "deploy:commands:moderation": "node scripts/deploy-moderation-commands-cli.js",

@@ -1,8 +1,10 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 const logger = require('./logger');
+const { resolveDatabasePath } = require('../../../utils/database-path');
 
-const db = new Database(path.resolve(__dirname, '../database/giveaway.sqlite'));
+const dbPath = resolveDatabasePath(path.resolve(__dirname, '../database/giveaway.sqlite'));
+const db = new Database(dbPath);
 logger.info('Connexion à la base de données giveaway.sqlite établie.');
 
 db.pragma('journal_mode = WAL');

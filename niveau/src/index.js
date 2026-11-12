@@ -6,11 +6,15 @@ const {
     isOrchestratorSlashDeployEnabled,
 } = require(path.join(__dirname, '..', '..', 'blzbot-env.js'));
 require('dotenv').config({
-    path: resolveDotenvPath(
-        path.join(__dirname, '..', '..', '.env'),
-        PEBBLE_HOST_ENV_PATH,
-        path.join(process.cwd(), '.env')
-    ),
+    path: ['1', 'true', 'yes', 'on'].includes(
+        String(process.env.BLZ_INSIDER_MODE || '').toLowerCase()
+    )
+        ? path.join(__dirname, '..', '..', '.env.insider')
+        : resolveDotenvPath(
+              path.join(__dirname, '..', '..', '.env'),
+              PEBBLE_HOST_ENV_PATH,
+              path.join(process.cwd(), '.env')
+          ),
     quiet: true,
 });
 applyTestGuildOverride();
@@ -73,6 +77,8 @@ const client = new Client({
         GatewayIntentBits.GuildMessageReactions
     ]
 });
+
+require('./utils/insider-access').installInsiderInteractionGate(client);
 
 client.commands = new Collection();
 loadTopLevelCommands(client);

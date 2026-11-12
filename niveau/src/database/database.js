@@ -2,13 +2,14 @@ const logger = require('../utils/logger');
 const Database = require('better-sqlite3');
 const path = require('path');
 const { isTestBotProfile } = require(path.join(__dirname, '..', '..', '..', 'blzbot-env.js'));
+const { resolveDatabasePath } = require('../../../utils/database-path');
 
-const mainDb = new Database(path.join(__dirname, 'blzbot.sqlite'));
+const mainDb = new Database(resolveDatabasePath(path.join(__dirname, 'blzbot.sqlite')));
 const testG = String(process.env.GUILD_ID || '').trim();
 const mainG = String(process.env.BLZ_MAIN_GUILD_ID || '').trim();
 let testDb = null;
 if (isTestBotProfile() && /^\d{17,22}$/.test(testG) && /^\d{17,22}$/.test(mainG) && testG !== mainG) {
-    testDb = new Database(path.join(__dirname, 'blzbot.test.sqlite'));
+    testDb = new Database(resolveDatabasePath(path.join(__dirname, 'blzbot.test.sqlite')));
     logger.info('[DB] Mode double serveur : économie test → blzbot.test.sqlite, principal → blzbot.sqlite');
 }
 

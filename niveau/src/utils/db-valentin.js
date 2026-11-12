@@ -2,9 +2,10 @@ const Database = require("better-sqlite3");
 const path = require("path");
 const logger = require("./logger");
 const { parisDateKey } = require("../../../utils/paris-time");
+const { resolveDatabasePath } = require("../../../utils/database-path");
 
 // Crée une nouvelle instance de la base de données pour l'événement
-const dbPath = path.join(__dirname, "../database/Valentin.sqlite");
+const dbPath = resolveDatabasePath(path.join(__dirname, "../database/Valentin.sqlite"));
 const db = new Database(dbPath);
 logger.info("Connexion à la base de données Valentin.sqlite établie.");
 

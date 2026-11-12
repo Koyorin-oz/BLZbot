@@ -3,7 +3,8 @@ const Database = require('better-sqlite3');
 const path = require('path');
 
 // DB séparée pour les badges
-const dbBadges = new Database(path.join(__dirname, 'badges.sqlite'));
+const { resolveDatabasePath } = require('../../../utils/database-path');
+const dbBadges = new Database(resolveDatabasePath(path.join(__dirname, 'badges.sqlite')));
 
 // Activer WAL mode pour les performances
 dbBadges.pragma('journal_mode = WAL');
