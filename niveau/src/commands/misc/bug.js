@@ -117,7 +117,7 @@ function buildListComponents(bugs, userId, token, filter, page, isAdmin) {
             .setDisabled(!isAdmin && reporterId !== userId);
         const section = new SectionBuilder()
             .addTextDisplayComponents(
-                new TextDisplayBuilder().setContent(`### ${thread.name}\n${preview}`)
+                new TextDisplayBuilder().setContent(`### ${title}\n${preview}`)
             )
             .setButtonAccessory(infoButton);
         container.addSectionComponents(section);
