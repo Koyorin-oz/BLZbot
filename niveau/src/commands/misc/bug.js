@@ -73,13 +73,14 @@ function buildListComponents(bugs, userId, token, page) {
         const preview = description.length > DESCRIPTION_PREVIEW_LENGTH
             ? `${description.slice(0, DESCRIPTION_PREVIEW_LENGTH - 1)}…`
             : description;
+        const starterMessage = await thread.fetchStarterMessage();
         const infoButton = new ButtonBuilder()
             .setCustomId(`${LIST_PREFIX}info:${userId}:${token}:${thread.id}`)
             .setLabel('Informations')
             .setStyle(ButtonStyle.Secondary);
         const section = new SectionBuilder()
             .addTextDisplayComponents(
-                new TextDisplayBuilder().setContent(`### ${thread.name} - Par ${getReporterName(starterMessage)}\n${preview}`)
+                new TextDisplayBuilder().setContent(`### ${thread.name} - Par ${starterMessage.author.tag}\n${preview}`)
             )
             .setButtonAccessory(infoButton);
         container.addSectionComponents(section);
