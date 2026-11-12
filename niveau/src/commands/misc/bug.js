@@ -103,10 +103,13 @@ function buildListComponents(bugs, userId, token, filter, page, isAdmin) {
     }
 
     for (const { thread, starterMessage, reporterId } of pageBugs) {
-        const description = starterMessage.embeds?.[0]?.description || 'Aucune description.';
-        const title = thread.name.length > TITLE_PREVIEW_LENGTH
-            ? `${thread.name.slice(0, TITLE_PREVIEW_LENGTH - 1)}…`
-            : thread.name;
+        const titleText = String(thread.name || 'Sans titre').replace(/\s+/g, ' ').trim();
+        const description = String(starterMessage.embeds?.[0]?.description || 'Aucune description.')
+            .replace(/\s+/g, ' ')
+            .trim();
+        const title = titleText.length > TITLE_PREVIEW_LENGTH
+            ? `${titleText.slice(0, TITLE_PREVIEW_LENGTH - 1)}…`
+            : titleText;
         const preview = description.length > DESCRIPTION_PREVIEW_LENGTH
             ? `${description.slice(0, DESCRIPTION_PREVIEW_LENGTH - 1)}…`
             : description;
