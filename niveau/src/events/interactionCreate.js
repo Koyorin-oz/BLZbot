@@ -187,7 +187,23 @@ module.exports = {
                 }
             }
             if (!interaction.isButton()) return;
-            if (interaction.customId.startsWith('bug_tag:')) {
+            if (interaction.customId.startsWith('bug:list:')) {
+                const { handleListButton } = require('../commands/misc/bug');
+                try {
+                    await handleListButton(interaction);
+                } catch (error) {
+                    logger.error('Error handling bug list button:', error);
+                    try {
+                        if (!interaction.replied && !interaction.deferred) {
+                            await interaction.reply({ content: '❌ Impossible d’utiliser cette liste.', flags: 64 });
+                        } else if (interaction.deferred) {
+                            await interaction.editReply({ content: '❌ Impossible d’utiliser cette liste.' });
+                        }
+                    } catch (replyError) {
+                        logger.error('Failed to reply after bug list button error:', replyError.code || replyError.message);
+                    }
+                }
+            } else if (interaction.customId.startsWith('bug_tag:')) {
                 const { handleBugTagButton } = require('../utils/bug-forum-tags');
                 try {
                     await handleBugTagButton(interaction);
@@ -436,6 +452,22 @@ module.exports = {
                         }
                     } catch (replyError) {
                         logger.error('Failed to reply after bug modal error:', replyError.code || replyError.message);
+                    }
+                }
+            } else if (interaction.customId.startsWith('bug:list:modal:')) {
+                const { handlePageModalSubmit } = require('../commands/misc/bug');
+                try {
+                    await handlePageModalSubmit(interaction);
+                } catch (error) {
+                    logger.error('Error handling bug list page modal:', error);
+                    try {
+                        if (interaction.deferred) {
+                            await interaction.editReply({ content: '❌ Impossible de changer de page.' });
+                        } else if (!interaction.replied) {
+                            await interaction.reply({ content: '❌ Impossible de changer de page.', flags: 64 });
+                        }
+                    } catch (replyError) {
+                        logger.error('Failed to reply after bug list modal error:', replyError.code || replyError.message);
                     }
                 }
             }

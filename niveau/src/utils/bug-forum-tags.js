@@ -521,6 +521,7 @@ module.exports = {
   createBugForumPost,
   getBugReminderTarget,
   getThreadLastActivityTimestamp,
+  fetchAllBugForumThreads,
   checkInactiveBugForumPosts,
   startBugForumInactivityReminders,
 };
