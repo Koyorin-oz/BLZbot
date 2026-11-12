@@ -67,7 +67,10 @@ async function fetchReportedBugs(client) {
         throw new Error(`Forum bugs introuvable (${BUG_FORUM_CHANNEL_ID})`);
     }
 
-    const threads = [...await fetchAllBugForumThreads(forum)];
+    // Accepter seulement les bugs faits par le bot
+    const botId = client.user.id;
+    const threads = [...await fetchAllBugForumThreads(forum)].filter((thread) => thread.ownerId === botId);
+
     const bugs = [];
     for (let i = 0; i < threads.length; i += 5) {
         await Promise.all(threads.slice(i, i + 5).map(async (thread) => {
