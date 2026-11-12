@@ -176,7 +176,11 @@ module.exports = {
             } catch (error) {
                 await handleCommandError(interaction, error);
             }
-        } else if (interaction.isButton() || (interaction.isStringSelectMenu() && interaction.customId?.startsWith('hw26:'))) {
+        } else if (
+            interaction.isButton() ||
+            (interaction.isStringSelectMenu() &&
+                (interaction.customId?.startsWith('hw26:') || interaction.customId?.startsWith('bug:list:filter:')))
+        ) {
             if (interaction.customId?.startsWith('hw26:')) {
                 const { onButton } = require('../halloween2026/events');
                 try {
@@ -185,6 +189,24 @@ module.exports = {
                 } catch (error) {
                     logger.error('halloween button:', error);
                 }
+            }
+            if (interaction.isStringSelectMenu() && interaction.customId.startsWith('bug:list:filter:')) {
+                const { handleListFilter } = require('../commands/misc/bug');
+                try {
+                    await handleListFilter(interaction);
+                } catch (error) {
+                    logger.error('Error handling bug list filter:', error);
+                    try {
+                        if (!interaction.replied && !interaction.deferred) {
+                            await interaction.reply({ content: '❌ Impossible de filtrer les signalements.', flags: 64 });
+                        } else if (interaction.deferred) {
+                            await interaction.editReply({ content: '❌ Impossible de filtrer les signalements.' });
+                        }
+                    } catch (replyError) {
+                        logger.error('Failed to reply after bug list filter error:', replyError.code || replyError.message);
+                    }
+                }
+                return;
             }
             if (!interaction.isButton()) return;
             if (interaction.customId.startsWith('bug:list:')) {

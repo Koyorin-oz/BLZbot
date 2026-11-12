@@ -8,6 +8,8 @@ const {
     MessageFlags,
     PermissionFlagsBits,
     SectionBuilder,
+    StringSelectMenuBuilder,
+    StringSelectMenuOptionBuilder,
     TextDisplayBuilder,
     TextInputBuilder,
     TextInputStyle,
@@ -16,6 +18,7 @@ const crypto = require('crypto');
 const logger = require('../../utils/logger');
 const {
     BUG_FORUM_CHANNEL_ID,
+    EN_COURS_TAG_IDS,
     createBugForumPost,
     fetchAllBugForumThreads,
 } = require('../../utils/bug-forum-tags');
@@ -27,6 +30,26 @@ const PAGE_FIELD = 'bug_list_page';
 const LIST_PREFIX = 'bug:list:';
 const PAGE_SIZE = 5;
 const DESCRIPTION_PREVIEW_LENGTH = 180;
+const DEFAULT_FILTER = 'current';
+const FILTERS = ['current', 'reported', 'classified'];
+const FILTER_TITLES = {
+    current: 'Bugs actuels',
+    reported: 'Bugs signalés',
+    classified: 'Bugs classés',
+};
+
+function isValidFilter(filter) {
+    return FILTERS.includes(filter);
+}
+
+function filterBugs(bugs, filter) {
+    if (filter === 'reported') return bugs;
+
+    return bugs.filter(({ thread }) => {
+        const isCurrent = (thread.appliedTags || []).some((tagId) => EN_COURS_TAG_IDS.includes(tagId));
+        return filter === 'current' ? isCurrent : !isCurrent;
+    });
+}
 
 function getReporterId(message) {
     const reporterField = message?.embeds?.[0]?.fields?.find(
@@ -62,14 +85,21 @@ async function fetchReportedBugs(client) {
     return bugs.sort((a, b) => b.thread.createdTimestamp - a.thread.createdTimestamp);
 }
 
-function buildListComponents(bugs, userId, token, page, isAdmin) {
-    const totalPages = Math.ceil(bugs.length / PAGE_SIZE);
-    const pageBugs = bugs.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+function buildListComponents(bugs, userId, token, filter, page, isAdmin) {
+    const filteredBugs = filterBugs(bugs, filter);
+    const totalPages = Math.ceil(filteredBugs.length / PAGE_SIZE);
+    const pageBugs = filteredBugs.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
     const container = new ContainerBuilder().addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-            `# 🐛 Signalements du forum\n${bugs.length} bug${bugs.length > 1 ? 's' : ''} signalé${bugs.length > 1 ? 's' : ''}.`
+            `# 🐛 ${FILTER_TITLES[filter]}\n${filteredBugs.length} bug${filteredBugs.length > 1 ? 's' : ''} signalé${filteredBugs.length > 1 ? 's' : ''}.`
         )
     );
+
+    if (pageBugs.length === 0) {
+        container.addTextDisplayComponents(
+            new TextDisplayBuilder().setContent('Aucun signalement dans cette catégorie.')
+        );
+    }
 
     for (const { thread, starterMessage, reporterId } of pageBugs) {
         const description = starterMessage.embeds?.[0]?.description || 'Aucune description.';
@@ -93,17 +123,17 @@ function buildListComponents(bugs, userId, token, page, isAdmin) {
     if (totalPages > 0) {
         const navigation = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setCustomId(`${LIST_PREFIX}prev:${userId}:${token}:${page}`)
+                .setCustomId(`${LIST_PREFIX}prev:${userId}:${token}:${filter}:${page}`)
                 .setLabel('◀️')
                 .setStyle(ButtonStyle.Secondary)
                 .setDisabled(totalPages === 1 || page === 0),
             new ButtonBuilder()
-                .setCustomId(`${LIST_PREFIX}goto:${userId}:${token}`)
+                .setCustomId(`${LIST_PREFIX}goto:${userId}:${token}:${filter}`)
                 .setLabel(`Page ${page + 1}`)
                 .setStyle(ButtonStyle.Secondary)
                 .setDisabled(totalPages === 1),
             new ButtonBuilder()
-                .setCustomId(`${LIST_PREFIX}next:${userId}:${token}:${page}`)
+                .setCustomId(`${LIST_PREFIX}next:${userId}:${token}:${filter}:${page}`)
                 .setLabel('▶️')
                 .setStyle(ButtonStyle.Secondary)
                 .setDisabled(totalPages === 1 || page === totalPages - 1)
@@ -111,21 +141,47 @@ function buildListComponents(bugs, userId, token, page, isAdmin) {
         components.push(navigation);
     }
 
+    const filterMenu = new StringSelectMenuBuilder()
+        .setCustomId(`${LIST_PREFIX}filter:${userId}:${token}`)
+        .setPlaceholder('Filtrer les bugs')
+        .addOptions(
+            new StringSelectMenuOptionBuilder()
+                .setLabel('Bugs actuels')
+                .setValue('current')
+                .setDescription('Bugs avec un tag En cours')
+                .setDefault(filter === 'current'),
+            new StringSelectMenuOptionBuilder()
+                .setLabel('Bugs signalés')
+                .setValue('reported')
+                .setDescription('Tous les bugs signalés')
+                .setDefault(filter === 'reported'),
+            new StringSelectMenuOptionBuilder()
+                .setLabel('Bugs classés')
+                .setValue('classified')
+                .setDescription('Bugs sans tag En cours')
+                .setDefault(filter === 'classified')
+        );
+    components.push(new ActionRowBuilder().addComponents(filterMenu));
+
     return { components, flags: MessageFlags.IsComponentsV2 };
 }
 
 async function handleListButton(interaction) {
     if (!interaction.customId.startsWith(LIST_PREFIX)) return false;
 
-    const [, , action, ownerId, token, value] = interaction.customId.split(':');
+    const [, , action, ownerId, token, value, pageValue] = interaction.customId.split(':');
     if (ownerId !== interaction.user.id) {
         await interaction.reply({ content: '❌ Cette liste ne vous appartient pas.', flags: MessageFlags.Ephemeral });
         return true;
     }
 
     if (action === 'goto') {
+        if (!isValidFilter(value)) {
+            await interaction.reply({ content: '❌ Ce filtre n’est plus valide.', flags: MessageFlags.Ephemeral });
+            return true;
+        }
         const modal = new ModalBuilder()
-            .setCustomId(`${LIST_PREFIX}modal:${ownerId}:${token}`)
+            .setCustomId(`${LIST_PREFIX}modal:${ownerId}:${token}:${value}`)
             .setTitle('Aller à une page');
         const pageInput = new TextInputBuilder()
             .setCustomId(PAGE_FIELD)
@@ -179,7 +235,12 @@ async function handleListButton(interaction) {
     }
 
     if (action === 'prev' || action === 'next') {
-        const currentPage = Number(value);
+        const filter = value;
+        const currentPage = Number(pageValue);
+        if (!isValidFilter(filter)) {
+            await interaction.reply({ content: '❌ Ce filtre n’est plus valide.', flags: MessageFlags.Ephemeral });
+            return true;
+        }
         if (!Number.isInteger(currentPage) || currentPage < 0) {
             await interaction.reply({ content: '❌ Cette page n’est plus valide.', flags: MessageFlags.Ephemeral });
             return true;
@@ -187,13 +248,13 @@ async function handleListButton(interaction) {
 
         await interaction.deferUpdate();
         const bugs = await fetchReportedBugs(interaction.client);
-        const totalPages = Math.max(1, Math.ceil(bugs.length / PAGE_SIZE));
+        const totalPages = Math.max(1, Math.ceil(filterBugs(bugs, filter).length / PAGE_SIZE));
         const isAdmin = interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) || false;
         const page = Math.min(
             Math.max(currentPage + (action === 'next' ? 1 : -1), 0),
             totalPages - 1
         );
-        await interaction.editReply(buildListComponents(bugs, ownerId, token, page, isAdmin));
+        await interaction.editReply(buildListComponents(bugs, ownerId, token, filter, page, isAdmin));
         return true;
     }
 
@@ -205,9 +266,13 @@ async function handleListButton(interaction) {
 }
 
 async function handlePageModalSubmit(interaction) {
-    const [, , , ownerId, token] = interaction.customId.split(':');
+    const [, , , ownerId, token, filter] = interaction.customId.split(':');
     if (ownerId !== interaction.user.id) {
         await interaction.reply({ content: '❌ Cette liste ne vous appartient pas.', flags: MessageFlags.Ephemeral });
+        return;
+    }
+    if (!isValidFilter(filter)) {
+        await interaction.reply({ content: '❌ Ce filtre n’est plus valide.', flags: MessageFlags.Ephemeral });
         return;
     }
 
@@ -225,10 +290,32 @@ async function handlePageModalSubmit(interaction) {
 
     await interaction.deferUpdate();
     const bugs = await fetchReportedBugs(interaction.client);
-    const totalPages = Math.max(1, Math.ceil(bugs.length / PAGE_SIZE));
+    const totalPages = Math.max(1, Math.ceil(filterBugs(bugs, filter).length / PAGE_SIZE));
     const page = Math.min(Math.max(requestedPage - 1, 0), totalPages - 1);
     const isAdmin = interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) || false;
-    await interaction.editReply(buildListComponents(bugs, ownerId, token, page, isAdmin));
+    await interaction.editReply(buildListComponents(bugs, ownerId, token, filter, page, isAdmin));
+}
+
+async function handleListFilter(interaction) {
+    if (!interaction.customId.startsWith(`${LIST_PREFIX}filter:`)) return false;
+
+    const [, , , ownerId] = interaction.customId.split(':');
+    if (ownerId !== interaction.user.id) {
+        await interaction.reply({ content: '❌ Cette liste ne vous appartient pas.', flags: MessageFlags.Ephemeral });
+        return true;
+    }
+
+    const filter = interaction.values[0];
+    if (!isValidFilter(filter)) {
+        await interaction.reply({ content: '❌ Ce filtre n’est pas valide.', flags: MessageFlags.Ephemeral });
+        return true;
+    }
+
+    const [, , , , token] = interaction.customId.split(':');
+    await interaction.deferUpdate();
+    const bugs = await fetchReportedBugs(interaction.client);
+    const isAdmin = interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) || false;
+    await interaction.editReply(buildListComponents(bugs, ownerId, token, filter, 0, isAdmin));
 }
 
 function buildReporterLabel(interaction) {
@@ -286,18 +373,10 @@ module.exports = {
             try {
                 const bugs = await fetchReportedBugs(interaction.client);
                 const token = crypto.randomBytes(6).toString('hex');
-                if (bugs.length === 0) {
-                    return interaction.editReply({
-                        components: [
-                            new ContainerBuilder().addTextDisplayComponents(
-                                new TextDisplayBuilder().setContent('🐛 Aucun signalement pour le moment.')
-                            ),
-                        ],
-                        flags: MessageFlags.IsComponentsV2,
-                    });
-                }
                 const isAdmin = interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) || false;
-                await interaction.editReply(buildListComponents(bugs, interaction.user.id, token, 0, isAdmin));
+                await interaction.editReply(
+                    buildListComponents(bugs, interaction.user.id, token, DEFAULT_FILTER, 0, isAdmin)
+                );
             } catch (error) {
                 logger.error('[bug] Impossible de lister les signalements:', error);
                 await interaction.editReply({
@@ -357,5 +436,6 @@ module.exports = {
         }
     },
     handleListButton,
+    handleListFilter,
     handlePageModalSubmit,
 };
