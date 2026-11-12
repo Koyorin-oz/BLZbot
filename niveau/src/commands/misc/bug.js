@@ -29,7 +29,8 @@ const FIELD_DESCRIPTION = 'bug_description';
 const PAGE_FIELD = 'bug_list_page';
 const LIST_PREFIX = 'bug:list:';
 const PAGE_SIZE = 5;
-const DESCRIPTION_PREVIEW_LENGTH = 180;
+const TITLE_PREVIEW_LENGTH = 32;
+const DESCRIPTION_PREVIEW_LENGTH = 64;
 const DEFAULT_FILTER = 'current';
 const FILTERS = ['current', 'reported', 'classified'];
 const FILTER_TITLES = {
@@ -103,6 +104,9 @@ function buildListComponents(bugs, userId, token, filter, page, isAdmin) {
 
     for (const { thread, starterMessage, reporterId } of pageBugs) {
         const description = starterMessage.embeds?.[0]?.description || 'Aucune description.';
+        const title = thread.name.length > TITLE_PREVIEW_LENGTH
+            ? `${thread.name.slice(0, TITLE_PREVIEW_LENGTH - 1)}…`
+            : thread.name;
         const preview = description.length > DESCRIPTION_PREVIEW_LENGTH
             ? `${description.slice(0, DESCRIPTION_PREVIEW_LENGTH - 1)}…`
             : description;
