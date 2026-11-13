@@ -9,7 +9,7 @@ require('dotenv').config({
     path: ['1', 'true', 'yes', 'on'].includes(
         String(process.env.BLZ_INSIDER_MODE || '').toLowerCase()
     )
-        ? path.join(__dirname, '..', '..', '.env.insider')
+        ? path.join(__dirname, '..', '..', '.insider.env')
         : resolveDotenvPath(
               path.join(__dirname, '..', '..', '.env'),
               PEBBLE_HOST_ENV_PATH,

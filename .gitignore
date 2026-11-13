@@ -5,7 +5,8 @@ node_modules/
 .env
 .env.*
 !.env.example
-!.env.insider.example
+.insider.env
+!.insider.env.example
 
 # OAuth / clés fichiers
 credentials.json
